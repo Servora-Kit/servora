@@ -7,7 +7,7 @@ import (
 	"time"
 
 	conf "github.com/horonlee/servora/api/gen/go/conf/v1"
-	"github.com/horonlee/servora/pkg/config"
+	"github.com/horonlee/servora/pkg/bootstrap/config"
 	"github.com/horonlee/servora/pkg/governance/telemetry"
 	"github.com/horonlee/servora/pkg/logger"
 
