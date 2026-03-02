@@ -82,7 +82,7 @@ func NewClient(cfg *Config, l logger.Logger) (*Client, func(), error) {
 		writeTimeout = DefaultWriteTimeout
 	}
 
-	baseLogger := logger.With(l, logger.WithModule("redis/pkg/servora-service"))
+	baseLogger := logger.With(l, logger.WithModule("redis/pkg"))
 	setupLog := logger.NewHelper(baseLogger, logger.WithField("operation", "NewClient"))
 	cleanupLog := logger.NewHelper(baseLogger, logger.WithField("operation", "cleanup"))
 

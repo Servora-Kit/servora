@@ -36,3 +36,32 @@ func NewRegistrar(cfg *conf.Registry) registry.Registrar {
 		return nil
 	}
 }
+
+// NewDiscovery 根据配置创建服务发现客户端
+func NewDiscovery(cfg *conf.Discovery) registry.Discovery {
+	if cfg == nil {
+		return nil
+	}
+
+	switch c := cfg.Discovery.(type) {
+	case *conf.Discovery_Consul:
+		return NewConsulDiscovery(c.Consul)
+	case *conf.Discovery_Etcd:
+		var opts []Option
+		if c.Etcd.Namespace != "" {
+			opts = append(opts, Namespace(c.Etcd.Namespace))
+		}
+		opts = append(opts, RegisterTTL(15*time.Second), MaxRetry(5))
+		discovery, err := NewEtcdDiscovery(c.Etcd, opts...)
+		if err != nil {
+			panic(fmt.Sprintf("failed to create etcd discovery: %v", err))
+		}
+		return discovery
+	case *conf.Discovery_Nacos:
+		return NewNacosDiscovery(c.Nacos)
+	case *conf.Discovery_Kubernetes:
+		return NewKubernetesDiscovery(c.Kubernetes)
+	default:
+		return nil
+	}
+}

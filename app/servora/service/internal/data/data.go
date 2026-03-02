@@ -9,6 +9,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/horonlee/servora/api/gen/go/conf/v1"
 	"github.com/horonlee/servora/app/servora/service/internal/data/ent"
+	"github.com/horonlee/servora/pkg/governance/registry"
 	"github.com/horonlee/servora/pkg/logger"
 	"github.com/horonlee/servora/pkg/redis"
 	"github.com/horonlee/servora/pkg/transport/client"
@@ -21,7 +22,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewDiscovery, NewDB, NewEntClient, NewRedis, NewData, NewAuthRepo, NewUserRepo, NewTestRepo)
+var ProviderSet = wire.NewSet(registry.NewDiscovery, NewDB, NewEntClient, NewRedis, NewData, NewAuthRepo, NewUserRepo, NewTestRepo)
 
 // Data .
 type Data struct {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/horonlee/servora/app/servora/service/internal/biz"
 	"github.com/horonlee/servora/app/servora/service/internal/biz/entity"
-	dataent "github.com/horonlee/servora/app/servora/service/internal/data/ent"
-	entuser "github.com/horonlee/servora/app/servora/service/internal/data/ent/user"
+	"github.com/horonlee/servora/app/servora/service/internal/data/ent"
+	"github.com/horonlee/servora/app/servora/service/internal/data/ent/user"
 	"github.com/horonlee/servora/pkg/helpers/hash"
 	"github.com/horonlee/servora/pkg/logger"
 	"github.com/horonlee/servora/pkg/mapper"
@@ -17,14 +17,14 @@ import (
 type userRepo struct {
 	data   *Data
 	log    *logger.Helper
-	mapper *mapper.CopierMapper[entity.User, dataent.User]
+	mapper *mapper.CopierMapper[entity.User, ent.User]
 }
 
 func NewUserRepo(data *Data, l logger.Logger) biz.UserRepo {
 	return &userRepo{
 		data:   data,
 		log:    logger.NewHelper(l, logger.WithModule("user/data/servora-service")),
-		mapper: mapper.New[entity.User, dataent.User]().RegisterConverters(mapper.AllBuiltinConverters()),
+		mapper: mapper.New[entity.User, ent.User]().RegisterConverters(mapper.AllBuiltinConverters()),
 	}
 }
 
@@ -56,7 +56,7 @@ func (r *userRepo) SaveUser(ctx context.Context, user *entity.User) (*entity.Use
 }
 
 func (r *userRepo) GetUserById(ctx context.Context, id int64) (*entity.User, error) {
-	entUser, err := r.data.entClient.User.Query().Where(entuser.IDEQ(id)).Only(ctx)
+	entUser, err := r.data.entClient.User.Query().Where(user.IDEQ(id)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (r *userRepo) ListUsers(ctx context.Context, page int32, pageSize int32) ([
 	offset := int((page - 1) * pageSize)
 	limit := int(pageSize)
 
-	query := r.data.entClient.User.Query().Order(entuser.ByID(sql.OrderDesc()))
+	query := r.data.entClient.User.Query().Order(user.ByID(sql.OrderDesc()))
 	total, err := query.Clone().Count(ctx)
 	if err != nil {
 		return nil, 0, err

@@ -8,8 +8,8 @@ import (
 
 	"github.com/horonlee/servora/app/servora/service/internal/biz"
 	"github.com/horonlee/servora/app/servora/service/internal/biz/entity"
-	dataent "github.com/horonlee/servora/app/servora/service/internal/data/ent"
-	entuser "github.com/horonlee/servora/app/servora/service/internal/data/ent/user"
+	"github.com/horonlee/servora/app/servora/service/internal/data/ent"
+	"github.com/horonlee/servora/app/servora/service/internal/data/ent/user"
 	"github.com/horonlee/servora/pkg/helpers/hash"
 	"github.com/horonlee/servora/pkg/logger"
 	"github.com/horonlee/servora/pkg/mapper"
@@ -18,14 +18,14 @@ import (
 type authRepo struct {
 	data   *Data
 	log    *logger.Helper
-	mapper *mapper.CopierMapper[entity.User, dataent.User]
+	mapper *mapper.CopierMapper[entity.User, ent.User]
 }
 
 func NewAuthRepo(data *Data, l logger.Logger) biz.AuthRepo {
 	return &authRepo{
 		data:   data,
 		log:    logger.NewHelper(l, logger.WithModule("auth/data/servora-service")),
-		mapper: mapper.New[entity.User, dataent.User]().RegisterConverters(mapper.AllBuiltinConverters()),
+		mapper: mapper.New[entity.User, ent.User]().RegisterConverters(mapper.AllBuiltinConverters()),
 	}
 }
 
@@ -55,7 +55,7 @@ func (r *authRepo) SaveUser(ctx context.Context, user *entity.User) (*entity.Use
 }
 
 func (r *authRepo) GetUserByUserName(ctx context.Context, name string) (*entity.User, error) {
-	entUser, err := r.data.entClient.User.Query().Where(entuser.NameEQ(name)).Only(ctx)
+	entUser, err := r.data.entClient.User.Query().Where(user.NameEQ(name)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (r *authRepo) GetUserByUserName(ctx context.Context, name string) (*entity.
 }
 
 func (r *authRepo) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	entUser, err := r.data.entClient.User.Query().Where(entuser.EmailEQ(email)).Only(ctx)
+	entUser, err := r.data.entClient.User.Query().Where(user.EmailEQ(email)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *authRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 }
 
 func (r *authRepo) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
-	entUser, err := r.data.entClient.User.Query().Where(entuser.IDEQ(id)).Only(ctx)
+	entUser, err := r.data.entClient.User.Query().Where(user.IDEQ(id)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
