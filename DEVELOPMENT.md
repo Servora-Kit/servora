@@ -2,6 +2,46 @@
 
 This project follows the [go-wind-admin](https://github.com/tx7do/go-wind-admin) project structure and best practices.
 
+## 双分支策略
+
+本仓库采用双分支架构，以支持框架开发和完整示例的并存：
+
+- **main 分支**：纯框架代码，用于 Go module 发布
+  - 包含：`pkg/`、`cmd/svr/`、`api/protos/`、`templates/`、文档
+  - 不包含：服务实现（`app/`）、部署配置（`manifests/`、`docker-compose.yaml`）
+
+- **example 分支**：完整示例项目
+  - 包含：框架代码 + 示例服务（servora、sayhello）+ 部署配置
+  - 用于：开发、测试、演示
+
+### 为什么使用双分支？
+
+1. **框架纯净性**：main 分支可以直接作为 Go module 发布，不包含示例代码
+2. **开发便利性**：example 分支提供完整环境，方便在真实场景中开发和测试框架
+3. **历史连续性**：两个分支共享 git 历史，便于追溯和同步
+4. **简化管理**：避免多仓库方案的复杂性
+
+### 开发工作流程
+
+**主要开发在 example 分支进行**：
+```bash
+git checkout example
+# 进行开发...
+```
+
+**框架相关的提交同步到 main**：
+```bash
+# 查看需要同步的框架提交
+git log --oneline --grep="^feat(pkg):" --grep="^fix(pkg):" --grep="^feat(cmd):" --grep="^fix(cmd):"
+
+# 同步到 main
+git checkout main
+git cherry-pick <commit-hash>
+git checkout example
+```
+
+详细工作流程请参考本文档后续章节。
+
 ## Project Structure
 
 ```
