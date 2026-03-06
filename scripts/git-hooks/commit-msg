@@ -2,21 +2,25 @@
 # commit-msg hook: 验证提交消息格式
 # 格式: type(scope): description
 # type: feat, fix, refactor, docs, test, chore
-# scope: pkg, cmd, app, example, openspec, infra
+# scope: 小写可扩展标识（建议使用项目约定的一级域）
 
 commit_msg_file="$1"
 commit_msg=$(cat "$commit_msg_file")
+subject_line="${commit_msg%%$'\n'*}"
 
 # 允许 merge 提交和 revert 提交
-if echo "$commit_msg" | grep -qE "^(Merge|Revert)"; then
+if [[ "$subject_line" =~ ^(Merge|Revert) ]]; then
     exit 0
 fi
 
 # 验证格式: type(scope): description
-if ! echo "$commit_msg" | grep -qE "^(feat|fix|refactor|docs|test|chore)\((pkg|cmd|app|example|openspec|infra)\): .+"; then
+# - type 为固定白名单
+# - scope 为可扩展：小写字母开头，可包含小写字母/数字/._/-
+if ! [[ "$subject_line" =~ ^(feat|fix|refactor|docs|test|chore)\(([a-z][a-z0-9._/-]*)\):[[:space:]].+ ]]; then
     echo "❌ 提交消息格式错误！"
     echo ""
     echo "要求格式: type(scope): description"
+    echo "说明: scope 可扩展（不再限制为固定列表），但必须为小写标识"
     echo ""
     echo "允许的 type:"
     echo "  - feat:     新功能"
@@ -25,24 +29,40 @@ if ! echo "$commit_msg" | grep -qE "^(feat|fix|refactor|docs|test|chore)\((pkg|c
     echo "  - docs:     文档"
     echo "  - test:     测试"
     echo "  - chore:    构建/工具"
-    echo ""
-    echo "允许的 scope:"
-    echo "  - pkg:      框架核心代码"
-    echo "  - cmd:      CLI 工具"
-    echo "  - app:      应用服务"
-    echo "  - example:  示例配置"
-    echo "  - openspec: OpenSpec 变更管理"
-    echo "  - infra:    基础设施/部署"
+    echo "scope 规则:"
+    echo "  - 必填，建议语义化、简短、小写"
+    echo "  - 可包含: a-z 0-9 . _ / -"
+    echo "  - 建议优先使用约定一级域"
+    echo "    api, buf, cmd, pkg, scripts, templates, tool-chain, md, docs, openspec, repo, app, infra"
     echo ""
     echo "示例:"
     echo "  feat(pkg): add new middleware for authentication"
-    echo "  fix(cmd): correct flag parsing in svr command"
-    echo "  feat(app): add user registration endpoint"
-    echo "  docs(example): update deployment guide"
+    echo "  chore(tool-chain/mk): refactor common Make targets"
+    echo "  docs(md/readme): clarify local development setup"
+    echo "  fix(api/proto): align pagination field names"
+    echo "  docs(repo): update contributing guidelines"
     echo ""
     echo "您的提交消息:"
-    echo "  $commit_msg"
+    echo "  $subject_line"
     exit 1
 fi
+
+# 推荐一级域清单（仅提示，不阻止提交）
+scope="${BASH_REMATCH[2]}"
+top_level="${scope%%/*}"
+
+case "$top_level" in
+    api|buf|cmd|pkg|scripts|templates|tool-chain|md|docs|openspec|repo|app|infra)
+        ;;
+    *)
+        echo "⚠️  提示：scope '$scope' 的一级域 '$top_level' 不在建议列表中。"
+        echo "   建议一级域：api, buf, cmd, pkg, scripts, templates, tool-chain, md, docs, openspec, repo, app, infra"
+        echo "   若当前需求确实没有合适一级域："
+        echo "   1) 先向用户/维护者申请新增一级域"
+        echo "   2) 获得同意后，再同步修改 scripts/git-hooks/commit-msg 与 AGENTS.md"
+        echo "   3) 在后续提交中统一使用新一级域"
+        echo "   详情请见 AGENTS.md 的“提交消息格式/规范的灵活性”章节"
+        ;;
+esac
 
 exit 0

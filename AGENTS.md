@@ -1,10 +1,10 @@
 # AGENTS.md - servora 项目根目录
 
-<!-- Generated: 2026-02-09 | Updated: 2026-03-06 -->
+<!-- Generated: 2026-02-09 | Updated: 2026-03-07 -->
 
 ## 项目概览
 
-`servora` 是一个基于 Go Kratos v2 的微服务示例仓库，当前采用 **Go workspace + 多模块** 与 **Buf v2 workspace** 组织方式。
+`servora` 是一个基于 Go Kratos 的微服务快开框架，当前采用 **Go workspace + 多模块** 与 **Buf v2 workspace** 组织方式。
 
 当前主线事实：
 - 根目录仍保留 `go.mod`，并通过 `go.work` 纳管 `api/gen`、`app/servora/service`、`app/sayhello/service`
@@ -47,13 +47,24 @@ type(scope): description
 
 **允许的 type**：`feat`、`fix`、`refactor`、`docs`、`test`、`chore`
 
-**允许的 scope**：
-- `pkg`：框架核心代码（需要同步到 main）
+**建议的 scope**：
+- `api`：API / Proto / OpenAPI 相关
+- `buf`：Buf 配置与生成链路
 - `cmd`：CLI 工具（需要同步到 main）
-- `app`：应用服务（仅 example 分支）
-- `example`：示例配置（仅 example 分支）
+- `pkg`：框架核心代码（需要同步到 main）
+- `scripts`：脚本与自动化任务
+- `templates`：模板资源（需要同步到 main）
+- `tool-chain`：工具链与构建体系（如 `tool-chain/mk`）
+- `md`：Markdown 文档（建议使用二级域，如 `md/readme`）
+- `docs`：非 Markdown 文档或文档体系治理（建议使用二级域，如 `docs/reference`）
 - `openspec`：OpenSpec 变更管理（需要同步到 main）
+- `repo`：仓库治理/元信息（如 hooks、ignore、目录约定）
+- `app`：应用服务（仅 example 分支）
 - `infra`：基础设施/部署（需要同步到 main）
+
+> 说明：git hooks 不再强制 scope 必须来自上述列表；只校验 `type(scope): description` 基本格式。
+> scope 仍建议使用小写、语义化、简短命名（可包含 `a-z`、`0-9`、`.`、`_`、`/`、`-`）。
+> 推荐优先采用“一级域/二级域”结构，例如：`tool-chain/mk`、`md/readme`、`api/proto`。
 
 **提交最佳实践**：
 1. 保持提交小而专注：一个提交只做一件事
@@ -62,9 +73,10 @@ type(scope): description
 4. 遵循格式：git hooks 会自动验证，不符合格式的提交会被拒绝
 
 **规范的灵活性**：
-- 当现有的 type/scope 无法准确描述提交时，主动询问用户是否需要添加新的分类
-- 不要默默使用不在列表中的 type/scope（会被 hooks 拒绝）
-- 不要强行将提交归类到不合适的 type/scope
+- 当现有建议的一级域能够表达语义时，优先在其下使用二级域（如 `md/readme`、`tool-chain/mk`）
+- 优先保持 scope 与改动边界一致，避免为了“套用已有分类”而使用不准确 scope
+- 若新增 scope 会被频繁复用，可将其补充到本节“建议的 scope”中
+- 若判断没有合适的**一级域**，必须先向用户/维护者申请新增域；在获得同意后，再同步更新 `scripts/git-hooks/commit-msg` 与本文件
 
 ### Git Hooks
 
@@ -144,7 +156,6 @@ make lint.go       # Go 代码检查
 
 ### CLI 工具
 ```bash
-svr new api <name> <server_name>    # 创建 API proto 脚手架
 svr gen gorm <service-name...>      # GORM GEN 代码生成
 ```
 
