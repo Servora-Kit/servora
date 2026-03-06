@@ -9,7 +9,7 @@ if [ "$current_branch" != "main" ]; then
 fi
 
 # 检查是否有服务代码被修改
-service_files=$(git diff --cached --name-only | grep -E "^app/(servora|sayhello)/")
+service_files=$(git diff --cached --name-only | grep -E "^app/")
 
 if [ -n "$service_files" ]; then
     echo "❌ 错误：不能在 main 分支提交服务代码！"
@@ -41,6 +41,26 @@ if [ -n "$deploy_files" ]; then
     echo "如果是模板文件，请放在 templates/ 目录下。"
     echo ""
     exit 1
+fi
+
+# 检查 Go 代码格式
+go_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
+
+if [ -n "$go_files" ]; then
+    # 检查是否需要格式化
+    unformatted=$(echo "$go_files" | xargs gofmt -l 2>/dev/null || true)
+
+    if [ -n "$unformatted" ]; then
+        echo "❌ 错误：以下 Go 文件需要格式化！"
+        echo ""
+        echo "$unformatted" | sed 's/^/  - /'
+        echo ""
+        echo "请执行以下操作："
+        echo "  gofmt -w $unformatted"
+        echo "  git add $unformatted"
+        echo ""
+        exit 1
+    fi
 fi
 
 exit 0

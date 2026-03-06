@@ -2,7 +2,9 @@
 
 简体中文
 
-`servora` 是一个基于 **Go Kratos v2** 的微服务示例仓库，采用 **DDD 分层** 与 **Proto First** 开发方式，覆盖 API 定义、代码生成、服务实现、前端联调、可观测性与容器化开发链路。
+`servora` 是一个基于 **Go Kratos v2** 的微服务示例项目，采用 **DDD 分层** 与 **Proto First** 开发方式，覆盖 API 定义、代码生成、服务实现、前端联调、可观测性与容器化开发链路。
+
+> **💡 这是 example 分支**：包含完整的示例服务（servora、sayhello）和运行环境。如果你只需要框架代码，请切换到 `main` 分支。
 
 ## ✨ 核心能力
 
@@ -48,10 +50,9 @@
 │   └── sayhello/service/            # gRPC 示例服务
 ├── cmd/
 │   └── svr/                         # CLI 工具（svr gen gorm）
-├── docs/                            # design / knowledge / reference
-├── manifests/                       # k8s / certs / grafana / loki / otel / prometheus
-├── openspec/                        # OpenSpec 变更与归档
 ├── pkg/                             # 共享基础库
+├── manifests/                       # k8s / grafana / loki / otel / prometheus
+├── openspec/                        # OpenSpec 变更与归档
 ├── app.mk                           # 服务级通用 Makefile 模板
 ├── buf.go.gen.yaml                  # 根级 Go 代码生成模板
 ├── buf.yaml                         # Buf v2 workspace
@@ -68,16 +69,25 @@
 - Docker / Docker Compose
 - Bun（如需运行前端）
 
-### 2) 克隆仓库
+### 2) 克隆仓库并切换到 example 分支
 
 ```bash
 git clone https://github.com/Servora-Kit/servora.git
 cd servora
+git checkout example
 ```
 
-按需修改 `app/servora/service/configs/config.yaml` 中的数据库、Redis、注册中心等配置。
+### 3) 配置环境
 
-### 3) 安装工具并生成代码
+复制 `.env` 文件并根据需要修改配置：
+
+```bash
+# .env 文件包含示例配置，真实配置请使用 .env.local
+cp .env .env.local
+# 编辑 .env.local，填入真实的数据库密码、API 密钥等
+```
+
+### 4) 安装工具并生成代码
 
 ```bash
 make init
@@ -86,7 +96,7 @@ make gen
 
 `make gen` 会统一执行：`api + openapi + wire + ent`。
 
-### 4) 启动容器化开发环境
+### 5) 启动容器化开发环境
 
 ```bash
 make compose.dev
@@ -95,10 +105,25 @@ make compose.dev
 相关命令：
 
 ```bash
-make compose.dev.logs
-make compose.dev.restart
-make compose.dev.down
+make compose.dev.logs      # 查看日志
+make compose.dev.restart   # 重启服务
+make compose.dev.down      # 停止环境
 ```
+
+## 📦 示例服务
+
+### Servora（主服务）
+
+- **端口**：HTTP 8000 / gRPC 9000
+- **功能**：用户管理、认证、前端界面
+- **前端**：`app/servora/service/web/`（Vue 3 + Vite）
+- **API 文档**：`http://localhost:8000/q/swagger-ui/`
+
+### SayHello（gRPC 示例）
+
+- **端口**：gRPC 9001
+- **功能**：简单的 gRPC 服务示例
+- **调用方式**：通过 gRPC 客户端或 Servora 服务调用
 
 ## 🧭 开发工作流
 
@@ -132,29 +157,16 @@ make ent
 # 质量检查
 make test
 make cover
-make vet
 make lint.go
 make lint.proto
 
 # 构建
 make build
-make build_only
-
-# Compose（生产）
-make compose.build
-make compose.up
-make compose.rebuild
-make compose.ps
-make compose.logs
-make compose.down
 
 # Compose（开发 Air）
 make compose.dev
-make compose.dev.build
-make compose.dev.up
-make compose.dev.restart
-make compose.dev.ps
 make compose.dev.logs
+make compose.dev.restart
 make compose.dev.down
 ```
 
@@ -163,8 +175,6 @@ make compose.dev.down
 ```bash
 make run
 make build
-make build_only
-make app
 make gen
 make wire
 make gen.ent
@@ -172,29 +182,17 @@ make gen.gorm
 make openapi
 ```
 
-说明：
-- 服务级 `make api` 会回到仓库根目录执行 `make api-go`
-- 若服务目录存在 `api/buf.typescript.gen.yaml`，服务级 `make api` 会继续生成 TypeScript 客户端
-- 服务级 `make openapi` 使用该服务自己的 `api/buf.openapi.gen.yaml`
-
 ### `svr` 命令行工具
 
 ```bash
 # 新建 API proto 脚手架
 svr new api <name> <server_name>
 svr new api billing servora
-svr new api billing.invoice servora
-svr new api --help
 
 # GORM GEN 代码生成
 svr gen gorm <service-name...>
 svr gen gorm servora --dry-run
-svr gen gorm
-
 ```
-
-> `svr` 命令默认从项目根目录执行。
-> `svr new api` 生成服务内 gRPC proto 骨架，输出到 `app/<server_name>/service/api/protos/<name>/service/v1/`。
 
 ### 前端命令（`app/servora/service/web/`）
 
@@ -204,32 +202,9 @@ bun install
 bun dev
 bun run build
 bun test:unit
-bun test:e2e
 bun lint
 bun format
 ```
-
-前端 TypeScript HTTP 客户端生成：
-
-```bash
-cd app/servora/service
-make api
-```
-
-生成结果位于 `app/servora/service/web/src/service/gen/`。
-
-## 📦 配置说明
-
-- 主服务配置：`app/servora/service/configs/config.yaml`
-- 共享配置 proto：`api/protos/conf/v1/conf.proto`
-- 支持环境变量覆盖默认值
-
-核心配置块包括：
-
-- `server`：HTTP / gRPC / TLS / CORS
-- `data`：数据库、Redis、客户端
-- `registry` / `discovery` / `config`：治理与配置中心
-- `trace` / `metrics`：观测
 
 ## 🔭 可观测性
 
@@ -246,8 +221,7 @@ make api
 - 不要手动编辑生成代码：`api/gen/go/`、`wire_gen.go`、`openapi.yaml`、`web/src/service/gen/`
 - 修改 proto 后务必执行 `make gen`
 - 修改 Wire 依赖图后务必执行 `make wire` 或 `make gen`
-- 根目录 Go 生成模板当前固定为 `buf.go.gen.yaml`
-- `servora` 前端 TypeScript 客户端模板位于 `app/servora/service/api/buf.typescript.gen.yaml`
+- 提交前确保通过 `make lint.go` 和 `make test`
 
 ## 🤝 贡献
 

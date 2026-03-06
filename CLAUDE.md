@@ -182,6 +182,14 @@ git cherry-pick --continue
 - 检查是否在 main 分支
 - 阻止提交 `app/` 目录的文件
 - 阻止提交 `manifests/`、`docker-compose.yaml` 等部署配置
+- 执行 gofmt 格式检查（仅检查 staged 的 .go 文件）
+
+### post-merge hook
+
+自动同步 git hooks：
+- 检测 `scripts/git-hooks/` 目录的变更
+- 合并或拉取后自动执行 `scripts/install-hooks.sh`
+- 确保 hooks 始终保持最新版本
 
 ### 安装 hooks
 
@@ -189,8 +197,32 @@ git cherry-pick --continue
 bash scripts/install-hooks.sh
 ```
 
+默认使用符号链接安装，修改 `scripts/git-hooks/` 中的 hooks 会立即生效。
+
 **重要**：不要使用 `--no-verify` 跳过 hooks 验证。
 
+## README 合并策略
+
+**重要**：main 和 example 分支的 README.md 内容不同，合并时会产生冲突。
+
+### 合并规则
+
+- **从 example 合并到 main**：保留 main 分支的 README.md（框架说明）
+- **从 main 合并到 example**：保留 example 分支的 README.md（完整项目说明）
+
+### 处理冲突
+
+```bash
+# 如果合并时 README.md 冲突
+git checkout --ours README.md    # 保留当前分支的 README
+# 或
+git checkout --theirs README.md  # 使用合并来源分支的 README
+
+git add README.md
+git commit
+```
+
+**原则**：始终保留目标分支（你当前所在分支）的 README 内容。
 
 ## Documentation Structure
 

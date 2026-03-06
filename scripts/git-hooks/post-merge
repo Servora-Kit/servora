@@ -1,0 +1,20 @@
+#!/bin/bash
+# post-merge hook: 合并后自动同步 git hooks
+
+# 检查 scripts/git-hooks/ 目录是否有变更
+if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | grep -q "^scripts/git-hooks/"; then
+    echo ""
+    echo "🔄 检测到 git hooks 更新，正在同步..."
+
+    # 获取项目根目录
+    ROOT_DIR="$(git rev-parse --show-toplevel)"
+
+    # 执行 install-hooks.sh
+    if [ -f "$ROOT_DIR/scripts/install-hooks.sh" ]; then
+        bash "$ROOT_DIR/scripts/install-hooks.sh"
+    else
+        echo "⚠️  警告：找不到 scripts/install-hooks.sh"
+    fi
+fi
+
+exit 0
