@@ -49,6 +49,9 @@ tmp/
 .claude/
 .omc/
 
+# Environment files
+.env.local
+
 # Frontend
 # Logs
 logs

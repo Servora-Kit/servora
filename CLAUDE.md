@@ -16,6 +16,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 包含：框架代码 + 示例服务（servora、sayhello）+ 部署配置
   - 用于：开发、测试、演示
 
+### templates vs manifests
+
+**重要区别**：这两个目录服务于不同的目的，不应该相互同步。
+
+- **templates/**（main 分支）
+  - 通用的、框架级别的部署模板
+  - 给使用框架的人作为参考
+  - 高度参数化，不包含具体的服务配置
+  - 修改场景：改进框架级别的部署最佳实践
+
+- **manifests/**（example 分支）
+  - 具体的、可运行的部署配置
+  - 基于 templates 创建的实例
+  - 包含具体的服务名、端口、环境变量等
+  - 修改场景：调整 example 项目的部署配置
+
+**工作流**：
+- 改进部署模板 → 在 main 分支修改 `templates/`
+- 调整示例配置 → 在 example 分支修改 `manifests/`
+- 不需要从 example 同步 manifests 到 main
+
 ### AI 开发规则
 
 1. **始终在 example 分支开发**
@@ -161,6 +182,14 @@ git cherry-pick --continue
 - 检查是否在 main 分支
 - 阻止提交 `app/` 目录的文件
 - 阻止提交 `manifests/`、`docker-compose.yaml` 等部署配置
+- 执行 gofmt 格式检查（仅检查 staged 的 .go 文件）
+
+### post-merge hook
+
+自动同步 git hooks：
+- 检测 `scripts/git-hooks/` 目录的变更
+- 合并或拉取后自动执行 `scripts/install-hooks.sh`
+- 确保 hooks 始终保持最新版本
 
 ### 安装 hooks
 
@@ -168,7 +197,32 @@ git cherry-pick --continue
 bash scripts/install-hooks.sh
 ```
 
+默认使用符号链接安装，修改 `scripts/git-hooks/` 中的 hooks 会立即生效。
+
 **重要**：不要使用 `--no-verify` 跳过 hooks 验证。
+
+## README 合并策略
+
+**重要**：main 和 example 分支的 README.md 内容不同，合并时会产生冲突。
+
+### 合并规则
+
+- **从 example 合并到 main**：保留 main 分支的 README.md（框架说明）
+- **从 main 合并到 example**：保留 example 分支的 README.md（完整项目说明）
+
+### 处理冲突
+
+```bash
+# 如果合并时 README.md 冲突
+git checkout --ours README.md    # 保留当前分支的 README
+# 或
+git checkout --theirs README.md  # 使用合并来源分支的 README
+
+git add README.md
+git commit
+```
+
+**原则**：始终保留目标分支（你当前所在分支）的 README 内容。
 
 ## Documentation Structure
 

@@ -7,6 +7,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOKS_DIR="$SCRIPT_DIR/git-hooks"
 GIT_HOOKS_DIR="$(git rev-parse --git-dir)/hooks"
 
+# 默认使用符号链接
+USE_SYMLINK=true
+
+# 解析命令行参数
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --symlink)
+            USE_SYMLINK=true
+            shift
+            ;;
+        --copy)
+            USE_SYMLINK=false
+            shift
+            ;;
+        *)
+            echo "未知参数: $1"
+            echo "用法: $0 [--symlink|--copy]"
+            exit 1
+            ;;
+    esac
+done
+
 echo "📦 正在安装 git hooks..."
 echo ""
 
@@ -17,23 +39,45 @@ if [ ! -d "$GIT_HOOKS_DIR" ]; then
     exit 1
 fi
 
-# 安装 commit-msg hook
-if [ -f "$HOOKS_DIR/commit-msg" ]; then
-    cp "$HOOKS_DIR/commit-msg" "$GIT_HOOKS_DIR/commit-msg"
-    chmod +x "$GIT_HOOKS_DIR/commit-msg"
-    echo "✓ 已安装 commit-msg hook"
-else
-    echo "⚠️  警告：找不到 commit-msg hook"
-fi
+# 安装单个 hook 的函数
+install_hook() {
+    local hook_name=$1
+    local source_file="$HOOKS_DIR/$hook_name"
+    local target_file="$GIT_HOOKS_DIR/$hook_name"
 
-# 安装 pre-commit hook
-if [ -f "$HOOKS_DIR/pre-commit" ]; then
-    cp "$HOOKS_DIR/pre-commit" "$GIT_HOOKS_DIR/pre-commit"
-    chmod +x "$GIT_HOOKS_DIR/pre-commit"
-    echo "✓ 已安装 pre-commit hook"
-else
-    echo "⚠️  警告：找不到 pre-commit hook"
-fi
+    if [ ! -f "$source_file" ]; then
+        echo "⚠️  警告：找不到 $hook_name hook"
+        return
+    fi
+
+    # 删除已存在的 hook（可能是文件或符号链接）
+    if [ -e "$target_file" ] || [ -L "$target_file" ]; then
+        rm -f "$target_file"
+    fi
+
+    if [ "$USE_SYMLINK" = true ]; then
+        # 尝试创建符号链接
+        if ln -s "$source_file" "$target_file" 2>/dev/null; then
+            echo "✓ 已安装 $hook_name hook (符号链接)"
+        else
+            # 符号链接失败，回退到复制模式
+            echo "⚠️  符号链接失败，使用复制模式"
+            cp "$source_file" "$target_file"
+            chmod +x "$target_file"
+            echo "✓ 已安装 $hook_name hook (复制)"
+        fi
+    else
+        # 复制模式
+        cp "$source_file" "$target_file"
+        chmod +x "$target_file"
+        echo "✓ 已安装 $hook_name hook (复制)"
+    fi
+}
+
+# 安装所有 hooks
+install_hook "commit-msg"
+install_hook "pre-commit"
+install_hook "post-merge"
 
 echo ""
 echo "✅ Git hooks 安装完成！"
