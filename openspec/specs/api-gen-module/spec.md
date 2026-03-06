@@ -32,5 +32,5 @@
 
 - **当** 生成代码位于 `api/gen/go/`
 - **那么** import 路径必须为 `github.com/Servora-Kit/servora/api/gen/go/<path>`
-- **那么** 现有代码的 import 语句无需修改
+- **那么** 现有代码的 import 语句需要更新为新的组织路径
 
