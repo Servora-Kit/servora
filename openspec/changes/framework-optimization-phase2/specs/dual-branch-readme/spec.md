@@ -1,46 +1,46 @@
-## 目的
+## Purpose
 定义 dual-branch-readme 的功能需求和验证场景。
 
-## 需求
+## Requirements
 
-### 需求:main 分支 README 展示框架能力
+### Requirement: main 分支 README 展示框架能力
 
 main 分支的 README.md 必须聚焦于框架本身的能力、架构设计和扩展方式，不包含具体业务服务的运行说明。
 
-#### 场景:框架概述
+#### Scenario: 框架概述
 
-- **当** 开发者在 main 分支查看 README.md
-- **那么** 文档必须包含框架的核心特性、技术栈、架构设计和目录结构说明
+- **WHEN** 开发者在 main 分支查看 README.md
+- **THEN** 文档必须包含框架的核心特性、技术栈、架构设计和目录结构说明
 
-#### 场景:快速开始指向 example 分支
+#### Scenario: 快速开始指向 example 分支
 
-- **当** 开发者在 main 分支查看 README.md 的快速开始章节
-- **那么** 文档必须引导开发者切换到 example 分支查看完整的运行示例
+- **WHEN** 开发者在 main 分支查看 README.md 的快速开始章节
+- **THEN** 文档必须引导开发者切换到 example 分支查看完整的运行示例
 
-### 需求:example 分支 README 展示完整项目
+### Requirement: example 分支 README 展示完整项目
 
 example 分支的 README.md 必须包含完整项目的运行指南、开发流程和示例服务说明。
 
-#### 场景:完整运行指南
+#### Scenario: 完整运行指南
 
-- **当** 开发者在 example 分支查看 README.md
-- **那么** 文档必须包含环境准备、依赖安装、服务启动、API 测试的完整步骤
+- **WHEN** 开发者在 example 分支查看 README.md
+- **THEN** 文档必须包含环境准备、依赖安装、服务启动、API 测试的完整步骤
 
-#### 场景:示例服务说明
+#### Scenario: 示例服务说明
 
-- **当** 开发者在 example 分支查看 README.md
-- **那么** 文档必须说明 servora 和 sayhello 两个示例服务的功能和使用方式
+- **WHEN** 开发者在 example 分支查看 README.md
+- **THEN** 文档必须说明 servora 和 sayhello 两个示例服务的功能和使用方式
 
-### 需求:分支差异化内容管理
+### Requirement: 分支差异化内容管理
 
 README.md 必须在两个分支中维护不同的内容，main 分支的更新不应覆盖 example 分支的运行指南。
 
-#### 场景:main 分支更新不影响 example
+#### Scenario: main 分支更新不影响 example
 
-- **当** 开发者在 main 分支更新框架说明
-- **那么** example 分支的 README.md 必须保持其完整项目运行指南不变
+- **WHEN** 开发者在 main 分支更新框架说明
+- **THEN** example 分支的 README.md 必须保持其完整项目运行指南不变
 
-#### 场景:example 分支更新不影响 main
+#### Scenario: example 分支更新不影响 main
 
-- **当** 开发者在 example 分支更新运行指南
-- **那么** main 分支的 README.md 必须保持其框架能力说明不变
+- **WHEN** 开发者在 example 分支更新运行指南
+- **THEN** main 分支的 README.md 必须保持其框架能力说明不变

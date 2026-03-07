@@ -1,8 +1,8 @@
-## 为什么
+## Why
 
 当前所有 proto 文件集中在 `api/protos/` 目录，框架公共 proto（conf, pagination）和业务 proto（auth, user, servora, sayhello）混在一起。这导致业务 API 变更需要在框架仓库操作，服务无法独立管理自己的 API 定义。在完成 Buf v2 迁移和 Go 模块拆分后，需要将业务 proto 移到各服务目录，实现 proto 定义跟随服务，同时更新构建系统以适应新的目录结构。
 
-## 变更内容
+## What Changes
 
 - **BREAKING** 移动业务 proto 文件：
   - `api/protos/auth/` → `app/servora/service/api/protos/auth/`
@@ -15,16 +15,16 @@
 - 更新根 `Makefile` 和 `app.mk`，适配新的 buf 配置位置
 - 更新 `.gitignore`，确保 `api/gen/go.mod` 不被忽略
 
-## 功能 (Capabilities)
+## Capabilities
 
-### 新增功能
+### New Capabilities
 - `service-proto-organization`: 服务 proto 目录组织结构
 - `build-system-update`: 更新后的构建系统配置
 
-### 修改功能
+### Modified Capabilities
 无
 
-## 影响
+## Impact
 
 - **Proto 文件路径**: 业务 proto 从 `api/protos/` 移到 `app/*/service/api/protos/`，影响 IDE 跳转和文档引用
 - **Buf 配置**: 根 `buf.yaml` 需要聚合多个 proto 源目录
