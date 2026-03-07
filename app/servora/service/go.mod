@@ -4,18 +4,16 @@ go 1.26.0
 
 require (
 	entgo.io/ent v0.14.5
-	github.com/go-kratos/kratos/contrib/middleware/validate/v2 v2.0.0-20260105075216-c7a58ff59f80
+	github.com/Servora-Kit/servora v0.0.0
+	github.com/Servora-Kit/servora/api/gen v0.0.0
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/wire v0.7.0
-	github.com/Servora-Kit/servora v0.0.0
-	github.com/Servora-Kit/servora/api/gen v0.0.0
 	github.com/lib/pq v1.11.2
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/automaxprocs v1.6.0
-	google.golang.org/grpc v1.79.1
 	gorm.io/gen v0.3.27
 	gorm.io/gorm v1.31.1
 	gorm.io/plugin/dbresolver v1.6.2
@@ -50,6 +48,7 @@ require (
 	github.com/go-kratos/aegis v0.2.0 // indirect
 	github.com/go-kratos/kratos/contrib/config/consul/v2 v2.0.0-20260105075216-c7a58ff59f80 // indirect
 	github.com/go-kratos/kratos/contrib/config/nacos/v2 v2.0.0-20260105075216-c7a58ff59f80 // indirect
+	github.com/go-kratos/kratos/contrib/middleware/validate/v2 v2.0.0-20260105075216-c7a58ff59f80 // indirect
 	github.com/go-kratos/kratos/contrib/registry/consul/v2 v2.0.0-20260105075216-c7a58ff59f80 // indirect
 	github.com/go-kratos/kratos/contrib/registry/kubernetes/v2 v2.0.0-20260105075216-c7a58ff59f80 // indirect
 	github.com/go-kratos/kratos/contrib/registry/nacos/v2 v2.0.0-20260105075216-c7a58ff59f80 // indirect
@@ -149,6 +148,7 @@ require (
 	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260223185530-2f722ef697dc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260217215200-42d3e9bedb6d // indirect
+	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
