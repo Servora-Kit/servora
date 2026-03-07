@@ -28,7 +28,8 @@ if [ -n "$service_files" ]; then
 fi
 
 # 检查是否有部署配置被修改（manifests/, docker-compose.yaml 等）
-deploy_files=$(git diff --cached --name-only | grep -E "^(manifests/|docker-compose\.yaml|docker-compose\.dev\.yaml|go\.work)")
+# 注意：go.work 在两个分支都需要，不算部署配置
+deploy_files=$(git diff --cached --name-only | grep -E "^(manifests/|docker-compose\.yaml|docker-compose\.dev\.yaml)")
 
 if [ -n "$deploy_files" ]; then
     echo "❌ 错误：不能在 main 分支提交部署配置！"
