@@ -3,9 +3,9 @@ package telemetry
 import (
 	"net/http"
 
-	"github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 	"github.com/Servora-Kit/servora/pkg/logger"
+	"github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
@@ -20,7 +20,7 @@ type Metrics struct {
 
 func NewMetrics(c *conf.Metrics, app *conf.App, l logger.Logger) (*Metrics, error) {
 	if c == nil || !c.Enable {
-		logger.NewHelper(l, logger.WithModule("metrics/telemetry")).Info("metrics config is empty, skip metrics init")
+		logger.NewHelper(l, logger.WithModule("metrics/pkg")).Info("metrics config is empty, skip metrics init")
 		return nil, nil
 	}
 

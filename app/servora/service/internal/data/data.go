@@ -39,7 +39,7 @@ func NewData(entClient *ent.Client, c *conf.Data, l logger.Logger, client client
 	}
 	return &Data{
 		entClient: entClient,
-		log:       logger.NewHelper(l, logger.WithModule("data/data/servora-service")),
+		log:       logger.NewHelper(l, logger.WithModule("core/data/servora-service")),
 		client:    client,
 		redis:     redisClient,
 	}, cleanup, nil
