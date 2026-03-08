@@ -1,11 +1,11 @@
 <!-- Parent: ../AGENTS.md -->
 # Redis 客户端封装 (pkg/redis)
 
-**最后更新时间**: 2026-03-06
+**最后更新时间**: 2026-03-08
 
 ## 模块目的
 
-封装 `github.com/redis/go-redis/v9`，统一配置转换、连通性探测、日志与基础操作。
+封装 `github.com/redis/go-redis/v9`，统一配置转换、连通性探测、日志与基础操作，并提供分布式锁和 Cache-aside 高级模式。
 
 ## 当前实现事实
 
@@ -20,6 +20,8 @@
 - `Set` / `Get` / `Del` / `Has` / `Keys`
 - `SAdd` / `SMembers`
 - `Expire`
+- `TryLock` / `Lock.Unlock`：基于 SET NX + Lua 的分布式锁
+- `GetOrSet[T]` / `GetOrSetJSON[T]`：Cache-aside 泛型 helper
 
 ## 使用示例
 
@@ -29,6 +31,24 @@ client, cleanup, err := redis.NewClient(cfg, l)
 defer cleanup()
 
 _ = client.Set(context.Background(), "key", "value", time.Hour)
+```
+
+### 分布式锁
+
+```go
+lock, err := client.TryLock(ctx, "order:123:lock", 10*time.Second)
+if err != nil { /* 锁已被占用或错误 */ }
+defer lock.Unlock(ctx)
+```
+
+### Cache-aside
+
+```go
+user, err := redis.GetOrSetJSON[User](ctx, client, "user:1", time.Hour,
+    func(ctx context.Context) (User, error) {
+        return db.FindUser(ctx, 1)
+    },
+)
 ```
 
 ## 测试
