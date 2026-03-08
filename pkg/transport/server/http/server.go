@@ -9,6 +9,7 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 	"github.com/Servora-Kit/servora/pkg/governance/telemetry"
+	"github.com/Servora-Kit/servora/pkg/health"
 	"github.com/Servora-Kit/servora/pkg/transport/server"
 	svrmw "github.com/Servora-Kit/servora/pkg/transport/server/middleware"
 )
@@ -24,6 +25,7 @@ type serverOptions struct {
 	cors           *conf.CORS
 	metricsHandler http.Handler
 	registrars     []Registrar
+	healthHandler  *health.Handler
 }
 
 func WithConfig(c *conf.Server_HTTP) ServerOption {
@@ -61,6 +63,14 @@ func WithMetrics(m *telemetry.Metrics) ServerOption {
 func WithServices(registrars ...Registrar) ServerOption {
 	return func(o *serverOptions) {
 		o.registrars = registrars
+	}
+}
+
+// WithHealthCheck 启用健康探针端点。
+// 注册 GET /healthz (liveness) 和 GET /readyz (readiness) 路由。
+func WithHealthCheck(h *health.Handler) ServerOption {
+	return func(o *serverOptions) {
+		o.healthHandler = h
 	}
 }
 
@@ -103,6 +113,11 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 
 	if o.metricsHandler != nil {
 		srv.Handle("/metrics", o.metricsHandler)
+	}
+
+	if o.healthHandler != nil {
+		srv.HandleFunc("/healthz", o.healthHandler.LivenessHandler())
+		srv.HandleFunc("/readyz", o.healthHandler.ReadinessHandler())
 	}
 
 	for _, reg := range o.registrars {

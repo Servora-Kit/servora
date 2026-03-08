@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/conf/v1"
+	"github.com/Servora-Kit/servora/pkg/health"
 )
 
 func TestNewServer_NoOptions(t *testing.T) {
@@ -139,5 +140,20 @@ func TestNewServer_FullOptions(t *testing.T) {
 	)
 	if srv == nil {
 		t.Fatal("expected non-nil server with full options")
+	}
+}
+
+func TestNewServer_WithHealthCheck(t *testing.T) {
+	h := health.NewHandler()
+	srv := NewServer(WithHealthCheck(h))
+	if srv == nil {
+		t.Fatal("expected non-nil server with health check")
+	}
+}
+
+func TestNewServer_WithNilHealthCheck(t *testing.T) {
+	srv := NewServer(WithHealthCheck(nil))
+	if srv == nil {
+		t.Fatal("expected non-nil server with nil health check")
 	}
 }
