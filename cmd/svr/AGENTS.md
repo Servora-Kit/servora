@@ -1,7 +1,6 @@
-# AGENTS.md - cmd/svr CLI
+# AGENTS.md - cmd/svr/
 
-<!-- Parent: ../../AGENTS.md -->
-<!-- Generated: 2026-03-03 | Updated: 2026-03-06 -->
+<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
 
 ## 目录定位
 
