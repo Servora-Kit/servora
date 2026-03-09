@@ -1,0 +1,112 @@
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Frontend<br/>Vue 3 + TypeScript]
+        CLI[CLI Tool<br/>svr]
+    end
+
+    subgraph "API Gateway"
+        HTTP[HTTP Server<br/>:8000]
+        GRPC[gRPC Server<br/>:9000]
+    end
+
+    subgraph "Servora Service"
+        direction TB
+        SERVER[Server Layer<br/>HTTP/gRPC Handlers]
+        BIZ[Business Layer<br/>Use Cases]
+        DATA[Data Layer<br/>Repository Pattern]
+        
+        SERVER --> BIZ
+        BIZ --> DATA
+        
+        subgraph "Data Access"
+            ENT[Ent ORM]
+            GORM[GORM]
+        end
+        
+        DATA --> ENT
+        DATA --> GORM
+    end
+
+    subgraph "Sayhello Service"
+        HELLO_SERVER[gRPC Server<br/>:9001]
+        HELLO_BIZ[Business Logic]
+    end
+
+    subgraph "Shared Libraries (pkg/)"
+        BOOTSTRAP[bootstrap<br/>启动聚合]
+        GOVERNANCE[governance<br/>注册/配置/遥测]
+        LOGGER[logger<br/>Zap日志]
+        JWT[jwt<br/>认证]
+        REDIS_PKG[redis<br/>缓存/分布式锁]
+        TRANSPORT[transport<br/>服务间通信]
+    end
+
+    subgraph "Infrastructure"
+        POSTGRES[(PostgreSQL<br/>主数据库)]
+        REDIS[(Redis<br/>缓存)]
+        ETCD[(etcd<br/>服务发现)]
+    end
+
+    subgraph "Proto & Code Gen"
+        PROTO[Proto Definitions<br/>api/protos/]
+        BUF[Buf v2 Workspace]
+        CODEGEN[Generated Code<br/>api/gen/go/]
+        
+        PROTO --> BUF
+        BUF --> CODEGEN
+    end
+
+    subgraph "Deployment"
+        K8S[Kubernetes<br/>manifests/k8s/]
+        COMPOSE[Docker Compose<br/>开发环境]
+    end
+
+    WEB -->|HTTP/REST| HTTP
+    CLI -->|Commands| SERVER
+    
+    HTTP --> SERVER
+    GRPC --> SERVER
+    GRPC --> HELLO_SERVER
+    
+    ENT --> POSTGRES
+    GORM --> POSTGRES
+    
+    SERVER -.->|使用| BOOTSTRAP
+    SERVER -.->|使用| GOVERNANCE
+    SERVER -.->|使用| LOGGER
+    SERVER -.->|使用| JWT
+    BIZ -.->|使用| REDIS_PKG
+    
+    HELLO_SERVER -.->|使用| BOOTSTRAP
+    HELLO_SERVER -.->|使用| GOVERNANCE
+    
+    REDIS_PKG --> REDIS
+    GOVERNANCE --> ETCD
+    
+    CODEGEN -.->|导入| SERVER
+    CODEGEN -.->|导入| BIZ
+    CODEGEN -.->|导入| WEB
+    
+    K8S -.->|部署| POSTGRES
+    K8S -.->|部署| REDIS
+    K8S -.->|部署| ETCD
+    K8S -.->|部署| HTTP
+    K8S -.->|部署| GRPC
+    
+    COMPOSE -.->|本地开发| HTTP
+    COMPOSE -.->|本地开发| POSTGRES
+    COMPOSE -.->|本地开发| REDIS
+
+    classDef clientStyle fill:#7aa2f7,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
+    classDef serviceStyle fill:#bb9af7,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
+    classDef dataStyle fill:#9ece6a,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
+    classDef infraStyle fill:#f7768e,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
+    classDef pkgStyle fill:#e0af68,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
+    classDef protoStyle fill:#73daca,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
+    
+    class WEB,CLI clientStyle
+    class HTTP,GRPC,SERVER,BIZ,HELLO_SERVER,HELLO_BIZ serviceStyle
+    class DATA,ENT,GORM,POSTGRES dataStyle
+    class REDIS,ETCD,K8S,COMPOSE infraStyle
+    class BOOTSTRAP,GOVERNANCE,LOGGER,JWT,REDIS_PKG,TRANSPORT pkgStyle
+    class PROTO,BUF,CODEGEN protoStyle
