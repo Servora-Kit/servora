@@ -16,7 +16,7 @@ data:
     db: 0
 
 app:
-  env: "prod"
+  env: "dev"
   jwt:
     access_secret: "servora_access_secret_change_me"
     refresh_secret: "servora_refresh_secret_change_me"
@@ -24,7 +24,10 @@ app:
     refresh_expire: 604800
   log:
     level: 0
-    filename: "/app/logs/servora.service.log"
+    filename: "./logs/servora.service.log"
+    max_size: 20
+    max_age: 30
+    max_backups: 10
 
 trace:
   endpoint: "otel-collector:4317"
@@ -34,12 +37,12 @@ metrics:
 
 registry:
   consul:
-    addr: "${REGISTRY_CONSUL_ADDR:consul:8500}"
-    scheme: "${REGISTRY_CONSUL_SCHEME:http}"
-    datacenter: "${REGISTRY_CONSUL_DC:dc1}"
+    addr: "consul:8500"
+    scheme: "http"
+    datacenter: "dc1"
 
 discovery:
   consul:
-    addr: "${DISCOVERY_CONSUL_ADDR:consul:8500}"
-    scheme: "${DISCOVERY_CONSUL_SCHEME:http}"
-    datacenter: "${DISCOVERY_CONSUL_DC:dc1}"
+    addr: "consul:8500"
+    scheme: "http"
+    datacenter: "dc1"

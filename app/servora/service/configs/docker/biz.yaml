@@ -1,0 +1,6 @@
+# Business-specific configuration for servora service (docker environment).
+# Add service-unique settings here (not covered by shared Bootstrap proto).
+# Example:
+# biz:
+#   some_feature_flag: true
+#   rate_limit: 100
