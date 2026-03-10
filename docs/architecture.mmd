@@ -6,7 +6,7 @@ graph TB
 
     subgraph "API Gateway"
         HTTP[HTTP Server<br/>:8000]
-        GRPC[gRPC Server<br/>:9000]
+        GRPC[gRPC Server<br/>:8001]
     end
 
     subgraph "Servora Service"
@@ -14,15 +14,15 @@ graph TB
         SERVER[Server Layer<br/>HTTP/gRPC Handlers]
         BIZ[Business Layer<br/>Use Cases]
         DATA[Data Layer<br/>Repository Pattern]
-        
+
         SERVER --> BIZ
         BIZ --> DATA
-        
+
         subgraph "Data Access"
             ENT[Ent ORM]
             GORM[GORM]
         end
-        
+
         DATA --> ENT
         DATA --> GORM
     end
@@ -51,7 +51,7 @@ graph TB
         PROTO[Proto Definitions<br/>api/protos/]
         BUF[Buf v2 Workspace]
         CODEGEN[Generated Code<br/>api/gen/go/]
-        
+
         PROTO --> BUF
         BUF --> CODEGEN
     end
@@ -63,36 +63,36 @@ graph TB
 
     WEB -->|HTTP/REST| HTTP
     CLI -->|Commands| SERVER
-    
+
     HTTP --> SERVER
     GRPC --> SERVER
     GRPC --> HELLO_SERVER
-    
+
     ENT --> POSTGRES
     GORM --> POSTGRES
-    
+
     SERVER -.->|使用| BOOTSTRAP
     SERVER -.->|使用| GOVERNANCE
     SERVER -.->|使用| LOGGER
     SERVER -.->|使用| JWT
     BIZ -.->|使用| REDIS_PKG
-    
+
     HELLO_SERVER -.->|使用| BOOTSTRAP
     HELLO_SERVER -.->|使用| GOVERNANCE
-    
+
     REDIS_PKG --> REDIS
     GOVERNANCE --> ETCD
-    
+
     CODEGEN -.->|导入| SERVER
     CODEGEN -.->|导入| BIZ
     CODEGEN -.->|导入| WEB
-    
+
     K8S -.->|部署| POSTGRES
     K8S -.->|部署| REDIS
     K8S -.->|部署| ETCD
     K8S -.->|部署| HTTP
     K8S -.->|部署| GRPC
-    
+
     COMPOSE -.->|本地开发| HTTP
     COMPOSE -.->|本地开发| POSTGRES
     COMPOSE -.->|本地开发| REDIS
@@ -103,7 +103,7 @@ graph TB
     classDef infraStyle fill:#f7768e,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
     classDef pkgStyle fill:#e0af68,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
     classDef protoStyle fill:#73daca,stroke:#1a1b26,stroke-width:2px,color:#1a1b26
-    
+
     class WEB,CLI clientStyle
     class HTTP,GRPC,SERVER,BIZ,HELLO_SERVER,HELLO_BIZ serviceStyle
     class DATA,ENT,GORM,POSTGRES dataStyle

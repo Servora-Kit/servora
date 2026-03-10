@@ -145,7 +145,7 @@ make compose.dev.reset     # 移除完整开发栈容器/网络/数据卷
 
 ### Servora（主服务）
 
-- **端口**：HTTP 8000 / gRPC 9000
+- **端口**：HTTP 8000 / gRPC 8001
 - **功能**：用户管理、认证、前端界面
 - **前端**：`app/servora/service/web/`（Vue 3 + Vite）
 - **API 文档**：`http://localhost:8000/q/swagger-ui/`
