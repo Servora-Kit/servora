@@ -102,19 +102,44 @@ make gen
 
 `make gen` 会统一执行：`api + openapi + wire + ent`。
 
+默认构建入口统一使用 `make build`：它会先执行完整生成，再构建所有服务；仓库不再区分 `build_only`。
+
 ### 5) 启动容器化开发环境
 
 ```bash
+# 仅启动基础设施
+make compose.up
+
+# 或：直接启动基础设施 + Air 开发容器
 make compose.dev
 ```
+
+- `make compose.up`：仅启动基础设施（Consul、Postgres、Redis、OTel、Loki、Prometheus、Grafana 等）
+- `make compose.dev`：启动基础设施 + Air 开发容器（`servora`、`sayhello`）
 
 相关命令：
 
 ```bash
+make compose.ps            # 查看基础设施状态
+make compose.stop          # 仅停止基础设施容器
+make compose.logs          # 查看基础设施日志
+make compose.down          # 移除本地 Compose 容器/网络（保留数据卷）
+make compose.reset         # 移除本地 Compose 容器/网络/数据卷
+make compose.dev.ps        # 查看完整开发栈状态
+make compose.dev.stop      # 仅停止完整开发栈容器
 make compose.dev.logs      # 查看日志
 make compose.dev.restart   # 重启服务
-make compose.dev.down      # 停止环境
+make compose.dev.down      # 移除完整开发栈容器/网络（保留数据卷）
+make compose.dev.reset     # 移除完整开发栈容器/网络/数据卷
 ```
+
+验收方式：
+
+- 执行 `make compose.down` 清理现场后，再执行 `make compose.up`，最后用 `make compose.ps` 确认只存在基础设施容器
+- 执行 `make compose.dev` 或 `make compose.dev.up` 后，用 `make compose.dev.ps` 确认基础设施和 `servora` / `sayhello` 开发容器都已启动
+- 执行 `make compose.stop` 或 `make compose.dev.stop` 后，容器应处于已停止状态，但数据卷和容器定义仍保留，可直接再次 `up`
+- 执行 `make compose.down` 或 `make compose.dev.down` 后，容器与网络会被移除，但不会删除 Postgres/Redis/Loki/Grafana 等 named volumes；只有显式使用 `docker compose down -v` 才会清空这些数据卷
+- 执行 `make compose.reset` 或 `make compose.dev.reset` 后，会连 named volumes 一起删除；这会清空本地数据库、缓存、日志与监控数据
 
 ## 📦 示例服务
 
@@ -169,11 +194,22 @@ make lint.proto
 # 构建
 make build
 
-# Compose（开发 Air）
+# Compose（基础设施 / 开发 Air）
+make compose.up
+make compose.ps
+make compose.stop
+make compose.logs
+make compose.down
+make compose.reset
+
+# 开发环境（基础设施 + Air）
 make compose.dev
+make compose.dev.ps
+make compose.dev.stop
 make compose.dev.logs
 make compose.dev.restart
 make compose.dev.down
+make compose.dev.reset
 ```
 
 ### 服务级命令（示例：`app/servora/service/`）
@@ -187,6 +223,8 @@ make gen.ent
 make gen.gorm
 make openapi
 ```
+
+服务级 `make build` 同样会先执行服务内生成流程，再编译当前服务。
 
 ### `svr` 命令行工具
 

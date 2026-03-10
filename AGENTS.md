@@ -192,11 +192,16 @@ type(scope): description
 ```bash
 make init          # 安装工具
 make gen           # 统一生成（api + openapi + wire + ent）
+make build         # 统一生成后构建所有服务
 ```
 
 ### 开发与测试
 ```bash
+make compose.up    # 仅启动基础设施
 make compose.dev   # 启动开发环境
+make compose.stop  # 仅停止基础设施容器
+make compose.down  # 移除容器/网络，保留数据卷
+make compose.reset # 移除容器/网络/数据卷
 make test          # 运行测试
 make lint.go       # Go 代码检查
 ```
@@ -209,7 +214,7 @@ svr gen gorm <service-name...>      # GORM GEN 代码生成
 ## 维护提示
 
 - 根 `make api` 当前固定使用 `buf.go.gen.yaml`；TypeScript 生成由服务目录内的 `api/buf.typescript.gen.yaml` 单独驱动
-- 修改任意 proto 后优先执行根目录 `make gen`
+- 修改任意 proto 后优先执行根目录 `make gen`；需要重新构建服务时直接执行根目录 `make build`
 - 修改服务依赖注入后执行对应服务目录下的 `make wire`
 - 不要手改 `api/gen/go/`、`wire_gen.go`、`openapi.yaml`
 - 若文档涉及前端路径，统一使用 `app/servora/service/web/`
