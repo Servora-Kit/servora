@@ -31,7 +31,9 @@ func TestGetOrSet_CacheHit(t *testing.T) {
 	expected := testUser{ID: 1, Name: "Alice"}
 
 	data, _ := marshalUser(expected)
-	c.Set(ctx, key, data, time.Minute)
+	if err := c.Set(ctx, key, data, time.Minute); err != nil {
+		t.Fatalf("seed cache failed: %v", err)
+	}
 
 	loaderCalled := false
 	result, err := GetOrSet(ctx, c, key, time.Minute,
@@ -74,7 +76,9 @@ func TestGetOrSet_CacheMiss(t *testing.T) {
 		t.Fatalf("value should be cached: %v", cacheErr)
 	}
 	var cachedUser testUser
-	json.Unmarshal([]byte(cached), &cachedUser)
+	if err := json.Unmarshal([]byte(cached), &cachedUser); err != nil {
+		t.Fatalf("unmarshal cached user failed: %v", err)
+	}
 	if cachedUser.ID != expected.ID {
 		t.Fatalf("cached value mismatch: %+v", cachedUser)
 	}
@@ -106,7 +110,9 @@ func TestGetOrSetJSON_CacheHit(t *testing.T) {
 	expected := testUser{ID: 3, Name: "Charlie"}
 
 	data, _ := json.Marshal(expected)
-	c.Set(ctx, key, string(data), time.Minute)
+	if err := c.Set(ctx, key, string(data), time.Minute); err != nil {
+		t.Fatalf("seed json cache failed: %v", err)
+	}
 
 	result, err := GetOrSetJSON(ctx, c, key, time.Minute,
 		func(_ context.Context) (testUser, error) {

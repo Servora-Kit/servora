@@ -42,11 +42,14 @@ func (c *Client) TryLock(ctx context.Context, key string, ttl time.Duration) (*L
 		return nil, err
 	}
 
-	ok, err := c.rdb.SetNX(ctx, key, token, ttl).Result()
+	result, err := c.rdb.SetArgs(ctx, key, token, goredis.SetArgs{Mode: "NX", TTL: ttl}).Result()
+	if errors.Is(err, goredis.Nil) {
+		return nil, ErrLockNotAcquired
+	}
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
+	if result != "OK" {
 		return nil, ErrLockNotAcquired
 	}
 

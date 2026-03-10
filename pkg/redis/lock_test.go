@@ -42,7 +42,11 @@ func TestTryLock_AlreadyHeld(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first lock should succeed: %v", err)
 	}
-	defer lock.Unlock(ctx)
+	defer func() {
+		if err := lock.Unlock(ctx); err != nil {
+			t.Errorf("cleanup unlock failed: %v", err)
+		}
+	}()
 
 	_, err = c.TryLock(ctx, "test:lock:2", 5*time.Second)
 	if err != ErrLockNotAcquired {
@@ -91,7 +95,11 @@ func TestTryLock_ExpiredThenReacquire(t *testing.T) {
 	if err != nil {
 		t.Fatalf("should reacquire expired lock: %v", err)
 	}
-	defer newLock.Unlock(ctx)
+	defer func() {
+		if err := newLock.Unlock(ctx); err != nil {
+			t.Errorf("cleanup unlock failed: %v", err)
+		}
+	}()
 
 	if err := lock.Unlock(ctx); err != ErrLockNotHeld {
 		t.Fatalf("expired lock unlock should return ErrLockNotHeld, got %v", err)
