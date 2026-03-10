@@ -28,3 +28,26 @@ func TestLoadBootstrap(t *testing.T) {
 		t.Fatalf("LoadBootstrap() app.name = %q, want %q", bc.App.Name, "from-file")
 	}
 }
+
+func TestLoadBootstrapFromDirectory(t *testing.T) {
+	t.Setenv("SVC_APP_NAME", "from-env")
+
+	configDir := t.TempDir()
+	configPath := filepath.Join(configDir, "bootstrap.yaml")
+	if err := os.WriteFile(configPath, []byte("app:\n  name: from-dir\n"), 0o600); err != nil {
+		t.Fatalf("write config file failed: %v", err)
+	}
+
+	bc, cfg, err := LoadBootstrap(configDir, "svc.service")
+	if err != nil {
+		t.Fatalf("LoadBootstrap() error = %v", err)
+	}
+	defer cfg.Close()
+
+	if bc == nil || bc.App == nil {
+		t.Fatalf("LoadBootstrap() returned nil bootstrap/app")
+	}
+	if bc.App.Name != "from-dir" {
+		t.Fatalf("LoadBootstrap() app.name = %q, want %q", bc.App.Name, "from-dir")
+	}
+}

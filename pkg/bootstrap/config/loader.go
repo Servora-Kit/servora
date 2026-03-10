@@ -1,6 +1,10 @@
 package config
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/conf/v1"
@@ -11,9 +15,13 @@ import (
 	"github.com/go-kratos/kratos/v2/config/file"
 )
 
+// LoadBootstrap 加载服务启动配置，并返回可持续 watch 的 Kratos 配置实例。
 func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, kconfig.Config, error) {
 	envPrefix := strings.ToUpper(strings.TrimSuffix(serviceName, ".service")) + "_"
-	initialSources := []kconfig.Source{file.NewSource(configPath)}
+	initialSources, err := buildFileSources(configPath)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	tempConfig := kconfig.New(
 		kconfig.WithSource(initialSources...),
@@ -42,7 +50,10 @@ func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, kcon
 	}
 	tempConfig.Close()
 
-	finalSources := []kconfig.Source{file.NewSource(configPath)}
+	finalSources, err := buildFileSources(configPath)
+	if err != nil {
+		return nil, nil, err
+	}
 	if configCenterSource != nil {
 		finalSources = append(finalSources, configCenterSource)
 	}
@@ -63,4 +74,46 @@ func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, kcon
 	}
 
 	return &bc, c, nil
+}
+
+// buildFileSources 将单文件或目录路径转换为 Kratos 可加载的文件配置源列表。
+//
+// 之所以在这里显式展开目录，而不是直接把目录交给 file.NewSource，
+// 是因为运行期 watch 目录源时会触发 "read <dir>: is a directory" 类错误。
+// 预先展开为多个文件源后，既能保留 Kratos 的多 Source 合并语义，
+// 又能让 watch 针对具体文件工作。
+func buildFileSources(configPath string) ([]kconfig.Source, error) {
+	info, err := os.Stat(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("stat config path: %w", err)
+	}
+
+	if !info.IsDir() {
+		return []kconfig.Source{file.NewSource(configPath)}, nil
+	}
+
+	entries, err := os.ReadDir(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("read config dir: %w", err)
+	}
+
+	paths := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		paths = append(paths, filepath.Join(configPath, entry.Name()))
+	}
+
+	sort.Strings(paths)
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("config dir %q contains no files", configPath)
+	}
+
+	sources := make([]kconfig.Source, 0, len(paths))
+	for _, path := range paths {
+		sources = append(sources, file.NewSource(path))
+	}
+
+	return sources, nil
 }
