@@ -261,7 +261,7 @@ compose.dev.restart:
 
 # tail logs for Air-based development stack
 compose.dev.logs:
-	@$(COMPOSE) $(COMPOSE_DEV_FILES) logs -f $(COMPOSE_STACK_SERVICES)
+	@$(COMPOSE) $(COMPOSE_DEV_FILES) logs -f $(MICROSERVICES)
 
 # show Air-based development stack status
 compose.dev.ps:

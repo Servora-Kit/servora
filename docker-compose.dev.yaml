@@ -28,7 +28,7 @@ services:
       redis:
         condition: service_healthy
       otel-collector:
-        condition: service_started
+        condition: service_healthy
     networks:
       - servora-network
 
@@ -54,7 +54,7 @@ services:
       consul:
         condition: service_healthy
       otel-collector:
-        condition: service_started
+        condition: service_healthy
     networks:
       - servora-network
 

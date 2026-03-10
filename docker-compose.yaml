@@ -42,6 +42,12 @@ services:
     user: "0:0"
     restart: unless-stopped
     command: ["--config=/etc/otelcol/config.yaml"]
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "validate", "--config=/etc/otelcol/config.yaml"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     volumes:
       - ./manifests/otel/otel-collector.yaml:/etc/otelcol/config.yaml:ro
       - servora-logs:/var/log/servora:ro
@@ -90,6 +96,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
       GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_METRICS_ENABLED: "true"
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
       - "3001:3000"
