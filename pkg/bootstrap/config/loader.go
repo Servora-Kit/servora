@@ -6,18 +6,18 @@ import (
 	conf "github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 	governanceConfig "github.com/Servora-Kit/servora/pkg/governance/config"
 
-	krconfig "github.com/go-kratos/kratos/v2/config"
+	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
 	"github.com/go-kratos/kratos/v2/config/file"
 )
 
-func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, krconfig.Config, error) {
+func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, kconfig.Config, error) {
 	envPrefix := strings.ToUpper(strings.TrimSuffix(serviceName, ".service")) + "_"
-	initialSources := []krconfig.Source{file.NewSource(configPath)}
+	initialSources := []kconfig.Source{file.NewSource(configPath)}
 
-	tempConfig := krconfig.New(
-		krconfig.WithSource(initialSources...),
-		krconfig.WithResolveActualTypes(true),
+	tempConfig := kconfig.New(
+		kconfig.WithSource(initialSources...),
+		kconfig.WithResolveActualTypes(true),
 	)
 	if err := tempConfig.Load(); err != nil {
 		return nil, nil, err
@@ -29,7 +29,7 @@ func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, krco
 		return nil, nil, err
 	}
 
-	var configCenterSource krconfig.Source
+	var configCenterSource kconfig.Source
 	if cfg := bc.Config; cfg != nil {
 		switch v := cfg.Config.(type) {
 		case *conf.Config_Nacos:
@@ -42,7 +42,7 @@ func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, krco
 	}
 	tempConfig.Close()
 
-	finalSources := []krconfig.Source{file.NewSource(configPath)}
+	finalSources := []kconfig.Source{file.NewSource(configPath)}
 	if configCenterSource != nil {
 		finalSources = append(finalSources, configCenterSource)
 	}
@@ -50,9 +50,9 @@ func LoadBootstrap(configPath string, serviceName string) (*conf.Bootstrap, krco
 		finalSources = append(finalSources, env.NewSource(envPrefix))
 	}
 
-	c := krconfig.New(
-		krconfig.WithSource(finalSources...),
-		krconfig.WithResolveActualTypes(true),
+	c := kconfig.New(
+		kconfig.WithSource(finalSources...),
+		kconfig.WithResolveActualTypes(true),
 	)
 	if err := c.Load(); err != nil {
 		return nil, nil, err
