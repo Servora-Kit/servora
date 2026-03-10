@@ -31,6 +31,8 @@ app:
 
 trace:
   endpoint: "localhost:4317"
+  insecure: true
+  sampling_ratio: 1.0
 
 metrics:
   enable: true
