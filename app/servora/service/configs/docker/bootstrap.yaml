@@ -16,7 +16,7 @@ data:
     db: 0
 
 app:
-  env: "dev"
+  env: "prod"
   jwt:
     access_secret: "servora_access_secret_change_me"
     refresh_secret: "servora_refresh_secret_change_me"
@@ -24,7 +24,7 @@ app:
     refresh_expire: 604800
   log:
     level: 0
-    filename: "./logs/servora.service.log"
+    filename: "/app/logs/servora.service.log"
     max_size: 20
     max_age: 30
     max_backups: 10
