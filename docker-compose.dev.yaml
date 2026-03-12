@@ -15,7 +15,7 @@ services:
       - ./:/workspace
       - servora_go_mod_cache:/go/pkg/mod
       - servora_go_build_cache:/go/cache
-      - ./app/iam/service/configs/docker/:/app/configs/:ro
+      - ./app/iam/service/configs/docker/:/app/configs/
       - ./app/iam/service/configs/keys/:/app/configs/keys/:ro
       - iam-logs:/app/logs
     ports:
