@@ -1,6 +1,9 @@
 package health
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 // Builder 用于构建 Handler，支持链式调用注册 checker。
 type Builder struct {
@@ -15,6 +18,12 @@ func NewBuilder() *Builder {
 // WithRedisChecker 注册 Redis 健康检查。
 func (b *Builder) WithRedisChecker(name string, pinger Pinger) *Builder {
 	b.checkers = append(b.checkers, PingChecker(name, pinger))
+	return b
+}
+
+// WithDBChecker 注册 *sql.DB 健康检查（使用 PingContext）。
+func (b *Builder) WithDBChecker(name string, db *sql.DB) *Builder {
+	b.checkers = append(b.checkers, &sqlDBChecker{name: name, db: db})
 	return b
 }
 
@@ -42,3 +51,11 @@ type funcChecker struct {
 
 func (f *funcChecker) Name() string                    { return f.name }
 func (f *funcChecker) Check(ctx context.Context) error { return f.checkFunc(ctx) }
+
+type sqlDBChecker struct {
+	name string
+	db   *sql.DB
+}
+
+func (c *sqlDBChecker) Name() string                    { return c.name }
+func (c *sqlDBChecker) Check(ctx context.Context) error { return c.db.PingContext(ctx) }
