@@ -9,11 +9,13 @@ import (
 	"github.com/Servora-Kit/servora/pkg/actor"
 	"github.com/Servora-Kit/servora/pkg/logger"
 	"github.com/Servora-Kit/servora/pkg/openfga"
+	"github.com/Servora-Kit/servora/pkg/redis"
 )
 
 type ProjectRepo interface {
 	Create(ctx context.Context, p *entity.Project) (*entity.Project, error)
 	GetByID(ctx context.Context, id string) (*entity.Project, error)
+	GetByIDs(ctx context.Context, ids []string, page, pageSize int32) ([]*entity.Project, int64, error)
 	ListByOrgID(ctx context.Context, orgID string, page, pageSize int32) ([]*entity.Project, int64, error)
 	Update(ctx context.Context, p *entity.Project) (*entity.Project, error)
 	Delete(ctx context.Context, id string) error
@@ -33,14 +35,16 @@ type ProjectUsecase struct {
 	repo    ProjectRepo
 	orgRepo OrganizationRepo
 	fga     *openfga.Client
+	redis   *redis.Client
 	log     *logger.Helper
 }
 
-func NewProjectUsecase(repo ProjectRepo, orgRepo OrganizationRepo, fga *openfga.Client, l logger.Logger) *ProjectUsecase {
+func NewProjectUsecase(repo ProjectRepo, orgRepo OrganizationRepo, fga *openfga.Client, rdb *redis.Client, l logger.Logger) *ProjectUsecase {
 	return &ProjectUsecase{
 		repo:    repo,
 		orgRepo: orgRepo,
 		fga:     fga,
+		redis:   rdb,
 		log:     logger.NewHelper(l, logger.WithModule("project/biz/iam-service")),
 	}
 }
@@ -62,6 +66,7 @@ func (uc *ProjectUsecase) Create(ctx context.Context, p *entity.Project) (*entit
 			openfga.Tuple{User: "organization:" + p.OrganizationID, Relation: "organization", Object: "project:" + created.ID},
 			openfga.Tuple{User: "user:" + userID, Relation: "admin", Object: "project:" + created.ID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "project")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.ProjectMember{
@@ -92,6 +97,7 @@ func (uc *ProjectUsecase) CreateDefault(ctx context.Context, userID, orgID, name
 			openfga.Tuple{User: "organization:" + orgID, Relation: "organization", Object: "project:" + created.ID},
 			openfga.Tuple{User: "user:" + userID, Relation: "admin", Object: "project:" + created.ID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "project")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.ProjectMember{
@@ -117,10 +123,21 @@ func (uc *ProjectUsecase) Get(ctx context.Context, id string) (*entity.Project, 
 }
 
 func (uc *ProjectUsecase) List(ctx context.Context, orgID string, page, pageSize int32) ([]*entity.Project, int64, error) {
-	_, ok := actor.FromContext(ctx)
+	a, ok := actor.FromContext(ctx)
 	if !ok {
 		return nil, 0, projectpb.ErrorProjectNotFound("user not authenticated")
 	}
+
+	if uc.fga != nil {
+		ids, err := uc.fga.CachedListObjects(ctx, uc.redis, openfga.DefaultListCacheTTL,
+			a.ID(), "can_view", "project")
+		if err != nil {
+			uc.log.Warnf("ListObjects fallback to DB: %v", err)
+			return uc.repo.ListByOrgID(ctx, orgID, page, pageSize)
+		}
+		return uc.repo.GetByIDs(ctx, ids, page, pageSize)
+	}
+
 	return uc.repo.ListByOrgID(ctx, orgID, page, pageSize)
 }
 
@@ -197,6 +214,7 @@ func (uc *ProjectUsecase) AddMember(ctx context.Context, m *entity.ProjectMember
 		_ = uc.fga.WriteTuples(ctx,
 			openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + m.ProjectID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, m.UserID, "can_view", "project")
 	}
 	return created, nil
 }
@@ -215,6 +233,7 @@ func (uc *ProjectUsecase) RemoveMember(ctx context.Context, projID, userID strin
 		_ = uc.fga.DeleteTuples(ctx,
 			openfga.Tuple{User: "user:" + userID, Relation: member.Role, Object: "project:" + projID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "project")
 	}
 	return nil
 }

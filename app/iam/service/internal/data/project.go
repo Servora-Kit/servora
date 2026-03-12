@@ -61,6 +61,36 @@ func (r *projectRepo) GetByID(ctx context.Context, id string) (*entity.Project, 
 	return entProjectToEntity(p), nil
 }
 
+func (r *projectRepo) GetByIDs(ctx context.Context, ids []string, page, pageSize int32) ([]*entity.Project, int64, error) {
+	uuids := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if uid, e := uuid.Parse(id); e == nil {
+			uuids = append(uuids, uid)
+		}
+	}
+
+	query := r.data.entClient.Project.Query().
+		Where(project.IDIn(uuids...)).
+		Order(project.ByCreatedAt(sql.OrderDesc()))
+
+	total, err := query.Clone().Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := int((page - 1) * pageSize)
+	projects, err := query.Offset(offset).Limit(int(pageSize)).All(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result := make([]*entity.Project, 0, len(projects))
+	for _, p := range projects {
+		result = append(result, entProjectToEntity(p))
+	}
+	return result, int64(total), nil
+}
+
 func (r *projectRepo) ListByOrgID(ctx context.Context, orgID string, page, pageSize int32) ([]*entity.Project, int64, error) {
 	oid, err := uuid.Parse(orgID)
 	if err != nil {

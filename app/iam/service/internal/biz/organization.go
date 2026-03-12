@@ -9,6 +9,7 @@ import (
 	"github.com/Servora-Kit/servora/pkg/actor"
 	"github.com/Servora-Kit/servora/pkg/logger"
 	"github.com/Servora-Kit/servora/pkg/openfga"
+	"github.com/Servora-Kit/servora/pkg/redis"
 )
 
 // PlatformRootID is the UUID string of the root platform record, used for Wire injection.
@@ -17,6 +18,7 @@ type PlatformRootID string
 type OrganizationRepo interface {
 	Create(ctx context.Context, org *entity.Organization) (*entity.Organization, error)
 	GetByID(ctx context.Context, id string) (*entity.Organization, error)
+	GetByIDs(ctx context.Context, ids []string, page, pageSize int32) ([]*entity.Organization, int64, error)
 	GetBySlug(ctx context.Context, slug string) (*entity.Organization, error)
 	ListByUserID(ctx context.Context, userID string, page, pageSize int32) ([]*entity.Organization, int64, error)
 	Update(ctx context.Context, org *entity.Organization) (*entity.Organization, error)
@@ -36,15 +38,17 @@ type OrganizationUsecase struct {
 	repo     OrganizationRepo
 	projRepo ProjectRepo
 	fga      *openfga.Client
+	redis    *redis.Client
 	log      *logger.Helper
 	platID   string
 }
 
-func NewOrganizationUsecase(repo OrganizationRepo, projRepo ProjectRepo, fga *openfga.Client, l logger.Logger, platID PlatformRootID) *OrganizationUsecase {
+func NewOrganizationUsecase(repo OrganizationRepo, projRepo ProjectRepo, fga *openfga.Client, rdb *redis.Client, l logger.Logger, platID PlatformRootID) *OrganizationUsecase {
 	return &OrganizationUsecase{
 		repo:     repo,
 		projRepo: projRepo,
 		fga:      fga,
+		redis:    rdb,
 		log:      logger.NewHelper(l, logger.WithModule("organization/biz/iam-service")),
 		platID:   string(platID),
 	}
@@ -75,6 +79,7 @@ func (uc *OrganizationUsecase) Create(ctx context.Context, org *entity.Organizat
 			openfga.Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
 			openfga.Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "organization")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.OrganizationMember{
@@ -106,6 +111,7 @@ func (uc *OrganizationUsecase) CreateDefault(ctx context.Context, userID, name, 
 			openfga.Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
 			openfga.Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "organization")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.OrganizationMember{
@@ -135,6 +141,17 @@ func (uc *OrganizationUsecase) List(ctx context.Context, page, pageSize int32) (
 	if !ok || a.Type() != actor.TypeUser {
 		return nil, 0, orgpb.ErrorOrganizationNotFound("user not authenticated")
 	}
+
+	if uc.fga != nil {
+		ids, err := uc.fga.CachedListObjects(ctx, uc.redis, openfga.DefaultListCacheTTL,
+			a.ID(), "can_view", "organization")
+		if err != nil {
+			uc.log.Warnf("ListObjects fallback to DB: %v", err)
+			return uc.repo.ListByUserID(ctx, a.ID(), page, pageSize)
+		}
+		return uc.repo.GetByIDs(ctx, ids, page, pageSize)
+	}
+
 	return uc.repo.ListByUserID(ctx, a.ID(), page, pageSize)
 }
 
@@ -237,6 +254,7 @@ func (uc *OrganizationUsecase) AddMember(ctx context.Context, m *entity.Organiza
 			openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + m.OrganizationID},
 			openfga.Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + m.OrganizationID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, m.UserID, "can_view", "organization")
 	}
 	return created, nil
 }
@@ -256,6 +274,7 @@ func (uc *OrganizationUsecase) RemoveMember(ctx context.Context, orgID, userID s
 			openfga.Tuple{User: "user:" + userID, Relation: member.Role, Object: "organization:" + orgID},
 			openfga.Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + orgID},
 		)
+		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "organization")
 	}
 	return nil
 }

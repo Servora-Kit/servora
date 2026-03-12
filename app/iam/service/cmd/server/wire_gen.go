@@ -70,8 +70,8 @@ func wireApp(confServer *conf.Server, discovery *conf.Discovery, confRegistry *c
 		cleanup()
 		return nil, nil, err
 	}
-	organizationUsecase := biz.NewOrganizationUsecase(organizationRepo, projectRepo, openfgaClient, logger, platformRootID)
-	projectUsecase := biz.NewProjectUsecase(projectRepo, organizationRepo, openfgaClient, logger)
+	organizationUsecase := biz.NewOrganizationUsecase(organizationRepo, projectRepo, openfgaClient, redisClient, logger, platformRootID)
+	projectUsecase := biz.NewProjectUsecase(projectRepo, organizationRepo, openfgaClient, redisClient, logger)
 	authUsecase := biz.NewAuthUsecase(authRepo, logger, app, keyManager, organizationUsecase, projectUsecase)
 	authService := service.NewAuthService(authUsecase)
 	userRepo := data.NewUserRepo(dataData, logger)
@@ -83,7 +83,7 @@ func wireApp(confServer *conf.Server, discovery *conf.Discovery, confRegistry *c
 	organizationService := service.NewOrganizationService(organizationUsecase)
 	projectService := service.NewProjectService(projectUsecase)
 	grpcServer := server.NewGRPCServer(confServer, grpcMiddleware, logger, authService, userService, testService, organizationService, projectService)
-	httpMiddleware := server.NewHTTPMiddleware(trace, telemetryMetrics, logger, keyManager, openfgaClient, platformRootID)
+	httpMiddleware := server.NewHTTPMiddleware(trace, telemetryMetrics, logger, keyManager, openfgaClient, redisClient, platformRootID)
 	handler := server.NewHealthHandler(redisClient)
 	httpServer := server.NewHTTPServer(confServer, app, httpMiddleware, telemetryMetrics, logger, handler, keyManager, authService, userService, testService, organizationService, projectService)
 	kratosApp := newApp(svcIdentity, logger, registrar, grpcServer, httpServer)

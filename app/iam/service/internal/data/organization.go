@@ -71,6 +71,36 @@ func (r *organizationRepo) GetBySlug(ctx context.Context, slug string) (*entity.
 	return entOrgToEntity(org), nil
 }
 
+func (r *organizationRepo) GetByIDs(ctx context.Context, ids []string, page, pageSize int32) ([]*entity.Organization, int64, error) {
+	uuids := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if uid, e := uuid.Parse(id); e == nil {
+			uuids = append(uuids, uid)
+		}
+	}
+
+	query := r.data.entClient.Organization.Query().
+		Where(organization.IDIn(uuids...)).
+		Order(organization.ByCreatedAt(sql.OrderDesc()))
+
+	total, err := query.Clone().Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := int((page - 1) * pageSize)
+	orgs, err := query.Offset(offset).Limit(int(pageSize)).All(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result := make([]*entity.Organization, 0, len(orgs))
+	for _, o := range orgs {
+		result = append(result, entOrgToEntity(o))
+	}
+	return result, int64(total), nil
+}
+
 func (r *organizationRepo) ListByUserID(ctx context.Context, userID string, page, pageSize int32) ([]*entity.Organization, int64, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {

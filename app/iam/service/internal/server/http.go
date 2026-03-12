@@ -27,6 +27,7 @@ func NewHTTPMiddleware(
 	l logger.Logger,
 	km *jwks.KeyManager,
 	fga *openfga.Client,
+	rdb *redis.Client,
 	platID biz.PlatformRootID,
 ) HTTPMiddleware {
 	ms := svrmw.NewChainBuilder(logger.With(l, logger.WithModule("http/server/iam-service"))).
@@ -45,11 +46,15 @@ func NewHTTPMiddleware(
 	authn := svrmw.Authn(svrmw.WithVerifier(km.Verifier()))
 
 	authzRules := convertAuthzRules(iamv1.AuthzRules)
-	authz := svrmw.Authz(
+	authzOpts := []svrmw.AuthzOption{
 		svrmw.WithFGAClient(fga),
 		svrmw.WithAuthzRules(authzRules),
 		svrmw.WithPlatformRootID(string(platID)),
-	)
+	}
+	if rdb != nil {
+		authzOpts = append(authzOpts, svrmw.WithAuthzCache(rdb, openfga.DefaultCheckCacheTTL))
+	}
+	authz := svrmw.Authz(authzOpts...)
 
 	ms = append(ms,
 		selector.Server(authn).
