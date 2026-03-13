@@ -10,8 +10,6 @@ import (
 	dataent "github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
 	"github.com/Servora-Kit/servora/pkg/actor"
 	"github.com/Servora-Kit/servora/pkg/logger"
-	"github.com/Servora-Kit/servora/pkg/openfga"
-	"github.com/Servora-Kit/servora/pkg/redis"
 )
 
 type ProjectRepo interface {
@@ -40,17 +38,15 @@ type ProjectRepo interface {
 type ProjectUsecase struct {
 	repo    ProjectRepo
 	orgRepo OrganizationRepo
-	fga     *openfga.Client
-	redis   *redis.Client
+	authz   AuthZRepo
 	log     *logger.Helper
 }
 
-func NewProjectUsecase(repo ProjectRepo, orgRepo OrganizationRepo, fga *openfga.Client, rdb *redis.Client, l logger.Logger) *ProjectUsecase {
+func NewProjectUsecase(repo ProjectRepo, orgRepo OrganizationRepo, authz AuthZRepo, l logger.Logger) *ProjectUsecase {
 	return &ProjectUsecase{
 		repo:    repo,
 		orgRepo: orgRepo,
-		fga:     fga,
-		redis:   rdb,
+		authz:   authz,
 		log:     logger.NewHelper(l, logger.WithModule("project/biz/iam-service")),
 	}
 }
@@ -68,12 +64,12 @@ func (uc *ProjectUsecase) Create(ctx context.Context, p *entity.Project) (*entit
 		return nil, projectpb.ErrorProjectCreateFailed("failed to create project")
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "organization:" + p.OrganizationID, Relation: "organization", Object: "project:" + created.ID},
-			openfga.Tuple{User: "user:" + userID, Relation: "admin", Object: "project:" + created.ID},
+	if uc.authz != nil {
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "organization:" + p.OrganizationID, Relation: "organization", Object: "project:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: "admin", Object: "project:" + created.ID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "project")
+		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "project")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.ProjectMember{
@@ -99,12 +95,12 @@ func (uc *ProjectUsecase) CreateDefault(ctx context.Context, userID, orgID, name
 		return nil, err
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "organization:" + orgID, Relation: "organization", Object: "project:" + created.ID},
-			openfga.Tuple{User: "user:" + userID, Relation: "admin", Object: "project:" + created.ID},
+	if uc.authz != nil {
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "organization:" + orgID, Relation: "organization", Object: "project:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: "admin", Object: "project:" + created.ID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "project")
+		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "project")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.ProjectMember{
@@ -135,9 +131,8 @@ func (uc *ProjectUsecase) List(ctx context.Context, orgID string, page, pageSize
 		return nil, 0, projectpb.ErrorProjectNotFound("user not authenticated")
 	}
 
-	if uc.fga != nil {
-		ids, err := uc.fga.CachedListObjects(ctx, uc.redis, openfga.DefaultListCacheTTL,
-			a.ID(), "can_view", "project")
+	if uc.authz != nil {
+		ids, err := uc.authz.CachedListObjects(ctx, DefaultListCacheTTL, a.ID(), "can_view", "project")
 		if err != nil {
 			uc.log.Warnf("ListObjects fallback to DB: %v", err)
 			return uc.repo.ListByOrgID(ctx, orgID, page, pageSize)
@@ -195,20 +190,20 @@ func (uc *ProjectUsecase) Purge(ctx context.Context, id string) error {
 }
 
 func (uc *ProjectUsecase) purgeProjectFGA(ctx context.Context, projID, orgID string) {
-	if uc.fga == nil {
+	if uc.authz == nil {
 		return
 	}
-	var tuples []openfga.Tuple
+	var tuples []Tuple
 	members, _ := uc.repo.ListAllMembers(ctx, projID)
 	for _, m := range members {
 		tuples = append(tuples,
-			openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + projID},
+			Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + projID},
 		)
 	}
 	tuples = append(tuples,
-		openfga.Tuple{User: "organization:" + orgID, Relation: "organization", Object: "project:" + projID},
+		Tuple{User: "organization:" + orgID, Relation: "organization", Object: "project:" + projID},
 	)
-	if err := uc.fga.DeleteTuples(ctx, tuples...); err != nil {
+	if err := uc.authz.DeleteTuples(ctx, tuples...); err != nil {
 		uc.log.Warnf("purge project %s FGA tuples: %v", projID, err)
 	}
 }
@@ -228,7 +223,6 @@ func (uc *ProjectUsecase) AddMember(ctx context.Context, m *entity.ProjectMember
 		return nil, projectpb.ErrorProjectCreateFailed("%v", err)
 	}
 
-	// Verify user is a member of the parent organization
 	proj, err := uc.repo.GetByID(ctx, m.ProjectID)
 	if err != nil {
 		return nil, projectpb.ErrorProjectNotFound("project not found")
@@ -246,11 +240,11 @@ func (uc *ProjectUsecase) AddMember(ctx context.Context, m *entity.ProjectMember
 		return nil, err
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + m.ProjectID},
+	if uc.authz != nil {
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + m.ProjectID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, m.UserID, "can_view", "project")
+		uc.authz.InvalidateListObjects(ctx, m.UserID, "can_view", "project")
 	}
 	return created, nil
 }
@@ -265,11 +259,11 @@ func (uc *ProjectUsecase) RemoveMember(ctx context.Context, projID, userID strin
 		return err
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.DeleteTuples(ctx,
-			openfga.Tuple{User: "user:" + userID, Relation: member.Role, Object: "project:" + projID},
+	if uc.authz != nil {
+		_ = uc.authz.DeleteTuples(ctx,
+			Tuple{User: "user:" + userID, Relation: member.Role, Object: "project:" + projID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "project")
+		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "project")
 	}
 	return nil
 }
@@ -293,12 +287,12 @@ func (uc *ProjectUsecase) UpdateMemberRole(ctx context.Context, projID, userID, 
 		return nil, err
 	}
 
-	if uc.fga != nil && oldMember.Role != newRole {
-		_ = uc.fga.DeleteTuples(ctx,
-			openfga.Tuple{User: "user:" + userID, Relation: oldMember.Role, Object: "project:" + projID},
+	if uc.authz != nil && oldMember.Role != newRole {
+		_ = uc.authz.DeleteTuples(ctx,
+			Tuple{User: "user:" + userID, Relation: oldMember.Role, Object: "project:" + projID},
 		)
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "user:" + userID, Relation: newRole, Object: "project:" + projID},
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "user:" + userID, Relation: newRole, Object: "project:" + projID},
 		)
 	}
 	return updated, nil

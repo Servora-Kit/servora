@@ -16,22 +16,22 @@ type AuthzRuleEntry struct {
 
 // AuthzRules maps each annotated RPC operation to its authorization rule.
 var AuthzRules = map[string]AuthzRuleEntry{
-	"/iam.service.v1.AuthService/ChangePassword": {
+	"/iam.service.v1.AuthnService/ChangePassword": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
-	"/iam.service.v1.AuthService/LoginByEmailPassword": {
+	"/iam.service.v1.AuthnService/LoginByEmailPassword": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
-	"/iam.service.v1.AuthService/Logout": {
+	"/iam.service.v1.AuthnService/Logout": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
-	"/iam.service.v1.AuthService/LogoutAllDevices": {
+	"/iam.service.v1.AuthnService/LogoutAllDevices": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
-	"/iam.service.v1.AuthService/RefreshToken": {
+	"/iam.service.v1.AuthnService/RefreshToken": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
-	"/iam.service.v1.AuthService/SignupByEmail": {
+	"/iam.service.v1.AuthnService/SignupByEmail": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
 	"/iam.service.v1.OrganizationService/AddMember": {

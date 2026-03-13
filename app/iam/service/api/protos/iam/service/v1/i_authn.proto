@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package iam.service.v1;
 
-import "auth/service/v1/auth.proto";
+import "authn/service/v1/authn.proto";
 import "google/api/annotations.proto";
 import "servora/authz/v1/authz.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/iam/service/v1;iampb";
 
-service AuthService {
-  rpc SignupByEmail(auth.service.v1.SignupByEmailRequest) returns (auth.service.v1.SignupByEmailResponse) {
+service AuthnService {
+  rpc SignupByEmail(authn.service.v1.SignupByEmailRequest) returns (authn.service.v1.SignupByEmailResponse) {
     option (google.api.http) = {
       post: "/v1/auth/signup/using-email"
       body: "*"
@@ -19,7 +19,7 @@ service AuthService {
     };
   }
 
-  rpc LoginByEmailPassword(auth.service.v1.LoginByEmailPasswordRequest) returns (auth.service.v1.LoginByEmailPasswordResponse) {
+  rpc LoginByEmailPassword(authn.service.v1.LoginByEmailPasswordRequest) returns (authn.service.v1.LoginByEmailPasswordResponse) {
     option (google.api.http) = {
       post: "/v1/auth/login/email-password"
       body: "*"
@@ -29,7 +29,7 @@ service AuthService {
     };
   }
 
-  rpc RefreshToken(auth.service.v1.RefreshTokenRequest) returns (auth.service.v1.RefreshTokenResponse) {
+  rpc RefreshToken(authn.service.v1.RefreshTokenRequest) returns (authn.service.v1.RefreshTokenResponse) {
     option (google.api.http) = {
       post: "/v1/auth/refresh-token"
       body: "*"
@@ -39,7 +39,7 @@ service AuthService {
     };
   }
 
-  rpc Logout(auth.service.v1.LogoutRequest) returns (auth.service.v1.LogoutResponse) {
+  rpc Logout(authn.service.v1.LogoutRequest) returns (authn.service.v1.LogoutResponse) {
     option (google.api.http) = {
       post: "/v1/auth/logout"
       body: "*"
@@ -49,7 +49,7 @@ service AuthService {
     };
   }
 
-  rpc ChangePassword(auth.service.v1.ChangePasswordRequest) returns (auth.service.v1.ChangePasswordResponse) {
+  rpc ChangePassword(authn.service.v1.ChangePasswordRequest) returns (authn.service.v1.ChangePasswordResponse) {
     option (google.api.http) = {
       post: "/v1/auth/change-password"
       body: "*"
@@ -59,7 +59,7 @@ service AuthService {
     };
   }
 
-  rpc LogoutAllDevices(auth.service.v1.LogoutAllDevicesRequest) returns (auth.service.v1.LogoutAllDevicesResponse) {
+  rpc LogoutAllDevices(authn.service.v1.LogoutAllDevicesRequest) returns (authn.service.v1.LogoutAllDevicesResponse) {
     option (google.api.http) = {
       post: "/v1/auth/logout-all"
       body: "*"

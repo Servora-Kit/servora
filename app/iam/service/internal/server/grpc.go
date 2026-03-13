@@ -7,7 +7,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/selector"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 
-	authpb "github.com/Servora-Kit/servora/api/gen/go/auth/service/v1"
+	authnpb "github.com/Servora-Kit/servora/api/gen/go/authn/service/v1"
 	"github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 	iamv1 "github.com/Servora-Kit/servora/api/gen/go/iam/service/v1"
 	orgpb "github.com/Servora-Kit/servora/api/gen/go/organization/service/v1"
@@ -44,9 +44,9 @@ func NewGRPCMiddleware(
 		Build()
 
 	publicWhitelist := svrmw.NewWhiteList(svrmw.Exact,
-		authpb.AuthService_LoginByEmailPassword_FullMethodName,
-		authpb.AuthService_RefreshToken_FullMethodName,
-		authpb.AuthService_SignupByEmail_FullMethodName,
+		authnpb.AuthnService_LoginByEmailPassword_FullMethodName,
+		authnpb.AuthnService_RefreshToken_FullMethodName,
+		authnpb.AuthnService_SignupByEmail_FullMethodName,
 		testpb.TestService_Test_FullMethodName,
 		testpb.TestService_Hello_FullMethodName,
 	)
@@ -114,7 +114,7 @@ func NewGRPCServer(
 	c *conf.Server,
 	mw GRPCMiddleware,
 	l logger.Logger,
-	auth *service.AuthService,
+	authn *service.AuthnService,
 	user *service.UserService,
 	test *service.TestService,
 	org *service.OrganizationService,
@@ -132,7 +132,7 @@ func NewGRPCServer(
 
 	srv := grpc.NewServer(opts...)
 
-	authpb.RegisterAuthServiceServer(srv, auth)
+	authnpb.RegisterAuthnServiceServer(srv, authn)
 	userpb.RegisterUserServiceServer(srv, user)
 	testpb.RegisterTestServiceServer(srv, test)
 	orgpb.RegisterOrganizationServiceServer(srv, org)

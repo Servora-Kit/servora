@@ -40,9 +40,9 @@ func NewHTTPMiddleware(
 		Build()
 
 	publicWhitelist := svrmw.NewWhiteList(svrmw.Exact,
-		iamv1.OperationAuthServiceLoginByEmailPassword,
-		iamv1.OperationAuthServiceRefreshToken,
-		iamv1.OperationAuthServiceSignupByEmail,
+		iamv1.OperationAuthnServiceLoginByEmailPassword,
+		iamv1.OperationAuthnServiceRefreshToken,
+		iamv1.OperationAuthnServiceSignupByEmail,
 		iamv1.OperationTestServiceTest,
 		iamv1.OperationTestServiceHello,
 	)
@@ -98,7 +98,7 @@ func NewHTTPServer(
 	l logger.Logger,
 	h *health.Handler,
 	km *jwks.KeyManager,
-	auth *service.AuthService,
+	authn *service.AuthnService,
 	user *service.UserService,
 	test *service.TestService,
 	org *service.OrganizationService,
@@ -125,7 +125,7 @@ func NewHTTPServer(
 		http.WithHealthCheck(h),
 		http.WithSwagger(assets.OpenAPIData, swagger.WithTitle("IAM API")),
 		http.WithServices(
-			func(s *khttp.Server) { iamv1.RegisterAuthServiceHTTPServer(s, auth) },
+			func(s *khttp.Server) { iamv1.RegisterAuthnServiceHTTPServer(s, authn) },
 			func(s *khttp.Server) { iamv1.RegisterUserServiceHTTPServer(s, user) },
 			func(s *khttp.Server) { iamv1.RegisterTestServiceHTTPServer(s, test) },
 			func(s *khttp.Server) { iamv1.RegisterOrganizationServiceHTTPServer(s, org) },

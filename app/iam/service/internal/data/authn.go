@@ -14,19 +14,19 @@ import (
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
-type authRepo struct {
+type authnRepo struct {
 	data *Data
 	log  *logger.Helper
 }
 
-func NewAuthRepo(data *Data, l logger.Logger) biz.AuthRepo {
-	return &authRepo{
+func NewAuthnRepo(data *Data, l logger.Logger) biz.AuthnRepo {
+	return &authnRepo{
 		data: data,
-		log:  logger.NewHelper(l, logger.WithModule("auth/data/iam-service")),
+		log:  logger.NewHelper(l, logger.WithModule("authn/data/iam-service")),
 	}
 }
 
-func (r *authRepo) SaveUser(ctx context.Context, u *entity.User) (*entity.User, error) {
+func (r *authnRepo) SaveUser(ctx context.Context, u *entity.User) (*entity.User, error) {
 	if !helpers.BcryptIsHashed(u.Password) {
 		bcryptPassword, err := helpers.BcryptHash(u.Password)
 		if err != nil {
@@ -48,7 +48,7 @@ func (r *authRepo) SaveUser(ctx context.Context, u *entity.User) (*entity.User, 
 	return userMapper.Map(created), nil
 }
 
-func (r *authRepo) GetUserByUserName(ctx context.Context, name string) (*entity.User, error) {
+func (r *authnRepo) GetUserByUserName(ctx context.Context, name string) (*entity.User, error) {
 	entUser, err := r.data.Ent(ctx).User.Query().Where(user.NameEQ(name)).Only(ctx)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (r *authRepo) GetUserByUserName(ctx context.Context, name string) (*entity.
 	return userMapper.Map(entUser), nil
 }
 
-func (r *authRepo) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
+func (r *authnRepo) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	entUser, err := r.data.Ent(ctx).User.Query().Where(user.EmailEQ(email)).Only(ctx)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (r *authRepo) GetUserByEmail(ctx context.Context, email string) (*entity.Us
 	return userMapper.Map(entUser), nil
 }
 
-func (r *authRepo) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
+func (r *authnRepo) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID: %w", err)
@@ -76,7 +76,7 @@ func (r *authRepo) GetUserByID(ctx context.Context, id string) (*entity.User, er
 	return userMapper.Map(entUser), nil
 }
 
-func (r *authRepo) UpdatePassword(ctx context.Context, userID string, hashedPassword string) error {
+func (r *authnRepo) UpdatePassword(ctx context.Context, userID string, hashedPassword string) error {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return fmt.Errorf("invalid user ID: %w", err)
@@ -85,7 +85,7 @@ func (r *authRepo) UpdatePassword(ctx context.Context, userID string, hashedPass
 	return err
 }
 
-func (r *authRepo) SaveRefreshToken(ctx context.Context, userID string, token string, expiration time.Duration) error {
+func (r *authnRepo) SaveRefreshToken(ctx context.Context, userID string, token string, expiration time.Duration) error {
 	tokenKey := fmt.Sprintf("refresh_token:%s", token)
 	if err := r.data.redis.Set(ctx, tokenKey, userID, expiration); err != nil {
 		r.log.Errorf("Failed to save refresh token: %v", err)
@@ -106,7 +106,7 @@ func (r *authRepo) SaveRefreshToken(ctx context.Context, userID string, token st
 	return nil
 }
 
-func (r *authRepo) GetRefreshToken(ctx context.Context, token string) (string, error) {
+func (r *authnRepo) GetRefreshToken(ctx context.Context, token string) (string, error) {
 	tokenKey := fmt.Sprintf("refresh_token:%s", token)
 	userID, err := r.data.redis.Get(ctx, tokenKey)
 	if err != nil {
@@ -116,7 +116,7 @@ func (r *authRepo) GetRefreshToken(ctx context.Context, token string) (string, e
 	return userID, nil
 }
 
-func (r *authRepo) DeleteRefreshToken(ctx context.Context, token string) error {
+func (r *authnRepo) DeleteRefreshToken(ctx context.Context, token string) error {
 	userID, err := r.GetRefreshToken(ctx, token)
 	if err != nil {
 		r.log.Warnf("Token not found during deletion: %v", err)
@@ -153,7 +153,7 @@ func (r *authRepo) DeleteRefreshToken(ctx context.Context, token string) error {
 	return nil
 }
 
-func (r *authRepo) DeleteUserRefreshTokens(ctx context.Context, userID string) error {
+func (r *authnRepo) DeleteUserRefreshTokens(ctx context.Context, userID string) error {
 	userTokensKey := fmt.Sprintf("user_tokens:%s", userID)
 
 	tokens, err := r.data.redis.SMembers(ctx, userTokensKey)

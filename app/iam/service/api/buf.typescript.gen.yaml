@@ -9,7 +9,7 @@ inputs:
     - directory: app/iam/service/api/protos
       paths:
           - app/iam/service/api/protos/iam/service/v1
-          - app/iam/service/api/protos/auth/service/v1
+          - app/iam/service/api/protos/authn/service/v1
           - app/iam/service/api/protos/user/service/v1
 
 plugins:

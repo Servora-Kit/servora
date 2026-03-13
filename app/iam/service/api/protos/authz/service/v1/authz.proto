@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package authz.service.v1;
+
+import "errors/errors.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/authz/service/v1;authzsvcpb";
+
+enum ErrorReason {
+  option (errors.default_code) = 500;
+  PERMISSION_DENIED = 0 [(errors.code) = 403];
+}
+
+service AuthzService {
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse);
+}
+
+message CheckPermissionRequest {
+  string user_id = 1;
+  string relation = 2;
+  string object_type = 3;
+  string object_id = 4;
+}
+
+message CheckPermissionResponse {
+  bool allowed = 1;
+}

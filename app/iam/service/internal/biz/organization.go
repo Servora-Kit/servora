@@ -10,8 +10,6 @@ import (
 	dataent "github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
 	"github.com/Servora-Kit/servora/pkg/actor"
 	"github.com/Servora-Kit/servora/pkg/logger"
-	"github.com/Servora-Kit/servora/pkg/openfga"
-	"github.com/Servora-Kit/servora/pkg/redis"
 )
 
 // PlatformRootID is the UUID string of the root platform record, used for Wire injection.
@@ -43,18 +41,16 @@ type OrganizationRepo interface {
 type OrganizationUsecase struct {
 	repo     OrganizationRepo
 	projRepo ProjectRepo
-	fga      *openfga.Client
-	redis    *redis.Client
+	authz    AuthZRepo
 	log      *logger.Helper
 	platID   string
 }
 
-func NewOrganizationUsecase(repo OrganizationRepo, projRepo ProjectRepo, fga *openfga.Client, rdb *redis.Client, l logger.Logger, platID PlatformRootID) *OrganizationUsecase {
+func NewOrganizationUsecase(repo OrganizationRepo, projRepo ProjectRepo, authz AuthZRepo, l logger.Logger, platID PlatformRootID) *OrganizationUsecase {
 	return &OrganizationUsecase{
 		repo:     repo,
 		projRepo: projRepo,
-		fga:      fga,
-		redis:    rdb,
+		authz:    authz,
 		log:      logger.NewHelper(l, logger.WithModule("organization/biz/iam-service")),
 		platID:   string(platID),
 	}
@@ -81,13 +77,13 @@ func (uc *OrganizationUsecase) Create(ctx context.Context, org *entity.Organizat
 		return nil, orgpb.ErrorOrganizationCreateFailed("failed to create organization")
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + created.ID},
-			openfga.Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
-			openfga.Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
+	if uc.authz != nil {
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "organization")
+		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "organization")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.OrganizationMember{
@@ -113,13 +109,13 @@ func (uc *OrganizationUsecase) CreateDefault(ctx context.Context, userID, name, 
 		return nil, err
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + created.ID},
-			openfga.Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
-			openfga.Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
+	if uc.authz != nil {
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "organization")
+		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "organization")
 	}
 
 	if _, err := uc.repo.AddMember(ctx, &entity.OrganizationMember{
@@ -150,9 +146,8 @@ func (uc *OrganizationUsecase) List(ctx context.Context, page, pageSize int32) (
 		return nil, 0, orgpb.ErrorOrganizationNotFound("user not authenticated")
 	}
 
-	if uc.fga != nil {
-		ids, err := uc.fga.CachedListObjects(ctx, uc.redis, openfga.DefaultListCacheTTL,
-			a.ID(), "can_view", "organization")
+	if uc.authz != nil {
+		ids, err := uc.authz.CachedListObjects(ctx, DefaultListCacheTTL, a.ID(), "can_view", "organization")
 		if err != nil {
 			uc.log.Warnf("ListObjects fallback to DB: %v", err)
 			return uc.repo.ListByUserID(ctx, a.ID(), page, pageSize)
@@ -219,36 +214,36 @@ func (uc *OrganizationUsecase) Restore(ctx context.Context, id string) (*entity.
 }
 
 func (uc *OrganizationUsecase) purgeOrgFGA(ctx context.Context, orgID string) {
-	if uc.fga == nil {
+	if uc.authz == nil {
 		return
 	}
-	var tuples []openfga.Tuple
+	var tuples []Tuple
 
 	projects, _ := uc.projRepo.ListAllByOrgID(ctx, orgID)
 	for _, p := range projects {
 		projMembers, _ := uc.projRepo.ListAllMembers(ctx, p.ID)
 		for _, m := range projMembers {
 			tuples = append(tuples,
-				openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + p.ID},
+				Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "project:" + p.ID},
 			)
 		}
 		tuples = append(tuples,
-			openfga.Tuple{User: "organization:" + p.OrganizationID, Relation: "organization", Object: "project:" + p.ID},
+			Tuple{User: "organization:" + p.OrganizationID, Relation: "organization", Object: "project:" + p.ID},
 		)
 	}
 
 	members, _ := uc.repo.ListAllMembers(ctx, orgID)
 	for _, m := range members {
 		tuples = append(tuples,
-			openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + orgID},
-			openfga.Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + orgID},
+			Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + orgID},
+			Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + orgID},
 		)
 	}
 	tuples = append(tuples,
-		openfga.Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + orgID},
+		Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + orgID},
 	)
 
-	if err := uc.fga.DeleteTuples(ctx, tuples...); err != nil {
+	if err := uc.authz.DeleteTuples(ctx, tuples...); err != nil {
 		uc.log.Warnf("purge org %s FGA tuples: %v", orgID, err)
 	}
 }
@@ -267,12 +262,12 @@ func (uc *OrganizationUsecase) AddMember(ctx context.Context, m *entity.Organiza
 		return nil, err
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + m.OrganizationID},
-			openfga.Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + m.OrganizationID},
+	if uc.authz != nil {
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + m.OrganizationID},
+			Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + m.OrganizationID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, m.UserID, "can_view", "organization")
+		uc.authz.InvalidateListObjects(ctx, m.UserID, "can_view", "organization")
 	}
 	return created, nil
 }
@@ -287,12 +282,12 @@ func (uc *OrganizationUsecase) RemoveMember(ctx context.Context, orgID, userID s
 		return err
 	}
 
-	if uc.fga != nil {
-		_ = uc.fga.DeleteTuples(ctx,
-			openfga.Tuple{User: "user:" + userID, Relation: member.Role, Object: "organization:" + orgID},
-			openfga.Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + orgID},
+	if uc.authz != nil {
+		_ = uc.authz.DeleteTuples(ctx,
+			Tuple{User: "user:" + userID, Relation: member.Role, Object: "organization:" + orgID},
+			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + orgID},
 		)
-		openfga.InvalidateListObjects(ctx, uc.redis, userID, "can_view", "organization")
+		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "organization")
 	}
 	return nil
 }
@@ -316,12 +311,12 @@ func (uc *OrganizationUsecase) UpdateMemberRole(ctx context.Context, orgID, user
 		return nil, err
 	}
 
-	if uc.fga != nil && oldMember.Role != newRole {
-		_ = uc.fga.DeleteTuples(ctx,
-			openfga.Tuple{User: "user:" + userID, Relation: oldMember.Role, Object: "organization:" + orgID},
+	if uc.authz != nil && oldMember.Role != newRole {
+		_ = uc.authz.DeleteTuples(ctx,
+			Tuple{User: "user:" + userID, Relation: oldMember.Role, Object: "organization:" + orgID},
 		)
-		_ = uc.fga.WriteTuples(ctx,
-			openfga.Tuple{User: "user:" + userID, Relation: newRole, Object: "organization:" + orgID},
+		_ = uc.authz.WriteTuples(ctx,
+			Tuple{User: "user:" + userID, Relation: newRole, Object: "organization:" + orgID},
 		)
 	}
 	return updated, nil

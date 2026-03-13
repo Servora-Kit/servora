@@ -9,7 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/golang-jwt/jwt/v5"
 
-	authpb "github.com/Servora-Kit/servora/api/gen/go/auth/service/v1"
+	authnpb "github.com/Servora-Kit/servora/api/gen/go/authn/service/v1"
 	"github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
 	dataent "github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
@@ -18,8 +18,8 @@ import (
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
-type AuthUsecase struct {
-	repo       AuthRepo
+type AuthnUsecase struct {
+	repo       AuthnRepo
 	log        *logger.Helper
 	cfg        *conf.App
 	keyManager *jwks.KeyManager
@@ -27,10 +27,10 @@ type AuthUsecase struct {
 	projUC     *ProjectUsecase
 }
 
-func NewAuthUsecase(repo AuthRepo, l logger.Logger, cfg *conf.App, km *jwks.KeyManager, orgUC *OrganizationUsecase, projUC *ProjectUsecase) *AuthUsecase {
-	return &AuthUsecase{
+func NewAuthnUsecase(repo AuthnRepo, l logger.Logger, cfg *conf.App, km *jwks.KeyManager, orgUC *OrganizationUsecase, projUC *ProjectUsecase) *AuthnUsecase {
+	return &AuthnUsecase{
 		repo:       repo,
-		log:        logger.NewHelper(l, logger.WithModule("auth/biz/iam-service")),
+		log:        logger.NewHelper(l, logger.WithModule("authn/biz/iam-service")),
 		cfg:        cfg,
 		keyManager: km,
 		orgUC:      orgUC,
@@ -59,7 +59,7 @@ type TokenStore interface {
 	DeleteUserRefreshTokens(ctx context.Context, userID string) error
 }
 
-type AuthRepo interface {
+type AuthnRepo interface {
 	SaveUser(context.Context, *entity.User) (*entity.User, error)
 	GetUserByEmail(context.Context, string) (*entity.User, error)
 	GetUserByUserName(context.Context, string) (*entity.User, error)
@@ -68,14 +68,14 @@ type AuthRepo interface {
 	TokenStore
 }
 
-func (uc *AuthUsecase) SignupByEmail(ctx context.Context, user *entity.User) (*entity.User, error) {
+func (uc *AuthnUsecase) SignupByEmail(ctx context.Context, user *entity.User) (*entity.User, error) {
 	existingUser, err := uc.repo.GetUserByUserName(ctx, user.Name)
 	if err != nil && !dataent.IsNotFound(err) {
 		uc.log.Errorf("check username failed: %v", err)
 		return nil, errors.InternalServer("INTERNAL", "internal error")
 	}
 	if existingUser != nil {
-		return nil, authpb.ErrorUserAlreadyExists("username already exists")
+		return nil, authnpb.ErrorUserAlreadyExists("username already exists")
 	}
 
 	existingEmail, err := uc.repo.GetUserByEmail(ctx, user.Email)
@@ -84,7 +84,7 @@ func (uc *AuthUsecase) SignupByEmail(ctx context.Context, user *entity.User) (*e
 		return nil, errors.InternalServer("INTERNAL", "internal error")
 	}
 	if existingEmail != nil {
-		return nil, authpb.ErrorUserAlreadyExists("email already exists")
+		return nil, authnpb.ErrorUserAlreadyExists("email already exists")
 	}
 
 	user.Role = "user"
@@ -106,11 +106,11 @@ func (uc *AuthUsecase) SignupByEmail(ctx context.Context, user *entity.User) (*e
 	return createdUser, nil
 }
 
-func (uc *AuthUsecase) generateAccessToken(claims *UserClaims) (string, error) {
+func (uc *AuthnUsecase) generateAccessToken(claims *UserClaims) (string, error) {
 	return uc.keyManager.Signer().Sign(claims)
 }
 
-func (uc *AuthUsecase) generateOpaqueToken() (string, error) {
+func (uc *AuthnUsecase) generateOpaqueToken() (string, error) {
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
@@ -118,20 +118,20 @@ func (uc *AuthUsecase) generateOpaqueToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func (uc *AuthUsecase) LoginByEmailPassword(ctx context.Context, user *entity.User) (*TokenPair, error) {
+func (uc *AuthnUsecase) LoginByEmailPassword(ctx context.Context, user *entity.User) (*TokenPair, error) {
 	foundUser, err := uc.repo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		if dataent.IsNotFound(err) {
-			return nil, authpb.ErrorUserNotFound("invalid email or password")
+			return nil, authnpb.ErrorUserNotFound("invalid email or password")
 		}
 		uc.log.Errorf("get user by email failed: %v", err)
 		return nil, errors.InternalServer("INTERNAL", "internal error")
 	}
 	if foundUser == nil {
-		return nil, authpb.ErrorUserNotFound("invalid email or password")
+		return nil, authnpb.ErrorUserNotFound("invalid email or password")
 	}
 	if !helpers.BcryptCheck(user.Password, foundUser.Password) {
-		return nil, authpb.ErrorIncorrectPassword("invalid email or password")
+		return nil, authnpb.ErrorIncorrectPassword("invalid email or password")
 	}
 
 	nonce, err := uc.generateOpaqueToken()
@@ -179,11 +179,11 @@ func (uc *AuthUsecase) LoginByEmailPassword(ctx context.Context, user *entity.Us
 	}, nil
 }
 
-func (uc *AuthUsecase) RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error) {
+func (uc *AuthnUsecase) RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error) {
 	userID, err := uc.repo.GetRefreshToken(ctx, refreshToken)
 	if err != nil {
 		uc.log.Warnf("invalid refresh token: %v", err)
-		return nil, authpb.ErrorInvalidRefreshToken("invalid or expired refresh token")
+		return nil, authnpb.ErrorInvalidRefreshToken("invalid or expired refresh token")
 	}
 
 	user, err := uc.repo.GetUserByID(ctx, userID)
@@ -242,14 +242,14 @@ func (uc *AuthUsecase) RefreshToken(ctx context.Context, refreshToken string) (*
 	}, nil
 }
 
-func (uc *AuthUsecase) Logout(ctx context.Context, refreshToken string) error {
+func (uc *AuthnUsecase) Logout(ctx context.Context, refreshToken string) error {
 	if err := uc.repo.DeleteRefreshToken(ctx, refreshToken); err != nil {
 		uc.log.Warnf("Failed to delete refresh token during logout: %v", err)
 	}
 	return nil
 }
 
-func (uc *AuthUsecase) ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error {
+func (uc *AuthnUsecase) ChangePassword(ctx context.Context, userID, currentPassword, newPassword string) error {
 	user, err := uc.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		uc.log.Errorf("get user for change password failed: %v", err)
@@ -257,7 +257,7 @@ func (uc *AuthUsecase) ChangePassword(ctx context.Context, userID, currentPasswo
 	}
 
 	if !helpers.BcryptCheck(currentPassword, user.Password) {
-		return authpb.ErrorIncorrectPassword("current password is incorrect")
+		return authnpb.ErrorIncorrectPassword("current password is incorrect")
 	}
 
 	hashed, err := helpers.BcryptHash(newPassword)
@@ -278,7 +278,7 @@ func (uc *AuthUsecase) ChangePassword(ctx context.Context, userID, currentPasswo
 	return nil
 }
 
-func (uc *AuthUsecase) LogoutAllDevices(ctx context.Context, userID string) error {
+func (uc *AuthnUsecase) LogoutAllDevices(ctx context.Context, userID string) error {
 	if err := uc.repo.DeleteUserRefreshTokens(ctx, userID); err != nil {
 		uc.log.Errorf("delete all refresh tokens failed: %v", err)
 		return errors.InternalServer("INTERNAL", "internal error")
