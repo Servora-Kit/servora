@@ -124,7 +124,7 @@ message RestoreOrganizationResponse {
 message AddMemberRequest {
   string organization_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string role = 3 [(buf.validate.field).string = {in: ["owner", "admin", "member"]}];
+  string role = 3 [(buf.validate.field).string = {in: ["owner", "admin", "member", "viewer"]}];
 }
 
 message AddMemberResponse {
@@ -153,7 +153,7 @@ message ListMembersResponse {
 message UpdateMemberRoleRequest {
   string organization_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string role = 3 [(buf.validate.field).string = {in: ["owner", "admin", "member"]}];
+  string role = 3 [(buf.validate.field).string = {in: ["owner", "admin", "member", "viewer"]}];
 }
 
 message UpdateMemberRoleResponse {

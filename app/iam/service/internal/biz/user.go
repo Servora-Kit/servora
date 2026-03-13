@@ -187,7 +187,6 @@ func (uc *UserUsecase) purgeUserFGA(ctx context.Context, userID string) {
 	for _, m := range orgMemberships {
 		tuples = append(tuples,
 			Tuple{User: "user:" + userID, Relation: m.Role, Object: "organization:" + m.OrganizationID},
-			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + m.OrganizationID},
 		)
 	}
 

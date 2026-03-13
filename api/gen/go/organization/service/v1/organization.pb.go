@@ -1387,11 +1387,11 @@ const file_organization_service_v1_organization_proto_rawDesc = "" +
 	"\x1aRestoreOrganizationRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"l\n" +
 	"\x1bRestoreOrganizationResponse\x12M\n" +
-	"\forganization\x18\x01 \x01(\v2).organization.service.v1.OrganizationInfoR\forganization\"\x99\x01\n" +
+	"\forganization\x18\x01 \x01(\v2).organization.service.v1.OrganizationInfoR\forganization\"\xa1\x01\n" +
 	"\x10AddMemberRequest\x121\n" +
 	"\x0forganization_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0eorganizationId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12/\n" +
-	"\x04role\x18\x03 \x01(\tB\x1b\xbaH\x18r\x16R\x05ownerR\x05adminR\x06memberR\x04role\"\\\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x127\n" +
+	"\x04role\x18\x03 \x01(\tB#\xbaH r\x1eR\x05ownerR\x05adminR\x06memberR\x06viewerR\x04role\"\\\n" +
 	"\x11AddMemberResponse\x12G\n" +
 	"\x06member\x18\x01 \x01(\v2/.organization.service.v1.OrganizationMemberInfoR\x06member\"k\n" +
 	"\x13RemoveMemberRequest\x121\n" +
@@ -1408,11 +1408,11 @@ const file_organization_service_v1_organization_proto_rawDesc = "" +
 	"\amembers\x18\x01 \x03(\v2/.organization.service.v1.OrganizationMemberInfoR\amembers\x12>\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1e.pagination.PaginationResponseR\n" +
-	"pagination\"\xa0\x01\n" +
+	"pagination\"\xa8\x01\n" +
 	"\x17UpdateMemberRoleRequest\x121\n" +
 	"\x0forganization_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0eorganizationId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12/\n" +
-	"\x04role\x18\x03 \x01(\tB\x1b\xbaH\x18r\x16R\x05ownerR\x05adminR\x06memberR\x04role\"c\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x127\n" +
+	"\x04role\x18\x03 \x01(\tB#\xbaH r\x1eR\x05ownerR\x05adminR\x06memberR\x06viewerR\x04role\"c\n" +
 	"\x18UpdateMemberRoleResponse\x12G\n" +
 	"\x06member\x18\x01 \x01(\v2/.organization.service.v1.OrganizationMemberInfoR\x06member*\xa5\x02\n" +
 	"\vErrorReason\x12 \n" +

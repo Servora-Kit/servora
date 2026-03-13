@@ -146,11 +146,10 @@ type Relation int32
 const (
 	Relation_RELATION_UNSPECIFIED Relation = 0
 	// --- 可分配角色 ---
-	Relation_RELATION_OWNER     Relation = 1 // 拥有者
-	Relation_RELATION_ADMIN     Relation = 2 // 管理员
-	Relation_RELATION_MEMBER    Relation = 3 // 成员
-	Relation_RELATION_DEVELOPER Relation = 4 // 开发者
-	Relation_RELATION_VIEWER    Relation = 5 // 只读者
+	Relation_RELATION_OWNER  Relation = 1 // 拥有者
+	Relation_RELATION_ADMIN  Relation = 2 // 管理员
+	Relation_RELATION_MEMBER Relation = 3 // 成员
+	Relation_RELATION_VIEWER Relation = 5 // 只读者
 	// --- 计算权限（由 OpenFGA 模型解析） ---
 	Relation_RELATION_CAN_VIEW           Relation = 10 // 可查看
 	Relation_RELATION_CAN_EDIT           Relation = 11 // 可编辑
@@ -166,7 +165,6 @@ var (
 		1:  "RELATION_OWNER",
 		2:  "RELATION_ADMIN",
 		3:  "RELATION_MEMBER",
-		4:  "RELATION_DEVELOPER",
 		5:  "RELATION_VIEWER",
 		10: "RELATION_CAN_VIEW",
 		11: "RELATION_CAN_EDIT",
@@ -179,7 +177,6 @@ var (
 		"RELATION_OWNER":              1,
 		"RELATION_ADMIN":              2,
 		"RELATION_MEMBER":             3,
-		"RELATION_DEVELOPER":          4,
 		"RELATION_VIEWER":             5,
 		"RELATION_CAN_VIEW":           10,
 		"RELATION_CAN_EDIT":           11,
@@ -330,13 +327,12 @@ const file_servora_authz_v1_authz_proto_rawDesc = "" +
 	"\x17OBJECT_TYPE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14OBJECT_TYPE_PLATFORM\x10\x01\x12\x1c\n" +
 	"\x18OBJECT_TYPE_ORGANIZATION\x10\x02\x12\x17\n" +
-	"\x13OBJECT_TYPE_PROJECT\x10\x03*\x8e\x02\n" +
+	"\x13OBJECT_TYPE_PROJECT\x10\x03*\xf6\x01\n" +
 	"\bRelation\x12\x18\n" +
 	"\x14RELATION_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eRELATION_OWNER\x10\x01\x12\x12\n" +
 	"\x0eRELATION_ADMIN\x10\x02\x12\x13\n" +
-	"\x0fRELATION_MEMBER\x10\x03\x12\x16\n" +
-	"\x12RELATION_DEVELOPER\x10\x04\x12\x13\n" +
+	"\x0fRELATION_MEMBER\x10\x03\x12\x13\n" +
 	"\x0fRELATION_VIEWER\x10\x05\x12\x15\n" +
 	"\x11RELATION_CAN_VIEW\x10\n" +
 	"\x12\x15\n" +

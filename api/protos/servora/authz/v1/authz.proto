@@ -40,7 +40,6 @@ enum Relation {
   RELATION_OWNER = 1;       // 拥有者
   RELATION_ADMIN = 2;       // 管理员
   RELATION_MEMBER = 3;      // 成员
-  RELATION_DEVELOPER = 4;   // 开发者
   RELATION_VIEWER = 5;      // 只读者
 
   // --- 计算权限（由 OpenFGA 模型解析） ---

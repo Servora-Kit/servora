@@ -81,7 +81,6 @@ func (uc *OrganizationUsecase) Create(ctx context.Context, org *entity.Organizat
 		_ = uc.authz.WriteTuples(ctx,
 			Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + created.ID},
 			Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
-			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
 		)
 		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "organization")
 	}
@@ -113,7 +112,6 @@ func (uc *OrganizationUsecase) CreateDefault(ctx context.Context, userID, name, 
 		_ = uc.authz.WriteTuples(ctx,
 			Tuple{User: "platform:" + uc.platID, Relation: "platform", Object: "organization:" + created.ID},
 			Tuple{User: "user:" + userID, Relation: "owner", Object: "organization:" + created.ID},
-			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + created.ID},
 		)
 		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "organization")
 	}
@@ -236,7 +234,6 @@ func (uc *OrganizationUsecase) purgeOrgFGA(ctx context.Context, orgID string) {
 	for _, m := range members {
 		tuples = append(tuples,
 			Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + orgID},
-			Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + orgID},
 		)
 	}
 	tuples = append(tuples,
@@ -265,7 +262,6 @@ func (uc *OrganizationUsecase) AddMember(ctx context.Context, m *entity.Organiza
 	if uc.authz != nil {
 		_ = uc.authz.WriteTuples(ctx,
 			Tuple{User: "user:" + m.UserID, Relation: m.Role, Object: "organization:" + m.OrganizationID},
-			Tuple{User: "user:" + m.UserID, Relation: "member", Object: "organization:" + m.OrganizationID},
 		)
 		uc.authz.InvalidateListObjects(ctx, m.UserID, "can_view", "organization")
 	}
@@ -285,7 +281,6 @@ func (uc *OrganizationUsecase) RemoveMember(ctx context.Context, orgID, userID s
 	if uc.authz != nil {
 		_ = uc.authz.DeleteTuples(ctx,
 			Tuple{User: "user:" + userID, Relation: member.Role, Object: "organization:" + orgID},
-			Tuple{User: "user:" + userID, Relation: "member", Object: "organization:" + orgID},
 		)
 		uc.authz.InvalidateListObjects(ctx, userID, "can_view", "organization")
 	}

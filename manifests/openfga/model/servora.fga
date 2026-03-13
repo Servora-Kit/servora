@@ -7,6 +7,8 @@ type platform
   relations
     define admin: [user]
     define member: [user] or admin
+    define can_view: member
+    define can_manage: admin
 
 type organization
   relations
@@ -14,17 +16,19 @@ type organization
     define owner: [user]
     define admin: [user] or owner
     define member: [user] or admin
-    define can_view: member
+    define viewer: [user] or member
+    define can_view: member or viewer
     define can_manage: admin
     define can_manage_members: admin
 
 type project
   relations
     define organization: [organization]
-    define admin: [user] or admin from organization
-    define developer: [user] or admin
-    define viewer: [user] or developer
+    define parent: [project]
+    define admin: [user] or admin from organization or admin from parent
+    define member: [user] or admin or member from parent
+    define viewer: [user] or member or viewer from parent
     define can_view: viewer
-    define can_edit: developer
+    define can_edit: member
     define can_admin: admin
     define can_manage_members: admin

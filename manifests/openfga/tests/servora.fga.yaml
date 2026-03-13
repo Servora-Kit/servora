@@ -24,6 +24,10 @@ tuples:
     relation: member
     object: organization:acme
 
+  - user: user:org-viewer
+    relation: viewer
+    object: organization:acme
+
   # Organization member also on platform
   - user: user:org-owner
     relation: member
@@ -34,8 +38,8 @@ tuples:
     relation: organization
     object: project:alpha
 
-  - user: user:proj-dev
-    relation: developer
+  - user: user:proj-member
+    relation: member
     object: project:alpha
 
   - user: user:proj-viewer
@@ -43,13 +47,15 @@ tuples:
     object: project:alpha
 
 tests:
-  - name: platform admin has member access
+  - name: platform admin has member and can_manage access
     check:
       - user: user:platform-admin
         object: platform:root
         assertions:
           admin: true
           member: true
+          can_view: true
+          can_manage: true
 
   - name: organization owner inherits admin and member
     check:
@@ -59,6 +65,7 @@ tests:
           owner: true
           admin: true
           member: true
+          viewer: true
           can_view: true
           can_manage: true
           can_manage_members: true
@@ -71,6 +78,7 @@ tests:
           owner: false
           admin: true
           member: true
+          viewer: true
           can_view: true
           can_manage: true
           can_manage_members: true
@@ -83,6 +91,20 @@ tests:
           owner: false
           admin: false
           member: true
+          viewer: true
+          can_view: true
+          can_manage: false
+          can_manage_members: false
+
+  - name: organization viewer can only view
+    check:
+      - user: user:org-viewer
+        object: organization:acme
+        assertions:
+          owner: false
+          admin: false
+          member: false
+          viewer: true
           can_view: true
           can_manage: false
           can_manage_members: false
@@ -93,7 +115,7 @@ tests:
         object: project:alpha
         assertions:
           admin: true
-          developer: true
+          member: true
           viewer: true
           can_view: true
           can_edit: true
@@ -105,19 +127,19 @@ tests:
         object: project:alpha
         assertions:
           admin: true
-          developer: true
+          member: true
           viewer: true
           can_view: true
           can_edit: true
           can_admin: true
 
-  - name: project developer can edit but not admin
+  - name: project member can edit but not admin
     check:
-      - user: user:proj-dev
+      - user: user:proj-member
         object: project:alpha
         assertions:
           admin: false
-          developer: true
+          member: true
           viewer: true
           can_view: true
           can_edit: true
@@ -129,7 +151,7 @@ tests:
         object: project:alpha
         assertions:
           admin: false
-          developer: false
+          member: false
           viewer: true
           can_view: true
           can_edit: false
@@ -141,7 +163,7 @@ tests:
         object: project:alpha
         assertions:
           admin: false
-          developer: false
+          member: false
           viewer: false
           can_view: false
           can_edit: false

@@ -127,7 +127,7 @@ message RestoreProjectResponse {
 message AddMemberRequest {
   string project_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string role = 3 [(buf.validate.field).string = {in: ["admin", "developer", "viewer"]}];
+  string role = 3 [(buf.validate.field).string = {in: ["admin", "member", "viewer"]}];
 }
 
 message AddMemberResponse {
@@ -156,7 +156,7 @@ message ListMembersResponse {
 message UpdateMemberRoleRequest {
   string project_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string role = 3 [(buf.validate.field).string = {in: ["admin", "developer", "viewer"]}];
+  string role = 3 [(buf.validate.field).string = {in: ["admin", "member", "viewer"]}];
 }
 
 message UpdateMemberRoleResponse {

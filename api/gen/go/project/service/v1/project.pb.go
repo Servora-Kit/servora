@@ -1415,12 +1415,12 @@ const file_project_service_v1_project_proto_rawDesc = "" +
 	"\x15RestoreProjectRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"S\n" +
 	"\x16RestoreProjectResponse\x129\n" +
-	"\aproject\x18\x01 \x01(\v2\x1f.project.service.v1.ProjectInfoR\aproject\"\x93\x01\n" +
+	"\aproject\x18\x01 \x01(\v2\x1f.project.service.v1.ProjectInfoR\aproject\"\x90\x01\n" +
 	"\x10AddMemberRequest\x12'\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tprojectId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x123\n" +
-	"\x04role\x18\x03 \x01(\tB\x1f\xbaH\x1cr\x1aR\x05adminR\tdeveloperR\x06viewerR\x04role\"R\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x120\n" +
+	"\x04role\x18\x03 \x01(\tB\x1c\xbaH\x19r\x17R\x05adminR\x06memberR\x06viewerR\x04role\"R\n" +
 	"\x11AddMemberResponse\x12=\n" +
 	"\x06member\x18\x01 \x01(\v2%.project.service.v1.ProjectMemberInfoR\x06member\"a\n" +
 	"\x13RemoveMemberRequest\x12'\n" +
@@ -1439,12 +1439,12 @@ const file_project_service_v1_project_proto_rawDesc = "" +
 	"\amembers\x18\x01 \x03(\v2%.project.service.v1.ProjectMemberInfoR\amembers\x12>\n" +
 	"\n" +
 	"pagination\x18\x02 \x01(\v2\x1e.pagination.PaginationResponseR\n" +
-	"pagination\"\x9a\x01\n" +
+	"pagination\"\x97\x01\n" +
 	"\x17UpdateMemberRoleRequest\x12'\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tprojectId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x123\n" +
-	"\x04role\x18\x03 \x01(\tB\x1f\xbaH\x1cr\x1aR\x05adminR\tdeveloperR\x06viewerR\x04role\"Y\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x120\n" +
+	"\x04role\x18\x03 \x01(\tB\x1c\xbaH\x19r\x17R\x05adminR\x06memberR\x06viewerR\x04role\"Y\n" +
 	"\x18UpdateMemberRoleResponse\x12=\n" +
 	"\x06member\x18\x01 \x01(\v2%.project.service.v1.ProjectMemberInfoR\x06member*\x82\x02\n" +
 	"\vErrorReason\x12\x1b\n" +
