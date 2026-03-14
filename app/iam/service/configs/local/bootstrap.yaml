@@ -39,7 +39,7 @@ mail:
   smtp:
     host: "127.0.0.1"
     port: 1025
-    use_tls: false
+    tls: false
   from:
     address: "noreply@servora.dev"
     name: "Servora"

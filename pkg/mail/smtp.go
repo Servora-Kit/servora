@@ -29,7 +29,7 @@ func newSMTPSender(c *conf.Smtp) *smtpSender {
 		addr:          fmt.Sprintf("%s:%d", c.Host, port),
 		username:      c.Username,
 		password:      c.Password,
-		useTLS:        c.UseTls,
+		useTLS:        c.Tls,
 		skipVerifySSL: c.SkipVerifySsl,
 	}
 }

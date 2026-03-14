@@ -2990,7 +2990,7 @@ func (m *Smtp) validate(all bool) error {
 
 	// no validation rules for Password
 
-	// no validation rules for UseTls
+	// no validation rules for Tls
 
 	// no validation rules for SkipVerifySsl
 

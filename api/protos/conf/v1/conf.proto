@@ -270,7 +270,7 @@ message Smtp {
   int32 port = 2;
   string username = 3;
   string password = 4;
-  bool use_tls = 5; // 是否使用 TLS（SMTPS / STARTTLS）
+  bool tls = 5; // 是否使用 TLS（SMTPS / STARTTLS）
   bool skip_verify_ssl = 6; // 跳过证书验证（仅建议 dev 使用）
   google.protobuf.Duration send_timeout = 7; // 发信超时
 }

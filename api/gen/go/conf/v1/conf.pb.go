@@ -1405,7 +1405,7 @@ type Smtp struct {
 	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
 	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
 	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
-	UseTls        bool                   `protobuf:"varint,5,opt,name=use_tls,json=useTls,proto3" json:"use_tls,omitempty"`                        // 是否使用 TLS（SMTPS / STARTTLS）
+	Tls           bool                   `protobuf:"varint,5,opt,name=tls,proto3" json:"tls,omitempty"`                                            // 是否使用 TLS（SMTPS / STARTTLS）
 	SkipVerifySsl bool                   `protobuf:"varint,6,opt,name=skip_verify_ssl,json=skipVerifySsl,proto3" json:"skip_verify_ssl,omitempty"` // 跳过证书验证（仅建议 dev 使用）
 	SendTimeout   *durationpb.Duration   `protobuf:"bytes,7,opt,name=send_timeout,json=sendTimeout,proto3" json:"send_timeout,omitempty"`          // 发信超时
 	unknownFields protoimpl.UnknownFields
@@ -1470,9 +1470,9 @@ func (x *Smtp) GetPassword() string {
 	return ""
 }
 
-func (x *Smtp) GetUseTls() bool {
+func (x *Smtp) GetTls() bool {
 	if x != nil {
-		return x.UseTls
+		return x.Tls
 	}
 	return false
 }
@@ -2477,13 +2477,13 @@ const file_conf_v1_conf_proto_rawDesc = "" +
 	"\x04smtp\x18\x01 \x01(\v2\r.conf.v1.SmtpR\x04smtp\x12%\n" +
 	"\x04from\x18\x02 \x01(\v2\x11.conf.v1.MailFromR\x04from\x12\x19\n" +
 	"\bbase_url\x18\x03 \x01(\tR\abaseUrl\x12!\n" +
-	"\ftemplate_dir\x18\x05 \x01(\tR\vtemplateDir\"\xe5\x01\n" +
+	"\ftemplate_dir\x18\x05 \x01(\tR\vtemplateDir\"\xde\x01\n" +
 	"\x04Smtp\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x17\n" +
-	"\ause_tls\x18\x05 \x01(\bR\x06useTls\x12&\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x10\n" +
+	"\x03tls\x18\x05 \x01(\bR\x03tls\x12&\n" +
 	"\x0fskip_verify_ssl\x18\x06 \x01(\bR\rskipVerifySsl\x12<\n" +
 	"\fsend_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vsendTimeout\"8\n" +
 	"\bMailFrom\x12\x18\n" +
