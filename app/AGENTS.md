@@ -1,11 +1,12 @@
 # AGENTS.md - app/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 目录概览
 
 `app/` 存放可运行服务。当前仓库内有两个服务模块：
-- `app/servora/service/`：主服务，含后端实现与内嵌前端 `web/`
+- `app/iam/service/`：IAM 主服务（认证、授权、组织、项目），含后端与可选前端
 - `app/sayhello/service/`：独立示例服务
 
 每个服务目录都是独立 Go module，并通过根 `go.work` 纳管。
@@ -22,10 +23,10 @@ app/{service}/service/
 └── go.mod       # 独立模块
 ```
 
-`servora/service/` 额外包含：
-- `web/`：Vue 3 前端
+各服务目录可包含：
+- `web/`：前端（如有）
 - `manifests/`：服务专属补充资源
-- `openapi.yaml`：服务 OpenAPI 产物
+- `openapi.yaml`：服务 OpenAPI 产物（由 buf 生成）
 
 ## 关键约定
 
@@ -38,16 +39,15 @@ app/{service}/service/
 ## 常用命令
 
 ```bash
-cd app/servora/service && make run
-cd app/servora/service && make build
-cd app/servora/service && make wire
-cd app/servora/service && make gen.ent
-cd app/servora/service && make gen.gorm
+cd app/iam/service && make run
+cd app/iam/service && make build
+cd app/iam/service && make wire
+cd app/iam/service && make gen.ent
+cd app/iam/service && make gen.gorm
 cd app/sayhello/service && make run
 ```
 
 ## 维护提示
 
-- 旧文档中的根目录 `web/` 已失效，前端真实位置是 `app/servora/service/web/`
-- 旧的 `deployment/` 目录描述已过时；部署清单以根 `manifests/` 为主，当前只有 `app/servora/service/` 额外带 `manifests/` 补充资源
+- 部署清单以根 `manifests/` 为主；各服务可带 `manifests/` 补充资源
 - 若新增服务，优先参考 `app/sayhello/service/` 的最小结构，再按需要补齐 `api/` 与 `internal/`

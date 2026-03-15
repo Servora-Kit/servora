@@ -1,6 +1,7 @@
 # AGENTS.md - api/protos/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 当前定位
 
@@ -10,7 +11,7 @@
 - `template/`：`svr new api` 命令使用的 proto 模板
 
 服务专属协议已拆到：
-- `app/servora/service/api/protos/`
+- `app/iam/service/api/protos/`
 - `app/sayhello/service/api/protos/`
 
 ## 当前结构
@@ -49,5 +50,5 @@ cd api/protos && buf mod update
 ## 维护提示
 
 - 这里不再列出 `auth/`、`user/`、`servora/`、`sayhello/` 等业务目录，那些协议已不在本模块
-- 若要更新 `servora` 或 `sayhello` 的实际接口，请改对应服务目录下的 `api/protos/`
+- 若要更新 IAM 或 sayhello 的实际接口，请改对应服务目录下的 `api/protos/`
 - `template/` 目录仅用于 `svr new api` 命令，不参与实际代码生成

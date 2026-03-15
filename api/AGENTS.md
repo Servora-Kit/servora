@@ -1,6 +1,7 @@
 # AGENTS.md - api/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 目录职责
 
@@ -8,7 +9,7 @@
 - 共享 proto 模块：`api/protos/`
 - 统一 Go 生成产物：`api/gen/`
 
-仓库已迁移到 **Buf v2 workspace**：根目录 `buf.yaml` 同时纳管 `api/protos/`、`app/servora/service/api/protos/`、`app/sayhello/service/api/protos/`。
+仓库已迁移到 **Buf v2 workspace**：根目录 `buf.yaml` 同时纳管 `api/protos/`、`app/iam/service/api/protos/`、`app/sayhello/service/api/protos/`。
 
 ## 当前结构
 
@@ -30,7 +31,7 @@ api/
 - 根 `Makefile` 的 `make api` 只调用根级 `buf.go.gen.yaml`
 - 根 `Makefile` 的 `make api-ts` 直接调用根级固定模板 `buf.typescript.gen.yaml`
 - 服务私有 OpenAPI 由各服务目录下的 `api/buf.openapi.gen.yaml` 负责
-- `servora` 前端 TypeScript 客户端由 `app/servora/service/api/buf.typescript.gen.yaml` 输出到 `app/servora/service/web/src/service/gen/`
+- 各服务前端 TypeScript 客户端由该服务目录下 `api/buf.typescript.gen.yaml` 输出到该服务 `web/src/service/gen/`（如有）
 
 ## 关键文件
 
@@ -62,4 +63,4 @@ cd api/protos && buf breaking --against '.git#branch=main'
 ## 注意事项
 
 - 旧文档里提到的 `api/buf.*.go.gen.yaml` 自动扫描规则已过时；当前根级 Go 生成模板是固定文件 `buf.go.gen.yaml`
-- `servora` / `sayhello` 的 proto 目录已迁到各自服务的 `api/protos/` 下，不再都堆在 `api/protos/`
+- IAM / sayhello 的 proto 目录在各自服务的 `api/protos/` 下，共享 proto 在 `api/protos/`

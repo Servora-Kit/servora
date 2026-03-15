@@ -1,37 +1,30 @@
 # AGENTS.md - pkg/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 目录概览
 
-`pkg/` 提供跨服务复用的基础能力。当前真实子目录如下：
-
-```text
-pkg/
-├── bootstrap/
-├── governance/
-├── helpers/
-├── jwt/
-├── k8s/
-├── logger/
-├── mapper/
-├── middleware/
-├── redis/
-└── transport/
-```
+`pkg/` 提供跨服务复用的基础能力。当前子目录：`actor`、`bootstrap`、`ent/mixin`、`governance`、`health`、`helpers`、`jwks`、`jwt`、`k8s`、`logger`、`mapper`、`openfga`、`redis`、`transport`。
 
 ## 模块速览
 
-- `bootstrap/`：启动链路与配置加载复用
-- `governance/`：注册发现、配置中心、遥测
-- `helpers/`：通用辅助函数与 bcrypt 哈希
-- `jwt/`：泛型 JWT 工具与 context 注入
-- `k8s/`：Kubernetes 客户端工具
-- `logger/`：Kratos + Zap 日志适配，含 GORM / Ent 日志桥接
-- `mapper/`：模型映射工具
-- `middleware/`：公共中间件，如 CORS 与 operation 白名单
-- `redis/`：Redis 客户端封装
-- `transport/`：服务间 transport client
+| 目录 | 用途 |
+|------|------|
+| `actor/` | 请求上下文中的调用方抽象 |
+| `bootstrap/` | 启动链路与配置加载 |
+| `ent/mixin` | Ent schema 混入 |
+| `governance/` | 注册发现、配置中心、遥测 |
+| `health/` | 健康检查 |
+| `helpers/` | 通用辅助与 bcrypt 哈希 |
+| `jwks/` | JWKS 解析 |
+| `jwt/` | JWT 工具与 context 注入 |
+| `k8s/` | Kubernetes 客户端 |
+| `logger/` | Kratos + Zap，含 GORM/Ent 桥接 |
+| `mapper/` | 模型映射 |
+| `openfga/` | OpenFGA 客户端与授权 |
+| `redis/` | Redis 客户端与锁/Cache-aside |
+| `transport/` | 服务间 transport client |
 
 ## 当前事实
 
@@ -58,5 +51,5 @@ go test ./pkg/redis/...
 
 ## 维护提示
 
-- 若更新共享基础设施能力，优先同步 `pkg/AGENTS.md` 与对应子模块 `AGENTS.md`
-- `helpers` 承担密码哈希职责，旧的 `pkg/hash` 说法已经不适用
+- 若更新共享基础设施能力，优先同步本文件与对应子模块 AGENTS.md
+- `helpers` 承担密码哈希等通用辅助

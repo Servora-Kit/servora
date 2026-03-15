@@ -1,6 +1,7 @@
 # AGENTS.md - cmd/svr/
 
-<!-- Generated: 2026-03-11 | Commit: 11857e3 -->
+<!-- Parent: ../../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 目录定位
 
@@ -34,7 +35,7 @@ cmd/svr/
 ### `svr new api <name> <server_name>`
 - 在指定服务目录下生成 gRPC proto 骨架
 - `<name>` 必须是小写 snake_case，支持点分层级（如 `billing.invoice`）
-- `<server_name>` 必须对应真实存在的 `app/<server_name>/service` 目录
+- `<server_name>` 必须对应真实存在的 `app/<server_name>/service` 目录（如 `iam`、`sayhello`）
 - 输出到 `app/<server_name>/service/api/protos/<name>/service/v1/`
 - 只生成 `<name>.proto` 与 `<name>_doc.proto`，不生成 HTTP 专用 `i_*.proto`
 - 模板位于 `api/protos/template/service/v1/`
@@ -70,10 +71,10 @@ cmd/svr/
 ## 常用命令
 
 ```bash
-go run ./cmd/svr new api billing servora
-go run ./cmd/svr new api billing.invoice servora
-go run ./cmd/svr gen gorm servora
-go run ./cmd/svr gen gorm servora --dry-run
+go run ./cmd/svr new api billing iam
+go run ./cmd/svr new api billing.invoice iam
+go run ./cmd/svr gen gorm iam
+go run ./cmd/svr gen gorm iam --dry-run
 svr openfga init
 svr openfga init --api-url http://localhost:8080 --store servora --env-prefix IAM_
 svr openfga model apply

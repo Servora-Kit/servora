@@ -1,6 +1,7 @@
 # AGENTS.md - pkg/redis/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 模块目的
 

@@ -1,30 +1,33 @@
-# AGENTS.md - app/servora/service/
+# AGENTS.md - app/iam/service/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 目录定位
 
-`app/servora/service/` 是主服务模块，当前同时包含：
-- 服务私有 proto：`api/protos/`
+`app/iam/service/` 是 IAM 服务模块，包含：
+- 服务私有 proto：`api/protos/`（含 authn、authz、organization、project 等）
 - Go 后端：`cmd/` + `internal/`
-- Vue 前端：`web/`
-- OpenAPI 产物：`openapi.yaml`
+- OpenAPI 产物：`openapi.yaml`（由 buf 生成）
 
-这是一个独立 Go module，受根 `go.work` 管理。
+独立 Go module，受根 `go.work` 管理。
 
 ## 当前结构
 
 ```text
-app/servora/service/
+app/iam/service/
 ├── api/
 │   ├── buf.openapi.gen.yaml
-│   ├── buf.typescript.gen.yaml
-│   └── protos/
-├── cmd/server/
-├── configs/
+│   └── protos/           # authn, authz, organization, project 等
+├── cmd/                  # 启动入口
+├── configs/              # 配置
 ├── internal/
+│   ├── biz/              # UseCase 与仓储接口
+│   ├── data/             # Ent / GORM 数据层
+│   ├── oidc/             # OIDC 登录等
+│   ├── server/           # Server 与中间件装配
+│   └── service/          # gRPC / HTTP 接口实现
 ├── manifests/
-├── web/
 ├── go.mod
 ├── Makefile
 └── openapi.yaml
@@ -32,17 +35,16 @@ app/servora/service/
 
 ## 代码层次
 
-- `internal/biz/`：UseCase 与仓储接口
-- `internal/biz/entity/`：领域实体
-- `internal/data/`：Ent 默认实现，GORM GEN 作为并行工具链保留
-- `internal/service/`：gRPC / HTTP 接口实现
+- `internal/biz/`：业务用例与仓储接口
+- `internal/data/`：Ent / GORM 实现
+- `internal/oidc/`：OIDC 登录流程
+- `internal/service/`：gRPC / HTTP 协议适配
 - `internal/server/`：Server 与中间件装配
 
-## Proto / OpenAPI / 前端生成
+## Proto / OpenAPI
 
-- 业务 proto 位于 `app/servora/service/api/protos/`
-- TypeScript HTTP 客户端输出到 `app/servora/service/web/src/service/gen/`
-- OpenAPI 模板位于 `app/servora/service/api/buf.openapi.gen.yaml`
+- 业务 proto 位于 `api/protos/`，根 `make api` 统一生成到 `api/gen/go/`
+- OpenAPI 模板：`api/buf.openapi.gen.yaml`
 
 ## 常用命令
 
@@ -54,21 +56,9 @@ make wire
 make gen.ent
 make gen.gorm
 make openapi
-cd web && bun install && bun dev
-cd web && bun test:unit
-cd web && bun test:e2e
-cd web && bun lint
 ```
-
-## 当前实现事实
-
-- 数据层 `internal/data/data.go` 使用 Ent client 作为运行时 ORM
-- `internal/data/gorm/` 目录仅保留 GORM GEN 生成物与生成器配置
-- 认证中间件文件名为 `internal/server/middleware/authN_jwt.go`
-- `server.ProviderSet` 组合了 `middleware.ProviderSet`、`registry.NewRegistrar`、`telemetry.NewMetrics`
 
 ## 维护提示
 
-- 旧文档里的根目录 `web/`、`deployment/`、`config.go`、`AuthJWT.go` 等路径名已经不准确
-- 修改 proto 后用根目录或服务目录的 `make gen`；需要重新编译服务时直接执行 `make build`，修改 Wire 依赖图后执行 `make wire`
-- 不要手动编辑 `openapi.yaml`、`web/src/service/gen/`、`wire_gen.go`
+- 修改 proto 后执行根目录或本目录 `make gen`
+- 不要手动编辑 `openapi.yaml`、`wire_gen.go`、`api/gen/`

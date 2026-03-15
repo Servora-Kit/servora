@@ -1,6 +1,7 @@
 # AGENTS.md - pkg/governance/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 模块目的
 
@@ -27,8 +28,8 @@ pkg/governance/
 
 ## 使用位置
 
-- `app/servora/service/internal/server/server.go` 通过 `registry.NewRegistrar` 与 `telemetry.NewMetrics` 接入
-- `app/servora/service/internal/data/data.go` 通过 `registry.NewDiscovery` 注入服务发现
+- `app/iam/service/internal/server/` 通过 `registry.NewRegistrar` 与 `telemetry.NewMetrics` 接入
+- `app/iam/service/internal/data/data.go` 通过 `registry.NewDiscovery` 注入服务发现
 
 ## 测试
 

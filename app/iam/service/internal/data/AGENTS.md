@@ -1,9 +1,10 @@
-# AGENTS.md - app/servora/service/internal/data/
+# AGENTS.md - app/iam/service/internal/data/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 概览
-数据访问层，包含Ent ORM实现和数据仓库。
+数据访问层，包含 Ent ORM 实现和数据仓库。
 
 ## 结构
 ```

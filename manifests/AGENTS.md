@@ -1,6 +1,7 @@
 # AGENTS.md - manifests/
 
-<!-- Generated: 2026-03-09 | Commit: 1f79cd0 -->
+<!-- Parent: ../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 概览
 统一部署清单，K8s已收敛到 manifests/k8s/。
@@ -26,7 +27,7 @@ manifests/
 | 本地开发环境 | ../docker-compose.yaml + ../docker-compose.dev.yaml | 根目录 make compose.dev |
 | K8s基础设施 | k8s/base/ | etcd/redis/postgres StatefulSet |
 | 服务部署 | k8s/{service}/ | Deployment + Service + ConfigMap |
-| 数据库初始化 | app/servora/service/manifests/ | SQL初始化脚本 |
+| 数据库初始化 | app/iam/service/manifests/（如有） | SQL 初始化脚本 |
 | Postgres 初始化（Compose） | scripts/postgres-init/ | 根 docker-compose 挂载 |
 | 压测脚本 | scripts/ | k6 |
 
@@ -56,6 +57,6 @@ make compose.dev.reset  # 移除开发栈（含数据卷）
 ```
 
 ## 注意事项
-- SQL初始化脚本在 app/servora/service/manifests/ 不在这里
+- SQL 初始化脚本若在服务目录则位于该服务 `manifests/`，不在此目录
 - K8s清单使用 kustomize 管理，不是 Helm
 - 根 `docker-compose.yaml` 仅包含基础设施；Air 热重载开发容器位于根 `docker-compose.dev.yaml`

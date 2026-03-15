@@ -1,6 +1,6 @@
 # AGENTS.md - servora 项目根目录
 
-<!-- Generated: 2026-03-12 | Commit: af6206c | Branch: main -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
 
 ## 项目概览
 
@@ -89,12 +89,12 @@ type(scope): description
 - `app/sayhello/service/`：独立示例服务，包含自己的 `api/` 与运行时目录
 
 ### 前端
-- 目录：`app/servora/service/web/`（如有）
-- 生成的 TypeScript HTTP 客户端输出到对应服务的 `web/src/service/gen/`
+- 目录：各服务下 `web/`（如有）
+- 生成的 TypeScript HTTP 客户端输出到该服务 `web/src/service/gen/`
 
 ### 部署
 - K8s 基础设施：`manifests/k8s/base/`
-- 服务清单：`manifests/k8s/servora/`、`manifests/k8s/sayhello/`
+- 服务清单：`manifests/k8s/iam/`、`manifests/k8s/sayhello/`
 
 ## 常用命令
 
