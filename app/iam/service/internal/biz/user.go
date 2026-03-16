@@ -192,16 +192,24 @@ func (uc *UserUsecase) DeleteUser(ctx context.Context, user *entity.User) (bool,
 }
 
 func (uc *UserUsecase) PurgeUser(ctx context.Context, user *entity.User) (bool, error) {
-	uc.purgeUserFGA(ctx, user.ID)
-
-	if err := uc.authnRepo.DeleteUserRefreshTokens(ctx, user.ID); err != nil {
-		uc.log.Warnf("delete user refresh tokens: %v", err)
-	}
+	uc.log.Infof("PurgeUser start: user_id=%s", user.ID)
 
 	if err := uc.repo.PurgeCascade(ctx, user.ID); err != nil {
-		uc.log.Errorf("purge user failed: %v", err)
+		uc.log.Errorf("PurgeUser PurgeCascade failed: user_id=%s err=%v", user.ID, err)
 		return false, userpb.ErrorDeleteUserFailed("failed to delete user")
 	}
+	uc.log.Infof("PurgeUser PurgeCascade done: user_id=%s", user.ID)
+
+	uc.purgeUserFGA(ctx, user.ID)
+	uc.log.Infof("PurgeUser FGA cleanup done: user_id=%s", user.ID)
+
+	if err := uc.authnRepo.DeleteUserRefreshTokens(ctx, user.ID); err != nil {
+		uc.log.Warnf("PurgeUser Redis cleanup partial failure: user_id=%s err=%v", user.ID, err)
+	} else {
+		uc.log.Infof("PurgeUser Redis cleanup done: user_id=%s", user.ID)
+	}
+
+	uc.log.Infof("PurgeUser complete: user_id=%s", user.ID)
 	return true, nil
 }
 

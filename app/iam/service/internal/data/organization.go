@@ -13,8 +13,6 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/project"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/projectmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
@@ -186,31 +184,7 @@ func (r *organizationRepo) PurgeCascade(ctx context.Context, id string) error {
 		return fmt.Errorf("invalid organization ID: %w", err)
 	}
 	return r.data.RunInEntTx(ctx, func(txCtx context.Context) error {
-		c := r.data.Ent(txCtx)
-		projIDs, err := c.Project.Query().
-			Where(project.OrganizationIDEQ(oid)).
-			IDs(txCtx)
-		if err != nil {
-			return err
-		}
-		if len(projIDs) > 0 {
-			if _, err := c.ProjectMember.Delete().
-				Where(projectmember.ProjectIDIn(projIDs...)).
-				Exec(txCtx); err != nil {
-				return err
-			}
-			if _, err := c.Project.Delete().
-				Where(project.IDIn(projIDs...)).
-				Exec(txCtx); err != nil {
-				return err
-			}
-		}
-		if _, err := c.OrganizationMember.Delete().
-			Where(organizationmember.OrganizationIDEQ(oid)).
-			Exec(txCtx); err != nil {
-			return err
-		}
-		return c.Organization.DeleteOneID(oid).Exec(txCtx)
+		return purgeOrganizationInTx(txCtx, r.data.Ent(txCtx), oid)
 	})
 }
 

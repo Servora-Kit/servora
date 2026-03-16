@@ -104,6 +104,23 @@ func (r *userRepo) PurgeCascade(ctx context.Context, id string) error {
 	}
 	return r.data.RunInEntTx(ctx, func(txCtx context.Context) error {
 		c := r.data.Ent(txCtx)
+
+		ownedMembers, err := c.OrganizationMember.Query().
+			Where(
+				organizationmember.UserIDEQ(uid),
+				organizationmember.RoleEQ("owner"),
+			).
+			All(txCtx)
+		if err != nil {
+			return fmt.Errorf("query owned organizations: %w", err)
+		}
+
+		for _, m := range ownedMembers {
+			if err := purgeOrganizationInTx(txCtx, c, m.OrganizationID); err != nil {
+				return fmt.Errorf("purge owned organization %s: %w", m.OrganizationID, err)
+			}
+		}
+
 		if _, err := c.OrganizationMember.Delete().
 			Where(organizationmember.UserIDEQ(uid)).
 			Exec(txCtx); err != nil {
