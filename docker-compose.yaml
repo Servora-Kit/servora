@@ -170,9 +170,31 @@ services:
       retries: 5
       start_period: 5s
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "18080:8080"
+      - "18081:8081"
       - "3000:3000"
+    networks:
+      - servora-network
+
+  traefik:
+    image: traefik:v3.6
+    container_name: servora_traefik
+    restart: unless-stopped
+    depends_on:
+      consul:
+        condition: service_healthy
+    command:
+      - --configFile=/etc/traefik/traefik.yaml
+    ports:
+      - "8080:80"
+      - "8081:8080"
+    volumes:
+      - ./manifests/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - servora-network
 

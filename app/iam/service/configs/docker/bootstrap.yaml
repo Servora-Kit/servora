@@ -64,6 +64,15 @@ registry:
     addr: "consul:8500"
     scheme: "http"
     datacenter: "dc1"
+    tags:
+      - "traefik.enable=true"
+      - "traefik.http.routers.iam-api.rule=PathPrefix(`/v1`)"
+      - "traefik.http.routers.iam-api.entrypoints=web"
+      - "traefik.http.routers.iam-api.service=iam-http"
+      - "traefik.http.routers.iam-healthz.rule=Path(`/healthz`)"
+      - "traefik.http.routers.iam-healthz.entrypoints=web"
+      - "traefik.http.routers.iam-healthz.service=iam-http"
+      - "traefik.http.services.iam-http.loadbalancer.server.port=8000"
 
 discovery:
   consul:

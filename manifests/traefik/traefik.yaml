@@ -1,0 +1,22 @@
+api:
+  insecure: true
+ping: {}
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  consulCatalog:
+    endpoint:
+      address: consul:8500
+      scheme: http
+      datacenter: dc1
+    exposedByDefault: false
+    refreshInterval: 5s
+    prefix: traefik
+
+log:
+  level: INFO
+
+accessLog: {}
