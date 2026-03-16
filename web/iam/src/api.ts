@@ -1,5 +1,6 @@
 import { env } from '#/env'
-import { createIamClients, ApiError, type TokenStore } from '#/service/request/clients'
+import { createIamClients } from '#/service/request/clients'
+import type { ApiError, TokenStore } from '#/service/request/clients'
 import { scopeStore, setCurrentOrganizationId, orgIdFromPath } from '#/stores/scope'
 
 const ACCESS_TOKEN_KEY = 'iam_access_token'
