@@ -18,3 +18,13 @@
 - **放置位置**：按服务设 e2e，不放在仓库根。例如 IAM 的 e2e 放在 `app/iam/service/e2e/`（与 `cmd/`、`internal/` 平级），包名 `e2e`。若后续有跨多服务的整条链路验证，再在根目录增加 `e2e/`。
 - **覆盖范围**：Authorization Code 全流程（创建 Application → /authorize → 登录 → 拿 code 换 token → /userinfo、/oauth/introspect）；Client Credentials 换 token；Discovery `/.well-known/openid-configuration`。依赖可用 testcontainers（Postgres + Redis）或复用 `make compose.dev` 后指向依赖地址。
 - **何时正式进行**：在 **P1 OIDC 接口与授权流程基本稳定、不再做大改** 时落地（例如登录页基地址、前端接管登录等方案定稿并实现后）。可约定为「准备将 IAM 纳入正式交付或 CI 回归前」必须通过 e2e；日常开发仍以单元测试与本地手动验证为主。Makefile 可提供 `make test.e2e`（或需显式环境变量开启），默认不参与 `make test`，避免 CI 强依赖 compose/容器。
+
+---
+
+## IAM 前端 authStore 会话持久化优化
+
+- **背景**：当前 `authStore` 仅持久化 token，不持久化 `currentUser`。刷新页面后 Sidebar 的用户卡片和角色判断（超管/租户管理员）需要等 API 返回才能渲染，导致短暂空白闪烁。参考 Kemate 的做法（`useAuthStore` 将 `currentUser` 和 `capabilities` 也序列化到 localStorage）。
+- **待办**：
+  1. **`currentUser` 持久化**：在 `setUser` 时将用户信息 JSON 序列化写入 localStorage，`authStore` 初始化时从 localStorage 反序列化恢复。刷新页面后 Sidebar 可立即渲染用户名、邮箱、角色，无需等待 API。
+  2. **防重设值**：`setTokens` 增加与当前值对比，相同时跳过写入，减少不必要的 store 更新和 localStorage 写入。
+  3. **Capabilities 缓存（后续）**：等实际接入 OpenFGA 权限驱动导航后，再将 capabilities map 持久化到 localStorage，使刷新页面后导航菜单可立即渲染。

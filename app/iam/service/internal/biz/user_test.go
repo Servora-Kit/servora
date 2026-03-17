@@ -85,7 +85,7 @@ func (r *fakeOrgRepo) GetByID(context.Context, string) (*entity.Organization, er
 func (r *fakeOrgRepo) GetByIDs(context.Context, string, []string, int32, int32) ([]*entity.Organization, int64, error) {
 	return nil, 0, nil
 }
-func (r *fakeOrgRepo) GetBySlug(context.Context, string) (*entity.Organization, error) {
+func (r *fakeOrgRepo) GetBySlug(_ context.Context, _, _ string) (*entity.Organization, error) {
 	return nil, nil
 }
 func (r *fakeOrgRepo) ListByUserID(context.Context, string, string, int32, int32) ([]*entity.Organization, int64, error) {

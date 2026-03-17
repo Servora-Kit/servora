@@ -64,11 +64,16 @@ func (r *organizationRepo) GetByID(ctx context.Context, id string) (*entity.Orga
 	return orgMapper.Map(org), nil
 }
 
-func (r *organizationRepo) GetBySlug(ctx context.Context, slug string) (*entity.Organization, error) {
-	org, err := r.data.Ent(ctx).Organization.Query().
+func (r *organizationRepo) GetBySlug(ctx context.Context, tenantID, slug string) (*entity.Organization, error) {
+	q := r.data.Ent(ctx).Organization.Query().
 		Where(organization.SlugEQ(slug)).
-		Where(organization.DeletedAtIsNil()).
-		Only(ctx)
+		Where(organization.DeletedAtIsNil())
+	if tenantID != "" {
+		if tid, err := uuid.Parse(tenantID); err == nil {
+			q = q.Where(organization.TenantIDEQ(tid))
+		}
+	}
+	org, err := q.Only(ctx)
 	if err != nil {
 		return nil, err
 	}

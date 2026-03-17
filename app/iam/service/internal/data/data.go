@@ -9,6 +9,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/migrate"
 
 	entdrv "github.com/Servora-Kit/servora/pkg/ent"
 	"github.com/Servora-Kit/servora/pkg/governance/registry"
@@ -96,7 +97,7 @@ func NewDBClient(driver *entsql.Driver, app *conf.App, l logger.Logger) (*ent.Cl
 	ec := ent.NewClient(opts...)
 
 	ctx := context.Background()
-	if err := ec.Schema.Create(ctx); err != nil {
+	if err := ec.Schema.Create(ctx, migrate.WithDropIndex(true)); err != nil {
 		return nil, errors.New("ent auto-migrate: " + err.Error())
 	}
 

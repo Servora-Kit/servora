@@ -6,6 +6,7 @@ import (
 	orgpb "github.com/Servora-Kit/servora/api/gen/go/organization/service/v1"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
+	"github.com/Servora-Kit/servora/pkg/actor"
 	"github.com/Servora-Kit/servora/pkg/pagination"
 )
 
@@ -20,10 +21,12 @@ func NewOrganizationService(uc *biz.OrganizationUsecase) *OrganizationService {
 }
 
 func (s *OrganizationService) CreateOrganization(ctx context.Context, req *orgpb.CreateOrganizationRequest) (*orgpb.CreateOrganizationResponse, error) {
+	tenantID, _ := actor.TenantIDFromContext(ctx)
 	org, err := s.uc.Create(ctx, &entity.Organization{
 		Name:        req.Name,
 		Slug:        req.Slug,
 		DisplayName: req.DisplayName,
+		TenantID:    tenantID,
 	})
 	if err != nil {
 		return nil, err

@@ -165,7 +165,7 @@ gen: api openapi wire ent
 	@echo "$(GREEN)✓ All code generated$(RESET)"
 
 # generate protobuf api code (go + ts)
-api: api-go api-authz
+api: api-go api-authz api-ts
 	@echo "$(GREEN)✓ Protobuf code generated $(RESET)"
 
 # generate protobuf api go code

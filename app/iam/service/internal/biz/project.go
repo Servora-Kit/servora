@@ -9,6 +9,7 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
 	"github.com/Servora-Kit/servora/pkg/actor"
+	"github.com/Servora-Kit/servora/pkg/helpers"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
@@ -57,6 +58,10 @@ func (uc *ProjectUsecase) Create(ctx context.Context, p *entity.Project) (*entit
 		return nil, projectpb.ErrorProjectCreateFailed("user not authenticated")
 	}
 	userID := a.ID()
+
+	if p.Slug == "" {
+		p.Slug = helpers.Slugify(p.Name)
+	}
 
 	created, err := uc.repo.Create(ctx, p)
 	if err != nil {

@@ -59,9 +59,8 @@ message OrganizationMemberInfo {
 message CreateOrganizationRequest {
   string name = 1 [(buf.validate.field).string = {min_len: 2, max_len: 128}];
   string slug = 2 [(buf.validate.field).string = {
-    min_len: 2,
     max_len: 128,
-    pattern: "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+    pattern: "^$|^[a-z0-9][a-z0-9-]*[a-z0-9]$"
   }];
   string display_name = 3;
 }

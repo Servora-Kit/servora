@@ -45,7 +45,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "name", Type: field.TypeString, Size: 128},
-		{Name: "slug", Type: field.TypeString, Unique: true, Size: 128},
+		{Name: "slug", Type: field.TypeString, Size: 128},
 		{Name: "display_name", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -62,6 +62,16 @@ var (
 				Columns:    []*schema.Column{OrganizationsColumns[7]},
 				RefColumns: []*schema.Column{TenantsColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "organization_tenant_id_slug",
+				Unique:  true,
+				Columns: []*schema.Column{OrganizationsColumns[7], OrganizationsColumns[3]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "deleted_at IS NULL",
+				},
 			},
 		},
 	}

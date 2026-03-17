@@ -9,6 +9,7 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
 	"github.com/Servora-Kit/servora/pkg/actor"
+	"github.com/Servora-Kit/servora/pkg/helpers"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
@@ -16,7 +17,7 @@ type OrganizationRepo interface {
 	Create(ctx context.Context, org *entity.Organization) (*entity.Organization, error)
 	GetByID(ctx context.Context, id string) (*entity.Organization, error)
 	GetByIDs(ctx context.Context, tenantID string, ids []string, page, pageSize int32) ([]*entity.Organization, int64, error)
-	GetBySlug(ctx context.Context, slug string) (*entity.Organization, error)
+	GetBySlug(ctx context.Context, tenantID, slug string) (*entity.Organization, error)
 	ListByUserID(ctx context.Context, userID, tenantID string, page, pageSize int32) ([]*entity.Organization, int64, error)
 	Update(ctx context.Context, org *entity.Organization) (*entity.Organization, error)
 	Delete(ctx context.Context, id string) error
@@ -58,15 +59,22 @@ func (uc *OrganizationUsecase) Create(ctx context.Context, org *entity.Organizat
 	}
 	userID := a.ID()
 
-	if _, err := uc.repo.GetBySlug(ctx, org.Slug); err == nil {
+	if org.TenantID == "" {
+		return nil, orgpb.ErrorOrganizationCreateFailed("tenant_id is required")
+	}
+
+	if org.Slug == "" {
+		org.Slug = helpers.Slugify(org.Name)
+	}
+	if org.DisplayName == "" {
+		org.DisplayName = org.Name
+	}
+
+	if _, err := uc.repo.GetBySlug(ctx, org.TenantID, org.Slug); err == nil {
 		return nil, orgpb.ErrorOrganizationAlreadyExists("slug '%s' already taken", org.Slug)
 	} else if !ent.IsNotFound(err) {
 		uc.log.Errorf("check slug failed: %v", err)
 		return nil, errors.InternalServer("INTERNAL", "internal error")
-	}
-
-	if org.TenantID == "" {
-		return nil, orgpb.ErrorOrganizationCreateFailed("tenant_id is required")
 	}
 	created, err := uc.repo.Create(ctx, org)
 	if err != nil {

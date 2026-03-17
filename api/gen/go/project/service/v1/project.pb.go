@@ -1359,11 +1359,11 @@ const file_project_service_v1_project_proto_rawDesc = "" +
 	"user_email\x18\x05 \x01(\tR\tuserEmail\x12\x12\n" +
 	"\x04role\x18\x06 \x01(\tR\x04role\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x9c\x01\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x9d\x01\n" +
 	"\x14CreateProjectRequest\x12\x1e\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
-	"\xbaH\ar\x05\x10\x02\x18\x80\x01R\x04name\x12<\n" +
-	"\x04slug\x18\x03 \x01(\tB(\xbaH%r#\x10\x02\x18\x80\x012\x1c^[a-z0-9][a-z0-9-]*[a-z0-9]$R\x04slug\x12 \n" +
+	"\xbaH\ar\x05\x10\x02\x18\x80\x01R\x04name\x12=\n" +
+	"\x04slug\x18\x03 \x01(\tB)\xbaH&r$\x18\x80\x012\x1f^$|^[a-z0-9][a-z0-9-]*[a-z0-9]$R\x04slug\x12 \n" +
 	"\vdescription\x18\x04 \x01(\tR\vdescriptionJ\x04\b\x01\x10\x02\"R\n" +
 	"\x15CreateProjectResponse\x129\n" +
 	"\aproject\x18\x01 \x01(\v2\x1f.project.service.v1.ProjectInfoR\aproject\"-\n" +
