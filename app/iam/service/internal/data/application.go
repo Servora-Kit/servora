@@ -12,6 +12,7 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/predicate"
+	"github.com/Servora-Kit/servora/pkg/ent/scope"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
@@ -56,10 +57,8 @@ func (r *applicationRepo) GetByID(ctx context.Context, orgID, id string) (*entit
 		return nil, fmt.Errorf("invalid application id: %w", err)
 	}
 	query := r.data.Ent(ctx).Application.Query().
-		Where(application.IDEQ(uid), application.DeletedAtIsNil())
-	if oid, err := uuid.Parse(orgID); err == nil {
-		query = query.Where(application.OrganizationIDEQ(oid))
-	}
+		Where(application.IDEQ(uid), application.DeletedAtIsNil()).
+		Where(scope.ByUUID(orgID, application.OrganizationIDEQ)...)
 	a, err := query.Only(ctx)
 	if err != nil {
 		return nil, err
@@ -106,10 +105,10 @@ func (r *applicationRepo) Update(ctx context.Context, orgID string, app *entity.
 	if err != nil {
 		return nil, fmt.Errorf("invalid application id: %w", err)
 	}
-	predicates := []predicate.Application{application.IDEQ(uid), application.DeletedAtIsNil()}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		predicates = append(predicates, application.OrganizationIDEQ(oid))
-	}
+	predicates := append(
+		[]predicate.Application{application.IDEQ(uid), application.DeletedAtIsNil()},
+		scope.ByUUID(orgID, application.OrganizationIDEQ)...,
+	)
 	n, err := r.data.Ent(ctx).Application.Update().
 		Where(predicates...).
 		SetName(app.Name).
@@ -132,10 +131,10 @@ func (r *applicationRepo) Delete(ctx context.Context, orgID, id string) error {
 	if err != nil {
 		return fmt.Errorf("invalid application id: %w", err)
 	}
-	predicates := []predicate.Application{application.IDEQ(uid), application.DeletedAtIsNil()}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		predicates = append(predicates, application.OrganizationIDEQ(oid))
-	}
+	predicates := append(
+		[]predicate.Application{application.IDEQ(uid), application.DeletedAtIsNil()},
+		scope.ByUUID(orgID, application.OrganizationIDEQ)...,
+	)
 	n, err := r.data.Ent(ctx).Application.Update().
 		Where(predicates...).
 		SetDeletedAt(time.Now()).
@@ -154,10 +153,10 @@ func (r *applicationRepo) UpdateClientSecretHash(ctx context.Context, orgID, id 
 	if err != nil {
 		return fmt.Errorf("invalid application id: %w", err)
 	}
-	predicates := []predicate.Application{application.IDEQ(uid), application.DeletedAtIsNil()}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		predicates = append(predicates, application.OrganizationIDEQ(oid))
-	}
+	predicates := append(
+		[]predicate.Application{application.IDEQ(uid), application.DeletedAtIsNil()},
+		scope.ByUUID(orgID, application.OrganizationIDEQ)...,
+	)
 	n, err := r.data.Ent(ctx).Application.Update().
 		Where(predicates...).
 		SetClientSecretHash(hash).

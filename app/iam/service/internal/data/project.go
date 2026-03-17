@@ -15,6 +15,7 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/project"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/projectmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
+	"github.com/Servora-Kit/servora/pkg/ent/scope"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
@@ -56,10 +57,8 @@ func (r *projectRepo) GetByID(ctx context.Context, orgID, id string) (*entity.Pr
 	}
 	q := r.data.Ent(ctx).Project.Query().
 		Where(project.IDEQ(uid)).
-		Where(project.DeletedAtIsNil())
-	if oid, err := uuid.Parse(orgID); err == nil {
-		q = q.Where(project.OrganizationIDEQ(oid))
-	}
+		Where(project.DeletedAtIsNil()).
+		Where(scope.ByUUID(orgID, project.OrganizationIDEQ)...)
 	p, err := q.Only(ctx)
 	if err != nil {
 		return nil, err
@@ -78,10 +77,8 @@ func (r *projectRepo) GetByIDs(ctx context.Context, orgID string, ids []string, 
 	query := r.data.Ent(ctx).Project.Query().
 		Where(project.IDIn(uuids...)).
 		Where(project.DeletedAtIsNil()).
+		Where(scope.ByUUID(orgID, project.OrganizationIDEQ)...).
 		Order(project.ByCreatedAt(sql.OrderDesc()))
-	if oid, err := uuid.Parse(orgID); err == nil {
-		query = query.Where(project.OrganizationIDEQ(oid))
-	}
 
 	total, err := query.Clone().Count(ctx)
 	if err != nil {
@@ -127,10 +124,7 @@ func (r *projectRepo) Update(ctx context.Context, orgID string, p *entity.Projec
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	preds := []predicate.Project{project.IDEQ(uid)}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		preds = append(preds, project.OrganizationIDEQ(oid))
-	}
+	preds := append([]predicate.Project{project.IDEQ(uid)}, scope.ByUUID(orgID, project.OrganizationIDEQ)...)
 
 	b := r.data.Ent(ctx).Project.Update().Where(preds...)
 	if p.Name != "" {
@@ -155,10 +149,7 @@ func (r *projectRepo) Delete(ctx context.Context, orgID, id string) error {
 		return fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	preds := []predicate.Project{project.IDEQ(uid)}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		preds = append(preds, project.OrganizationIDEQ(oid))
-	}
+	preds := append([]predicate.Project{project.IDEQ(uid)}, scope.ByUUID(orgID, project.OrganizationIDEQ)...)
 
 	affected, err := r.data.Ent(ctx).Project.Update().
 		Where(preds...).
@@ -179,10 +170,7 @@ func (r *projectRepo) Purge(ctx context.Context, orgID, id string) error {
 		return fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	preds := []predicate.Project{project.IDEQ(uid)}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		preds = append(preds, project.OrganizationIDEQ(oid))
-	}
+	preds := append([]predicate.Project{project.IDEQ(uid)}, scope.ByUUID(orgID, project.OrganizationIDEQ)...)
 
 	affected, err := r.data.Ent(ctx).Project.Delete().
 		Where(preds...).
@@ -218,10 +206,7 @@ func (r *projectRepo) Restore(ctx context.Context, orgID, id string) (*entity.Pr
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	preds := []predicate.Project{project.IDEQ(uid)}
-	if oid, err := uuid.Parse(orgID); err == nil {
-		preds = append(preds, project.OrganizationIDEQ(oid))
-	}
+	preds := append([]predicate.Project{project.IDEQ(uid)}, scope.ByUUID(orgID, project.OrganizationIDEQ)...)
 
 	affected, err := r.data.Ent(ctx).Project.Update().
 		Where(preds...).
@@ -242,10 +227,8 @@ func (r *projectRepo) GetByIDIncludingDeleted(ctx context.Context, orgID, id str
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 	q := r.data.Ent(ctx).Project.Query().
-		Where(project.IDEQ(uid))
-	if oid, err := uuid.Parse(orgID); err == nil {
-		q = q.Where(project.OrganizationIDEQ(oid))
-	}
+		Where(project.IDEQ(uid)).
+		Where(scope.ByUUID(orgID, project.OrganizationIDEQ)...)
 	p, err := q.Only(ctx)
 	if err != nil {
 		return nil, err

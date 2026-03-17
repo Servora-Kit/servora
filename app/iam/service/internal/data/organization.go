@@ -14,6 +14,7 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
+	"github.com/Servora-Kit/servora/pkg/ent/scope"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
@@ -74,7 +75,7 @@ func (r *organizationRepo) GetBySlug(ctx context.Context, slug string) (*entity.
 	return orgMapper.Map(org), nil
 }
 
-func (r *organizationRepo) GetByIDs(ctx context.Context, ids []string, page, pageSize int32) ([]*entity.Organization, int64, error) {
+func (r *organizationRepo) GetByIDs(ctx context.Context, tenantID string, ids []string, page, pageSize int32) ([]*entity.Organization, int64, error) {
 	uuids := make([]uuid.UUID, 0, len(ids))
 	for _, id := range ids {
 		if uid, e := uuid.Parse(id); e == nil {
@@ -86,6 +87,8 @@ func (r *organizationRepo) GetByIDs(ctx context.Context, ids []string, page, pag
 		Where(organization.IDIn(uuids...)).
 		Where(organization.DeletedAtIsNil()).
 		Order(organization.ByCreatedAt(sql.OrderDesc()))
+
+	query = query.Where(scope.ByUUID(tenantID, organization.TenantIDEQ)...)
 
 	total, err := query.Clone().Count(ctx)
 	if err != nil {
@@ -127,9 +130,7 @@ func (r *organizationRepo) ListByUserID(ctx context.Context, userID, tenantID st
 		Where(organization.DeletedAtIsNil()).
 		Order(organization.ByCreatedAt(sql.OrderDesc()))
 
-	if tid, parseErr := uuid.Parse(tenantID); parseErr == nil {
-		query = query.Where(organization.TenantIDEQ(tid))
-	}
+	query = query.Where(scope.ByUUID(tenantID, organization.TenantIDEQ)...)
 
 	total, err := query.Clone().Count(ctx)
 	if err != nil {
