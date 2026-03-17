@@ -8,8 +8,6 @@ importers:
 
   .: {}
 
-  api/gen/ts: {}
-
   api/ts-client: {}
 
   web/iam:
@@ -22,7 +20,7 @@ importers:
         version: 10.43.0(react@19.2.4)(rollup@4.59.0)
       '@servora/api-client':
         specifier: workspace:*
-        version: link:../../api/gen/ts
+        version: link:../../api/ts-client
       '@t3-oss/env-core':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
