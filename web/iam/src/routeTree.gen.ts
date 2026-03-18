@@ -13,11 +13,15 @@ import { Route as PlatformRouteRouteImport } from './routes/_platform/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
+import { Route as AuthRegisterSuccessRouteImport } from './routes/_auth/register-success'
+import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthCallbackRouteImport } from './routes/_auth/callback'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as PlatformTenantsIndexRouteImport } from './routes/_platform/tenants/index'
 import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
+import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppOrganizationsIndexRouteImport } from './routes/_app/organizations/index'
 import { Route as AppApplicationsIndexRouteImport } from './routes/_app/applications/index'
 import { Route as AppUsersUserIdRouteImport } from './routes/_app/users/$userId'
@@ -47,6 +51,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthRegisterSuccessRoute = AuthRegisterSuccessRouteImport.update({
+  id: '/register-success',
+  path: '/register-success',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -70,6 +89,11 @@ const PlatformTenantsIndexRoute = PlatformTenantsIndexRouteImport.update({
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppOrganizationsIndexRoute = AppOrganizationsIndexRouteImport.update({
@@ -138,12 +162,16 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/callback': typeof AuthCallbackRoute
   '/login': typeof AuthLoginRoute
+  '/register': typeof AuthRegisterRoute
+  '/register-success': typeof AuthRegisterSuccessRoute
+  '/verify-email': typeof AuthVerifyEmailRoute
   '/applications/$appId': typeof AppApplicationsAppIdRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/users/$userId': typeof AppUsersUserIdRoute
   '/applications/': typeof AppApplicationsIndexRoute
   '/organizations/': typeof AppOrganizationsIndexRoute
+  '/settings/': typeof AppSettingsIndexRoute
   '/users/': typeof AppUsersIndexRoute
   '/tenants/': typeof PlatformTenantsIndexRoute
   '/organizations/$orgId/members': typeof AppOrganizationsOrgIdMembersRoute
@@ -157,12 +185,16 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/callback': typeof AuthCallbackRoute
   '/login': typeof AuthLoginRoute
+  '/register': typeof AuthRegisterRoute
+  '/register-success': typeof AuthRegisterSuccessRoute
+  '/verify-email': typeof AuthVerifyEmailRoute
   '/applications/$appId': typeof AppApplicationsAppIdRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/users/$userId': typeof AppUsersUserIdRoute
   '/applications': typeof AppApplicationsIndexRoute
   '/organizations': typeof AppOrganizationsIndexRoute
+  '/settings': typeof AppSettingsIndexRoute
   '/users': typeof AppUsersIndexRoute
   '/tenants': typeof PlatformTenantsIndexRoute
   '/organizations/$orgId/members': typeof AppOrganizationsOrgIdMembersRoute
@@ -180,12 +212,16 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/callback': typeof AuthCallbackRoute
   '/_auth/login': typeof AuthLoginRoute
+  '/_auth/register': typeof AuthRegisterRoute
+  '/_auth/register-success': typeof AuthRegisterSuccessRoute
+  '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/_app/applications/$appId': typeof AppApplicationsAppIdRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/users/$userId': typeof AppUsersUserIdRoute
   '/_app/applications/': typeof AppApplicationsIndexRoute
   '/_app/organizations/': typeof AppOrganizationsIndexRoute
+  '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
   '/_platform/tenants/': typeof PlatformTenantsIndexRoute
   '/_app/organizations/$orgId/members': typeof AppOrganizationsOrgIdMembersRoute
@@ -201,12 +237,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/callback'
     | '/login'
+    | '/register'
+    | '/register-success'
+    | '/verify-email'
     | '/applications/$appId'
     | '/settings/profile'
     | '/settings/security'
     | '/users/$userId'
     | '/applications/'
     | '/organizations/'
+    | '/settings/'
     | '/users/'
     | '/tenants/'
     | '/organizations/$orgId/members'
@@ -220,12 +260,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/callback'
     | '/login'
+    | '/register'
+    | '/register-success'
+    | '/verify-email'
     | '/applications/$appId'
     | '/settings/profile'
     | '/settings/security'
     | '/users/$userId'
     | '/applications'
     | '/organizations'
+    | '/settings'
     | '/users'
     | '/tenants'
     | '/organizations/$orgId/members'
@@ -242,12 +286,16 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_auth/callback'
     | '/_auth/login'
+    | '/_auth/register'
+    | '/_auth/register-success'
+    | '/_auth/verify-email'
     | '/_app/applications/$appId'
     | '/_app/settings/profile'
     | '/_app/settings/security'
     | '/_app/users/$userId'
     | '/_app/applications/'
     | '/_app/organizations/'
+    | '/_app/settings/'
     | '/_app/users/'
     | '/_platform/tenants/'
     | '/_app/organizations/$orgId/members'
@@ -294,6 +342,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/verify-email': {
+      id: '/_auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/register-success': {
+      id: '/_auth/register-success'
+      path: '/register-success'
+      fullPath: '/register-success'
+      preLoaderRoute: typeof AuthRegisterSuccessRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/register': {
+      id: '/_auth/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
@@ -327,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users/'
       preLoaderRoute: typeof AppUsersIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/settings/': {
+      id: '/_app/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/organizations/': {
@@ -417,6 +493,7 @@ interface AppRouteRouteChildren {
   AppUsersUserIdRoute: typeof AppUsersUserIdRoute
   AppApplicationsIndexRoute: typeof AppApplicationsIndexRoute
   AppOrganizationsIndexRoute: typeof AppOrganizationsIndexRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppOrganizationsOrgIdMembersRoute: typeof AppOrganizationsOrgIdMembersRoute
   AppOrganizationsOrgIdSettingsRoute: typeof AppOrganizationsOrgIdSettingsRoute
@@ -431,6 +508,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppUsersUserIdRoute: AppUsersUserIdRoute,
   AppApplicationsIndexRoute: AppApplicationsIndexRoute,
   AppOrganizationsIndexRoute: AppOrganizationsIndexRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppOrganizationsOrgIdMembersRoute: AppOrganizationsOrgIdMembersRoute,
   AppOrganizationsOrgIdSettingsRoute: AppOrganizationsOrgIdSettingsRoute,
@@ -444,11 +522,17 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 interface AuthRouteRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthRegisterSuccessRoute: typeof AuthRegisterSuccessRoute
+  AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
+  AuthRegisterSuccessRoute: AuthRegisterSuccessRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(

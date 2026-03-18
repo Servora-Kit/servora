@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_auth')({
 function AuthLayout() {
   return (
     <div className="flex min-h-dvh">
-      <div className="relative hidden w-[48%] flex-col items-center justify-center bg-gradient-to-br from-primary/90 via-primary to-primary/80 lg:flex">
+      <div className="relative hidden w-[48%] flex-col items-center justify-center bg-linear-to-br from-primary/90 via-primary to-primary/80 lg:flex">
         <div className="relative z-10 flex flex-col items-center gap-4 text-center">
           <div className="flex size-16 items-center justify-center rounded-2xl bg-white/15 text-white text-2xl font-bold backdrop-blur-sm">
             S

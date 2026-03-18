@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -21,10 +21,29 @@ function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [emailNotVerified, setEmailNotVerified] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendMsg, setResendMsg] = useState('')
+
+  async function handleResendVerification() {
+    if (!email) return
+    setResending(true)
+    setResendMsg('')
+    try {
+      await iamClients.authn.RequestEmailVerification({ email })
+      setResendMsg('验证邮件已发送，请检查收件箱')
+    } catch {
+      setResendMsg('发送失败，请稍后重试')
+    } finally {
+      setResending(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setEmailNotVerified(false)
+    setResendMsg('')
     setLoading(true)
 
     try {
@@ -64,8 +83,13 @@ function LoginPage() {
       const target = redirectTo || '/dashboard'
       void navigate({ to: target })
     } catch (err: unknown) {
-      const apiErr = err as { responseBody?: { message?: string } }
-      setError(apiErr.responseBody?.message ?? '登录失败，请检查邮箱和密码')
+      const apiErr = err as { responseBody?: { message?: string; reason?: string } }
+      if (apiErr.responseBody?.reason === 'EMAIL_NOT_VERIFIED') {
+        setEmailNotVerified(true)
+        setError('')
+      } else {
+        setError(apiErr.responseBody?.message ?? '登录失败，请检查邮箱和密码')
+      }
     } finally {
       setLoading(false)
     }
@@ -81,6 +105,22 @@ function LoginPage() {
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {emailNotVerified && (
+        <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <p className="font-medium">邮箱尚未验证</p>
+          <p className="mt-1">请先验证邮箱后再登录。</p>
+          {resendMsg && <p className="mt-2 text-muted-foreground">{resendMsg}</p>}
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resending}
+            className="mt-2 text-primary hover:underline disabled:opacity-50"
+          >
+            {resending ? '发送中...' : '重新发送验证邮件'}
+          </button>
         </div>
       )}
 
@@ -116,6 +156,13 @@ function LoginPage() {
           {loading ? '登录中...' : '登录'}
         </Button>
       </form>
+
+      <p className="text-center text-sm text-muted-foreground">
+        没有账号？{' '}
+        <Link to="/register" className="font-medium text-primary hover:underline">
+          立即注册
+        </Link>
+      </p>
     </div>
   )
 }
