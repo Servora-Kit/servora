@@ -123,6 +123,52 @@ func (m *OrganizationInfo) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for Type
+
+	// no validation rules for Sort
+
+	for idx, item := range m.GetChildren() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, OrganizationInfoValidationError{
+						field:  fmt.Sprintf("Children[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, OrganizationInfoValidationError{
+						field:  fmt.Sprintf("Children[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return OrganizationInfoValidationError{
+					field:  fmt.Sprintf("Children[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.ParentId != nil {
+		// no validation rules for ParentId
+	}
+
+	if m.LeaderUserId != nil {
+		// no validation rules for LeaderUserId
+	}
+
 	if len(errors) > 0 {
 		return OrganizationInfoMultiError(errors)
 	}
@@ -371,6 +417,14 @@ func (m *CreateOrganizationRequest) validate(all bool) error {
 	// no validation rules for Slug
 
 	// no validation rules for DisplayName
+
+	// no validation rules for Type
+
+	// no validation rules for Sort
+
+	if m.ParentId != nil {
+		// no validation rules for ParentId
+	}
 
 	if len(errors) > 0 {
 		return CreateOrganizationRequestMultiError(errors)
@@ -1114,6 +1168,246 @@ var _ interface {
 	ErrorName() string
 } = ListOrganizationsResponseValidationError{}
 
+// Validate checks the field values on ListOrganizationTreeRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListOrganizationTreeRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListOrganizationTreeRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListOrganizationTreeRequestMultiError, or nil if none found.
+func (m *ListOrganizationTreeRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListOrganizationTreeRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ListOrganizationTreeRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListOrganizationTreeRequestMultiError is an error wrapping multiple
+// validation errors returned by ListOrganizationTreeRequest.ValidateAll() if
+// the designated constraints aren't met.
+type ListOrganizationTreeRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListOrganizationTreeRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListOrganizationTreeRequestMultiError) AllErrors() []error { return m }
+
+// ListOrganizationTreeRequestValidationError is the validation error returned
+// by ListOrganizationTreeRequest.Validate if the designated constraints
+// aren't met.
+type ListOrganizationTreeRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListOrganizationTreeRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListOrganizationTreeRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListOrganizationTreeRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListOrganizationTreeRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListOrganizationTreeRequestValidationError) ErrorName() string {
+	return "ListOrganizationTreeRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListOrganizationTreeRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListOrganizationTreeRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListOrganizationTreeRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListOrganizationTreeRequestValidationError{}
+
+// Validate checks the field values on ListOrganizationTreeResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListOrganizationTreeResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListOrganizationTreeResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListOrganizationTreeResponseMultiError, or nil if none found.
+func (m *ListOrganizationTreeResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListOrganizationTreeResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetRoots() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListOrganizationTreeResponseValidationError{
+						field:  fmt.Sprintf("Roots[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListOrganizationTreeResponseValidationError{
+						field:  fmt.Sprintf("Roots[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListOrganizationTreeResponseValidationError{
+					field:  fmt.Sprintf("Roots[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListOrganizationTreeResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListOrganizationTreeResponseMultiError is an error wrapping multiple
+// validation errors returned by ListOrganizationTreeResponse.ValidateAll() if
+// the designated constraints aren't met.
+type ListOrganizationTreeResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListOrganizationTreeResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListOrganizationTreeResponseMultiError) AllErrors() []error { return m }
+
+// ListOrganizationTreeResponseValidationError is the validation error returned
+// by ListOrganizationTreeResponse.Validate if the designated constraints
+// aren't met.
+type ListOrganizationTreeResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListOrganizationTreeResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListOrganizationTreeResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListOrganizationTreeResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListOrganizationTreeResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListOrganizationTreeResponseValidationError) ErrorName() string {
+	return "ListOrganizationTreeResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListOrganizationTreeResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListOrganizationTreeResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListOrganizationTreeResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListOrganizationTreeResponseValidationError{}
+
 // Validate checks the field values on UpdateOrganizationRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1141,6 +1435,18 @@ func (m *UpdateOrganizationRequest) validate(all bool) error {
 	// no validation rules for Name
 
 	// no validation rules for DisplayName
+
+	// no validation rules for Type
+
+	// no validation rules for Sort
+
+	if m.ParentId != nil {
+		// no validation rules for ParentId
+	}
+
+	if m.LeaderUserId != nil {
+		// no validation rules for LeaderUserId
+	}
 
 	if len(errors) > 0 {
 		return UpdateOrganizationRequestMultiError(errors)

@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package iam.service.v1;
+
+import "google/api/annotations.proto";
+import "authz/service/v1/authz.proto";
+import "dict/service/v1/dict.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/iam/service/v1;iampb";
+
+// DictService manages system-level dictionary types and items (platform admin only for writes).
+service DictService {
+  // ── DictType ────────────────────────────────────────────────────────────────
+
+  rpc ListDictTypes(dict.service.v1.ListDictTypesRequest)
+      returns (dict.service.v1.ListDictTypesResponse) {
+    option (google.api.http) = {get: "/v1/dict/types"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc GetDictType(dict.service.v1.GetDictTypeRequest)
+      returns (dict.service.v1.GetDictTypeResponse) {
+    option (google.api.http) = {get: "/v1/dict/types/{id_or_code}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc CreateDictType(dict.service.v1.CreateDictTypeRequest)
+      returns (dict.service.v1.CreateDictTypeResponse) {
+    option (google.api.http) = {
+      post: "/v1/dict/types"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc UpdateDictType(dict.service.v1.UpdateDictTypeRequest)
+      returns (dict.service.v1.UpdateDictTypeResponse) {
+    option (google.api.http) = {
+      put: "/v1/dict/types/{id}"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc DeleteDictType(dict.service.v1.DeleteDictTypeRequest)
+      returns (dict.service.v1.DeleteDictTypeResponse) {
+    option (google.api.http) = {delete: "/v1/dict/types/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  // ── DictItem ────────────────────────────────────────────────────────────────
+
+  rpc ListDictItems(dict.service.v1.ListDictItemsRequest)
+      returns (dict.service.v1.ListDictItemsResponse) {
+    option (google.api.http) = {get: "/v1/dict/items"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc CreateDictItem(dict.service.v1.CreateDictItemRequest)
+      returns (dict.service.v1.CreateDictItemResponse) {
+    option (google.api.http) = {
+      post: "/v1/dict/items"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc UpdateDictItem(dict.service.v1.UpdateDictItemRequest)
+      returns (dict.service.v1.UpdateDictItemResponse) {
+    option (google.api.http) = {
+      put: "/v1/dict/items/{id}"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc DeleteDictItem(dict.service.v1.DeleteDictItemRequest)
+      returns (dict.service.v1.DeleteDictItemResponse) {
+    option (google.api.http) = {delete: "/v1/dict/items/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+}

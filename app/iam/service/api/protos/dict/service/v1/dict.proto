@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+package dict.service.v1;
+
+import "buf/validate/validate.proto";
+import "errors/errors.proto";
+import "google/protobuf/timestamp.proto";
+import "pagination/v1/pagination.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/dict/service/v1;dictpb";
+option java_multiple_files = true;
+option java_outer_classname = "DictProtoV1";
+option java_package = "dev.servora.api.dict.v1";
+
+enum ErrorReason {
+  option (errors.default_code) = 500;
+  DICT_TYPE_NOT_FOUND = 0 [(errors.code) = 404];
+  DICT_TYPE_ALREADY_EXISTS = 1 [(errors.code) = 409];
+  DICT_TYPE_CREATE_FAILED = 2 [(errors.code) = 500];
+  DICT_TYPE_UPDATE_FAILED = 3 [(errors.code) = 500];
+  DICT_TYPE_DELETE_FAILED = 4 [(errors.code) = 500];
+  DICT_ITEM_NOT_FOUND = 5 [(errors.code) = 404];
+  DICT_ITEM_ALREADY_EXISTS = 6 [(errors.code) = 409];
+  DICT_ITEM_CREATE_FAILED = 7 [(errors.code) = 500];
+  DICT_ITEM_UPDATE_FAILED = 8 [(errors.code) = 500];
+  DICT_ITEM_DELETE_FAILED = 9 [(errors.code) = 500];
+}
+
+service DictService {
+  // DictType CRUD
+  rpc ListDictTypes(ListDictTypesRequest) returns (ListDictTypesResponse);
+  rpc GetDictType(GetDictTypeRequest) returns (GetDictTypeResponse);
+  rpc CreateDictType(CreateDictTypeRequest) returns (CreateDictTypeResponse);
+  rpc UpdateDictType(UpdateDictTypeRequest) returns (UpdateDictTypeResponse);
+  rpc DeleteDictType(DeleteDictTypeRequest) returns (DeleteDictTypeResponse);
+  // DictItem CRUD
+  rpc ListDictItems(ListDictItemsRequest) returns (ListDictItemsResponse);
+  rpc CreateDictItem(CreateDictItemRequest) returns (CreateDictItemResponse);
+  rpc UpdateDictItem(UpdateDictItemRequest) returns (UpdateDictItemResponse);
+  rpc DeleteDictItem(DeleteDictItemRequest) returns (DeleteDictItemResponse);
+}
+
+message DictTypeInfo {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  optional string description = 4;
+  string status = 5;
+  int32 sort = 6;
+  repeated DictItemInfo items = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message DictItemInfo {
+  string id = 1;
+  string dict_type_id = 2;
+  string label = 3;
+  string value = 4;
+  optional string color_tag = 5;
+  int32 sort = 6;
+  string status = 7;
+  bool is_default = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// ── DictType ──────────────────────────────────────────────────────────────────
+
+message ListDictTypesRequest {
+  pagination.v1.PaginationRequest pagination = 1;
+  optional string status = 2;
+}
+
+message ListDictTypesResponse {
+  repeated DictTypeInfo dict_types = 1;
+  pagination.v1.PaginationResponse pagination = 2;
+}
+
+message GetDictTypeRequest {
+  // Accepts either UUID (id) or code string
+  string id_or_code = 1;
+}
+
+message GetDictTypeResponse {
+  DictTypeInfo dict_type = 1;
+}
+
+message CreateDictTypeRequest {
+  string code = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string name = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  optional string description = 3;
+  int32 sort = 4;
+}
+
+message CreateDictTypeResponse {
+  DictTypeInfo dict_type = 1;
+}
+
+message UpdateDictTypeRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  optional string name = 2;
+  optional string description = 3;
+  optional int32 sort = 4;
+  optional string status = 5;
+}
+
+message UpdateDictTypeResponse {
+  DictTypeInfo dict_type = 1;
+}
+
+message DeleteDictTypeRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteDictTypeResponse {
+  bool success = 1;
+}
+
+// ── DictItem ──────────────────────────────────────────────────────────────────
+
+message ListDictItemsRequest {
+  // Filter by type UUID or code
+  string dict_type_id_or_code = 1;
+  optional string status = 2;
+}
+
+message ListDictItemsResponse {
+  repeated DictItemInfo items = 1;
+}
+
+message CreateDictItemRequest {
+  string dict_type_id = 1 [(buf.validate.field).string.uuid = true];
+  string label = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string value = 3 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  optional string color_tag = 4;
+  int32 sort = 5;
+  bool is_default = 6;
+}
+
+message CreateDictItemResponse {
+  DictItemInfo item = 1;
+}
+
+message UpdateDictItemRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  optional string label = 2;
+  optional string color_tag = 3;
+  optional int32 sort = 4;
+  optional string status = 5;
+  optional bool is_default = 6;
+}
+
+message UpdateDictItemResponse {
+  DictItemInfo item = 1;
+}
+
+message DeleteDictItemRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteDictItemResponse {
+  bool success = 1;
+}

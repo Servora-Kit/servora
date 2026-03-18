@@ -6,7 +6,7 @@ managed:
     enabled: false
 
 # Gateway (HTTP) + domain protos referenced by gateway (for data models).
-# Only packages used by IAM HTTP APIs are included.
+# All packages exposed via IAM HTTP APIs are included.
 inputs:
     - directory: app/iam/service/api/protos
       paths:
@@ -14,9 +14,9 @@ inputs:
           - app/iam/service/api/protos/authn/service/v1
           - app/iam/service/api/protos/user/service/v1
           - app/iam/service/api/protos/organization/service/v1
-          - app/iam/service/api/protos/project/service/v1
           - app/iam/service/api/protos/application/service/v1
-          - app/iam/service/api/protos/test/service/v1
+          - app/iam/service/api/protos/tenant/service/v1
+          - app/iam/service/api/protos/rbac/service/v1
 
 plugins:
     - local: protoc-gen-typescript-http

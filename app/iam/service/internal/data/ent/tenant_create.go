@@ -12,8 +12,9 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/position"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -35,6 +36,12 @@ func (_c *TenantCreate) SetNillableDeletedAt(v *time.Time) *TenantCreate {
 	if v != nil {
 		_c.SetDeletedAt(*v)
 	}
+	return _c
+}
+
+// SetOwnerUserID sets the "owner_user_id" field.
+func (_c *TenantCreate) SetOwnerUserID(v uuid.UUID) *TenantCreate {
+	_c.mutation.SetOwnerUserID(v)
 	return _c
 }
 
@@ -148,6 +155,17 @@ func (_c *TenantCreate) SetNillableID(v *uuid.UUID) *TenantCreate {
 	return _c
 }
 
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_c *TenantCreate) SetOwnerID(id uuid.UUID) *TenantCreate {
+	_c.mutation.SetOwnerID(id)
+	return _c
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_c *TenantCreate) SetOwner(v *User) *TenantCreate {
+	return _c.SetOwnerID(v.ID)
+}
+
 // AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
 func (_c *TenantCreate) AddOrganizationIDs(ids ...uuid.UUID) *TenantCreate {
 	_c.mutation.AddOrganizationIDs(ids...)
@@ -163,21 +181,6 @@ func (_c *TenantCreate) AddOrganizations(v ...*Organization) *TenantCreate {
 	return _c.AddOrganizationIDs(ids...)
 }
 
-// AddMemberIDs adds the "members" edge to the TenantMember entity by IDs.
-func (_c *TenantCreate) AddMemberIDs(ids ...uuid.UUID) *TenantCreate {
-	_c.mutation.AddMemberIDs(ids...)
-	return _c
-}
-
-// AddMembers adds the "members" edges to the TenantMember entity.
-func (_c *TenantCreate) AddMembers(v ...*TenantMember) *TenantCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddMemberIDs(ids...)
-}
-
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
 func (_c *TenantCreate) AddApplicationIDs(ids ...uuid.UUID) *TenantCreate {
 	_c.mutation.AddApplicationIDs(ids...)
@@ -191,6 +194,21 @@ func (_c *TenantCreate) AddApplications(v ...*Application) *TenantCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddApplicationIDs(ids...)
+}
+
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (_c *TenantCreate) AddPositionIDs(ids ...uuid.UUID) *TenantCreate {
+	_c.mutation.AddPositionIDs(ids...)
+	return _c
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (_c *TenantCreate) AddPositions(v ...*Position) *TenantCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPositionIDs(ids...)
 }
 
 // Mutation returns the TenantMutation object of the builder.
@@ -252,6 +270,9 @@ func (_c *TenantCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *TenantCreate) check() error {
+	if _, ok := _c.mutation.OwnerUserID(); !ok {
+		return &ValidationError{Name: "owner_user_id", err: errors.New(`ent: missing required field "Tenant.owner_user_id"`)}
+	}
 	if _, ok := _c.mutation.Slug(); !ok {
 		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "Tenant.slug"`)}
 	}
@@ -299,6 +320,9 @@ func (_c *TenantCreate) check() error {
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Tenant.updated_at"`)}
+	}
+	if len(_c.mutation.OwnerIDs()) == 0 {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Tenant.owner"`)}
 	}
 	return nil
 }
@@ -371,6 +395,23 @@ func (_c *TenantCreate) createSpec() (*Tenant, *sqlgraph.CreateSpec) {
 		_spec.SetField(tenant.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tenant.OwnerTable,
+			Columns: []string{tenant.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.OwnerUserID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.OrganizationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -387,22 +428,6 @@ func (_c *TenantCreate) createSpec() (*Tenant, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.MembersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   tenant.MembersTable,
-			Columns: []string{tenant.MembersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantmember.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.ApplicationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -412,6 +437,22 @@ func (_c *TenantCreate) createSpec() (*Tenant, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(application.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenant.PositionsTable,
+			Columns: []string{tenant.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useLocation } from '@tanstack/react-router'
-import { Bell, Maximize2, Minimize2, RotateCw, ShieldAlert } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { Bell, Maximize2, Minimize2, RotateCw, CircleUser, Lock, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '#/components/ui/avatar'
 import { Button } from '#/components/ui/button'
 import {
@@ -14,23 +14,15 @@ import { Separator } from '#/components/ui/separator'
 import { AppBreadcrumb } from '#/components/app-breadcrumb'
 import { OrgContextPicker } from '#/components/org-context-picker'
 import ThemeToggle from '#/components/ThemeToggle'
-import { useStore } from '@tanstack/react-store'
-import { authStore } from '#/stores/auth'
 import type { UserInfo } from '#/stores/auth'
 
 interface HeaderProps {
   user: UserInfo | null
   onLogout: () => void
-  /** Shown in PlatformShell to let superadmin switch back to tenant view */
-  platformMode?: boolean
 }
 
-export function Header({ user, onLogout, platformMode = false }: HeaderProps) {
+export function Header({ user, onLogout }: HeaderProps) {
   const navigate = useNavigate()
-  const location = useLocation()
-  const superAdmin = useStore(authStore, (s) => s.user?.role === 'admin')
-  // true when the user is in the platform admin area
-  const inPlatform = platformMode || location.pathname.startsWith('/tenants')
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
@@ -96,7 +88,7 @@ export function Header({ user, onLogout, platformMode = false }: HeaderProps) {
               className="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-accent"
             >
               <Avatar className="size-8">
-                <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">
+                <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold" suppressHydrationWarning>
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -105,7 +97,7 @@ export function Header({ user, onLogout, platformMode = false }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-[240px] p-0">
             <div className="flex items-center gap-3 p-3">
               <Avatar className="size-12">
-                <AvatarFallback className="bg-primary/15 text-primary text-lg font-semibold">
+                <AvatarFallback className="bg-primary/15 text-primary text-lg font-semibold" suppressHydrationWarning>
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -120,29 +112,20 @@ export function Header({ user, onLogout, platformMode = false }: HeaderProps) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="mx-1 rounded-sm py-1 leading-8">
-              <Link to="/settings/profile">个人设置</Link>
+              <Link to="/settings/profile" className="flex items-center gap-2">
+                <CircleUser className="size-4 text-muted-foreground" />
+                个人设置
+              </Link>
             </DropdownMenuItem>
-            {superAdmin && (
-              <DropdownMenuItem asChild className="mx-1 rounded-sm py-1 leading-8">
-                {inPlatform ? (
-                  <Link to="/dashboard">
-                    <span className="flex items-center gap-2">
-                      <ShieldAlert className="size-3.5 text-primary" />
-                      切换到租户管理
-                    </span>
-                  </Link>
-                ) : (
-                  <Link to="/tenants">
-                    <span className="flex items-center gap-2">
-                      <ShieldAlert className="size-3.5 text-primary" />
-                      切换到平台管理
-                    </span>
-                  </Link>
-                )}
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem asChild className="mx-1 rounded-sm py-1 leading-8">
+              <Link to="/settings/security" className="flex items-center gap-2">
+                <Lock className="size-4 text-muted-foreground" />
+                安全设置
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onLogout} className="mx-1 rounded-sm py-1 leading-8 text-destructive focus:text-destructive">
+              <LogOut className="size-4" />
               退出登录
             </DropdownMenuItem>
           </DropdownMenuContent>

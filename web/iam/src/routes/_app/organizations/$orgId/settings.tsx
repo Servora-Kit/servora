@@ -38,7 +38,7 @@ function OrgSettingsPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await iamClients.organization.UpdateOrganization({ id: orgId, name: org?.organization?.name ?? '', displayName })
+      await iamClients.organization.UpdateOrganization({ id: orgId, name: org?.organization?.name ?? '', displayName, type: 'COMPANY', sort: 0 })
       void refetch()
       toast.success('保存成功')
     } finally {

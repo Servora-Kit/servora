@@ -33,19 +33,12 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// EdgeTenantMembers holds the string denoting the tenant_members edge name in mutations.
-	EdgeTenantMembers = "tenant_members"
 	// EdgeOrgMemberships holds the string denoting the org_memberships edge name in mutations.
 	EdgeOrgMemberships = "org_memberships"
+	// EdgeOwnedTenants holds the string denoting the owned_tenants edge name in mutations.
+	EdgeOwnedTenants = "owned_tenants"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// TenantMembersTable is the table that holds the tenant_members relation/edge.
-	TenantMembersTable = "tenant_members"
-	// TenantMembersInverseTable is the table name for the TenantMember entity.
-	// It exists in this package in order to avoid circular dependency with the "tenantmember" package.
-	TenantMembersInverseTable = "tenant_members"
-	// TenantMembersColumn is the table column denoting the tenant_members relation/edge.
-	TenantMembersColumn = "user_id"
 	// OrgMembershipsTable is the table that holds the org_memberships relation/edge.
 	OrgMembershipsTable = "organization_members"
 	// OrgMembershipsInverseTable is the table name for the OrganizationMember entity.
@@ -53,6 +46,13 @@ const (
 	OrgMembershipsInverseTable = "organization_members"
 	// OrgMembershipsColumn is the table column denoting the org_memberships relation/edge.
 	OrgMembershipsColumn = "user_id"
+	// OwnedTenantsTable is the table that holds the owned_tenants relation/edge.
+	OwnedTenantsTable = "tenants"
+	// OwnedTenantsInverseTable is the table name for the Tenant entity.
+	// It exists in this package in order to avoid circular dependency with the "tenant" package.
+	OwnedTenantsInverseTable = "tenants"
+	// OwnedTenantsColumn is the table column denoting the owned_tenants relation/edge.
+	OwnedTenantsColumn = "owner_user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -155,20 +155,6 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByTenantMembersCount orders the results by tenant_members count.
-func ByTenantMembersCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newTenantMembersStep(), opts...)
-	}
-}
-
-// ByTenantMembers orders the results by tenant_members terms.
-func ByTenantMembers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTenantMembersStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
 // ByOrgMembershipsCount orders the results by org_memberships count.
 func ByOrgMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -182,17 +168,31 @@ func ByOrgMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newOrgMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newTenantMembersStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TenantMembersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, TenantMembersTable, TenantMembersColumn),
-	)
+
+// ByOwnedTenantsCount orders the results by owned_tenants count.
+func ByOwnedTenantsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOwnedTenantsStep(), opts...)
+	}
+}
+
+// ByOwnedTenants orders the results by owned_tenants terms.
+func ByOwnedTenants(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOwnedTenantsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
 }
 func newOrgMembershipsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrgMembershipsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, OrgMembershipsTable, OrgMembershipsColumn),
+	)
+}
+func newOwnedTenantsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OwnedTenantsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OwnedTenantsTable, OwnedTenantsColumn),
 	)
 }

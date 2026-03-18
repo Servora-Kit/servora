@@ -10,13 +10,10 @@ import (
 
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/Servora-Kit/servora/pkg/logger"
 )
 
@@ -33,7 +30,12 @@ func NewTenantRepo(data *Data, l logger.Logger) biz.TenantRepo {
 }
 
 func (r *tenantRepo) Create(ctx context.Context, t *entity.Tenant) (*entity.Tenant, error) {
+	ownerID, err := uuid.Parse(t.OwnerUserID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid owner user ID: %w", err)
+	}
 	b := r.data.Ent(ctx).Tenant.Create().
+		SetOwnerUserID(ownerID).
 		SetSlug(t.Slug).
 		SetName(t.Name).
 		SetKind(tenant.Kind(t.Kind)).
@@ -88,29 +90,70 @@ func (r *tenantRepo) GetByDomain(ctx context.Context, domain string) (*entity.Te
 	return tenantMapper.Map(t), nil
 }
 
+// List returns all tenants where the user is either the owner or a member
+// of any organization under the tenant.
 func (r *tenantRepo) List(ctx context.Context, userID string, page, pageSize int32) ([]*entity.Tenant, int64, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	memberTenantIDs, err := r.data.Ent(ctx).TenantMember.Query().
-		Where(tenantmember.UserIDEQ(uid)).
-		Select(tenantmember.FieldTenantID).
-		Strings(ctx)
+	// Collect tenant IDs via org membership (user belongs to some org in the tenant)
+	orgMembers, err := r.data.Ent(ctx).OrganizationMember.Query().
+		Where(organizationmember.UserIDEQ(uid)).
+		All(ctx)
 	if err != nil {
-		return nil, 0, fmt.Errorf("list member tenants: %w", err)
+		return nil, 0, fmt.Errorf("list org memberships: %w", err)
 	}
 
-	tenantUUIDs := make([]uuid.UUID, 0, len(memberTenantIDs))
-	for _, idStr := range memberTenantIDs {
-		if tid, e := uuid.Parse(idStr); e == nil {
-			tenantUUIDs = append(tenantUUIDs, tid)
+	orgIDs := make([]uuid.UUID, 0, len(orgMembers))
+	for _, m := range orgMembers {
+		orgIDs = append(orgIDs, m.OrganizationID)
+	}
+
+	var tenantIDs []uuid.UUID
+	if len(orgIDs) > 0 {
+		orgs, err := r.data.Ent(ctx).Organization.Query().
+			Where(organization.IDIn(orgIDs...)).
+			Where(organization.DeletedAtIsNil()).
+			All(ctx)
+		if err != nil {
+			return nil, 0, fmt.Errorf("list organizations: %w", err)
+		}
+		seen := make(map[uuid.UUID]struct{})
+		for _, o := range orgs {
+			if _, ok := seen[o.TenantID]; !ok {
+				seen[o.TenantID] = struct{}{}
+				tenantIDs = append(tenantIDs, o.TenantID)
+			}
 		}
 	}
 
+	// Also include tenants where user is the owner (e.g. personal tenant with no org memberships)
+	ownedTenants, err := r.data.Ent(ctx).Tenant.Query().
+		Where(tenant.OwnerUserIDEQ(uid)).
+		Where(tenant.DeletedAtIsNil()).
+		IDs(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list owned tenants: %w", err)
+	}
+	seen := make(map[uuid.UUID]struct{})
+	for _, id := range tenantIDs {
+		seen[id] = struct{}{}
+	}
+	for _, id := range ownedTenants {
+		if _, ok := seen[id]; !ok {
+			seen[id] = struct{}{}
+			tenantIDs = append(tenantIDs, id)
+		}
+	}
+
+	if len(tenantIDs) == 0 {
+		return nil, 0, nil
+	}
+
 	query := r.data.Ent(ctx).Tenant.Query().
-		Where(tenant.IDIn(tenantUUIDs...)).
+		Where(tenant.IDIn(tenantIDs...)).
 		Where(tenant.DeletedAtIsNil()).
 		Order(tenant.ByCreatedAt(sql.OrderDesc()))
 
@@ -194,273 +237,47 @@ func (r *tenantRepo) Purge(ctx context.Context, id string) error {
 			}
 		}
 
-		// 4. 删除租户成员
-		if _, err := c.TenantMember.Delete().
-			Where(tenantmember.TenantIDEQ(uid)).
-			Exec(txCtx); err != nil {
-			return err
-		}
-
-		// 5. 删除租户下应用（含软删除记录）
+		// 4. 删除租户下应用（含软删除记录）
 		if _, err := c.Application.Delete().
 			Where(application.TenantIDEQ(uid)).
 			Exec(txCtx); err != nil {
 			return err
 		}
 
-		// 6. 删除租户本身
+		// 5. 删除租户本身
 		return c.Tenant.DeleteOneID(uid).Exec(txCtx)
 	})
 }
 
-func (r *tenantRepo) AddMember(ctx context.Context, m *entity.TenantMember) (*entity.TenantMember, error) {
-	tid, err := uuid.Parse(m.TenantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid tenant ID: %w", err)
-	}
-	uid, err := uuid.Parse(m.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %w", err)
-	}
-	b := r.data.Ent(ctx).TenantMember.Create().
-		SetTenantID(tid).
-		SetUserID(uid).
-		SetRole(tenantmember.Role(m.Role)).
-		SetStatus(tenantmember.Status(m.Status))
-	if m.JoinedAt != nil {
-		b.SetJoinedAt(*m.JoinedAt)
-	}
-	created, err := b.Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("add tenant member: %w", err)
-	}
-	return r.enrichMember(ctx, created)
-}
-
-func (r *tenantRepo) RemoveMember(ctx context.Context, tenantID, userID string) error {
+// TransferOwnership updates the owner_user_id field of the tenant.
+func (r *tenantRepo) TransferOwnership(ctx context.Context, tenantID, newOwnerUserID string) error {
 	tid, err := uuid.Parse(tenantID)
 	if err != nil {
 		return fmt.Errorf("invalid tenant ID: %w", err)
 	}
-	uid, err := uuid.Parse(userID)
+	newOwnerID, err := uuid.Parse(newOwnerUserID)
 	if err != nil {
-		return fmt.Errorf("invalid user ID: %w", err)
+		return fmt.Errorf("invalid new owner user ID: %w", err)
 	}
-	_, err = r.data.Ent(ctx).TenantMember.Delete().
-		Where(
-			tenantmember.TenantIDEQ(tid),
-			tenantmember.UserIDEQ(uid),
-		).Exec(ctx)
-	return err
+	return r.data.Ent(ctx).Tenant.UpdateOneID(tid).
+		SetOwnerUserID(newOwnerID).
+		Exec(ctx)
 }
 
-func (r *tenantRepo) GetMember(ctx context.Context, tenantID, userID string) (*entity.TenantMember, error) {
-	tid, err := uuid.Parse(tenantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid tenant ID: %w", err)
-	}
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %w", err)
-	}
-	m, err := r.data.Ent(ctx).TenantMember.Query().
-		Where(
-			tenantmember.TenantIDEQ(tid),
-			tenantmember.UserIDEQ(uid),
-		).Only(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.enrichMember(ctx, m)
-}
-
-func (r *tenantRepo) GetOwnerMember(ctx context.Context, tenantID string) (*entity.TenantMember, error) {
-	tid, err := uuid.Parse(tenantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid tenant ID: %w", err)
-	}
-	m, err := r.data.Ent(ctx).TenantMember.Query().
-		Where(
-			tenantmember.TenantIDEQ(tid),
-			tenantmember.RoleEQ(tenantmember.RoleOwner),
-		).Only(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.enrichMember(ctx, m)
-}
-
-func (r *tenantRepo) ListMembers(ctx context.Context, tenantID string, page, pageSize int32) ([]*entity.TenantMember, int64, error) {
-	tid, err := uuid.Parse(tenantID)
-	if err != nil {
-		return nil, 0, fmt.Errorf("invalid tenant ID: %w", err)
-	}
-	query := r.data.Ent(ctx).TenantMember.Query().
-		Where(tenantmember.TenantIDEQ(tid)).
-		Order(tenantmember.ByCreatedAt(sql.OrderDesc()))
-
-	total, err := query.Clone().Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	offset := int((page - 1) * pageSize)
-	members, err := query.Offset(offset).Limit(int(pageSize)).All(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	userIDs := make([]uuid.UUID, len(members))
-	for i, m := range members {
-		userIDs[i] = m.UserID
-	}
-	users, _ := r.data.Ent(ctx).User.Query().Where(user.IDIn(userIDs...)).All(ctx)
-	userMap := make(map[uuid.UUID]*ent.User, len(users))
-	for _, u := range users {
-		userMap[u.ID] = u
-	}
-
-	result := make([]*entity.TenantMember, 0, len(members))
-	for _, m := range members {
-		em := &entity.TenantMember{
-			ID:        m.ID.String(),
-			TenantID:  m.TenantID.String(),
-			UserID:    m.UserID.String(),
-			Role:      string(m.Role),
-			Status:    string(m.Status),
-			JoinedAt:  m.JoinedAt,
-			CreatedAt: m.CreatedAt,
-		}
-		if u, ok := userMap[m.UserID]; ok {
-			em.UserName = u.Name
-			em.UserEmail = u.Email
-		}
-		result = append(result, em)
-	}
-	return result, int64(total), nil
-}
-
-func (r *tenantRepo) UpdateMemberRole(ctx context.Context, tenantID, userID, role string) (*entity.TenantMember, error) {
-	tid, err := uuid.Parse(tenantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid tenant ID: %w", err)
-	}
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %w", err)
-	}
-	affected, err := r.data.Ent(ctx).TenantMember.Update().
-		Where(
-			tenantmember.TenantIDEQ(tid),
-			tenantmember.UserIDEQ(uid),
-		).
-		SetRole(tenantmember.Role(role)).
-		Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update member role: %w", err)
-	}
-	if affected == 0 {
-		return nil, fmt.Errorf("member not found")
-	}
-	return r.GetMember(ctx, tenantID, userID)
-}
-
-func (r *tenantRepo) UpdateMemberStatus(ctx context.Context, tenantID, userID, status string) (*entity.TenantMember, error) {
-	tid, err := uuid.Parse(tenantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid tenant ID: %w", err)
-	}
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %w", err)
-	}
-	b := r.data.Ent(ctx).TenantMember.Update().
-		Where(
-			tenantmember.TenantIDEQ(tid),
-			tenantmember.UserIDEQ(uid),
-		).
-		SetStatus(tenantmember.Status(status))
-	if status == "active" {
-		now := time.Now()
-		b.SetJoinedAt(now)
-	}
-	affected, err := b.Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update member status: %w", err)
-	}
-	if affected == 0 {
-		return nil, fmt.Errorf("member not found")
-	}
-	return r.GetMember(ctx, tenantID, userID)
-}
-
-func (r *tenantRepo) ListMembershipsByUserID(ctx context.Context, userID string) ([]*entity.TenantMember, error) {
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %w", err)
-	}
-	members, err := r.data.Ent(ctx).TenantMember.Query().
-		Where(tenantmember.UserIDEQ(uid)).All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*entity.TenantMember, len(members))
-	for i, m := range members {
-		result[i] = &entity.TenantMember{
-			ID:        m.ID.String(),
-			TenantID:  m.TenantID.String(),
-			UserID:    m.UserID.String(),
-			Role:      string(m.Role),
-			Status:    string(m.Status),
-			JoinedAt:  m.JoinedAt,
-			CreatedAt: m.CreatedAt,
-		}
-	}
-	return result, nil
-}
-
+// GetPersonalTenantByUserID finds the personal tenant owned by the given user.
 func (r *tenantRepo) GetPersonalTenantByUserID(ctx context.Context, userID string) (*entity.Tenant, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	memberEntries, err := r.data.Ent(ctx).TenantMember.Query().
-		Where(tenantmember.UserIDEQ(uid)).
-		All(ctx)
+	t, err := r.data.Ent(ctx).Tenant.Query().
+		Where(tenant.OwnerUserIDEQ(uid)).
+		Where(tenant.KindEQ(tenant.KindPersonal)).
+		Where(tenant.DeletedAtIsNil()).
+		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, m := range memberEntries {
-		t, err := r.data.Ent(ctx).Tenant.Query().
-			Where(tenant.IDEQ(m.TenantID)).
-			Where(tenant.KindEQ(tenant.KindPersonal)).
-			Where(tenant.DeletedAtIsNil()).
-			Only(ctx)
-		if err != nil {
-			continue
-		}
-		return tenantMapper.Map(t), nil
-	}
-
-	return nil, &ent.NotFoundError{}
-}
-
-func (r *tenantRepo) enrichMember(ctx context.Context, m *ent.TenantMember) (*entity.TenantMember, error) {
-	em := &entity.TenantMember{
-		ID:        m.ID.String(),
-		TenantID:  m.TenantID.String(),
-		UserID:    m.UserID.String(),
-		Role:      string(m.Role),
-		Status:    string(m.Status),
-		JoinedAt:  m.JoinedAt,
-		CreatedAt: m.CreatedAt,
-	}
-	u, err := r.data.Ent(ctx).User.Query().Where(user.IDEQ(m.UserID)).Only(ctx)
-	if err == nil {
-		em.UserName = u.Name
-		em.UserEmail = u.Email
-	}
-	return em, nil
+	return tenantMapper.Map(t), nil
 }

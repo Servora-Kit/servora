@@ -1,11 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useStore } from '@tanstack/react-store'
 import { useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { iamClients } from '#/api'
-import { scopeStore } from '#/stores/scope'
-import { authStore } from '#/stores/auth'
 import { Page } from '#/components/page'
 import { DataTable } from '#/components/data-table'
 import { FormDrawer } from '#/components/form-drawer'
@@ -20,15 +17,15 @@ import {
 } from '#/components/ui/select'
 import { Label } from '#/components/ui/label'
 import { Badge } from '#/components/ui/badge'
-import { UserPlus, Trash2, ArrowRightLeft } from 'lucide-react'
+import { UserPlus, Trash2, Loader2 } from 'lucide-react'
 import { toast } from '#/lib/toast'
 
 export const Route = createFileRoute('/_app/organizations/$orgId/members')({
   component: OrgMembersPage,
 })
 
-// owner 只能通过专用的所有权转让操作获得，不在下拉选项中显示
-const ASSIGNABLE_ROLES = ['admin', 'member', 'viewer']
+// Organization roles: admin > member. No "owner" or "viewer" at org level.
+const ASSIGNABLE_ROLES = ['admin', 'member']
 const PAGE_SIZE = 50
 
 interface Member {
@@ -39,8 +36,8 @@ interface Member {
 }
 
 function roleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' {
-  if (role === 'owner') return 'default'
-  if (role === 'admin') return 'secondary'
+  if (role === 'admin') return 'default'
+  if (role === 'member') return 'secondary'
   return 'outline'
 }
 
@@ -61,13 +58,6 @@ function OrgMembersPage() {
   const members = data?.members ?? []
   const total = data?.pagination?.page?.total ?? 0
 
-  const currentTenantId = useStore(scopeStore, (s) => s.currentTenantId)
-  const currentUserId = useStore(authStore, (s) => s.user?.id)
-
-  const isCurrentUserOwner = members.some(
-    (m) => m.userId === currentUserId && m.role === 'owner',
-  )
-
   const [roleChange, setRoleChange] = useState<{
     userId: string
     name: string
@@ -79,26 +69,19 @@ function OrgMembersPage() {
   const [inviteUserId, setInviteUserId] = useState<string | undefined>(undefined)
   const [inviteRole, setInviteRole] = useState('member')
   const [inviteLoading, setInviteLoading] = useState(false)
-  const [transferOpen, setTransferOpen] = useState(false)
-  const [transferTargetId, setTransferTargetId] = useState<string | undefined>(undefined)
-  const [transferLoading, setTransferLoading] = useState(false)
 
-  const { data: tenantMembersData } = useQuery({
-    queryKey: ['tenant-members', 'list-for-invite', currentTenantId],
+  // Fetch tenant users only when the invite drawer is open
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    queryKey: ['tenant-users-for-invite', orgId],
     queryFn: () =>
-      iamClients.tenant.ListMembers({
-        tenantId: currentTenantId!,
+      iamClients.user.ListUsers({
         pagination: { page: { page: 1, pageSize: 100 } },
       }),
-    enabled: !!currentTenantId,
+    enabled: inviteOpen,
     staleTime: 60_000,
   })
-  const userOptions = tenantMembersData?.members ?? []
-
-  // 可被转让所有权的目标：必须是 admin
-  const adminMembers = members.filter(
-    (m) => m.role === 'admin' && m.userId !== currentUserId,
-  )
+  const currentMemberIds = new Set(members.map((m) => m.userId))
+  const userOptions = (usersData?.users ?? []).filter((u) => !currentMemberIds.has(u.id))
 
   function invalidate() {
     void queryClient.invalidateQueries({ queryKey: ['org-members', orgId] })
@@ -154,23 +137,6 @@ function OrgMembersPage() {
     }
   }
 
-  async function handleTransferOwnership() {
-    if (!transferTargetId) return
-    setTransferLoading(true)
-    try {
-      await iamClients.organization.TransferOwnership({
-        organizationId: orgId,
-        newOwnerUserId: transferTargetId,
-      })
-      setTransferOpen(false)
-      setTransferTargetId(undefined)
-      invalidate()
-      toast.success('所有权已转让')
-    } finally {
-      setTransferLoading(false)
-    }
-  }
-
   const columns: ColumnDef<Member, unknown>[] = [
     {
       accessorKey: 'userName',
@@ -191,10 +157,10 @@ function OrgMembersPage() {
       header: '角色',
       cell: ({ row }) => {
         const m = row.original
-        const isOwner = m.role === 'owner'
+        const isAdmin = m.role === 'admin'
 
-        if (isOwner) {
-          return <Badge variant={roleBadgeVariant('owner')}>owner</Badge>
+        if (isAdmin) {
+          return <Badge variant={roleBadgeVariant('admin')}>admin</Badge>
         }
 
         return (
@@ -228,12 +194,6 @@ function OrgMembersPage() {
       header: '操作',
       cell: ({ row }) => {
         const m = row.original
-        const isOwner = m.role === 'owner'
-
-        if (isOwner) {
-          return <span className="text-xs text-muted-foreground">—</span>
-        }
-
         return (
           <Button
             variant="ghost"
@@ -252,25 +212,12 @@ function OrgMembersPage() {
   return (
     <Page
       title="成员管理"
-      description="管理组织成员。"
+      description="管理组织成员。组织角色：admin > member。"
       extra={
-        <div className="flex gap-2">
-          {isCurrentUserOwner && (
-            <Button
-              variant="outline"
-              onClick={() => setTransferOpen(true)}
-              disabled={adminMembers.length === 0}
-              title={adminMembers.length === 0 ? '需要先有 admin 才能转让所有权' : ''}
-            >
-              <ArrowRightLeft className="size-4" />
-              转让所有权
-            </Button>
-          )}
-          <Button onClick={() => setInviteOpen(true)}>
-            <UserPlus className="size-4" />
-            添加成员
-          </Button>
-        </div>
+        <Button onClick={() => setInviteOpen(true)}>
+          <UserPlus className="size-4" />
+          添加成员
+        </Button>
       }
     >
       <DataTable
@@ -294,19 +241,28 @@ function OrgMembersPage() {
       >
         <div className="space-y-2">
           <Label>选择用户</Label>
-          <Select value={inviteUserId} onValueChange={setInviteUserId}>
+          <Select value={inviteUserId} onValueChange={setInviteUserId} disabled={usersLoading}>
             <SelectTrigger>
-              <SelectValue placeholder="从租户成员中选择" />
+              {usersLoading ? (
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  加载中...
+                </span>
+              ) : (
+                <SelectValue placeholder="从租户用户中选择" />
+              )}
             </SelectTrigger>
-            <SelectContent>
-              {userOptions.length === 0 && (
-                <div className="py-4 text-center text-xs text-muted-foreground">暂无可选用户</div>
+            <SelectContent position="popper">
+              {!usersLoading && userOptions.length === 0 && (
+                <SelectItem value="__empty__" disabled>
+                  暂无可选用户（该租户所有成员均已在此组织中）
+                </SelectItem>
               )}
               {userOptions.map((u) => (
-                <SelectItem key={u.userId} value={u.userId ?? ''}>
-                  <span className="font-medium">{u.userName || u.userId}</span>
-                  {u.userEmail && (
-                    <span className="ml-2 text-xs text-muted-foreground">{u.userEmail}</span>
+                <SelectItem key={u.id} value={u.id ?? ''}>
+                  <span className="font-medium">{u.name || u.id}</span>
+                  {u.email && (
+                    <span className="ml-2 text-xs text-muted-foreground">{u.email}</span>
                   )}
                 </SelectItem>
               ))}
@@ -323,37 +279,6 @@ function OrgMembersPage() {
               {ASSIGNABLE_ROLES.map((r) => (
                 <SelectItem key={r} value={r}>
                   {r}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </FormDrawer>
-
-      <FormDrawer
-        open={transferOpen}
-        onOpenChange={setTransferOpen}
-        title="转让组织所有权"
-        loading={transferLoading}
-        onSubmit={handleTransferOwnership}
-        submitLabel="确认转让"
-      >
-        <p className="text-sm text-muted-foreground">
-          转让后你将降为 admin，新的 owner 将获得完整控制权。此操作立即生效且不可撤销。
-        </p>
-        <div className="space-y-2">
-          <Label>选择新的 owner（必须是现有 admin）</Label>
-          <Select value={transferTargetId} onValueChange={setTransferTargetId}>
-            <SelectTrigger>
-              <SelectValue placeholder="选择目标 admin" />
-            </SelectTrigger>
-            <SelectContent>
-              {adminMembers.map((m) => (
-                <SelectItem key={m.userId} value={m.userId ?? ''}>
-                  <span className="font-medium">{m.userName || m.userId}</span>
-                  {m.userEmail && (
-                    <span className="ml-2 text-xs text-muted-foreground">{m.userEmail}</span>
-                  )}
                 </SelectItem>
               ))}
             </SelectContent>

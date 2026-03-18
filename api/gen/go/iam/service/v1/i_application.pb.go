@@ -27,15 +27,14 @@ var File_iam_service_v1_i_application_proto protoreflect.FileDescriptor
 
 const file_iam_service_v1_i_application_proto_rawDesc = "" +
 	"\n" +
-	"\"iam/service/v1/i_application.proto\x12\x0eiam.service.v1\x1a\x1cgoogle/api/annotations.proto\x1a(application/service/v1/application.proto\x1a\x1cauthz/service/v1/authz.proto2\xf0\a\n" +
+	"\"iam/service/v1/i_application.proto\x12\x0eiam.service.v1\x1a\x1cgoogle/api/annotations.proto\x1a(application/service/v1/application.proto\x1a\x1cauthz/service/v1/authz.proto2\xf8\a\n" +
 	"\x12ApplicationService\x12\x9f\x01\n" +
 	"\x11CreateApplication\x120.application.service.v1.CreateApplicationRequest\x1a1.application.service.v1.CreateApplicationResponse\"%\xa2\xbb\x18\x06\b\x04\x10\r\x18\x01\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/applications\x12\x94\x01\n" +
-	"\x0eGetApplication\x12-.application.service.v1.GetApplicationRequest\x1a..application.service.v1.GetApplicationResponse\"#\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/applications/{id}\x12\x99\x01\n" +
-	"\x10ListApplications\x12/.application.service.v1.ListApplicationsRequest\x1a0.application.service.v1.ListApplicationsResponse\"\"\xa2\xbb\x18\x06\b\x04\x10\n" +
-	"\x18\x01\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/applications\x12\xa0\x01\n" +
-	"\x11UpdateApplication\x120.application.service.v1.UpdateApplicationRequest\x1a1.application.service.v1.UpdateApplicationResponse\"&\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/v1/applications/{id}\x12\x9d\x01\n" +
-	"\x11DeleteApplication\x120.application.service.v1.DeleteApplicationRequest\x1a1.application.service.v1.DeleteApplicationResponse\"#\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x17*\x15/v1/applications/{id}\x12\xc1\x01\n" +
-	"\x16RegenerateClientSecret\x125.application.service.v1.RegenerateClientSecretRequest\x1a6.application.service.v1.RegenerateClientSecretResponse\"8\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02,:\x01*\"'/v1/applications/{id}/regenerate-secretB\xc1\x01\n" +
+	"\x0eGetApplication\x12-.application.service.v1.GetApplicationRequest\x1a..application.service.v1.GetApplicationResponse\"#\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/applications/{id}\x12\x95\x01\n" +
+	"\x10ListApplications\x12/.application.service.v1.ListApplicationsRequest\x1a0.application.service.v1.ListApplicationsResponse\"\x1e\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/applications\x12\xa4\x01\n" +
+	"\x11UpdateApplication\x120.application.service.v1.UpdateApplicationRequest\x1a1.application.service.v1.UpdateApplicationResponse\"*\xa2\xbb\x18\x06\b\x04\x10\r\x18\x01\x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/v1/applications/{id}\x12\xa1\x01\n" +
+	"\x11DeleteApplication\x120.application.service.v1.DeleteApplicationRequest\x1a1.application.service.v1.DeleteApplicationResponse\"'\xa2\xbb\x18\x06\b\x04\x10\r\x18\x01\x82\xd3\xe4\x93\x02\x17*\x15/v1/applications/{id}\x12\xc5\x01\n" +
+	"\x16RegenerateClientSecret\x125.application.service.v1.RegenerateClientSecretRequest\x1a6.application.service.v1.RegenerateClientSecretResponse\"<\xa2\xbb\x18\x06\b\x04\x10\r\x18\x01\x82\xd3\xe4\x93\x02,:\x01*\"'/v1/applications/{id}/regenerate-secretB\xc1\x01\n" +
 	"\x12com.iam.service.v1B\x11IApplicationProtoP\x01Z>github.com/Servora-Kit/servora/api/gen/go/iam/service/v1;iampb\xa2\x02\x03ISX\xaa\x02\x0eIam.Service.V1\xca\x02\x0eIam\\Service\\V1\xe2\x02\x1aIam\\Service\\V1\\GPBMetadata\xea\x02\x10Iam::Service::V1b\x06proto3"
 
 var file_iam_service_v1_i_application_proto_goTypes = []any{

@@ -2,11 +2,13 @@ import { cn } from '#/lib/utils'
 
 type Tone = 'green' | 'yellow' | 'red' | 'zinc'
 
+// All tones use CSS design tokens defined in styles.css.
+// success / warning / destructive map directly to theme semantic colors.
 const toneStyles: Record<Tone, string> = {
-  green: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400',
-  yellow: 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400',
-  red: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400',
-  zinc: 'border-border bg-muted text-muted-foreground',
+  green:  'border-success/30 bg-success/10 text-success dark:border-success/20 dark:bg-success/15',
+  yellow: 'border-warning/40 bg-warning/10 text-warning-foreground dark:border-warning/30 dark:bg-warning/15 dark:text-warning',
+  red:    'border-destructive/30 bg-destructive/10 text-destructive dark:border-destructive/20 dark:bg-destructive/15',
+  zinc:   'border-border bg-muted text-muted-foreground',
 }
 
 interface ToneBadgeProps {

@@ -50,13 +50,20 @@ export const iamClients = createIamClients({
     }
 
     if (error.httpStatus === 403) {
-      const body = error.responseBody as { reason?: string } | null | undefined
+      const body = error.responseBody as { reason?: string; message?: string } | null | undefined
       const reason = body?.reason
-      // AUTHZ_DENIED 通常意味着 localStorage 中缓存的 scope ID（组织/租户）
-      // 在后端重启或数据库重置后已失效，清除 scope 并提示重新登录。
       if (reason === 'AUTHZ_DENIED') {
-        clearScope()
-        setLoginExpired(true)
+        const msg = body?.message ?? ''
+        const isScopeStale =
+          msg.includes('not found') ||
+          msg.includes('does not exist') ||
+          msg.includes('invalid')
+        if (isScopeStale) {
+          clearScope()
+          setLoginExpired(true)
+          return
+        }
+        // Genuine permission denial — show a toast, don't force re-login.
         return
       }
     }

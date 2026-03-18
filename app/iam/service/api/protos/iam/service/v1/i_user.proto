@@ -19,18 +19,14 @@ service UserService {
   rpc GetUser(user.service.v1.GetUserRequest) returns (user.service.v1.GetUserResponse) {
     option (google.api.http) = {get: "/v1/users/{id}"};
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_VIEW
+      mode: AUTHZ_MODE_NONE
     };
   }
 
   rpc ListUsers(user.service.v1.ListUsersRequest) returns (user.service.v1.ListUsersResponse) {
     option (google.api.http) = {get: "/v1/users"};
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_VIEW
+      mode: AUTHZ_MODE_NONE
     };
   }
 
@@ -52,7 +48,7 @@ service UserService {
     option (authz.service.v1.rule) = {
       mode: AUTHZ_MODE_OBJECT
       object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_MANAGE_MEMBERS
+      relation: RELATION_CAN_MANAGE
     };
   }
 

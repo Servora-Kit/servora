@@ -18,6 +18,8 @@ const (
 	FieldID = "id"
 	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
 	FieldDeletedAt = "deleted_at"
+	// FieldOwnerUserID holds the string denoting the owner_user_id field in the database.
+	FieldOwnerUserID = "owner_user_id"
 	// FieldSlug holds the string denoting the slug field in the database.
 	FieldSlug = "slug"
 	// FieldName holds the string denoting the name field in the database.
@@ -34,14 +36,23 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeOwner holds the string denoting the owner edge name in mutations.
+	EdgeOwner = "owner"
 	// EdgeOrganizations holds the string denoting the organizations edge name in mutations.
 	EdgeOrganizations = "organizations"
-	// EdgeMembers holds the string denoting the members edge name in mutations.
-	EdgeMembers = "members"
 	// EdgeApplications holds the string denoting the applications edge name in mutations.
 	EdgeApplications = "applications"
+	// EdgePositions holds the string denoting the positions edge name in mutations.
+	EdgePositions = "positions"
 	// Table holds the table name of the tenant in the database.
 	Table = "tenants"
+	// OwnerTable is the table that holds the owner relation/edge.
+	OwnerTable = "tenants"
+	// OwnerInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	OwnerInverseTable = "users"
+	// OwnerColumn is the table column denoting the owner relation/edge.
+	OwnerColumn = "owner_user_id"
 	// OrganizationsTable is the table that holds the organizations relation/edge.
 	OrganizationsTable = "organizations"
 	// OrganizationsInverseTable is the table name for the Organization entity.
@@ -49,13 +60,6 @@ const (
 	OrganizationsInverseTable = "organizations"
 	// OrganizationsColumn is the table column denoting the organizations relation/edge.
 	OrganizationsColumn = "tenant_id"
-	// MembersTable is the table that holds the members relation/edge.
-	MembersTable = "tenant_members"
-	// MembersInverseTable is the table name for the TenantMember entity.
-	// It exists in this package in order to avoid circular dependency with the "tenantmember" package.
-	MembersInverseTable = "tenant_members"
-	// MembersColumn is the table column denoting the members relation/edge.
-	MembersColumn = "tenant_id"
 	// ApplicationsTable is the table that holds the applications relation/edge.
 	ApplicationsTable = "applications"
 	// ApplicationsInverseTable is the table name for the Application entity.
@@ -63,12 +67,20 @@ const (
 	ApplicationsInverseTable = "applications"
 	// ApplicationsColumn is the table column denoting the applications relation/edge.
 	ApplicationsColumn = "tenant_id"
+	// PositionsTable is the table that holds the positions relation/edge.
+	PositionsTable = "positions"
+	// PositionsInverseTable is the table name for the Position entity.
+	// It exists in this package in order to avoid circular dependency with the "position" package.
+	PositionsInverseTable = "positions"
+	// PositionsColumn is the table column denoting the positions relation/edge.
+	PositionsColumn = "tenant_id"
 )
 
 // Columns holds all SQL columns for tenant fields.
 var Columns = []string{
 	FieldID,
 	FieldDeletedAt,
+	FieldOwnerUserID,
 	FieldSlug,
 	FieldName,
 	FieldDisplayName,
@@ -173,6 +185,11 @@ func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
+// ByOwnerUserID orders the results by the owner_user_id field.
+func ByOwnerUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOwnerUserID, opts...).ToFunc()
+}
+
 // BySlug orders the results by the slug field.
 func BySlug(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSlug, opts...).ToFunc()
@@ -213,6 +230,13 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByOwnerField orders the results by owner field.
+func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByOrganizationsCount orders the results by organizations count.
 func ByOrganizationsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -224,20 +248,6 @@ func ByOrganizationsCount(opts ...sql.OrderTermOption) OrderOption {
 func ByOrganizations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newOrganizationsStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByMembersCount orders the results by members count.
-func ByMembersCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newMembersStep(), opts...)
-	}
-}
-
-// ByMembers orders the results by members terms.
-func ByMembers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newMembersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -254,6 +264,27 @@ func ByApplications(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newApplicationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByPositionsCount orders the results by positions count.
+func ByPositionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPositionsStep(), opts...)
+	}
+}
+
+// ByPositions orders the results by positions terms.
+func ByPositions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPositionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newOwnerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OwnerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+	)
+}
 func newOrganizationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -261,17 +292,17 @@ func newOrganizationsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, OrganizationsTable, OrganizationsColumn),
 	)
 }
-func newMembersStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(MembersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, MembersTable, MembersColumn),
-	)
-}
 func newApplicationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ApplicationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ApplicationsTable, ApplicationsColumn),
+	)
+}
+func newPositionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PositionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PositionsTable, PositionsColumn),
 	)
 }

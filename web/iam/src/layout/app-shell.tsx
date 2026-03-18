@@ -1,13 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '@tanstack/react-store'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useLocation } from '@tanstack/react-router'
+import { Loader2 } from 'lucide-react'
 import {
   LayoutDashboard,
   Building2,
   AppWindow,
   Users,
-  SlidersHorizontal,
 } from 'lucide-react'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { Sidebar } from '#/layout/sidebar'
@@ -21,44 +21,101 @@ import {
   setCurrentOrganizationId,
   clearScope,
 } from '#/stores/scope'
+import {
+  accessStore,
+  setPermissionCodes,
+  setAccessMenus,
+  setAccessLoaded,
+  clearAccess,
+} from '#/stores/access'
 import { layoutStore, SIDEBAR_WIDTH, SIDEBAR_COLLAPSED_WIDTH } from '#/stores/layout'
 import { addTab, resetTabs } from '#/stores/tabbar'
 import { iamClients } from '#/api'
+import { getIcon } from '#/lib/icon-registry'
+import type { rbacservicev1_MenuInfo } from '@servora/api-client/iam/service/v1/index'
 
-const MENU_MAIN: MenuItem[] = [
+// Fallback static menu (used while dynamic menus are loading or as a baseline)
+const FALLBACK_MENU_MAIN: MenuItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   {
     label: '组织管理',
     icon: Building2,
-    children: [
-      { label: '组织列表', href: '/organizations' },
-    ],
+    children: [{ label: '组织列表', href: '/organizations' }],
   },
   {
     label: '应用管理',
     icon: AppWindow,
-    children: [
-      { label: '应用列表', href: '/applications' },
-    ],
+    children: [{ label: '应用列表', href: '/applications' }],
   },
   {
     label: '用户管理',
     icon: Users,
-    children: [
-      { label: '用户列表', href: '/users' },
-    ],
+    children: [{ label: '用户列表', href: '/users' }],
   },
 ]
 
-const MENU_SETTINGS: MenuItem[] = [
-  {
-    label: '系统设置',
-    icon: SlidersHorizontal,
-    children: [
-      { label: '个人设置', href: '/settings/profile' },
-    ],
-  },
-]
+
+// Icon name for a menu item is stored in meta JSON: { icon: "LayoutDashboard", ... }
+function extractIcon(menu: rbacservicev1_MenuInfo) {
+  if (!menu.meta) return undefined
+  try {
+    const parsed = JSON.parse(menu.meta) as { icon?: string }
+    return getIcon(parsed.icon)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Resolve path template variables using scope values.
+ * e.g., "/organizations/{orgId}/members" + { orgId: "abc" } → "/organizations/abc/members"
+ * If a required variable is missing (empty), the path is returned as-is (will render as placeholder).
+ */
+function resolvePathTemplate(path: string, vars: Record<string, string>): string {
+  return path.replace(/\{(\w+)\}/g, (match, key: string) => vars[key] || match)
+}
+
+/**
+ * Convert a flat list of backend menus into a MenuItem[] tree.
+ * Backend already returns them in a nested structure (children array).
+ * Filter to only CATALOG and MENU types (not BUTTON).
+ * Resolves path template variables (e.g., {orgId}) using provided scope vars.
+ */
+function buildMenuTree(menus: rbacservicev1_MenuInfo[], scopeVars: Record<string, string>): MenuItem[] {
+  return menus
+    .filter((m) => m.type === 'CATALOG' || m.type === 'MENU')
+    .map((m): MenuItem | null => {
+      const children = m.children
+        ?.filter((c) => c.type === 'MENU' && c.path)
+        .map((c) => ({
+          label: c.name ?? '',
+          href: resolvePathTemplate(c.path ?? '', scopeVars),
+          icon: extractIcon(c),
+        }))
+      // Skip CATALOG nodes that have no visible children — prevents orphan group headers
+      if (m.type === 'CATALOG' && (!children || children.length === 0)) return null
+      const rawPath = m.type === 'MENU' && !children?.length ? (m.path ?? undefined) : undefined
+      return {
+        label: m.name ?? '',
+        href: rawPath ? resolvePathTemplate(rawPath, scopeVars) : undefined,
+        icon: extractIcon(m),
+        children: children && children.length > 0 ? children : undefined,
+      }
+    })
+    .filter((m): m is MenuItem => m !== null)
+}
+
+/**
+ * Split menu tree into main and settings groups.
+ * Convention: sort < 10 = main menu groups, sort >= 10 = secondary groups (settings, etc.)
+ * All menus are shown; visibility is controlled entirely by backend permission codes.
+ */
+function splitMenuGroups(menus: rbacservicev1_MenuInfo[], scopeVars: Record<string, string>): [MenuItem[], MenuItem[]] {
+  const topLevel = menus.filter((m) => m.parentId == null)
+  const main = topLevel.filter((m) => (m.sort ?? 0) < 10)
+  const secondary = topLevel.filter((m) => (m.sort ?? 0) >= 10)
+  return [buildMenuTree(main, scopeVars), buildMenuTree(secondary, scopeVars)]
+}
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': '概览',
@@ -66,6 +123,8 @@ const ROUTE_TITLES: Record<string, string> = {
   '/applications': '应用列表',
   '/users': '用户列表',
   '/settings/profile': '个人设置',
+  '/settings/security': '安全设置',
+  '/settings/roles': '角色管理',
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -73,10 +132,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const collapsed = useStore(layoutStore, (s) => s.sidebarCollapsed)
   const currentTenantId = useStore(scopeStore, (s) => s.currentTenantId)
   const currentOrgId = useStore(scopeStore, (s) => s.currentOrganizationId)
+  const accessMenus = useStore(accessStore, (s) => s.accessMenus)
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Reset tabbar when entering the app shell to prevent platform-shell tabs from leaking in.
+  const [scopeReady, setScopeReady] = useState(() => !!scopeStore.state.currentTenantId)
+
   useEffect(() => {
     resetTabs({ path: '/dashboard', title: '概览' })
   }, [])
@@ -92,9 +153,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       .catch(() => {})
   }, [user])
 
-  // Auto-fetch tenant on mount
+  // Auto-fetch tenant on mount; mark scope ready after resolution.
   useEffect(() => {
-    if (currentTenantId || !authStore.state.accessToken) return
+    if (currentTenantId) {
+      setScopeReady(true)
+      return
+    }
+    if (!authStore.state.accessToken) {
+      setScopeReady(true)
+      return
+    }
     iamClients.tenant
       .ListTenants({ pagination: { page: { page: 1, pageSize: 100 } } })
       .then((res) => {
@@ -102,6 +170,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (firstId) setCurrentTenantId(firstId)
       })
       .catch(() => {})
+      .finally(() => setScopeReady(true))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Fetch permission codes and navigation once scope is ready
+  useEffect(() => {
+    if (!scopeReady || !authStore.state.accessToken) return
+    Promise.all([
+      iamClients.rbac.GetMyPermissionCodes({}),
+      iamClients.rbac.GetNavigation({}),
+    ])
+      .then(([permRes, navRes]) => {
+        setPermissionCodes(permRes.codes ?? [])
+        setAccessMenus(navRes.menus ?? [])
+        setAccessLoaded(true)
+      })
+      .catch(() => {
+        // Keep access empty on error; fallback menus will be shown
+        setAccessLoaded(true)
+      })
+  }, [scopeReady])
+
+  // Clear access store on logout / scope clear
+  useEffect(() => {
+    if (!currentTenantId) {
+      clearAccess()
+    }
   }, [currentTenantId])
 
   // Org query
@@ -126,11 +221,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   function handleLogout() {
     clearAuth()
     clearScope()
+    clearAccess()
     void navigate({ to: '/login' as string })
   }
 
-  // Sync route to tabbar — always use the base path as the tab key so that
-  // sub-routes (e.g. /projects/xxx/members) don't create duplicate tabs.
+  // Sync route to tabbar
   useEffect(() => {
     const path = location.pathname
     const baseMatch = Object.keys(ROUTE_TITLES).find(
@@ -143,6 +238,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [location.pathname])
 
+  // Scope variables for resolving path templates like {orgId}, {tenantId}
+  const scopeVars: Record<string, string> = {
+    orgId: currentOrgId ?? '',
+    tenantId: currentTenantId ?? '',
+  }
+
+  // Build dynamic menus or fall back to static ones
+  const [menuMain, menuSettings] =
+    accessMenus.length > 0
+      ? splitMenuGroups(accessMenus, scopeVars)
+      : [FALLBACK_MENU_MAIN, []]
+
   const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH
 
   return (
@@ -151,7 +258,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar
           title="Servora IAM"
           titleHref="/dashboard"
-          menuGroups={[MENU_MAIN, MENU_SETTINGS]}
+          menuGroups={[menuMain, menuSettings]}
         />
 
         <div
@@ -160,7 +267,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           <Header user={user} onLogout={handleLogout} />
           <Tabbar />
-          <main className="flex-1 p-4">{children}</main>
+          <main className="flex-1 p-4">
+            {scopeReady ? children : (
+              <div className="flex h-48 items-center justify-center">
+                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </main>
         </div>
       </div>
     </TooltipProvider>

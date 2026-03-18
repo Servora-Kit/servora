@@ -123,9 +123,6 @@ func (r *fakeOrgRepo) ListAllMembers(context.Context, string) ([]*entity.Organiz
 	return nil, nil
 }
 func (r *fakeOrgRepo) DeleteAllMembers(context.Context, string) (int, error) { return 0, nil }
-func (r *fakeOrgRepo) GetOwnerMember(context.Context, string) (*entity.OrganizationMember, error) {
-	return nil, nil
-}
 func (r *fakeOrgRepo) DeleteMembershipsByUserID(context.Context, string) (int, error) {
 	return 0, nil
 }
@@ -164,9 +161,7 @@ func (r *fakeAuthZRepo) CachedListObjects(context.Context, time.Duration, string
 func (r *fakeAuthZRepo) InvalidateCheck(context.Context, string, string, string, string) {}
 func (r *fakeAuthZRepo) InvalidateListObjects(context.Context, string, string, string)   {}
 
-type fakeTenantRepo struct {
-	memberships []*entity.TenantMember
-}
+type fakeTenantRepo struct{}
 
 func (r *fakeTenantRepo) Create(context.Context, *entity.Tenant) (*entity.Tenant, error) {
 	return nil, nil
@@ -180,30 +175,9 @@ func (r *fakeTenantRepo) List(context.Context, string, int32, int32) ([]*entity.
 func (r *fakeTenantRepo) Update(context.Context, *entity.Tenant) (*entity.Tenant, error) {
 	return nil, nil
 }
-func (r *fakeTenantRepo) Delete(context.Context, string) error { return nil }
-func (r *fakeTenantRepo) Purge(context.Context, string) error  { return nil }
-func (r *fakeTenantRepo) AddMember(context.Context, *entity.TenantMember) (*entity.TenantMember, error) {
-	return nil, nil
-}
-func (r *fakeTenantRepo) RemoveMember(context.Context, string, string) error { return nil }
-func (r *fakeTenantRepo) GetMember(context.Context, string, string) (*entity.TenantMember, error) {
-	return nil, nil
-}
-func (r *fakeTenantRepo) ListMembers(context.Context, string, int32, int32) ([]*entity.TenantMember, int64, error) {
-	return nil, 0, nil
-}
-func (r *fakeTenantRepo) UpdateMemberRole(context.Context, string, string, string) (*entity.TenantMember, error) {
-	return nil, nil
-}
-func (r *fakeTenantRepo) UpdateMemberStatus(context.Context, string, string, string) (*entity.TenantMember, error) {
-	return nil, nil
-}
-func (r *fakeTenantRepo) GetOwnerMember(context.Context, string) (*entity.TenantMember, error) {
-	return nil, nil
-}
-func (r *fakeTenantRepo) ListMembershipsByUserID(_ context.Context, _ string) ([]*entity.TenantMember, error) {
-	return r.memberships, nil
-}
+func (r *fakeTenantRepo) Delete(context.Context, string) error          { return nil }
+func (r *fakeTenantRepo) Purge(context.Context, string) error           { return nil }
+func (r *fakeTenantRepo) TransferOwnership(context.Context, string, string) error { return nil }
 func (r *fakeTenantRepo) GetPersonalTenantByUserID(context.Context, string) (*entity.Tenant, error) {
 	return nil, nil
 }
@@ -211,7 +185,7 @@ func (r *fakeTenantRepo) GetPersonalTenantByUserID(context.Context, string) (*en
 // --- helpers ---
 
 func newTestPurgeUserUC(userRepo *fakeUserRepo, authnRepo *fakeAuthnRepo, orgRepo *fakeOrgRepo, authzRepo *fakeAuthZRepo) *UserUsecase {
-	return NewUserUsecase(userRepo, log.DefaultLogger, nil, authnRepo, orgRepo, &fakeTenantRepo{}, authzRepo)
+	return NewUserUsecase(userRepo, log.DefaultLogger, nil, authnRepo, nil, orgRepo, &fakeTenantRepo{}, authzRepo)
 }
 
 // --- tests ---
@@ -220,7 +194,7 @@ func TestPurgeUser_HappyPath(t *testing.T) {
 	ur := &fakeUserRepo{}
 	ar := &fakeAuthnRepo{}
 	or := &fakeOrgRepo{memberships: []*entity.OrganizationMember{
-		{OrganizationID: "org-1", Role: "owner"},
+		{OrganizationID: "org-1", Role: "admin"},
 	}}
 	az := &fakeAuthZRepo{}
 
@@ -271,7 +245,7 @@ func TestPurgeUser_FGAFails_StillSucceeds(t *testing.T) {
 	ur := &fakeUserRepo{}
 	ar := &fakeAuthnRepo{}
 	or := &fakeOrgRepo{memberships: []*entity.OrganizationMember{
-		{OrganizationID: "org-1", Role: "owner"},
+		{OrganizationID: "org-1", Role: "admin"},
 	}}
 	az := &fakeAuthZRepo{deleteTuplesErr: errors.New("fga error")}
 
@@ -308,16 +282,14 @@ func TestPurgeUser_RedisFails_StillSucceeds(t *testing.T) {
 func TestPurgeUser_ExecutionOrder_DBBeforeFGABeforeRedis(t *testing.T) {
 	var order []string
 
-	or := &fakeOrgRepo{}
-	tr := &fakeTenantRepo{memberships: []*entity.TenantMember{
-		{TenantID: "tenant-1", Role: "admin"},
+	or := &fakeOrgRepo{memberships: []*entity.OrganizationMember{
+		{OrganizationID: "org-1", Role: "admin"},
 	}}
-
 	ur := &orderTrackingUserRepo{order: &order}
 	ar := &orderTrackingAuthnRepo{order: &order}
 	az := &orderTrackingAuthZRepo{order: &order}
 
-	uc := NewUserUsecase(ur, log.DefaultLogger, nil, ar, or, tr, az)
+	uc := NewUserUsecase(ur, log.DefaultLogger, nil, ar, nil, or, &fakeTenantRepo{}, az)
 	_, _ = uc.PurgeUser(context.Background(), &entity.User{ID: "user-1"})
 
 	if len(order) < 3 {
@@ -380,16 +352,13 @@ func (r *cascadeClearingUserRepo) PurgeCascade(ctx context.Context, id string) e
 
 func TestPurgeUser_CollectsTuplesBeforeCascade(t *testing.T) {
 	or := &fakeOrgRepo{memberships: []*entity.OrganizationMember{
-		{OrganizationID: "org-1", Role: "owner"},
-	}}
-	tr := &fakeTenantRepo{memberships: []*entity.TenantMember{
-		{TenantID: "tenant-1", Role: "admin"},
+		{OrganizationID: "org-1", Role: "admin"},
 	}}
 	ur := &cascadeClearingUserRepo{orgRepo: or}
 	ar := &fakeAuthnRepo{}
 	az := &fakeAuthZRepo{}
 
-	uc := NewUserUsecase(ur, log.DefaultLogger, nil, ar, or, tr, az)
+	uc := NewUserUsecase(ur, log.DefaultLogger, nil, ar, nil, or, &fakeTenantRepo{}, az)
 	ok, err := uc.PurgeUser(context.Background(), &entity.User{ID: "user-1"})
 	if err != nil {
 		t.Fatalf("PurgeUser() unexpected error: %v", err)
@@ -402,19 +371,16 @@ func TestPurgeUser_CollectsTuplesBeforeCascade(t *testing.T) {
 		t.Fatalf("DeleteTuples called %d times, want 1", len(az.deleteTuplesCalls))
 	}
 	tuples := az.deleteTuplesCalls[0]
-	if len(tuples) != 2 {
-		t.Fatalf("expected 2 tuples (org + tenant), got %d: %v", len(tuples), tuples)
+	if len(tuples) != 1 {
+		t.Fatalf("expected 1 org tuple, got %d: %v", len(tuples), tuples)
 	}
 
 	found := map[string]bool{}
 	for _, tp := range tuples {
 		found[tp.Relation+":"+tp.Object] = true
 	}
-	if !found["owner:organization:org-1"] {
-		t.Error("missing org owner tuple")
-	}
-	if !found["admin:tenant:tenant-1"] {
-		t.Error("missing tenant admin tuple")
+	if !found["admin:organization:org-1"] {
+		t.Error("missing org admin tuple")
 	}
 }
 
@@ -422,11 +388,11 @@ func TestCompensateUserPurge_HappyPath(t *testing.T) {
 	ar := &fakeAuthnRepo{}
 	az := &fakeAuthZRepo{
 		listObjectsMap: map[string][]string{
-			"owner:organization": {"organization:org-1"},
+			"admin:organization": {"organization:org-1"},
 		},
 	}
 
-	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
+	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, nil, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
 	err := uc.CompensateUserPurge(context.Background(), "user-1")
 	if err != nil {
 		t.Fatalf("CompensateUserPurge() unexpected error: %v", err)
@@ -444,8 +410,8 @@ func TestCompensateUserPurge_HappyPath(t *testing.T) {
 	for _, tp := range tuples {
 		found[tp.Relation+":"+tp.Object] = true
 	}
-	if !found["owner:organization:org-1"] {
-		t.Error("missing org owner tuple")
+	if !found["admin:organization:org-1"] {
+		t.Error("missing org admin tuple")
 	}
 
 	if len(ar.deleteTokensCalls) != 1 || ar.deleteTokensCalls[0] != "user-1" {
@@ -457,7 +423,7 @@ func TestCompensateUserPurge_NoResidual(t *testing.T) {
 	ar := &fakeAuthnRepo{}
 	az := &fakeAuthZRepo{}
 
-	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
+	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, nil, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
 	err := uc.CompensateUserPurge(context.Background(), "user-1")
 	if err != nil {
 		t.Fatalf("CompensateUserPurge() unexpected error: %v", err)
@@ -475,12 +441,12 @@ func TestCompensateUserPurge_FGADeleteFails(t *testing.T) {
 	ar := &fakeAuthnRepo{}
 	az := &fakeAuthZRepo{
 		listObjectsMap: map[string][]string{
-			"owner:organization": {"organization:org-1"},
+			"admin:organization": {"organization:org-1"},
 		},
 		deleteTuplesErr: errors.New("fga error"),
 	}
 
-	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
+	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, nil, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
 	err := uc.CompensateUserPurge(context.Background(), "user-1")
 	if err == nil {
 		t.Fatal("CompensateUserPurge() should return error when FGA delete fails")
@@ -491,7 +457,7 @@ func TestCompensateUserPurge_RedisFails(t *testing.T) {
 	ar := &fakeAuthnRepo{deleteTokensErr: errors.New("redis error")}
 	az := &fakeAuthZRepo{}
 
-	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
+	uc := NewUserUsecase(&fakeUserRepo{}, log.DefaultLogger, nil, ar, nil, &fakeOrgRepo{}, &fakeTenantRepo{}, az)
 	err := uc.CompensateUserPurge(context.Background(), "user-1")
 	if err == nil {
 		t.Fatal("CompensateUserPurge() should return error when Redis fails")

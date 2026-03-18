@@ -97,6 +97,7 @@ type TenantInfo struct {
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	DisplayName   string                 `protobuf:"bytes,9,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	OwnerUserId   string                 `protobuf:"bytes,10,opt,name=owner_user_id,json=ownerUserId,proto3" json:"owner_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -194,112 +195,11 @@ func (x *TenantInfo) GetDisplayName() string {
 	return ""
 }
 
-type TenantMemberInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	UserName      string                 `protobuf:"bytes,4,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
-	UserEmail     string                 `protobuf:"bytes,5,opt,name=user_email,json=userEmail,proto3" json:"user_email,omitempty"`
-	Role          string                 `protobuf:"bytes,6,opt,name=role,proto3" json:"role,omitempty"`
-	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	JoinedAt      *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TenantMemberInfo) Reset() {
-	*x = TenantMemberInfo{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TenantMemberInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TenantMemberInfo) ProtoMessage() {}
-
-func (x *TenantMemberInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[1]
+func (x *TenantInfo) GetOwnerUserId() string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TenantMemberInfo.ProtoReflect.Descriptor instead.
-func (*TenantMemberInfo) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *TenantMemberInfo) GetId() string {
-	if x != nil {
-		return x.Id
+		return x.OwnerUserId
 	}
 	return ""
-}
-
-func (x *TenantMemberInfo) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *TenantMemberInfo) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *TenantMemberInfo) GetUserName() string {
-	if x != nil {
-		return x.UserName
-	}
-	return ""
-}
-
-func (x *TenantMemberInfo) GetUserEmail() string {
-	if x != nil {
-		return x.UserEmail
-	}
-	return ""
-}
-
-func (x *TenantMemberInfo) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
-func (x *TenantMemberInfo) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *TenantMemberInfo) GetJoinedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.JoinedAt
-	}
-	return nil
-}
-
-func (x *TenantMemberInfo) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
 }
 
 type CreateTenantRequest struct {
@@ -315,7 +215,7 @@ type CreateTenantRequest struct {
 
 func (x *CreateTenantRequest) Reset() {
 	*x = CreateTenantRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[2]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -327,7 +227,7 @@ func (x *CreateTenantRequest) String() string {
 func (*CreateTenantRequest) ProtoMessage() {}
 
 func (x *CreateTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[2]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -340,7 +240,7 @@ func (x *CreateTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTenantRequest.ProtoReflect.Descriptor instead.
 func (*CreateTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{2}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateTenantRequest) GetName() string {
@@ -387,7 +287,7 @@ type CreateTenantResponse struct {
 
 func (x *CreateTenantResponse) Reset() {
 	*x = CreateTenantResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[3]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -399,7 +299,7 @@ func (x *CreateTenantResponse) String() string {
 func (*CreateTenantResponse) ProtoMessage() {}
 
 func (x *CreateTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[3]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -412,7 +312,7 @@ func (x *CreateTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTenantResponse.ProtoReflect.Descriptor instead.
 func (*CreateTenantResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{3}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateTenantResponse) GetTenant() *TenantInfo {
@@ -431,7 +331,7 @@ type GetTenantRequest struct {
 
 func (x *GetTenantRequest) Reset() {
 	*x = GetTenantRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[4]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -443,7 +343,7 @@ func (x *GetTenantRequest) String() string {
 func (*GetTenantRequest) ProtoMessage() {}
 
 func (x *GetTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[4]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -456,7 +356,7 @@ func (x *GetTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTenantRequest.ProtoReflect.Descriptor instead.
 func (*GetTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{4}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetTenantRequest) GetId() string {
@@ -475,7 +375,7 @@ type GetTenantResponse struct {
 
 func (x *GetTenantResponse) Reset() {
 	*x = GetTenantResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[5]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -487,7 +387,7 @@ func (x *GetTenantResponse) String() string {
 func (*GetTenantResponse) ProtoMessage() {}
 
 func (x *GetTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[5]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -500,7 +400,7 @@ func (x *GetTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTenantResponse.ProtoReflect.Descriptor instead.
 func (*GetTenantResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{5}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetTenantResponse) GetTenant() *TenantInfo {
@@ -519,7 +419,7 @@ type ListTenantsRequest struct {
 
 func (x *ListTenantsRequest) Reset() {
 	*x = ListTenantsRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[6]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -531,7 +431,7 @@ func (x *ListTenantsRequest) String() string {
 func (*ListTenantsRequest) ProtoMessage() {}
 
 func (x *ListTenantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[6]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -544,7 +444,7 @@ func (x *ListTenantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTenantsRequest.ProtoReflect.Descriptor instead.
 func (*ListTenantsRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{6}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListTenantsRequest) GetPagination() *v1.PaginationRequest {
@@ -564,7 +464,7 @@ type ListTenantsResponse struct {
 
 func (x *ListTenantsResponse) Reset() {
 	*x = ListTenantsResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[7]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -576,7 +476,7 @@ func (x *ListTenantsResponse) String() string {
 func (*ListTenantsResponse) ProtoMessage() {}
 
 func (x *ListTenantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[7]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +489,7 @@ func (x *ListTenantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTenantsResponse.ProtoReflect.Descriptor instead.
 func (*ListTenantsResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{7}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListTenantsResponse) GetTenants() []*TenantInfo {
@@ -619,7 +519,7 @@ type UpdateTenantRequest struct {
 
 func (x *UpdateTenantRequest) Reset() {
 	*x = UpdateTenantRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[8]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -631,7 +531,7 @@ func (x *UpdateTenantRequest) String() string {
 func (*UpdateTenantRequest) ProtoMessage() {}
 
 func (x *UpdateTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[8]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -644,7 +544,7 @@ func (x *UpdateTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTenantRequest.ProtoReflect.Descriptor instead.
 func (*UpdateTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{8}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateTenantRequest) GetId() string {
@@ -691,7 +591,7 @@ type UpdateTenantResponse struct {
 
 func (x *UpdateTenantResponse) Reset() {
 	*x = UpdateTenantResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[9]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -703,7 +603,7 @@ func (x *UpdateTenantResponse) String() string {
 func (*UpdateTenantResponse) ProtoMessage() {}
 
 func (x *UpdateTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[9]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -716,7 +616,7 @@ func (x *UpdateTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTenantResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTenantResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{9}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateTenantResponse) GetTenant() *TenantInfo {
@@ -735,7 +635,7 @@ type DeleteTenantRequest struct {
 
 func (x *DeleteTenantRequest) Reset() {
 	*x = DeleteTenantRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[10]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -747,7 +647,7 @@ func (x *DeleteTenantRequest) String() string {
 func (*DeleteTenantRequest) ProtoMessage() {}
 
 func (x *DeleteTenantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[10]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -760,7 +660,7 @@ func (x *DeleteTenantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTenantRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTenantRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{10}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteTenantRequest) GetId() string {
@@ -779,7 +679,7 @@ type DeleteTenantResponse struct {
 
 func (x *DeleteTenantResponse) Reset() {
 	*x = DeleteTenantResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[11]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -791,7 +691,7 @@ func (x *DeleteTenantResponse) String() string {
 func (*DeleteTenantResponse) ProtoMessage() {}
 
 func (x *DeleteTenantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[11]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -804,594 +704,10 @@ func (x *DeleteTenantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTenantResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTenantResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{11}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteTenantResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type InviteTenantMemberRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *InviteTenantMemberRequest) Reset() {
-	*x = InviteTenantMemberRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *InviteTenantMemberRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*InviteTenantMemberRequest) ProtoMessage() {}
-
-func (x *InviteTenantMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use InviteTenantMemberRequest.ProtoReflect.Descriptor instead.
-func (*InviteTenantMemberRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *InviteTenantMemberRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *InviteTenantMemberRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *InviteTenantMemberRequest) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
-type InviteTenantMemberResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Member        *TenantMemberInfo      `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *InviteTenantMemberResponse) Reset() {
-	*x = InviteTenantMemberResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *InviteTenantMemberResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*InviteTenantMemberResponse) ProtoMessage() {}
-
-func (x *InviteTenantMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use InviteTenantMemberResponse.ProtoReflect.Descriptor instead.
-func (*InviteTenantMemberResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *InviteTenantMemberResponse) GetMember() *TenantMemberInfo {
-	if x != nil {
-		return x.Member
-	}
-	return nil
-}
-
-type AcceptTenantInvitationRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AcceptTenantInvitationRequest) Reset() {
-	*x = AcceptTenantInvitationRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AcceptTenantInvitationRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AcceptTenantInvitationRequest) ProtoMessage() {}
-
-func (x *AcceptTenantInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AcceptTenantInvitationRequest.ProtoReflect.Descriptor instead.
-func (*AcceptTenantInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *AcceptTenantInvitationRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-type AcceptTenantInvitationResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AcceptTenantInvitationResponse) Reset() {
-	*x = AcceptTenantInvitationResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AcceptTenantInvitationResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AcceptTenantInvitationResponse) ProtoMessage() {}
-
-func (x *AcceptTenantInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AcceptTenantInvitationResponse.ProtoReflect.Descriptor instead.
-func (*AcceptTenantInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *AcceptTenantInvitationResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type RejectTenantInvitationRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RejectTenantInvitationRequest) Reset() {
-	*x = RejectTenantInvitationRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RejectTenantInvitationRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RejectTenantInvitationRequest) ProtoMessage() {}
-
-func (x *RejectTenantInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RejectTenantInvitationRequest.ProtoReflect.Descriptor instead.
-func (*RejectTenantInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *RejectTenantInvitationRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-type RejectTenantInvitationResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RejectTenantInvitationResponse) Reset() {
-	*x = RejectTenantInvitationResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RejectTenantInvitationResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RejectTenantInvitationResponse) ProtoMessage() {}
-
-func (x *RejectTenantInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RejectTenantInvitationResponse.ProtoReflect.Descriptor instead.
-func (*RejectTenantInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *RejectTenantInvitationResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type ListTenantMembersRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Pagination    *v1.PaginationRequest  `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTenantMembersRequest) Reset() {
-	*x = ListTenantMembersRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTenantMembersRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTenantMembersRequest) ProtoMessage() {}
-
-func (x *ListTenantMembersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTenantMembersRequest.ProtoReflect.Descriptor instead.
-func (*ListTenantMembersRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *ListTenantMembersRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *ListTenantMembersRequest) GetPagination() *v1.PaginationRequest {
-	if x != nil {
-		return x.Pagination
-	}
-	return nil
-}
-
-type ListTenantMembersResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Members       []*TenantMemberInfo    `protobuf:"bytes,1,rep,name=members,proto3" json:"members,omitempty"`
-	Pagination    *v1.PaginationResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListTenantMembersResponse) Reset() {
-	*x = ListTenantMembersResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListTenantMembersResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListTenantMembersResponse) ProtoMessage() {}
-
-func (x *ListTenantMembersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListTenantMembersResponse.ProtoReflect.Descriptor instead.
-func (*ListTenantMembersResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *ListTenantMembersResponse) GetMembers() []*TenantMemberInfo {
-	if x != nil {
-		return x.Members
-	}
-	return nil
-}
-
-func (x *ListTenantMembersResponse) GetPagination() *v1.PaginationResponse {
-	if x != nil {
-		return x.Pagination
-	}
-	return nil
-}
-
-type UpdateTenantMemberRoleRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateTenantMemberRoleRequest) Reset() {
-	*x = UpdateTenantMemberRoleRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateTenantMemberRoleRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateTenantMemberRoleRequest) ProtoMessage() {}
-
-func (x *UpdateTenantMemberRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateTenantMemberRoleRequest.ProtoReflect.Descriptor instead.
-func (*UpdateTenantMemberRoleRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *UpdateTenantMemberRoleRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *UpdateTenantMemberRoleRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *UpdateTenantMemberRoleRequest) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
-type UpdateTenantMemberRoleResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Member        *TenantMemberInfo      `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateTenantMemberRoleResponse) Reset() {
-	*x = UpdateTenantMemberRoleResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateTenantMemberRoleResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateTenantMemberRoleResponse) ProtoMessage() {}
-
-func (x *UpdateTenantMemberRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateTenantMemberRoleResponse.ProtoReflect.Descriptor instead.
-func (*UpdateTenantMemberRoleResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *UpdateTenantMemberRoleResponse) GetMember() *TenantMemberInfo {
-	if x != nil {
-		return x.Member
-	}
-	return nil
-}
-
-type RemoveTenantMemberRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveTenantMemberRequest) Reset() {
-	*x = RemoveTenantMemberRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveTenantMemberRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveTenantMemberRequest) ProtoMessage() {}
-
-func (x *RemoveTenantMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveTenantMemberRequest.ProtoReflect.Descriptor instead.
-func (*RemoveTenantMemberRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *RemoveTenantMemberRequest) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *RemoveTenantMemberRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-type RemoveTenantMemberResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveTenantMemberResponse) Reset() {
-	*x = RemoveTenantMemberResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveTenantMemberResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveTenantMemberResponse) ProtoMessage() {}
-
-func (x *RemoveTenantMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveTenantMemberResponse.ProtoReflect.Descriptor instead.
-func (*RemoveTenantMemberResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *RemoveTenantMemberResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
@@ -1408,7 +724,7 @@ type TransferTenantOwnershipRequest struct {
 
 func (x *TransferTenantOwnershipRequest) Reset() {
 	*x = TransferTenantOwnershipRequest{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[24]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1420,7 +736,7 @@ func (x *TransferTenantOwnershipRequest) String() string {
 func (*TransferTenantOwnershipRequest) ProtoMessage() {}
 
 func (x *TransferTenantOwnershipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[24]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1433,7 +749,7 @@ func (x *TransferTenantOwnershipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferTenantOwnershipRequest.ProtoReflect.Descriptor instead.
 func (*TransferTenantOwnershipRequest) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{24}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TransferTenantOwnershipRequest) GetTenantId() string {
@@ -1459,7 +775,7 @@ type TransferTenantOwnershipResponse struct {
 
 func (x *TransferTenantOwnershipResponse) Reset() {
 	*x = TransferTenantOwnershipResponse{}
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[25]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1471,7 +787,7 @@ func (x *TransferTenantOwnershipResponse) String() string {
 func (*TransferTenantOwnershipResponse) ProtoMessage() {}
 
 func (x *TransferTenantOwnershipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_tenant_service_v1_tenant_proto_msgTypes[25]
+	mi := &file_tenant_service_v1_tenant_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1484,7 +800,7 @@ func (x *TransferTenantOwnershipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferTenantOwnershipResponse.ProtoReflect.Descriptor instead.
 func (*TransferTenantOwnershipResponse) Descriptor() ([]byte, []int) {
-	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{25}
+	return file_tenant_service_v1_tenant_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TransferTenantOwnershipResponse) GetSuccess() bool {
@@ -1498,7 +814,7 @@ var File_tenant_service_v1_tenant_proto protoreflect.FileDescriptor
 
 const file_tenant_service_v1_tenant_proto_rawDesc = "" +
 	"\n" +
-	"\x1etenant/service/v1/tenant.proto\x12\x11tenant.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xa1\x02\n" +
+	"\x1etenant/service/v1/tenant.proto\x12\x11tenant.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xc5\x02\n" +
 	"\n" +
 	"TenantInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -1511,19 +827,9 @@ const file_tenant_service_v1_tenant_proto_rawDesc = "" +
 	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12!\n" +
-	"\fdisplay_name\x18\t \x01(\tR\vdisplayName\"\xb4\x02\n" +
-	"\x10TenantMemberInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
-	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x17\n" +
-	"\auser_id\x18\x03 \x01(\tR\x06userId\x12\x1b\n" +
-	"\tuser_name\x18\x04 \x01(\tR\buserName\x12\x1d\n" +
-	"\n" +
-	"user_email\x18\x05 \x01(\tR\tuserEmail\x12\x12\n" +
-	"\x04role\x18\x06 \x01(\tR\x04role\x12\x16\n" +
-	"\x06status\x18\a \x01(\tR\x06status\x127\n" +
-	"\tjoined_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bjoinedAt\x129\n" +
-	"\n" +
-	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xdd\x01\n" +
+	"\fdisplay_name\x18\t \x01(\tR\vdisplayName\x12\"\n" +
+	"\rowner_user_id\x18\n" +
+	" \x01(\tR\vownerUserId\"\xdd\x01\n" +
 	"\x13CreateTenantRequest\x12\x1e\n" +
 	"\x04name\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x02\x18\x80\x01R\x04name\x12<\n" +
@@ -1557,41 +863,6 @@ const file_tenant_service_v1_tenant_proto_rawDesc = "" +
 	"\x13DeleteTenantRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"0\n" +
 	"\x14DeleteTenantResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x8f\x01\n" +
-	"\x19InviteTenantMemberRequest\x12%\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12(\n" +
-	"\x04role\x18\x03 \x01(\tB\x14\xbaH\x11r\x0fR\x05adminR\x06memberR\x04role\"Y\n" +
-	"\x1aInviteTenantMemberResponse\x12;\n" +
-	"\x06member\x18\x01 \x01(\v2#.tenant.service.v1.TenantMemberInfoR\x06member\"F\n" +
-	"\x1dAcceptTenantInvitationRequest\x12%\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\":\n" +
-	"\x1eAcceptTenantInvitationResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"F\n" +
-	"\x1dRejectTenantInvitationRequest\x12%\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\":\n" +
-	"\x1eRejectTenantInvitationResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x83\x01\n" +
-	"\x18ListTenantMembersRequest\x12%\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\x12@\n" +
-	"\n" +
-	"pagination\x18\x02 \x01(\v2 .pagination.v1.PaginationRequestR\n" +
-	"pagination\"\x9d\x01\n" +
-	"\x19ListTenantMembersResponse\x12=\n" +
-	"\amembers\x18\x01 \x03(\v2#.tenant.service.v1.TenantMemberInfoR\amembers\x12A\n" +
-	"\n" +
-	"pagination\x18\x02 \x01(\v2!.pagination.v1.PaginationResponseR\n" +
-	"pagination\"\x93\x01\n" +
-	"\x1dUpdateTenantMemberRoleRequest\x12%\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12(\n" +
-	"\x04role\x18\x03 \x01(\tB\x14\xbaH\x11r\x0fR\x05adminR\x06memberR\x04role\"]\n" +
-	"\x1eUpdateTenantMemberRoleResponse\x12;\n" +
-	"\x06member\x18\x01 \x01(\v2#.tenant.service.v1.TenantMemberInfoR\x06member\"e\n" +
-	"\x19RemoveTenantMemberRequest\x12%\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\"6\n" +
-	"\x1aRemoveTenantMemberResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"|\n" +
 	"\x1eTransferTenantOwnershipRequest\x12%\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\btenantId\x123\n" +
@@ -1605,20 +876,13 @@ const file_tenant_service_v1_tenant_proto_rawDesc = "" +
 	"\x1cTENANT_MEMBER_ALREADY_EXISTS\x10\x03\x1a\x04\xa8E\x99\x03\x12\x1e\n" +
 	"\x14TENANT_CREATE_FAILED\x10\x04\x1a\x04\xa8E\xf4\x03\x12\x1e\n" +
 	"\x14TENANT_UPDATE_FAILED\x10\x05\x1a\x04\xa8E\xf4\x03\x12\x1e\n" +
-	"\x14TENANT_DELETE_FAILED\x10\x06\x1a\x04\xa8E\xf4\x03\x1a\x04\xa0E\xf4\x032\x93\n" +
-	"\n" +
+	"\x14TENANT_DELETE_FAILED\x10\x06\x1a\x04\xa8E\xf4\x03\x1a\x04\xa0E\xf4\x032\xe4\x04\n" +
 	"\rTenantService\x12_\n" +
 	"\fCreateTenant\x12&.tenant.service.v1.CreateTenantRequest\x1a'.tenant.service.v1.CreateTenantResponse\x12V\n" +
 	"\tGetTenant\x12#.tenant.service.v1.GetTenantRequest\x1a$.tenant.service.v1.GetTenantResponse\x12\\\n" +
 	"\vListTenants\x12%.tenant.service.v1.ListTenantsRequest\x1a&.tenant.service.v1.ListTenantsResponse\x12_\n" +
 	"\fUpdateTenant\x12&.tenant.service.v1.UpdateTenantRequest\x1a'.tenant.service.v1.UpdateTenantResponse\x12_\n" +
-	"\fDeleteTenant\x12&.tenant.service.v1.DeleteTenantRequest\x1a'.tenant.service.v1.DeleteTenantResponse\x12k\n" +
-	"\fInviteMember\x12,.tenant.service.v1.InviteTenantMemberRequest\x1a-.tenant.service.v1.InviteTenantMemberResponse\x12w\n" +
-	"\x10AcceptInvitation\x120.tenant.service.v1.AcceptTenantInvitationRequest\x1a1.tenant.service.v1.AcceptTenantInvitationResponse\x12w\n" +
-	"\x10RejectInvitation\x120.tenant.service.v1.RejectTenantInvitationRequest\x1a1.tenant.service.v1.RejectTenantInvitationResponse\x12h\n" +
-	"\vListMembers\x12+.tenant.service.v1.ListTenantMembersRequest\x1a,.tenant.service.v1.ListTenantMembersResponse\x12w\n" +
-	"\x10UpdateMemberRole\x120.tenant.service.v1.UpdateTenantMemberRoleRequest\x1a1.tenant.service.v1.UpdateTenantMemberRoleResponse\x12k\n" +
-	"\fRemoveMember\x12,.tenant.service.v1.RemoveTenantMemberRequest\x1a-.tenant.service.v1.RemoveTenantMemberResponse\x12z\n" +
+	"\fDeleteTenant\x12&.tenant.service.v1.DeleteTenantRequest\x1a'.tenant.service.v1.DeleteTenantResponse\x12z\n" +
 	"\x11TransferOwnership\x121.tenant.service.v1.TransferTenantOwnershipRequest\x1a2.tenant.service.v1.TransferTenantOwnershipResponseB\xd0\x01\n" +
 	"\x15com.tenant.service.v1B\vTenantProtoP\x01ZDgithub.com/Servora-Kit/servora/api/gen/go/tenant/service/v1;tenantpb\xa2\x02\x03TSX\xaa\x02\x11Tenant.Service.V1\xca\x02\x11Tenant\\Service\\V1\xe2\x02\x1dTenant\\Service\\V1\\GPBMetadata\xea\x02\x13Tenant::Service::V1b\x06proto3"
 
@@ -1635,84 +899,52 @@ func file_tenant_service_v1_tenant_proto_rawDescGZIP() []byte {
 }
 
 var file_tenant_service_v1_tenant_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_tenant_service_v1_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_tenant_service_v1_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_tenant_service_v1_tenant_proto_goTypes = []any{
 	(ErrorReason)(0),                        // 0: tenant.service.v1.ErrorReason
 	(*TenantInfo)(nil),                      // 1: tenant.service.v1.TenantInfo
-	(*TenantMemberInfo)(nil),                // 2: tenant.service.v1.TenantMemberInfo
-	(*CreateTenantRequest)(nil),             // 3: tenant.service.v1.CreateTenantRequest
-	(*CreateTenantResponse)(nil),            // 4: tenant.service.v1.CreateTenantResponse
-	(*GetTenantRequest)(nil),                // 5: tenant.service.v1.GetTenantRequest
-	(*GetTenantResponse)(nil),               // 6: tenant.service.v1.GetTenantResponse
-	(*ListTenantsRequest)(nil),              // 7: tenant.service.v1.ListTenantsRequest
-	(*ListTenantsResponse)(nil),             // 8: tenant.service.v1.ListTenantsResponse
-	(*UpdateTenantRequest)(nil),             // 9: tenant.service.v1.UpdateTenantRequest
-	(*UpdateTenantResponse)(nil),            // 10: tenant.service.v1.UpdateTenantResponse
-	(*DeleteTenantRequest)(nil),             // 11: tenant.service.v1.DeleteTenantRequest
-	(*DeleteTenantResponse)(nil),            // 12: tenant.service.v1.DeleteTenantResponse
-	(*InviteTenantMemberRequest)(nil),       // 13: tenant.service.v1.InviteTenantMemberRequest
-	(*InviteTenantMemberResponse)(nil),      // 14: tenant.service.v1.InviteTenantMemberResponse
-	(*AcceptTenantInvitationRequest)(nil),   // 15: tenant.service.v1.AcceptTenantInvitationRequest
-	(*AcceptTenantInvitationResponse)(nil),  // 16: tenant.service.v1.AcceptTenantInvitationResponse
-	(*RejectTenantInvitationRequest)(nil),   // 17: tenant.service.v1.RejectTenantInvitationRequest
-	(*RejectTenantInvitationResponse)(nil),  // 18: tenant.service.v1.RejectTenantInvitationResponse
-	(*ListTenantMembersRequest)(nil),        // 19: tenant.service.v1.ListTenantMembersRequest
-	(*ListTenantMembersResponse)(nil),       // 20: tenant.service.v1.ListTenantMembersResponse
-	(*UpdateTenantMemberRoleRequest)(nil),   // 21: tenant.service.v1.UpdateTenantMemberRoleRequest
-	(*UpdateTenantMemberRoleResponse)(nil),  // 22: tenant.service.v1.UpdateTenantMemberRoleResponse
-	(*RemoveTenantMemberRequest)(nil),       // 23: tenant.service.v1.RemoveTenantMemberRequest
-	(*RemoveTenantMemberResponse)(nil),      // 24: tenant.service.v1.RemoveTenantMemberResponse
-	(*TransferTenantOwnershipRequest)(nil),  // 25: tenant.service.v1.TransferTenantOwnershipRequest
-	(*TransferTenantOwnershipResponse)(nil), // 26: tenant.service.v1.TransferTenantOwnershipResponse
-	(*timestamppb.Timestamp)(nil),           // 27: google.protobuf.Timestamp
-	(*v1.PaginationRequest)(nil),            // 28: pagination.v1.PaginationRequest
-	(*v1.PaginationResponse)(nil),           // 29: pagination.v1.PaginationResponse
+	(*CreateTenantRequest)(nil),             // 2: tenant.service.v1.CreateTenantRequest
+	(*CreateTenantResponse)(nil),            // 3: tenant.service.v1.CreateTenantResponse
+	(*GetTenantRequest)(nil),                // 4: tenant.service.v1.GetTenantRequest
+	(*GetTenantResponse)(nil),               // 5: tenant.service.v1.GetTenantResponse
+	(*ListTenantsRequest)(nil),              // 6: tenant.service.v1.ListTenantsRequest
+	(*ListTenantsResponse)(nil),             // 7: tenant.service.v1.ListTenantsResponse
+	(*UpdateTenantRequest)(nil),             // 8: tenant.service.v1.UpdateTenantRequest
+	(*UpdateTenantResponse)(nil),            // 9: tenant.service.v1.UpdateTenantResponse
+	(*DeleteTenantRequest)(nil),             // 10: tenant.service.v1.DeleteTenantRequest
+	(*DeleteTenantResponse)(nil),            // 11: tenant.service.v1.DeleteTenantResponse
+	(*TransferTenantOwnershipRequest)(nil),  // 12: tenant.service.v1.TransferTenantOwnershipRequest
+	(*TransferTenantOwnershipResponse)(nil), // 13: tenant.service.v1.TransferTenantOwnershipResponse
+	(*timestamppb.Timestamp)(nil),           // 14: google.protobuf.Timestamp
+	(*v1.PaginationRequest)(nil),            // 15: pagination.v1.PaginationRequest
+	(*v1.PaginationResponse)(nil),           // 16: pagination.v1.PaginationResponse
 }
 var file_tenant_service_v1_tenant_proto_depIdxs = []int32{
-	27, // 0: tenant.service.v1.TenantInfo.created_at:type_name -> google.protobuf.Timestamp
-	27, // 1: tenant.service.v1.TenantInfo.updated_at:type_name -> google.protobuf.Timestamp
-	27, // 2: tenant.service.v1.TenantMemberInfo.joined_at:type_name -> google.protobuf.Timestamp
-	27, // 3: tenant.service.v1.TenantMemberInfo.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 4: tenant.service.v1.CreateTenantResponse.tenant:type_name -> tenant.service.v1.TenantInfo
-	1,  // 5: tenant.service.v1.GetTenantResponse.tenant:type_name -> tenant.service.v1.TenantInfo
-	28, // 6: tenant.service.v1.ListTenantsRequest.pagination:type_name -> pagination.v1.PaginationRequest
-	1,  // 7: tenant.service.v1.ListTenantsResponse.tenants:type_name -> tenant.service.v1.TenantInfo
-	29, // 8: tenant.service.v1.ListTenantsResponse.pagination:type_name -> pagination.v1.PaginationResponse
-	1,  // 9: tenant.service.v1.UpdateTenantResponse.tenant:type_name -> tenant.service.v1.TenantInfo
-	2,  // 10: tenant.service.v1.InviteTenantMemberResponse.member:type_name -> tenant.service.v1.TenantMemberInfo
-	28, // 11: tenant.service.v1.ListTenantMembersRequest.pagination:type_name -> pagination.v1.PaginationRequest
-	2,  // 12: tenant.service.v1.ListTenantMembersResponse.members:type_name -> tenant.service.v1.TenantMemberInfo
-	29, // 13: tenant.service.v1.ListTenantMembersResponse.pagination:type_name -> pagination.v1.PaginationResponse
-	2,  // 14: tenant.service.v1.UpdateTenantMemberRoleResponse.member:type_name -> tenant.service.v1.TenantMemberInfo
-	3,  // 15: tenant.service.v1.TenantService.CreateTenant:input_type -> tenant.service.v1.CreateTenantRequest
-	5,  // 16: tenant.service.v1.TenantService.GetTenant:input_type -> tenant.service.v1.GetTenantRequest
-	7,  // 17: tenant.service.v1.TenantService.ListTenants:input_type -> tenant.service.v1.ListTenantsRequest
-	9,  // 18: tenant.service.v1.TenantService.UpdateTenant:input_type -> tenant.service.v1.UpdateTenantRequest
-	11, // 19: tenant.service.v1.TenantService.DeleteTenant:input_type -> tenant.service.v1.DeleteTenantRequest
-	13, // 20: tenant.service.v1.TenantService.InviteMember:input_type -> tenant.service.v1.InviteTenantMemberRequest
-	15, // 21: tenant.service.v1.TenantService.AcceptInvitation:input_type -> tenant.service.v1.AcceptTenantInvitationRequest
-	17, // 22: tenant.service.v1.TenantService.RejectInvitation:input_type -> tenant.service.v1.RejectTenantInvitationRequest
-	19, // 23: tenant.service.v1.TenantService.ListMembers:input_type -> tenant.service.v1.ListTenantMembersRequest
-	21, // 24: tenant.service.v1.TenantService.UpdateMemberRole:input_type -> tenant.service.v1.UpdateTenantMemberRoleRequest
-	23, // 25: tenant.service.v1.TenantService.RemoveMember:input_type -> tenant.service.v1.RemoveTenantMemberRequest
-	25, // 26: tenant.service.v1.TenantService.TransferOwnership:input_type -> tenant.service.v1.TransferTenantOwnershipRequest
-	4,  // 27: tenant.service.v1.TenantService.CreateTenant:output_type -> tenant.service.v1.CreateTenantResponse
-	6,  // 28: tenant.service.v1.TenantService.GetTenant:output_type -> tenant.service.v1.GetTenantResponse
-	8,  // 29: tenant.service.v1.TenantService.ListTenants:output_type -> tenant.service.v1.ListTenantsResponse
-	10, // 30: tenant.service.v1.TenantService.UpdateTenant:output_type -> tenant.service.v1.UpdateTenantResponse
-	12, // 31: tenant.service.v1.TenantService.DeleteTenant:output_type -> tenant.service.v1.DeleteTenantResponse
-	14, // 32: tenant.service.v1.TenantService.InviteMember:output_type -> tenant.service.v1.InviteTenantMemberResponse
-	16, // 33: tenant.service.v1.TenantService.AcceptInvitation:output_type -> tenant.service.v1.AcceptTenantInvitationResponse
-	18, // 34: tenant.service.v1.TenantService.RejectInvitation:output_type -> tenant.service.v1.RejectTenantInvitationResponse
-	20, // 35: tenant.service.v1.TenantService.ListMembers:output_type -> tenant.service.v1.ListTenantMembersResponse
-	22, // 36: tenant.service.v1.TenantService.UpdateMemberRole:output_type -> tenant.service.v1.UpdateTenantMemberRoleResponse
-	24, // 37: tenant.service.v1.TenantService.RemoveMember:output_type -> tenant.service.v1.RemoveTenantMemberResponse
-	26, // 38: tenant.service.v1.TenantService.TransferOwnership:output_type -> tenant.service.v1.TransferTenantOwnershipResponse
-	27, // [27:39] is the sub-list for method output_type
-	15, // [15:27] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	14, // 0: tenant.service.v1.TenantInfo.created_at:type_name -> google.protobuf.Timestamp
+	14, // 1: tenant.service.v1.TenantInfo.updated_at:type_name -> google.protobuf.Timestamp
+	1,  // 2: tenant.service.v1.CreateTenantResponse.tenant:type_name -> tenant.service.v1.TenantInfo
+	1,  // 3: tenant.service.v1.GetTenantResponse.tenant:type_name -> tenant.service.v1.TenantInfo
+	15, // 4: tenant.service.v1.ListTenantsRequest.pagination:type_name -> pagination.v1.PaginationRequest
+	1,  // 5: tenant.service.v1.ListTenantsResponse.tenants:type_name -> tenant.service.v1.TenantInfo
+	16, // 6: tenant.service.v1.ListTenantsResponse.pagination:type_name -> pagination.v1.PaginationResponse
+	1,  // 7: tenant.service.v1.UpdateTenantResponse.tenant:type_name -> tenant.service.v1.TenantInfo
+	2,  // 8: tenant.service.v1.TenantService.CreateTenant:input_type -> tenant.service.v1.CreateTenantRequest
+	4,  // 9: tenant.service.v1.TenantService.GetTenant:input_type -> tenant.service.v1.GetTenantRequest
+	6,  // 10: tenant.service.v1.TenantService.ListTenants:input_type -> tenant.service.v1.ListTenantsRequest
+	8,  // 11: tenant.service.v1.TenantService.UpdateTenant:input_type -> tenant.service.v1.UpdateTenantRequest
+	10, // 12: tenant.service.v1.TenantService.DeleteTenant:input_type -> tenant.service.v1.DeleteTenantRequest
+	12, // 13: tenant.service.v1.TenantService.TransferOwnership:input_type -> tenant.service.v1.TransferTenantOwnershipRequest
+	3,  // 14: tenant.service.v1.TenantService.CreateTenant:output_type -> tenant.service.v1.CreateTenantResponse
+	5,  // 15: tenant.service.v1.TenantService.GetTenant:output_type -> tenant.service.v1.GetTenantResponse
+	7,  // 16: tenant.service.v1.TenantService.ListTenants:output_type -> tenant.service.v1.ListTenantsResponse
+	9,  // 17: tenant.service.v1.TenantService.UpdateTenant:output_type -> tenant.service.v1.UpdateTenantResponse
+	11, // 18: tenant.service.v1.TenantService.DeleteTenant:output_type -> tenant.service.v1.DeleteTenantResponse
+	13, // 19: tenant.service.v1.TenantService.TransferOwnership:output_type -> tenant.service.v1.TransferTenantOwnershipResponse
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_tenant_service_v1_tenant_proto_init() }
@@ -1726,7 +958,7 @@ func file_tenant_service_v1_tenant_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tenant_service_v1_tenant_proto_rawDesc), len(file_tenant_service_v1_tenant_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   26,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

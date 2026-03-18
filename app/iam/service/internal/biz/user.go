@@ -31,6 +31,7 @@ type UserUsecase struct {
 	log        *logger.Helper
 	cfg        *conf.App
 	authnRepo  AuthnRepo
+	authnUC    *AuthnUsecase
 	orgRepo    OrganizationRepo
 	tenantRepo TenantRepo
 	authz      AuthZRepo
@@ -41,6 +42,7 @@ func NewUserUsecase(
 	l logger.Logger,
 	cfg *conf.App,
 	authnRepo AuthnRepo,
+	authnUC *AuthnUsecase,
 	orgRepo OrganizationRepo,
 	tenantRepo TenantRepo,
 	authz AuthZRepo,
@@ -50,6 +52,7 @@ func NewUserUsecase(
 		log:        logger.NewHelper(l, logger.WithModule("user/biz/iam-service")),
 		cfg:        cfg,
 		authnRepo:  authnRepo,
+		authnUC:    authnUC,
 		orgRepo:    orgRepo,
 		tenantRepo: tenantRepo,
 		authz:      authz,
@@ -127,8 +130,9 @@ func (uc *UserUsecase) UpdateUser(ctx context.Context, callerID string, user *en
 	return updatedUser, nil
 }
 
-// CreateUser creates a new user and adds them to the specified tenant and organization.
-// The user is also given a personal tenant/org space.
+// CreateUser creates a new user and adds them to the specified organization.
+// The user is NOT given a personal tenant; tenant owners/admins always assign users to an org.
+// The created user starts with email_verified=false; a verification email is sent.
 func (uc *UserUsecase) CreateUser(ctx context.Context, tenantID, organizationID string, user *entity.User) (*entity.User, error) {
 	if tenantID == "" {
 		return nil, userpb.ErrorCreateUserFailed("tenant_id is required")
@@ -152,7 +156,12 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, tenantID, organizationID 
 		return nil, err
 	}
 
-	user.EmailVerified = true
+	// Manually created users get the same default role as self-registered users.
+	if user.Role == "" {
+		user.Role = "user"
+	}
+	// Manually created users must verify their email before they can be considered active.
+	user.EmailVerified = false
 
 	savedUser, err := uc.repo.SaveUser(ctx, user)
 	if err != nil {
@@ -160,15 +169,7 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, tenantID, organizationID 
 		return nil, userpb.ErrorCreateUserFailed("failed to create user")
 	}
 
-	if _, err := uc.tenantRepo.AddMember(ctx, &entity.TenantMember{
-		TenantID: tenantID,
-		UserID:   savedUser.ID,
-		Role:     string(RoleMember),
-		Status:   "active",
-	}); err != nil {
-		uc.log.Errorf("add user to tenant failed: %v", err)
-	}
-
+	// Add user to the specified organization as a member.
 	if _, err := uc.orgRepo.AddMember(ctx, &entity.OrganizationMember{
 		OrganizationID: organizationID,
 		UserID:         savedUser.ID,
@@ -179,9 +180,15 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, tenantID, organizationID 
 
 	if uc.authz != nil {
 		_ = uc.authz.WriteTuples(ctx,
-			Tuple{User: "user:" + savedUser.ID, Relation: string(RoleMember), Object: "tenant:" + tenantID},
 			Tuple{User: "user:" + savedUser.ID, Relation: string(RoleMember), Object: "organization:" + organizationID},
 		)
+	}
+
+	// Send verification email (best-effort; failure is logged but not returned).
+	if uc.authnUC != nil {
+		if err := uc.authnUC.SendVerificationEmail(ctx, savedUser); err != nil {
+			uc.log.Warnf("send verification email failed for user %s: %v", savedUser.ID, err)
+		}
 	}
 
 	return savedUser, nil
@@ -257,17 +264,10 @@ func (uc *UserUsecase) PurgeUser(ctx context.Context, user *entity.User) (bool, 
 	return true, nil
 }
 
-// collectUserFGATuples builds the FGA tuple list from current DB memberships.
+// collectUserFGATuples builds the FGA tuple list from current DB org memberships.
 // Must be called BEFORE PurgeCascade so the membership rows still exist.
 func (uc *UserUsecase) collectUserFGATuples(ctx context.Context, userID string) []Tuple {
 	var tuples []Tuple
-
-	tenantMemberships, _ := uc.tenantRepo.ListMembershipsByUserID(ctx, userID)
-	for _, m := range tenantMemberships {
-		tuples = append(tuples,
-			Tuple{User: "user:" + userID, Relation: m.Role, Object: "tenant:" + m.TenantID},
-		)
-	}
 
 	orgMemberships, _ := uc.orgRepo.ListMembershipsByUserID(ctx, userID)
 	for _, m := range orgMemberships {
@@ -290,14 +290,13 @@ func (uc *UserUsecase) deleteUserFGATuples(ctx context.Context, userID string, t
 
 // CompensateUserPurge cleans up residual FGA tuples and Redis refresh tokens
 // for a user whose DB records have already been deleted by PurgeCascade.
-// It queries FGA directly (via ListObjects) to discover remaining tuples.
 func (uc *UserUsecase) CompensateUserPurge(ctx context.Context, userID string) error {
 	uc.log.Infof("CompensateUserPurge start: user_id=%s", userID)
 
 	var tuples []Tuple
 
 	if uc.authz != nil {
-		orgRelations := []string{"owner", "admin", "member", "viewer"}
+		orgRelations := []string{"admin", "member", "viewer"}
 
 		for _, rel := range orgRelations {
 			objects, err := uc.authz.ListObjects(ctx, userID, rel, "organization")
@@ -310,16 +309,13 @@ func (uc *UserUsecase) CompensateUserPurge(ctx context.Context, userID string) e
 			}
 		}
 
-		tenantRelations := []string{"owner", "admin", "member"}
-		for _, rel := range tenantRelations {
-			objects, err := uc.authz.ListObjects(ctx, userID, rel, "tenant")
-			if err != nil {
-				uc.log.Warnf("CompensateUserPurge ListObjects(tenant/%s) failed: %v", rel, err)
-				continue
-			}
-			for _, obj := range objects {
-				tuples = append(tuples, Tuple{User: "user:" + userID, Relation: rel, Object: obj})
-			}
+		// Also check tenant owner tuples (user may be or have been a tenant owner)
+		objects, err := uc.authz.ListObjects(ctx, userID, "owner", "tenant")
+		if err != nil {
+			uc.log.Warnf("CompensateUserPurge ListObjects(tenant/owner) failed: %v", err)
+		}
+		for _, obj := range objects {
+			tuples = append(tuples, Tuple{User: "user:" + userID, Relation: "owner", Object: obj})
 		}
 
 		if len(tuples) > 0 {

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/position"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/predicate"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
 	"github.com/google/uuid"
@@ -113,6 +114,81 @@ func (_u *OrganizationUpdate) ClearDisplayName() *OrganizationUpdate {
 	return _u
 }
 
+// SetParentID sets the "parent_id" field.
+func (_u *OrganizationUpdate) SetParentID(v uuid.UUID) *OrganizationUpdate {
+	_u.mutation.SetParentID(v)
+	return _u
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableParentID(v *uuid.UUID) *OrganizationUpdate {
+	if v != nil {
+		_u.SetParentID(*v)
+	}
+	return _u
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (_u *OrganizationUpdate) ClearParentID() *OrganizationUpdate {
+	_u.mutation.ClearParentID()
+	return _u
+}
+
+// SetType sets the "type" field.
+func (_u *OrganizationUpdate) SetType(v organization.Type) *OrganizationUpdate {
+	_u.mutation.SetType(v)
+	return _u
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableType(v *organization.Type) *OrganizationUpdate {
+	if v != nil {
+		_u.SetType(*v)
+	}
+	return _u
+}
+
+// SetSort sets the "sort" field.
+func (_u *OrganizationUpdate) SetSort(v int) *OrganizationUpdate {
+	_u.mutation.ResetSort()
+	_u.mutation.SetSort(v)
+	return _u
+}
+
+// SetNillableSort sets the "sort" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableSort(v *int) *OrganizationUpdate {
+	if v != nil {
+		_u.SetSort(*v)
+	}
+	return _u
+}
+
+// AddSort adds value to the "sort" field.
+func (_u *OrganizationUpdate) AddSort(v int) *OrganizationUpdate {
+	_u.mutation.AddSort(v)
+	return _u
+}
+
+// SetLeaderUserID sets the "leader_user_id" field.
+func (_u *OrganizationUpdate) SetLeaderUserID(v uuid.UUID) *OrganizationUpdate {
+	_u.mutation.SetLeaderUserID(v)
+	return _u
+}
+
+// SetNillableLeaderUserID sets the "leader_user_id" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableLeaderUserID(v *uuid.UUID) *OrganizationUpdate {
+	if v != nil {
+		_u.SetLeaderUserID(*v)
+	}
+	return _u
+}
+
+// ClearLeaderUserID clears the value of the "leader_user_id" field.
+func (_u *OrganizationUpdate) ClearLeaderUserID() *OrganizationUpdate {
+	_u.mutation.ClearLeaderUserID()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *OrganizationUpdate) SetUpdatedAt(v time.Time) *OrganizationUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -137,6 +213,41 @@ func (_u *OrganizationUpdate) AddMembers(v ...*OrganizationMember) *Organization
 		ids[i] = v[i].ID
 	}
 	return _u.AddMemberIDs(ids...)
+}
+
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (_u *OrganizationUpdate) AddPositionIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	_u.mutation.AddPositionIDs(ids...)
+	return _u
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (_u *OrganizationUpdate) AddPositions(v ...*Position) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPositionIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Organization entity.
+func (_u *OrganizationUpdate) SetParent(v *Organization) *OrganizationUpdate {
+	return _u.SetParentID(v.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Organization entity by IDs.
+func (_u *OrganizationUpdate) AddChildIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	_u.mutation.AddChildIDs(ids...)
+	return _u
+}
+
+// AddChildren adds the "children" edges to the Organization entity.
+func (_u *OrganizationUpdate) AddChildren(v ...*Organization) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddChildIDs(ids...)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -169,6 +280,54 @@ func (_u *OrganizationUpdate) RemoveMembers(v ...*OrganizationMember) *Organizat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveMemberIDs(ids...)
+}
+
+// ClearPositions clears all "positions" edges to the Position entity.
+func (_u *OrganizationUpdate) ClearPositions() *OrganizationUpdate {
+	_u.mutation.ClearPositions()
+	return _u
+}
+
+// RemovePositionIDs removes the "positions" edge to Position entities by IDs.
+func (_u *OrganizationUpdate) RemovePositionIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	_u.mutation.RemovePositionIDs(ids...)
+	return _u
+}
+
+// RemovePositions removes "positions" edges to Position entities.
+func (_u *OrganizationUpdate) RemovePositions(v ...*Position) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePositionIDs(ids...)
+}
+
+// ClearParent clears the "parent" edge to the Organization entity.
+func (_u *OrganizationUpdate) ClearParent() *OrganizationUpdate {
+	_u.mutation.ClearParent()
+	return _u
+}
+
+// ClearChildren clears all "children" edges to the Organization entity.
+func (_u *OrganizationUpdate) ClearChildren() *OrganizationUpdate {
+	_u.mutation.ClearChildren()
+	return _u
+}
+
+// RemoveChildIDs removes the "children" edge to Organization entities by IDs.
+func (_u *OrganizationUpdate) RemoveChildIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	_u.mutation.RemoveChildIDs(ids...)
+	return _u
+}
+
+// RemoveChildren removes "children" edges to Organization entities.
+func (_u *OrganizationUpdate) RemoveChildren(v ...*Organization) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveChildIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -224,6 +383,11 @@ func (_u *OrganizationUpdate) check() error {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Organization.display_name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.GetType(); ok {
+		if err := organization.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Organization.type": %w`, err)}
+		}
+	}
 	if _u.mutation.TenantCleared() && len(_u.mutation.TenantIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Organization.tenant"`)
 	}
@@ -259,6 +423,21 @@ func (_u *OrganizationUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if _u.mutation.DisplayNameCleared() {
 		_spec.ClearField(organization.FieldDisplayName, field.TypeString)
+	}
+	if value, ok := _u.mutation.GetType(); ok {
+		_spec.SetField(organization.FieldType, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Sort(); ok {
+		_spec.SetField(organization.FieldSort, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSort(); ok {
+		_spec.AddField(organization.FieldSort, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.LeaderUserID(); ok {
+		_spec.SetField(organization.FieldLeaderUserID, field.TypeUUID, value)
+	}
+	if _u.mutation.LeaderUserIDCleared() {
+		_spec.ClearField(organization.FieldLeaderUserID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
@@ -330,6 +509,125 @@ func (_u *OrganizationUpdate) sqlSave(ctx context.Context) (_node int, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationmember.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPositionsIDs(); len(nodes) > 0 && !_u.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.ParentTable,
+			Columns: []string{organization.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.ParentTable,
+			Columns: []string{organization.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !_u.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -439,6 +737,81 @@ func (_u *OrganizationUpdateOne) ClearDisplayName() *OrganizationUpdateOne {
 	return _u
 }
 
+// SetParentID sets the "parent_id" field.
+func (_u *OrganizationUpdateOne) SetParentID(v uuid.UUID) *OrganizationUpdateOne {
+	_u.mutation.SetParentID(v)
+	return _u
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableParentID(v *uuid.UUID) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetParentID(*v)
+	}
+	return _u
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (_u *OrganizationUpdateOne) ClearParentID() *OrganizationUpdateOne {
+	_u.mutation.ClearParentID()
+	return _u
+}
+
+// SetType sets the "type" field.
+func (_u *OrganizationUpdateOne) SetType(v organization.Type) *OrganizationUpdateOne {
+	_u.mutation.SetType(v)
+	return _u
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableType(v *organization.Type) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetType(*v)
+	}
+	return _u
+}
+
+// SetSort sets the "sort" field.
+func (_u *OrganizationUpdateOne) SetSort(v int) *OrganizationUpdateOne {
+	_u.mutation.ResetSort()
+	_u.mutation.SetSort(v)
+	return _u
+}
+
+// SetNillableSort sets the "sort" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableSort(v *int) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetSort(*v)
+	}
+	return _u
+}
+
+// AddSort adds value to the "sort" field.
+func (_u *OrganizationUpdateOne) AddSort(v int) *OrganizationUpdateOne {
+	_u.mutation.AddSort(v)
+	return _u
+}
+
+// SetLeaderUserID sets the "leader_user_id" field.
+func (_u *OrganizationUpdateOne) SetLeaderUserID(v uuid.UUID) *OrganizationUpdateOne {
+	_u.mutation.SetLeaderUserID(v)
+	return _u
+}
+
+// SetNillableLeaderUserID sets the "leader_user_id" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableLeaderUserID(v *uuid.UUID) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetLeaderUserID(*v)
+	}
+	return _u
+}
+
+// ClearLeaderUserID clears the value of the "leader_user_id" field.
+func (_u *OrganizationUpdateOne) ClearLeaderUserID() *OrganizationUpdateOne {
+	_u.mutation.ClearLeaderUserID()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *OrganizationUpdateOne) SetUpdatedAt(v time.Time) *OrganizationUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -463,6 +836,41 @@ func (_u *OrganizationUpdateOne) AddMembers(v ...*OrganizationMember) *Organizat
 		ids[i] = v[i].ID
 	}
 	return _u.AddMemberIDs(ids...)
+}
+
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (_u *OrganizationUpdateOne) AddPositionIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	_u.mutation.AddPositionIDs(ids...)
+	return _u
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (_u *OrganizationUpdateOne) AddPositions(v ...*Position) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPositionIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Organization entity.
+func (_u *OrganizationUpdateOne) SetParent(v *Organization) *OrganizationUpdateOne {
+	return _u.SetParentID(v.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Organization entity by IDs.
+func (_u *OrganizationUpdateOne) AddChildIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	_u.mutation.AddChildIDs(ids...)
+	return _u
+}
+
+// AddChildren adds the "children" edges to the Organization entity.
+func (_u *OrganizationUpdateOne) AddChildren(v ...*Organization) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddChildIDs(ids...)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -495,6 +903,54 @@ func (_u *OrganizationUpdateOne) RemoveMembers(v ...*OrganizationMember) *Organi
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveMemberIDs(ids...)
+}
+
+// ClearPositions clears all "positions" edges to the Position entity.
+func (_u *OrganizationUpdateOne) ClearPositions() *OrganizationUpdateOne {
+	_u.mutation.ClearPositions()
+	return _u
+}
+
+// RemovePositionIDs removes the "positions" edge to Position entities by IDs.
+func (_u *OrganizationUpdateOne) RemovePositionIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	_u.mutation.RemovePositionIDs(ids...)
+	return _u
+}
+
+// RemovePositions removes "positions" edges to Position entities.
+func (_u *OrganizationUpdateOne) RemovePositions(v ...*Position) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePositionIDs(ids...)
+}
+
+// ClearParent clears the "parent" edge to the Organization entity.
+func (_u *OrganizationUpdateOne) ClearParent() *OrganizationUpdateOne {
+	_u.mutation.ClearParent()
+	return _u
+}
+
+// ClearChildren clears all "children" edges to the Organization entity.
+func (_u *OrganizationUpdateOne) ClearChildren() *OrganizationUpdateOne {
+	_u.mutation.ClearChildren()
+	return _u
+}
+
+// RemoveChildIDs removes the "children" edge to Organization entities by IDs.
+func (_u *OrganizationUpdateOne) RemoveChildIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	_u.mutation.RemoveChildIDs(ids...)
+	return _u
+}
+
+// RemoveChildren removes "children" edges to Organization entities.
+func (_u *OrganizationUpdateOne) RemoveChildren(v ...*Organization) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveChildIDs(ids...)
 }
 
 // Where appends a list predicates to the OrganizationUpdate builder.
@@ -563,6 +1019,11 @@ func (_u *OrganizationUpdateOne) check() error {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Organization.display_name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.GetType(); ok {
+		if err := organization.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Organization.type": %w`, err)}
+		}
+	}
 	if _u.mutation.TenantCleared() && len(_u.mutation.TenantIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Organization.tenant"`)
 	}
@@ -615,6 +1076,21 @@ func (_u *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizati
 	}
 	if _u.mutation.DisplayNameCleared() {
 		_spec.ClearField(organization.FieldDisplayName, field.TypeString)
+	}
+	if value, ok := _u.mutation.GetType(); ok {
+		_spec.SetField(organization.FieldType, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Sort(); ok {
+		_spec.SetField(organization.FieldSort, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSort(); ok {
+		_spec.AddField(organization.FieldSort, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.LeaderUserID(); ok {
+		_spec.SetField(organization.FieldLeaderUserID, field.TypeUUID, value)
+	}
+	if _u.mutation.LeaderUserIDCleared() {
+		_spec.ClearField(organization.FieldLeaderUserID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
@@ -686,6 +1162,125 @@ func (_u *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizati
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationmember.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPositionsIDs(); len(nodes) > 0 && !_u.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.ParentTable,
+			Columns: []string{organization.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.ParentTable,
+			Columns: []string{organization.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !_u.mutation.ChildrenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

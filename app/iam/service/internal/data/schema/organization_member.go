@@ -21,8 +21,8 @@ func (OrganizationMember) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(newUUIDv7),
 		field.UUID("organization_id", uuid.UUID{}),
 		field.UUID("user_id", uuid.UUID{}),
-		field.String("role").MaxLen(32).Default("member"),
-		field.Enum("status").Values("active", "invited").Default("active"),
+		// 组织角色两级：admin > member
+		field.Enum("role").Values("admin", "member").Default("member"),
 		field.Time("created_at").Default(time.Now).Immutable(),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}

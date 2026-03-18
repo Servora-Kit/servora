@@ -27,7 +27,7 @@ var File_iam_service_v1_i_tenant_proto protoreflect.FileDescriptor
 
 const file_iam_service_v1_i_tenant_proto_rawDesc = "" +
 	"\n" +
-	"\x1diam/service/v1/i_tenant.proto\x12\x0eiam.service.v1\x1a\x1cauthz/service/v1/authz.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1etenant/service/v1/tenant.proto2\xad\x0f\n" +
+	"\x1diam/service/v1/i_tenant.proto\x12\x0eiam.service.v1\x1a\x1cauthz/service/v1/authz.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1etenant/service/v1/tenant.proto2\xe7\x06\n" +
 	"\rTenantService\x12}\n" +
 	"\fCreateTenant\x12&.tenant.service.v1.CreateTenantRequest\x1a'.tenant.service.v1.CreateTenantResponse\"\x1c\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/tenants\x12~\n" +
 	"\tGetTenant\x12#.tenant.service.v1.GetTenantRequest\x1a$.tenant.service.v1.GetTenantResponse\"&\xa2\xbb\x18\n" +
@@ -37,15 +37,8 @@ const file_iam_service_v1_i_tenant_proto_rawDesc = "" +
 	"\fUpdateTenant\x12&.tenant.service.v1.UpdateTenantRequest\x1a'.tenant.service.v1.UpdateTenantResponse\")\xa2\xbb\x18\n" +
 	"\b\x04\x10\r\x18\x01\"\x02id\x82\xd3\xe4\x93\x02\x15:\x01*\x1a\x10/v1/tenants/{id}\x12\x87\x01\n" +
 	"\fDeleteTenant\x12&.tenant.service.v1.DeleteTenantRequest\x1a'.tenant.service.v1.DeleteTenantResponse\"&\xa2\xbb\x18\n" +
-	"\b\x04\x10\r\x18\x01\"\x02id\x82\xd3\xe4\x93\x02\x12*\x10/v1/tenants/{id}\x12\xac\x01\n" +
-	"\fInviteMember\x12,.tenant.service.v1.InviteTenantMemberRequest\x1a-.tenant.service.v1.InviteTenantMemberResponse\"?\xa2\xbb\x18\x11\b\x04\x10\x0e\x18\x01\"\ttenant_id\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/tenants/{tenant_id}/members\x12\xb4\x01\n" +
-	"\x10AcceptInvitation\x120.tenant.service.v1.AcceptTenantInvitationRequest\x1a1.tenant.service.v1.AcceptTenantInvitationResponse\";\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/tenants/{tenant_id}/invitations/accept\x12\xb4\x01\n" +
-	"\x10RejectInvitation\x120.tenant.service.v1.RejectTenantInvitationRequest\x1a1.tenant.service.v1.RejectTenantInvitationResponse\";\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/tenants/{tenant_id}/invitations/reject\x12\xa6\x01\n" +
-	"\vListMembers\x12+.tenant.service.v1.ListTenantMembersRequest\x1a,.tenant.service.v1.ListTenantMembersResponse\"<\xa2\xbb\x18\x11\b\x04\x10\n" +
-	"\x18\x01\"\ttenant_id\x82\xd3\xe4\x93\x02!\x12\x1f/v1/tenants/{tenant_id}/members\x12\xc7\x01\n" +
-	"\x10UpdateMemberRole\x120.tenant.service.v1.UpdateTenantMemberRoleRequest\x1a1.tenant.service.v1.UpdateTenantMemberRoleResponse\"N\xa2\xbb\x18\x11\b\x04\x10\x0e\x18\x01\"\ttenant_id\x82\xd3\xe4\x93\x023:\x01*\x1a./v1/tenants/{tenant_id}/members/{user_id}/role\x12\xb3\x01\n" +
-	"\fRemoveMember\x12,.tenant.service.v1.RemoveTenantMemberRequest\x1a-.tenant.service.v1.RemoveTenantMemberResponse\"F\xa2\xbb\x18\x11\b\x04\x10\x0e\x18\x01\"\ttenant_id\x82\xd3\xe4\x93\x02+*)/v1/tenants/{tenant_id}/members/{user_id}\x12\xc6\x01\n" +
-	"\x11TransferOwnership\x121.tenant.service.v1.TransferTenantOwnershipRequest\x1a2.tenant.service.v1.TransferTenantOwnershipResponse\"J\xa2\xbb\x18\x11\b\x04\x10\x0e\x18\x01\"\ttenant_id\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/tenants/{tenant_id}/transfer-ownershipB\xbc\x01\n" +
+	"\b\x04\x10\r\x18\x01\"\x02id\x82\xd3\xe4\x93\x02\x12*\x10/v1/tenants/{id}\x12\xc6\x01\n" +
+	"\x11TransferOwnership\x121.tenant.service.v1.TransferTenantOwnershipRequest\x1a2.tenant.service.v1.TransferTenantOwnershipResponse\"J\xa2\xbb\x18\x11\b\x04\x10\r\x18\x01\"\ttenant_id\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/tenants/{tenant_id}/transfer-ownershipB\xbc\x01\n" +
 	"\x12com.iam.service.v1B\fITenantProtoP\x01Z>github.com/Servora-Kit/servora/api/gen/go/iam/service/v1;iampb\xa2\x02\x03ISX\xaa\x02\x0eIam.Service.V1\xca\x02\x0eIam\\Service\\V1\xe2\x02\x1aIam\\Service\\V1\\GPBMetadata\xea\x02\x10Iam::Service::V1b\x06proto3"
 
 var file_iam_service_v1_i_tenant_proto_goTypes = []any{
@@ -54,25 +47,13 @@ var file_iam_service_v1_i_tenant_proto_goTypes = []any{
 	(*v1.ListTenantsRequest)(nil),              // 2: tenant.service.v1.ListTenantsRequest
 	(*v1.UpdateTenantRequest)(nil),             // 3: tenant.service.v1.UpdateTenantRequest
 	(*v1.DeleteTenantRequest)(nil),             // 4: tenant.service.v1.DeleteTenantRequest
-	(*v1.InviteTenantMemberRequest)(nil),       // 5: tenant.service.v1.InviteTenantMemberRequest
-	(*v1.AcceptTenantInvitationRequest)(nil),   // 6: tenant.service.v1.AcceptTenantInvitationRequest
-	(*v1.RejectTenantInvitationRequest)(nil),   // 7: tenant.service.v1.RejectTenantInvitationRequest
-	(*v1.ListTenantMembersRequest)(nil),        // 8: tenant.service.v1.ListTenantMembersRequest
-	(*v1.UpdateTenantMemberRoleRequest)(nil),   // 9: tenant.service.v1.UpdateTenantMemberRoleRequest
-	(*v1.RemoveTenantMemberRequest)(nil),       // 10: tenant.service.v1.RemoveTenantMemberRequest
-	(*v1.TransferTenantOwnershipRequest)(nil),  // 11: tenant.service.v1.TransferTenantOwnershipRequest
-	(*v1.CreateTenantResponse)(nil),            // 12: tenant.service.v1.CreateTenantResponse
-	(*v1.GetTenantResponse)(nil),               // 13: tenant.service.v1.GetTenantResponse
-	(*v1.ListTenantsResponse)(nil),             // 14: tenant.service.v1.ListTenantsResponse
-	(*v1.UpdateTenantResponse)(nil),            // 15: tenant.service.v1.UpdateTenantResponse
-	(*v1.DeleteTenantResponse)(nil),            // 16: tenant.service.v1.DeleteTenantResponse
-	(*v1.InviteTenantMemberResponse)(nil),      // 17: tenant.service.v1.InviteTenantMemberResponse
-	(*v1.AcceptTenantInvitationResponse)(nil),  // 18: tenant.service.v1.AcceptTenantInvitationResponse
-	(*v1.RejectTenantInvitationResponse)(nil),  // 19: tenant.service.v1.RejectTenantInvitationResponse
-	(*v1.ListTenantMembersResponse)(nil),       // 20: tenant.service.v1.ListTenantMembersResponse
-	(*v1.UpdateTenantMemberRoleResponse)(nil),  // 21: tenant.service.v1.UpdateTenantMemberRoleResponse
-	(*v1.RemoveTenantMemberResponse)(nil),      // 22: tenant.service.v1.RemoveTenantMemberResponse
-	(*v1.TransferTenantOwnershipResponse)(nil), // 23: tenant.service.v1.TransferTenantOwnershipResponse
+	(*v1.TransferTenantOwnershipRequest)(nil),  // 5: tenant.service.v1.TransferTenantOwnershipRequest
+	(*v1.CreateTenantResponse)(nil),            // 6: tenant.service.v1.CreateTenantResponse
+	(*v1.GetTenantResponse)(nil),               // 7: tenant.service.v1.GetTenantResponse
+	(*v1.ListTenantsResponse)(nil),             // 8: tenant.service.v1.ListTenantsResponse
+	(*v1.UpdateTenantResponse)(nil),            // 9: tenant.service.v1.UpdateTenantResponse
+	(*v1.DeleteTenantResponse)(nil),            // 10: tenant.service.v1.DeleteTenantResponse
+	(*v1.TransferTenantOwnershipResponse)(nil), // 11: tenant.service.v1.TransferTenantOwnershipResponse
 }
 var file_iam_service_v1_i_tenant_proto_depIdxs = []int32{
 	0,  // 0: iam.service.v1.TenantService.CreateTenant:input_type -> tenant.service.v1.CreateTenantRequest
@@ -80,27 +61,15 @@ var file_iam_service_v1_i_tenant_proto_depIdxs = []int32{
 	2,  // 2: iam.service.v1.TenantService.ListTenants:input_type -> tenant.service.v1.ListTenantsRequest
 	3,  // 3: iam.service.v1.TenantService.UpdateTenant:input_type -> tenant.service.v1.UpdateTenantRequest
 	4,  // 4: iam.service.v1.TenantService.DeleteTenant:input_type -> tenant.service.v1.DeleteTenantRequest
-	5,  // 5: iam.service.v1.TenantService.InviteMember:input_type -> tenant.service.v1.InviteTenantMemberRequest
-	6,  // 6: iam.service.v1.TenantService.AcceptInvitation:input_type -> tenant.service.v1.AcceptTenantInvitationRequest
-	7,  // 7: iam.service.v1.TenantService.RejectInvitation:input_type -> tenant.service.v1.RejectTenantInvitationRequest
-	8,  // 8: iam.service.v1.TenantService.ListMembers:input_type -> tenant.service.v1.ListTenantMembersRequest
-	9,  // 9: iam.service.v1.TenantService.UpdateMemberRole:input_type -> tenant.service.v1.UpdateTenantMemberRoleRequest
-	10, // 10: iam.service.v1.TenantService.RemoveMember:input_type -> tenant.service.v1.RemoveTenantMemberRequest
-	11, // 11: iam.service.v1.TenantService.TransferOwnership:input_type -> tenant.service.v1.TransferTenantOwnershipRequest
-	12, // 12: iam.service.v1.TenantService.CreateTenant:output_type -> tenant.service.v1.CreateTenantResponse
-	13, // 13: iam.service.v1.TenantService.GetTenant:output_type -> tenant.service.v1.GetTenantResponse
-	14, // 14: iam.service.v1.TenantService.ListTenants:output_type -> tenant.service.v1.ListTenantsResponse
-	15, // 15: iam.service.v1.TenantService.UpdateTenant:output_type -> tenant.service.v1.UpdateTenantResponse
-	16, // 16: iam.service.v1.TenantService.DeleteTenant:output_type -> tenant.service.v1.DeleteTenantResponse
-	17, // 17: iam.service.v1.TenantService.InviteMember:output_type -> tenant.service.v1.InviteTenantMemberResponse
-	18, // 18: iam.service.v1.TenantService.AcceptInvitation:output_type -> tenant.service.v1.AcceptTenantInvitationResponse
-	19, // 19: iam.service.v1.TenantService.RejectInvitation:output_type -> tenant.service.v1.RejectTenantInvitationResponse
-	20, // 20: iam.service.v1.TenantService.ListMembers:output_type -> tenant.service.v1.ListTenantMembersResponse
-	21, // 21: iam.service.v1.TenantService.UpdateMemberRole:output_type -> tenant.service.v1.UpdateTenantMemberRoleResponse
-	22, // 22: iam.service.v1.TenantService.RemoveMember:output_type -> tenant.service.v1.RemoveTenantMemberResponse
-	23, // 23: iam.service.v1.TenantService.TransferOwnership:output_type -> tenant.service.v1.TransferTenantOwnershipResponse
-	12, // [12:24] is the sub-list for method output_type
-	0,  // [0:12] is the sub-list for method input_type
+	5,  // 5: iam.service.v1.TenantService.TransferOwnership:input_type -> tenant.service.v1.TransferTenantOwnershipRequest
+	6,  // 6: iam.service.v1.TenantService.CreateTenant:output_type -> tenant.service.v1.CreateTenantResponse
+	7,  // 7: iam.service.v1.TenantService.GetTenant:output_type -> tenant.service.v1.GetTenantResponse
+	8,  // 8: iam.service.v1.TenantService.ListTenants:output_type -> tenant.service.v1.ListTenantsResponse
+	9,  // 9: iam.service.v1.TenantService.UpdateTenant:output_type -> tenant.service.v1.UpdateTenantResponse
+	10, // 10: iam.service.v1.TenantService.DeleteTenant:output_type -> tenant.service.v1.DeleteTenantResponse
+	11, // 11: iam.service.v1.TenantService.TransferOwnership:output_type -> tenant.service.v1.TransferTenantOwnershipResponse
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

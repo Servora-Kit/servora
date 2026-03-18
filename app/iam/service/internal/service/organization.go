@@ -24,16 +24,23 @@ func (s *OrganizationService) CreateOrganization(ctx context.Context, req *orgpb
 	if err != nil {
 		return nil, err
 	}
+	orgType := req.Type
+	if orgType == "" {
+		orgType = "COMPANY"
+	}
 	org, err := s.uc.Create(ctx, callerID, &entity.Organization{
 		Name:        req.Name,
 		Slug:        req.Slug,
 		DisplayName: req.DisplayName,
 		TenantID:    tenantID,
+		ParentID:    req.ParentId,
+		Type:        orgType,
+		Sort:        int(req.Sort),
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &orgpb.CreateOrganizationResponse{Organization: orgInfoMapper.Map(org)}, nil
+	return &orgpb.CreateOrganizationResponse{Organization: orgToProto(org)}, nil
 }
 
 func (s *OrganizationService) GetOrganization(ctx context.Context, req *orgpb.GetOrganizationRequest) (*orgpb.GetOrganizationResponse, error) {
@@ -65,14 +72,34 @@ func (s *OrganizationService) ListOrganizations(ctx context.Context, req *orgpb.
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, req *orgpb.UpdateOrganizationRequest) (*orgpb.UpdateOrganizationResponse, error) {
 	org, err := s.uc.Update(ctx, &entity.Organization{
-		ID:          req.Id,
-		Name:        req.Name,
-		DisplayName: req.DisplayName,
+		ID:           req.Id,
+		Name:         req.Name,
+		DisplayName:  req.DisplayName,
+		ParentID:     req.ParentId,
+		Type:         req.Type,
+		Sort:         int(req.Sort),
+		LeaderUserID: req.LeaderUserId,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &orgpb.UpdateOrganizationResponse{Organization: orgInfoMapper.Map(org)}, nil
+	return &orgpb.UpdateOrganizationResponse{Organization: orgToProto(org)}, nil
+}
+
+func (s *OrganizationService) ListOrganizationTree(ctx context.Context, _ *orgpb.ListOrganizationTreeRequest) (*orgpb.ListOrganizationTreeResponse, error) {
+	_, tenantID, err := requireTenantScope(ctx)
+	if err != nil {
+		return nil, err
+	}
+	roots, err := s.uc.ListTree(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*orgpb.OrganizationInfo, len(roots))
+	for i, r := range roots {
+		out[i] = orgToProto(r)
+	}
+	return &orgpb.ListOrganizationTreeResponse{Roots: out}, nil
 }
 
 func (s *OrganizationService) DeleteOrganization(ctx context.Context, req *orgpb.DeleteOrganizationRequest) (*orgpb.DeleteOrganizationResponse, error) {
@@ -135,15 +162,4 @@ func (s *OrganizationService) UpdateMemberRole(ctx context.Context, req *orgpb.U
 		return nil, err
 	}
 	return &orgpb.UpdateMemberRoleResponse{Member: orgMemberInfoMapper.Map(m)}, nil
-}
-
-func (s *OrganizationService) TransferOwnership(ctx context.Context, req *orgpb.TransferOrganizationOwnershipRequest) (*orgpb.TransferOrganizationOwnershipResponse, error) {
-	callerID, err := requireAuthenticatedUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.uc.TransferOwnership(ctx, req.OrganizationId, callerID, req.NewOwnerUserId); err != nil {
-		return nil, err
-	}
-	return &orgpb.TransferOrganizationOwnershipResponse{Success: true}, nil
 }

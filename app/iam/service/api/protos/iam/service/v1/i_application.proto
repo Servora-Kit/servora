@@ -31,9 +31,7 @@ service ApplicationService {
   rpc ListApplications(application.service.v1.ListApplicationsRequest) returns (application.service.v1.ListApplicationsResponse) {
     option (google.api.http) = {get: "/v1/applications"};
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      relation: RELATION_CAN_VIEW
-      object_type: OBJECT_TYPE_TENANT
+      mode: AUTHZ_MODE_NONE
     };
   }
 
@@ -43,14 +41,18 @@ service ApplicationService {
       body: "*"
     };
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
+      mode: AUTHZ_MODE_OBJECT
+      relation: RELATION_CAN_MANAGE
+      object_type: OBJECT_TYPE_TENANT
     };
   }
 
   rpc DeleteApplication(application.service.v1.DeleteApplicationRequest) returns (application.service.v1.DeleteApplicationResponse) {
     option (google.api.http) = {delete: "/v1/applications/{id}"};
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
+      mode: AUTHZ_MODE_OBJECT
+      relation: RELATION_CAN_MANAGE
+      object_type: OBJECT_TYPE_TENANT
     };
   }
 
@@ -60,7 +62,9 @@ service ApplicationService {
       body: "*"
     };
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
+      mode: AUTHZ_MODE_OBJECT
+      relation: RELATION_CAN_MANAGE
+      object_type: OBJECT_TYPE_TENANT
     };
   }
 }

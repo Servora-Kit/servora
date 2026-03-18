@@ -84,36 +84,6 @@ func (s *TenantService) DeleteTenant(ctx context.Context, req *tenantpb.DeleteTe
 	return &tenantpb.DeleteTenantResponse{Success: true}, nil
 }
 
-func (s *TenantService) InviteMember(ctx context.Context, req *tenantpb.InviteTenantMemberRequest) (*tenantpb.InviteTenantMemberResponse, error) {
-	m, err := s.uc.InviteMember(ctx, req.TenantId, req.UserId, req.Role)
-	if err != nil {
-		return nil, err
-	}
-	return &tenantpb.InviteTenantMemberResponse{Member: tenantMemberInfoMapper.Map(m)}, nil
-}
-
-func (s *TenantService) AcceptInvitation(ctx context.Context, req *tenantpb.AcceptTenantInvitationRequest) (*tenantpb.AcceptTenantInvitationResponse, error) {
-	callerID, err := requireAuthenticatedUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.uc.AcceptInvitation(ctx, req.TenantId, callerID); err != nil {
-		return nil, err
-	}
-	return &tenantpb.AcceptTenantInvitationResponse{Success: true}, nil
-}
-
-func (s *TenantService) RejectInvitation(ctx context.Context, req *tenantpb.RejectTenantInvitationRequest) (*tenantpb.RejectTenantInvitationResponse, error) {
-	callerID, err := requireAuthenticatedUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.uc.RejectInvitation(ctx, req.TenantId, callerID); err != nil {
-		return nil, err
-	}
-	return &tenantpb.RejectTenantInvitationResponse{Success: true}, nil
-}
-
 func (s *TenantService) TransferOwnership(ctx context.Context, req *tenantpb.TransferTenantOwnershipRequest) (*tenantpb.TransferTenantOwnershipResponse, error) {
 	callerID, err := requireAuthenticatedUser(ctx)
 	if err != nil {
@@ -123,31 +93,4 @@ func (s *TenantService) TransferOwnership(ctx context.Context, req *tenantpb.Tra
 		return nil, err
 	}
 	return &tenantpb.TransferTenantOwnershipResponse{Success: true}, nil
-}
-
-func (s *TenantService) ListMembers(ctx context.Context, req *tenantpb.ListTenantMembersRequest) (*tenantpb.ListTenantMembersResponse, error) {
-	page, pageSize := pagination.ExtractPage(req.Pagination)
-	members, total, err := s.uc.ListMembers(ctx, req.TenantId, page, pageSize)
-	if err != nil {
-		return nil, err
-	}
-	return &tenantpb.ListTenantMembersResponse{
-		Members:    tenantMemberInfoMapper.MapSlice(members),
-		Pagination: pagination.BuildPageResponse(total, page, pageSize),
-	}, nil
-}
-
-func (s *TenantService) UpdateMemberRole(ctx context.Context, req *tenantpb.UpdateTenantMemberRoleRequest) (*tenantpb.UpdateTenantMemberRoleResponse, error) {
-	m, err := s.uc.UpdateMemberRole(ctx, req.TenantId, req.UserId, req.Role)
-	if err != nil {
-		return nil, err
-	}
-	return &tenantpb.UpdateTenantMemberRoleResponse{Member: tenantMemberInfoMapper.Map(m)}, nil
-}
-
-func (s *TenantService) RemoveMember(ctx context.Context, req *tenantpb.RemoveTenantMemberRequest) (*tenantpb.RemoveTenantMemberResponse, error) {
-	if err := s.uc.RemoveMember(ctx, req.TenantId, req.UserId); err != nil {
-		return nil, err
-	}
-	return &tenantpb.RemoveTenantMemberResponse{Success: true}, nil
 }

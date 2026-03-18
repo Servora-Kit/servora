@@ -38,9 +38,23 @@ func (r *organizationRepo) Create(ctx context.Context, org *entity.Organization)
 	b := r.data.Ent(ctx).Organization.Create().
 		SetTenantID(tenantID).
 		SetName(org.Name).
-		SetSlug(org.Slug)
+		SetSlug(org.Slug).
+		SetSort(org.Sort)
 	if org.DisplayName != "" {
 		b.SetDisplayName(org.DisplayName)
+	}
+	if org.Type != "" {
+		b.SetType(organization.Type(org.Type))
+	}
+	if org.ParentID != nil {
+		if pid, err := uuid.Parse(*org.ParentID); err == nil {
+			b.SetParentID(pid)
+		}
+	}
+	if org.LeaderUserID != nil {
+		if lid, err := uuid.Parse(*org.LeaderUserID); err == nil {
+			b.SetLeaderUserID(lid)
+		}
 	}
 	created, err := b.Save(ctx)
 	if err != nil {
@@ -163,11 +177,52 @@ func (r *organizationRepo) Update(ctx context.Context, org *entity.Organization)
 	if org.DisplayName != "" {
 		b.SetDisplayName(org.DisplayName)
 	}
+	if org.Type != "" {
+		b.SetType(organization.Type(org.Type))
+	}
+	b.SetSort(org.Sort)
+	if org.ParentID != nil {
+		if pid, err := uuid.Parse(*org.ParentID); err == nil {
+			b.SetParentID(pid)
+		}
+	}
+	if org.LeaderUserID != nil {
+		if lid, err := uuid.Parse(*org.LeaderUserID); err == nil {
+			b.SetLeaderUserID(lid)
+		}
+	}
 	updated, err := b.Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("update organization: %w", err)
 	}
 	return orgMapper.Map(updated), nil
+}
+
+// HasChildren returns true if the organization has any child organizations.
+func (r *organizationRepo) HasChildren(ctx context.Context, id string) (bool, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid organization ID: %w", err)
+	}
+	return r.data.Ent(ctx).Organization.Query().
+		Where(organization.ParentIDEQ(uid), organization.DeletedAtIsNil()).
+		Exist(ctx)
+}
+
+// ListAllByTenant loads all organizations for a tenant (flat list), used for tree building.
+func (r *organizationRepo) ListAllByTenant(ctx context.Context, tenantID string) ([]*entity.Organization, error) {
+	tid, err := uuid.Parse(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tenant ID: %w", err)
+	}
+	orgs, err := r.data.Ent(ctx).Organization.Query().
+		Where(organization.TenantIDEQ(tid), organization.DeletedAtIsNil()).
+		Order(organization.BySort()).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list orgs by tenant: %w", err)
+	}
+	return orgMapper.MapSlice(orgs), nil
 }
 
 func (r *organizationRepo) Delete(ctx context.Context, id string) error {
@@ -241,7 +296,7 @@ func (r *organizationRepo) AddMember(ctx context.Context, m *entity.Organization
 	created, err := r.data.Ent(ctx).OrganizationMember.Create().
 		SetOrganizationID(orgID).
 		SetUserID(userID).
-		SetRole(m.Role).
+		SetRole(organizationmember.Role(m.Role)).
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("add organization member: %w", err)
@@ -303,7 +358,7 @@ func (r *organizationRepo) ListMembers(ctx context.Context, orgID string, page, 
 			ID:             m.ID.String(),
 			OrganizationID: m.OrganizationID.String(),
 			UserID:         m.UserID.String(),
-			Role:           m.Role,
+			Role:           string(m.Role),
 			CreatedAt:      m.CreatedAt,
 		}
 		if u, ok := userMap[m.UserID]; ok {
@@ -335,21 +390,6 @@ func (r *organizationRepo) GetMember(ctx context.Context, orgID, userID string) 
 	return r.enrichMember(ctx, m)
 }
 
-func (r *organizationRepo) GetOwnerMember(ctx context.Context, orgID string) (*entity.OrganizationMember, error) {
-	oid, err := uuid.Parse(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid organization ID: %w", err)
-	}
-	m, err := r.data.Ent(ctx).OrganizationMember.Query().
-		Where(
-			organizationmember.OrganizationIDEQ(oid),
-			organizationmember.RoleEQ("owner"),
-		).Only(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.enrichMember(ctx, m)
-}
 
 func (r *organizationRepo) UpdateMemberRole(ctx context.Context, orgID, userID, role string) (*entity.OrganizationMember, error) {
 	oid, err := uuid.Parse(orgID)
@@ -365,7 +405,7 @@ func (r *organizationRepo) UpdateMemberRole(ctx context.Context, orgID, userID, 
 			organizationmember.OrganizationIDEQ(oid),
 			organizationmember.UserIDEQ(uid),
 		).
-		SetRole(role).
+		SetRole(organizationmember.Role(role)).
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("update member role: %w", err)
@@ -392,7 +432,7 @@ func (r *organizationRepo) ListAllMembers(ctx context.Context, orgID string) ([]
 			ID:             m.ID.String(),
 			OrganizationID: m.OrganizationID.String(),
 			UserID:         m.UserID.String(),
-			Role:           m.Role,
+			Role:           string(m.Role),
 			CreatedAt:      m.CreatedAt,
 		}
 	}
@@ -424,7 +464,7 @@ func (r *organizationRepo) ListMembershipsByUserID(ctx context.Context, userID s
 			ID:             m.ID.String(),
 			OrganizationID: m.OrganizationID.String(),
 			UserID:         m.UserID.String(),
-			Role:           m.Role,
+			Role:           string(m.Role),
 			CreatedAt:      m.CreatedAt,
 		}
 	}
@@ -500,7 +540,7 @@ func (r *organizationRepo) enrichMember(ctx context.Context, m *ent.Organization
 			ID:             m.ID.String(),
 			OrganizationID: m.OrganizationID.String(),
 			UserID:         m.UserID.String(),
-			Role:           m.Role,
+			Role:           string(m.Role),
 			CreatedAt:      m.CreatedAt,
 		}, nil
 	}
@@ -510,7 +550,7 @@ func (r *organizationRepo) enrichMember(ctx context.Context, m *ent.Organization
 		UserID:         m.UserID.String(),
 		UserName:       u.Name,
 		UserEmail:      u.Email,
-		Role:           m.Role,
+		Role:           string(m.Role),
 		CreatedAt:      m.CreatedAt,
 	}, nil
 }

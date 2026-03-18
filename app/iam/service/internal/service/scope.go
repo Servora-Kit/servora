@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/errors"
 
+	"github.com/Servora-Kit/servora/app/iam/service/internal/biz"
 	"github.com/Servora-Kit/servora/pkg/actor"
 )
 
@@ -56,4 +57,26 @@ func requireTenantScope(ctx context.Context) (userID, tenantID string, err error
 // or empty string if not set. Does not return an error for missing tenant.
 func requireTenantScopeOptional(ctx context.Context) (tenantID string, ok bool) {
 	return actor.TenantIDFromContext(ctx)
+}
+
+// errForbidden returns a standardized Forbidden error with the given reason.
+func errForbidden(reason string) error {
+	return errors.Forbidden("FORBIDDEN", reason)
+}
+
+// checkPlatformAdmin returns an error if the authenticated user is not a platform admin.
+// It is a package-level helper so all services can call it without duplicating logic.
+func checkPlatformAdmin(ctx context.Context, userUC *biz.UserUsecase) error {
+	callerID, err := requireAuthenticatedUser(ctx)
+	if err != nil {
+		return err
+	}
+	user, err := userUC.CurrentUserInfo(ctx, callerID)
+	if err != nil {
+		return err
+	}
+	if user.Role != "admin" {
+		return errors.Forbidden("FORBIDDEN", "only platform admin can perform this action")
+	}
+	return nil
 }

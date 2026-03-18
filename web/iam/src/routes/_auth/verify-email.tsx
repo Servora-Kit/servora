@@ -85,9 +85,9 @@ function VerifyEmailPage() {
 
       {status === 'success' && (
         <>
-          <div className="flex size-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <div className="flex size-20 items-center justify-center rounded-full bg-success/15">
             <svg
-              className="size-10 text-green-600 dark:text-green-400"
+              className="size-10 text-success"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

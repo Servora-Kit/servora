@@ -4,14 +4,20 @@ import type { RequestHandlerOptions } from './requestHandler'
 import {
   createApplicationServiceClient,
   createAuthnServiceClient,
+  createDictServiceClient,
   createOrganizationServiceClient,
+  createPositionServiceClient,
+  createRbacServiceClient,
   createTenantServiceClient,
   createUserServiceClient,
 } from '@servora/api-client/iam/service/v1/index'
 import type {
   ApplicationService,
   AuthnService,
+  DictService,
   OrganizationService,
+  PositionService,
+  RbacService,
   TenantService,
   UserService,
 } from '@servora/api-client/iam/service/v1/index'
@@ -22,6 +28,9 @@ export interface IamClients {
   organization: OrganizationService
   application: ApplicationService
   tenant: TenantService
+  rbac: RbacService
+  position: PositionService
+  dict: DictService
 }
 
 export function createIamClients(
@@ -35,6 +44,9 @@ export function createIamClients(
     organization: createOrganizationServiceClient(handler),
     application: createApplicationServiceClient(handler),
     tenant: createTenantServiceClient(handler),
+    rbac: createRbacServiceClient(handler),
+    position: createPositionServiceClient(handler),
+    dict: createDictServiceClient(handler),
   }
 }
 

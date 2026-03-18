@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -20,6 +21,8 @@ type Tenant struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// DeletedAt holds the value of the "deleted_at" field.
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	// OwnerUserID holds the value of the "owner_user_id" field.
+	OwnerUserID uuid.UUID `json:"owner_user_id,omitempty"`
 	// Slug holds the value of the "slug" field.
 	Slug string `json:"slug,omitempty"`
 	// Name holds the value of the "name" field.
@@ -44,33 +47,37 @@ type Tenant struct {
 
 // TenantEdges holds the relations/edges for other nodes in the graph.
 type TenantEdges struct {
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
 	// Organizations holds the value of the organizations edge.
 	Organizations []*Organization `json:"organizations,omitempty"`
-	// Members holds the value of the members edge.
-	Members []*TenantMember `json:"members,omitempty"`
 	// Applications holds the value of the applications edge.
 	Applications []*Application `json:"applications,omitempty"`
+	// Positions holds the value of the positions edge.
+	Positions []*Position `json:"positions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TenantEdges) OwnerOrErr() (*User, error) {
+	if e.Owner != nil {
+		return e.Owner, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
 // OrganizationsOrErr returns the Organizations value or an error if the edge
 // was not loaded in eager-loading.
 func (e TenantEdges) OrganizationsOrErr() ([]*Organization, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.Organizations, nil
 	}
 	return nil, &NotLoadedError{edge: "organizations"}
-}
-
-// MembersOrErr returns the Members value or an error if the edge
-// was not loaded in eager-loading.
-func (e TenantEdges) MembersOrErr() ([]*TenantMember, error) {
-	if e.loadedTypes[1] {
-		return e.Members, nil
-	}
-	return nil, &NotLoadedError{edge: "members"}
 }
 
 // ApplicationsOrErr returns the Applications value or an error if the edge
@@ -82,6 +89,15 @@ func (e TenantEdges) ApplicationsOrErr() ([]*Application, error) {
 	return nil, &NotLoadedError{edge: "applications"}
 }
 
+// PositionsOrErr returns the Positions value or an error if the edge
+// was not loaded in eager-loading.
+func (e TenantEdges) PositionsOrErr() ([]*Position, error) {
+	if e.loadedTypes[3] {
+		return e.Positions, nil
+	}
+	return nil, &NotLoadedError{edge: "positions"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Tenant) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -91,7 +107,7 @@ func (*Tenant) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case tenant.FieldDeletedAt, tenant.FieldCreatedAt, tenant.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case tenant.FieldID:
+		case tenant.FieldID, tenant.FieldOwnerUserID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -120,6 +136,12 @@ func (_m *Tenant) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.DeletedAt = new(time.Time)
 				*_m.DeletedAt = value.Time
+			}
+		case tenant.FieldOwnerUserID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field owner_user_id", values[i])
+			} else if value != nil {
+				_m.OwnerUserID = *value
 			}
 		case tenant.FieldSlug:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -184,19 +206,24 @@ func (_m *Tenant) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryOwner queries the "owner" edge of the Tenant entity.
+func (_m *Tenant) QueryOwner() *UserQuery {
+	return NewTenantClient(_m.config).QueryOwner(_m)
+}
+
 // QueryOrganizations queries the "organizations" edge of the Tenant entity.
 func (_m *Tenant) QueryOrganizations() *OrganizationQuery {
 	return NewTenantClient(_m.config).QueryOrganizations(_m)
 }
 
-// QueryMembers queries the "members" edge of the Tenant entity.
-func (_m *Tenant) QueryMembers() *TenantMemberQuery {
-	return NewTenantClient(_m.config).QueryMembers(_m)
-}
-
 // QueryApplications queries the "applications" edge of the Tenant entity.
 func (_m *Tenant) QueryApplications() *ApplicationQuery {
 	return NewTenantClient(_m.config).QueryApplications(_m)
+}
+
+// QueryPositions queries the "positions" edge of the Tenant entity.
+func (_m *Tenant) QueryPositions() *PositionQuery {
+	return NewTenantClient(_m.config).QueryPositions(_m)
 }
 
 // Update returns a builder for updating this Tenant.
@@ -226,6 +253,9 @@ func (_m *Tenant) String() string {
 		builder.WriteString("deleted_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("owner_user_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.OwnerUserID))
 	builder.WriteString(", ")
 	builder.WriteString("slug=")
 	builder.WriteString(_m.Slug)

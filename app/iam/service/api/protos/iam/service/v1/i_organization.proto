@@ -35,6 +35,13 @@ service OrganizationService {
     };
   }
 
+  rpc ListOrganizationTree(organization.service.v1.ListOrganizationTreeRequest) returns (organization.service.v1.ListOrganizationTreeResponse) {
+    option (google.api.http) = {get: "/v1/organizations/tree"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
   rpc UpdateOrganization(organization.service.v1.UpdateOrganizationRequest) returns (organization.service.v1.UpdateOrganizationResponse) {
     option (google.api.http) = {
       put: "/v1/organizations/{id}"
@@ -119,15 +126,4 @@ service OrganizationService {
     };
   }
 
-  rpc TransferOwnership(organization.service.v1.TransferOrganizationOwnershipRequest) returns (organization.service.v1.TransferOrganizationOwnershipResponse) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_id}/transfer-ownership"
-      body: "*"
-    };
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_ORGANIZATION
-      relation: RELATION_CAN_MANAGE_MEMBERS
-      id_field: "organization_id"
-    };
-  }
 }

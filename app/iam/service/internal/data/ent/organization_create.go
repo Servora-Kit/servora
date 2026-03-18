@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/position"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
 	"github.com/google/uuid"
 )
@@ -65,6 +66,62 @@ func (_c *OrganizationCreate) SetDisplayName(v string) *OrganizationCreate {
 func (_c *OrganizationCreate) SetNillableDisplayName(v *string) *OrganizationCreate {
 	if v != nil {
 		_c.SetDisplayName(*v)
+	}
+	return _c
+}
+
+// SetParentID sets the "parent_id" field.
+func (_c *OrganizationCreate) SetParentID(v uuid.UUID) *OrganizationCreate {
+	_c.mutation.SetParentID(v)
+	return _c
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableParentID(v *uuid.UUID) *OrganizationCreate {
+	if v != nil {
+		_c.SetParentID(*v)
+	}
+	return _c
+}
+
+// SetType sets the "type" field.
+func (_c *OrganizationCreate) SetType(v organization.Type) *OrganizationCreate {
+	_c.mutation.SetType(v)
+	return _c
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableType(v *organization.Type) *OrganizationCreate {
+	if v != nil {
+		_c.SetType(*v)
+	}
+	return _c
+}
+
+// SetSort sets the "sort" field.
+func (_c *OrganizationCreate) SetSort(v int) *OrganizationCreate {
+	_c.mutation.SetSort(v)
+	return _c
+}
+
+// SetNillableSort sets the "sort" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableSort(v *int) *OrganizationCreate {
+	if v != nil {
+		_c.SetSort(*v)
+	}
+	return _c
+}
+
+// SetLeaderUserID sets the "leader_user_id" field.
+func (_c *OrganizationCreate) SetLeaderUserID(v uuid.UUID) *OrganizationCreate {
+	_c.mutation.SetLeaderUserID(v)
+	return _c
+}
+
+// SetNillableLeaderUserID sets the "leader_user_id" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableLeaderUserID(v *uuid.UUID) *OrganizationCreate {
+	if v != nil {
+		_c.SetLeaderUserID(*v)
 	}
 	return _c
 }
@@ -131,6 +188,41 @@ func (_c *OrganizationCreate) AddMembers(v ...*OrganizationMember) *Organization
 	return _c.AddMemberIDs(ids...)
 }
 
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (_c *OrganizationCreate) AddPositionIDs(ids ...uuid.UUID) *OrganizationCreate {
+	_c.mutation.AddPositionIDs(ids...)
+	return _c
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (_c *OrganizationCreate) AddPositions(v ...*Position) *OrganizationCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPositionIDs(ids...)
+}
+
+// SetParent sets the "parent" edge to the Organization entity.
+func (_c *OrganizationCreate) SetParent(v *Organization) *OrganizationCreate {
+	return _c.SetParentID(v.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Organization entity by IDs.
+func (_c *OrganizationCreate) AddChildIDs(ids ...uuid.UUID) *OrganizationCreate {
+	_c.mutation.AddChildIDs(ids...)
+	return _c
+}
+
+// AddChildren adds the "children" edges to the Organization entity.
+func (_c *OrganizationCreate) AddChildren(v ...*Organization) *OrganizationCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddChildIDs(ids...)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (_c *OrganizationCreate) Mutation() *OrganizationMutation {
 	return _c.mutation
@@ -166,6 +258,14 @@ func (_c *OrganizationCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *OrganizationCreate) defaults() {
+	if _, ok := _c.mutation.GetType(); !ok {
+		v := organization.DefaultType
+		_c.mutation.SetType(v)
+	}
+	if _, ok := _c.mutation.Sort(); !ok {
+		v := organization.DefaultSort
+		_c.mutation.SetSort(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := organization.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -205,6 +305,17 @@ func (_c *OrganizationCreate) check() error {
 		if err := organization.DisplayNameValidator(v); err != nil {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Organization.display_name": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Organization.type"`)}
+	}
+	if v, ok := _c.mutation.GetType(); ok {
+		if err := organization.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Organization.type": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Sort(); !ok {
+		return &ValidationError{Name: "sort", err: errors.New(`ent: missing required field "Organization.sort"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Organization.created_at"`)}
@@ -266,6 +377,18 @@ func (_c *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		_spec.SetField(organization.FieldDisplayName, field.TypeString, value)
 		_node.DisplayName = &value
 	}
+	if value, ok := _c.mutation.GetType(); ok {
+		_spec.SetField(organization.FieldType, field.TypeEnum, value)
+		_node.Type = value
+	}
+	if value, ok := _c.mutation.Sort(); ok {
+		_spec.SetField(organization.FieldSort, field.TypeInt, value)
+		_node.Sort = value
+	}
+	if value, ok := _c.mutation.LeaderUserID(); ok {
+		_spec.SetField(organization.FieldLeaderUserID, field.TypeUUID, value)
+		_node.LeaderUserID = &value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(organization.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -300,6 +423,55 @@ func (_c *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationmember.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.PositionsTable,
+			Columns: []string{organization.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.ParentTable,
+			Columns: []string{organization.ParentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ParentID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ChildrenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   organization.ChildrenTable,
+			Columns: []string{organization.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

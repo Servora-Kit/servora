@@ -61,4 +61,3 @@ services:
         condition: service_healthy
     networks:
       - servora-network
-

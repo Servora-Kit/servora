@@ -19,6 +19,7 @@ type Tenant struct {
 func (Tenant) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(newUUIDv7),
+		field.UUID("owner_user_id", uuid.UUID{}),
 		field.String("slug").MaxLen(64).Unique(),
 		field.String("name").MaxLen(128),
 		field.String("display_name").MaxLen(255).Optional().Nillable(),
@@ -38,9 +39,15 @@ func (Tenant) Mixin() []ent.Mixin {
 
 func (Tenant) Edges() []ent.Edge {
 	return []ent.Edge{
+		// owner_user_id 外键指向 User
+		edge.From("owner", User.Type).
+			Ref("owned_tenants").
+			Field("owner_user_id").
+			Unique().
+			Required(),
 		edge.To("organizations", Organization.Type),
-		edge.To("members", TenantMember.Type),
 		edge.To("applications", Application.Type),
+		edge.To("positions", Position.Type),
 	}
 }
 

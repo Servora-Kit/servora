@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package position.service.v1;
+
+import "buf/validate/validate.proto";
+import "errors/errors.proto";
+import "google/protobuf/timestamp.proto";
+import "pagination/v1/pagination.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/position/service/v1;positionpb";
+option java_multiple_files = true;
+option java_outer_classname = "PositionProtoV1";
+option java_package = "dev.servora.api.position.v1";
+
+enum ErrorReason {
+  option (errors.default_code) = 500;
+  POSITION_NOT_FOUND = 0 [(errors.code) = 404];
+  POSITION_ALREADY_EXISTS = 1 [(errors.code) = 409];
+  POSITION_CREATE_FAILED = 2 [(errors.code) = 500];
+  POSITION_UPDATE_FAILED = 3 [(errors.code) = 500];
+  POSITION_DELETE_FAILED = 4 [(errors.code) = 500];
+}
+
+service PositionService {
+  rpc ListPositions(ListPositionsRequest) returns (ListPositionsResponse);
+  rpc GetPosition(GetPositionRequest) returns (GetPositionResponse);
+  rpc CreatePosition(CreatePositionRequest) returns (CreatePositionResponse);
+  rpc UpdatePosition(UpdatePositionRequest) returns (UpdatePositionResponse);
+  rpc DeletePosition(DeletePositionRequest) returns (DeletePositionResponse);
+}
+
+message PositionInfo {
+  string id = 1;
+  string tenant_id = 2;
+  optional string organization_id = 3;
+  string code = 4;
+  string name = 5;
+  optional string description = 6;
+  int32 sort = 7;
+  string status = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message ListPositionsRequest {
+  pagination.v1.PaginationRequest pagination = 1;
+  optional string organization_id = 2;
+  optional string status = 3;
+}
+
+message ListPositionsResponse {
+  repeated PositionInfo positions = 1;
+  pagination.v1.PaginationResponse pagination = 2;
+}
+
+message GetPositionRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetPositionResponse {
+  PositionInfo position = 1;
+}
+
+message CreatePositionRequest {
+  string code = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string name = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  optional string description = 3;
+  optional string organization_id = 4;
+  int32 sort = 5;
+}
+
+message CreatePositionResponse {
+  PositionInfo position = 1;
+}
+
+message UpdatePositionRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  optional string name = 2;
+  optional string description = 3;
+  optional string organization_id = 4;
+  optional int32 sort = 5;
+  optional string status = 6;
+}
+
+message UpdatePositionResponse {
+  PositionInfo position = 1;
+}
+
+message DeletePositionRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeletePositionResponse {
+  bool success = 1;
+}

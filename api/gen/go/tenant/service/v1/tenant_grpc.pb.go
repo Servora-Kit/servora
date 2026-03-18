@@ -24,12 +24,6 @@ const (
 	TenantService_ListTenants_FullMethodName       = "/tenant.service.v1.TenantService/ListTenants"
 	TenantService_UpdateTenant_FullMethodName      = "/tenant.service.v1.TenantService/UpdateTenant"
 	TenantService_DeleteTenant_FullMethodName      = "/tenant.service.v1.TenantService/DeleteTenant"
-	TenantService_InviteMember_FullMethodName      = "/tenant.service.v1.TenantService/InviteMember"
-	TenantService_AcceptInvitation_FullMethodName  = "/tenant.service.v1.TenantService/AcceptInvitation"
-	TenantService_RejectInvitation_FullMethodName  = "/tenant.service.v1.TenantService/RejectInvitation"
-	TenantService_ListMembers_FullMethodName       = "/tenant.service.v1.TenantService/ListMembers"
-	TenantService_UpdateMemberRole_FullMethodName  = "/tenant.service.v1.TenantService/UpdateMemberRole"
-	TenantService_RemoveMember_FullMethodName      = "/tenant.service.v1.TenantService/RemoveMember"
 	TenantService_TransferOwnership_FullMethodName = "/tenant.service.v1.TenantService/TransferOwnership"
 )
 
@@ -42,12 +36,6 @@ type TenantServiceClient interface {
 	ListTenants(ctx context.Context, in *ListTenantsRequest, opts ...grpc.CallOption) (*ListTenantsResponse, error)
 	UpdateTenant(ctx context.Context, in *UpdateTenantRequest, opts ...grpc.CallOption) (*UpdateTenantResponse, error)
 	DeleteTenant(ctx context.Context, in *DeleteTenantRequest, opts ...grpc.CallOption) (*DeleteTenantResponse, error)
-	InviteMember(ctx context.Context, in *InviteTenantMemberRequest, opts ...grpc.CallOption) (*InviteTenantMemberResponse, error)
-	AcceptInvitation(ctx context.Context, in *AcceptTenantInvitationRequest, opts ...grpc.CallOption) (*AcceptTenantInvitationResponse, error)
-	RejectInvitation(ctx context.Context, in *RejectTenantInvitationRequest, opts ...grpc.CallOption) (*RejectTenantInvitationResponse, error)
-	ListMembers(ctx context.Context, in *ListTenantMembersRequest, opts ...grpc.CallOption) (*ListTenantMembersResponse, error)
-	UpdateMemberRole(ctx context.Context, in *UpdateTenantMemberRoleRequest, opts ...grpc.CallOption) (*UpdateTenantMemberRoleResponse, error)
-	RemoveMember(ctx context.Context, in *RemoveTenantMemberRequest, opts ...grpc.CallOption) (*RemoveTenantMemberResponse, error)
 	TransferOwnership(ctx context.Context, in *TransferTenantOwnershipRequest, opts ...grpc.CallOption) (*TransferTenantOwnershipResponse, error)
 }
 
@@ -109,66 +97,6 @@ func (c *tenantServiceClient) DeleteTenant(ctx context.Context, in *DeleteTenant
 	return out, nil
 }
 
-func (c *tenantServiceClient) InviteMember(ctx context.Context, in *InviteTenantMemberRequest, opts ...grpc.CallOption) (*InviteTenantMemberResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InviteTenantMemberResponse)
-	err := c.cc.Invoke(ctx, TenantService_InviteMember_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tenantServiceClient) AcceptInvitation(ctx context.Context, in *AcceptTenantInvitationRequest, opts ...grpc.CallOption) (*AcceptTenantInvitationResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AcceptTenantInvitationResponse)
-	err := c.cc.Invoke(ctx, TenantService_AcceptInvitation_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tenantServiceClient) RejectInvitation(ctx context.Context, in *RejectTenantInvitationRequest, opts ...grpc.CallOption) (*RejectTenantInvitationResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RejectTenantInvitationResponse)
-	err := c.cc.Invoke(ctx, TenantService_RejectInvitation_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tenantServiceClient) ListMembers(ctx context.Context, in *ListTenantMembersRequest, opts ...grpc.CallOption) (*ListTenantMembersResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListTenantMembersResponse)
-	err := c.cc.Invoke(ctx, TenantService_ListMembers_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tenantServiceClient) UpdateMemberRole(ctx context.Context, in *UpdateTenantMemberRoleRequest, opts ...grpc.CallOption) (*UpdateTenantMemberRoleResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateTenantMemberRoleResponse)
-	err := c.cc.Invoke(ctx, TenantService_UpdateMemberRole_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tenantServiceClient) RemoveMember(ctx context.Context, in *RemoveTenantMemberRequest, opts ...grpc.CallOption) (*RemoveTenantMemberResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveTenantMemberResponse)
-	err := c.cc.Invoke(ctx, TenantService_RemoveMember_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *tenantServiceClient) TransferOwnership(ctx context.Context, in *TransferTenantOwnershipRequest, opts ...grpc.CallOption) (*TransferTenantOwnershipResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TransferTenantOwnershipResponse)
@@ -188,12 +116,6 @@ type TenantServiceServer interface {
 	ListTenants(context.Context, *ListTenantsRequest) (*ListTenantsResponse, error)
 	UpdateTenant(context.Context, *UpdateTenantRequest) (*UpdateTenantResponse, error)
 	DeleteTenant(context.Context, *DeleteTenantRequest) (*DeleteTenantResponse, error)
-	InviteMember(context.Context, *InviteTenantMemberRequest) (*InviteTenantMemberResponse, error)
-	AcceptInvitation(context.Context, *AcceptTenantInvitationRequest) (*AcceptTenantInvitationResponse, error)
-	RejectInvitation(context.Context, *RejectTenantInvitationRequest) (*RejectTenantInvitationResponse, error)
-	ListMembers(context.Context, *ListTenantMembersRequest) (*ListTenantMembersResponse, error)
-	UpdateMemberRole(context.Context, *UpdateTenantMemberRoleRequest) (*UpdateTenantMemberRoleResponse, error)
-	RemoveMember(context.Context, *RemoveTenantMemberRequest) (*RemoveTenantMemberResponse, error)
 	TransferOwnership(context.Context, *TransferTenantOwnershipRequest) (*TransferTenantOwnershipResponse, error)
 	mustEmbedUnimplementedTenantServiceServer()
 }
@@ -219,24 +141,6 @@ func (UnimplementedTenantServiceServer) UpdateTenant(context.Context, *UpdateTen
 }
 func (UnimplementedTenantServiceServer) DeleteTenant(context.Context, *DeleteTenantRequest) (*DeleteTenantResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTenant not implemented")
-}
-func (UnimplementedTenantServiceServer) InviteMember(context.Context, *InviteTenantMemberRequest) (*InviteTenantMemberResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method InviteMember not implemented")
-}
-func (UnimplementedTenantServiceServer) AcceptInvitation(context.Context, *AcceptTenantInvitationRequest) (*AcceptTenantInvitationResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method AcceptInvitation not implemented")
-}
-func (UnimplementedTenantServiceServer) RejectInvitation(context.Context, *RejectTenantInvitationRequest) (*RejectTenantInvitationResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RejectInvitation not implemented")
-}
-func (UnimplementedTenantServiceServer) ListMembers(context.Context, *ListTenantMembersRequest) (*ListTenantMembersResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListMembers not implemented")
-}
-func (UnimplementedTenantServiceServer) UpdateMemberRole(context.Context, *UpdateTenantMemberRoleRequest) (*UpdateTenantMemberRoleResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdateMemberRole not implemented")
-}
-func (UnimplementedTenantServiceServer) RemoveMember(context.Context, *RemoveTenantMemberRequest) (*RemoveTenantMemberResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveMember not implemented")
 }
 func (UnimplementedTenantServiceServer) TransferOwnership(context.Context, *TransferTenantOwnershipRequest) (*TransferTenantOwnershipResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TransferOwnership not implemented")
@@ -352,114 +256,6 @@ func _TenantService_DeleteTenant_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TenantService_InviteMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InviteTenantMemberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).InviteMember(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TenantService_InviteMember_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).InviteMember(ctx, req.(*InviteTenantMemberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_AcceptInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AcceptTenantInvitationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).AcceptInvitation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TenantService_AcceptInvitation_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).AcceptInvitation(ctx, req.(*AcceptTenantInvitationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_RejectInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RejectTenantInvitationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).RejectInvitation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TenantService_RejectInvitation_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).RejectInvitation(ctx, req.(*RejectTenantInvitationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_ListMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListTenantMembersRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).ListMembers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TenantService_ListMembers_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).ListMembers(ctx, req.(*ListTenantMembersRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_UpdateMemberRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateTenantMemberRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).UpdateMemberRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TenantService_UpdateMemberRole_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).UpdateMemberRole(ctx, req.(*UpdateTenantMemberRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TenantService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveTenantMemberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TenantServiceServer).RemoveMember(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TenantService_RemoveMember_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TenantServiceServer).RemoveMember(ctx, req.(*RemoveTenantMemberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _TenantService_TransferOwnership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TransferTenantOwnershipRequest)
 	if err := dec(in); err != nil {
@@ -504,30 +300,6 @@ var TenantService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTenant",
 			Handler:    _TenantService_DeleteTenant_Handler,
-		},
-		{
-			MethodName: "InviteMember",
-			Handler:    _TenantService_InviteMember_Handler,
-		},
-		{
-			MethodName: "AcceptInvitation",
-			Handler:    _TenantService_AcceptInvitation_Handler,
-		},
-		{
-			MethodName: "RejectInvitation",
-			Handler:    _TenantService_RejectInvitation_Handler,
-		},
-		{
-			MethodName: "ListMembers",
-			Handler:    _TenantService_ListMembers_Handler,
-		},
-		{
-			MethodName: "UpdateMemberRole",
-			Handler:    _TenantService_UpdateMemberRole_Handler,
-		},
-		{
-			MethodName: "RemoveMember",
-			Handler:    _TenantService_RemoveMember_Handler,
 		},
 		{
 			MethodName: "TransferOwnership",

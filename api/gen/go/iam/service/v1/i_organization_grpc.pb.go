@@ -20,18 +20,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrganizationService_CreateOrganization_FullMethodName  = "/iam.service.v1.OrganizationService/CreateOrganization"
-	OrganizationService_GetOrganization_FullMethodName     = "/iam.service.v1.OrganizationService/GetOrganization"
-	OrganizationService_ListOrganizations_FullMethodName   = "/iam.service.v1.OrganizationService/ListOrganizations"
-	OrganizationService_UpdateOrganization_FullMethodName  = "/iam.service.v1.OrganizationService/UpdateOrganization"
-	OrganizationService_DeleteOrganization_FullMethodName  = "/iam.service.v1.OrganizationService/DeleteOrganization"
-	OrganizationService_PurgeOrganization_FullMethodName   = "/iam.service.v1.OrganizationService/PurgeOrganization"
-	OrganizationService_RestoreOrganization_FullMethodName = "/iam.service.v1.OrganizationService/RestoreOrganization"
-	OrganizationService_AddMember_FullMethodName           = "/iam.service.v1.OrganizationService/AddMember"
-	OrganizationService_RemoveMember_FullMethodName        = "/iam.service.v1.OrganizationService/RemoveMember"
-	OrganizationService_ListMembers_FullMethodName         = "/iam.service.v1.OrganizationService/ListMembers"
-	OrganizationService_UpdateMemberRole_FullMethodName    = "/iam.service.v1.OrganizationService/UpdateMemberRole"
-	OrganizationService_TransferOwnership_FullMethodName   = "/iam.service.v1.OrganizationService/TransferOwnership"
+	OrganizationService_CreateOrganization_FullMethodName   = "/iam.service.v1.OrganizationService/CreateOrganization"
+	OrganizationService_GetOrganization_FullMethodName      = "/iam.service.v1.OrganizationService/GetOrganization"
+	OrganizationService_ListOrganizations_FullMethodName    = "/iam.service.v1.OrganizationService/ListOrganizations"
+	OrganizationService_ListOrganizationTree_FullMethodName = "/iam.service.v1.OrganizationService/ListOrganizationTree"
+	OrganizationService_UpdateOrganization_FullMethodName   = "/iam.service.v1.OrganizationService/UpdateOrganization"
+	OrganizationService_DeleteOrganization_FullMethodName   = "/iam.service.v1.OrganizationService/DeleteOrganization"
+	OrganizationService_PurgeOrganization_FullMethodName    = "/iam.service.v1.OrganizationService/PurgeOrganization"
+	OrganizationService_RestoreOrganization_FullMethodName  = "/iam.service.v1.OrganizationService/RestoreOrganization"
+	OrganizationService_AddMember_FullMethodName            = "/iam.service.v1.OrganizationService/AddMember"
+	OrganizationService_RemoveMember_FullMethodName         = "/iam.service.v1.OrganizationService/RemoveMember"
+	OrganizationService_ListMembers_FullMethodName          = "/iam.service.v1.OrganizationService/ListMembers"
+	OrganizationService_UpdateMemberRole_FullMethodName     = "/iam.service.v1.OrganizationService/UpdateMemberRole"
 )
 
 // OrganizationServiceClient is the client API for OrganizationService service.
@@ -41,6 +41,7 @@ type OrganizationServiceClient interface {
 	CreateOrganization(ctx context.Context, in *v1.CreateOrganizationRequest, opts ...grpc.CallOption) (*v1.CreateOrganizationResponse, error)
 	GetOrganization(ctx context.Context, in *v1.GetOrganizationRequest, opts ...grpc.CallOption) (*v1.GetOrganizationResponse, error)
 	ListOrganizations(ctx context.Context, in *v1.ListOrganizationsRequest, opts ...grpc.CallOption) (*v1.ListOrganizationsResponse, error)
+	ListOrganizationTree(ctx context.Context, in *v1.ListOrganizationTreeRequest, opts ...grpc.CallOption) (*v1.ListOrganizationTreeResponse, error)
 	UpdateOrganization(ctx context.Context, in *v1.UpdateOrganizationRequest, opts ...grpc.CallOption) (*v1.UpdateOrganizationResponse, error)
 	DeleteOrganization(ctx context.Context, in *v1.DeleteOrganizationRequest, opts ...grpc.CallOption) (*v1.DeleteOrganizationResponse, error)
 	PurgeOrganization(ctx context.Context, in *v1.PurgeOrganizationRequest, opts ...grpc.CallOption) (*v1.PurgeOrganizationResponse, error)
@@ -49,7 +50,6 @@ type OrganizationServiceClient interface {
 	RemoveMember(ctx context.Context, in *v1.RemoveMemberRequest, opts ...grpc.CallOption) (*v1.RemoveMemberResponse, error)
 	ListMembers(ctx context.Context, in *v1.ListMembersRequest, opts ...grpc.CallOption) (*v1.ListMembersResponse, error)
 	UpdateMemberRole(ctx context.Context, in *v1.UpdateMemberRoleRequest, opts ...grpc.CallOption) (*v1.UpdateMemberRoleResponse, error)
-	TransferOwnership(ctx context.Context, in *v1.TransferOrganizationOwnershipRequest, opts ...grpc.CallOption) (*v1.TransferOrganizationOwnershipResponse, error)
 }
 
 type organizationServiceClient struct {
@@ -84,6 +84,16 @@ func (c *organizationServiceClient) ListOrganizations(ctx context.Context, in *v
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v1.ListOrganizationsResponse)
 	err := c.cc.Invoke(ctx, OrganizationService_ListOrganizations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *organizationServiceClient) ListOrganizationTree(ctx context.Context, in *v1.ListOrganizationTreeRequest, opts ...grpc.CallOption) (*v1.ListOrganizationTreeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.ListOrganizationTreeResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_ListOrganizationTree_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,16 +180,6 @@ func (c *organizationServiceClient) UpdateMemberRole(ctx context.Context, in *v1
 	return out, nil
 }
 
-func (c *organizationServiceClient) TransferOwnership(ctx context.Context, in *v1.TransferOrganizationOwnershipRequest, opts ...grpc.CallOption) (*v1.TransferOrganizationOwnershipResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(v1.TransferOrganizationOwnershipResponse)
-	err := c.cc.Invoke(ctx, OrganizationService_TransferOwnership_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // OrganizationServiceServer is the server API for OrganizationService service.
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility.
@@ -187,6 +187,7 @@ type OrganizationServiceServer interface {
 	CreateOrganization(context.Context, *v1.CreateOrganizationRequest) (*v1.CreateOrganizationResponse, error)
 	GetOrganization(context.Context, *v1.GetOrganizationRequest) (*v1.GetOrganizationResponse, error)
 	ListOrganizations(context.Context, *v1.ListOrganizationsRequest) (*v1.ListOrganizationsResponse, error)
+	ListOrganizationTree(context.Context, *v1.ListOrganizationTreeRequest) (*v1.ListOrganizationTreeResponse, error)
 	UpdateOrganization(context.Context, *v1.UpdateOrganizationRequest) (*v1.UpdateOrganizationResponse, error)
 	DeleteOrganization(context.Context, *v1.DeleteOrganizationRequest) (*v1.DeleteOrganizationResponse, error)
 	PurgeOrganization(context.Context, *v1.PurgeOrganizationRequest) (*v1.PurgeOrganizationResponse, error)
@@ -195,7 +196,6 @@ type OrganizationServiceServer interface {
 	RemoveMember(context.Context, *v1.RemoveMemberRequest) (*v1.RemoveMemberResponse, error)
 	ListMembers(context.Context, *v1.ListMembersRequest) (*v1.ListMembersResponse, error)
 	UpdateMemberRole(context.Context, *v1.UpdateMemberRoleRequest) (*v1.UpdateMemberRoleResponse, error)
-	TransferOwnership(context.Context, *v1.TransferOrganizationOwnershipRequest) (*v1.TransferOrganizationOwnershipResponse, error)
 	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
@@ -214,6 +214,9 @@ func (UnimplementedOrganizationServiceServer) GetOrganization(context.Context, *
 }
 func (UnimplementedOrganizationServiceServer) ListOrganizations(context.Context, *v1.ListOrganizationsRequest) (*v1.ListOrganizationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListOrganizations not implemented")
+}
+func (UnimplementedOrganizationServiceServer) ListOrganizationTree(context.Context, *v1.ListOrganizationTreeRequest) (*v1.ListOrganizationTreeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOrganizationTree not implemented")
 }
 func (UnimplementedOrganizationServiceServer) UpdateOrganization(context.Context, *v1.UpdateOrganizationRequest) (*v1.UpdateOrganizationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateOrganization not implemented")
@@ -238,9 +241,6 @@ func (UnimplementedOrganizationServiceServer) ListMembers(context.Context, *v1.L
 }
 func (UnimplementedOrganizationServiceServer) UpdateMemberRole(context.Context, *v1.UpdateMemberRoleRequest) (*v1.UpdateMemberRoleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateMemberRole not implemented")
-}
-func (UnimplementedOrganizationServiceServer) TransferOwnership(context.Context, *v1.TransferOrganizationOwnershipRequest) (*v1.TransferOrganizationOwnershipResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method TransferOwnership not implemented")
 }
 func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 func (UnimplementedOrganizationServiceServer) testEmbeddedByValue()                             {}
@@ -313,6 +313,24 @@ func _OrganizationService_ListOrganizations_Handler(srv interface{}, ctx context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OrganizationServiceServer).ListOrganizations(ctx, req.(*v1.ListOrganizationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrganizationService_ListOrganizationTree_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.ListOrganizationTreeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).ListOrganizationTree(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganizationService_ListOrganizationTree_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).ListOrganizationTree(ctx, req.(*v1.ListOrganizationTreeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -461,24 +479,6 @@ func _OrganizationService_UpdateMemberRole_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrganizationService_TransferOwnership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.TransferOrganizationOwnershipRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrganizationServiceServer).TransferOwnership(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrganizationService_TransferOwnership_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganizationServiceServer).TransferOwnership(ctx, req.(*v1.TransferOrganizationOwnershipRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -497,6 +497,10 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListOrganizations",
 			Handler:    _OrganizationService_ListOrganizations_Handler,
+		},
+		{
+			MethodName: "ListOrganizationTree",
+			Handler:    _OrganizationService_ListOrganizationTree_Handler,
 		},
 		{
 			MethodName: "UpdateOrganization",
@@ -529,10 +533,6 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateMemberRole",
 			Handler:    _OrganizationService_UpdateMemberRole_Handler,
-		},
-		{
-			MethodName: "TransferOwnership",
-			Handler:    _OrganizationService_TransferOwnership_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

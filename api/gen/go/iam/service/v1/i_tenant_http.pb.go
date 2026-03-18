@@ -20,31 +20,19 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
-const OperationTenantServiceAcceptInvitation = "/iam.service.v1.TenantService/AcceptInvitation"
 const OperationTenantServiceCreateTenant = "/iam.service.v1.TenantService/CreateTenant"
 const OperationTenantServiceDeleteTenant = "/iam.service.v1.TenantService/DeleteTenant"
 const OperationTenantServiceGetTenant = "/iam.service.v1.TenantService/GetTenant"
-const OperationTenantServiceInviteMember = "/iam.service.v1.TenantService/InviteMember"
-const OperationTenantServiceListMembers = "/iam.service.v1.TenantService/ListMembers"
 const OperationTenantServiceListTenants = "/iam.service.v1.TenantService/ListTenants"
-const OperationTenantServiceRejectInvitation = "/iam.service.v1.TenantService/RejectInvitation"
-const OperationTenantServiceRemoveMember = "/iam.service.v1.TenantService/RemoveMember"
 const OperationTenantServiceTransferOwnership = "/iam.service.v1.TenantService/TransferOwnership"
-const OperationTenantServiceUpdateMemberRole = "/iam.service.v1.TenantService/UpdateMemberRole"
 const OperationTenantServiceUpdateTenant = "/iam.service.v1.TenantService/UpdateTenant"
 
 type TenantServiceHTTPServer interface {
-	AcceptInvitation(context.Context, *v1.AcceptTenantInvitationRequest) (*v1.AcceptTenantInvitationResponse, error)
 	CreateTenant(context.Context, *v1.CreateTenantRequest) (*v1.CreateTenantResponse, error)
 	DeleteTenant(context.Context, *v1.DeleteTenantRequest) (*v1.DeleteTenantResponse, error)
 	GetTenant(context.Context, *v1.GetTenantRequest) (*v1.GetTenantResponse, error)
-	InviteMember(context.Context, *v1.InviteTenantMemberRequest) (*v1.InviteTenantMemberResponse, error)
-	ListMembers(context.Context, *v1.ListTenantMembersRequest) (*v1.ListTenantMembersResponse, error)
 	ListTenants(context.Context, *v1.ListTenantsRequest) (*v1.ListTenantsResponse, error)
-	RejectInvitation(context.Context, *v1.RejectTenantInvitationRequest) (*v1.RejectTenantInvitationResponse, error)
-	RemoveMember(context.Context, *v1.RemoveTenantMemberRequest) (*v1.RemoveTenantMemberResponse, error)
 	TransferOwnership(context.Context, *v1.TransferTenantOwnershipRequest) (*v1.TransferTenantOwnershipResponse, error)
-	UpdateMemberRole(context.Context, *v1.UpdateTenantMemberRoleRequest) (*v1.UpdateTenantMemberRoleResponse, error)
 	UpdateTenant(context.Context, *v1.UpdateTenantRequest) (*v1.UpdateTenantResponse, error)
 }
 
@@ -55,13 +43,7 @@ func RegisterTenantServiceHTTPServer(s *http.Server, srv TenantServiceHTTPServer
 	r.GET("/v1/tenants", _TenantService_ListTenants0_HTTP_Handler(srv))
 	r.PUT("/v1/tenants/{id}", _TenantService_UpdateTenant0_HTTP_Handler(srv))
 	r.DELETE("/v1/tenants/{id}", _TenantService_DeleteTenant0_HTTP_Handler(srv))
-	r.POST("/v1/tenants/{tenant_id}/members", _TenantService_InviteMember0_HTTP_Handler(srv))
-	r.POST("/v1/tenants/{tenant_id}/invitations/accept", _TenantService_AcceptInvitation0_HTTP_Handler(srv))
-	r.POST("/v1/tenants/{tenant_id}/invitations/reject", _TenantService_RejectInvitation0_HTTP_Handler(srv))
-	r.GET("/v1/tenants/{tenant_id}/members", _TenantService_ListMembers1_HTTP_Handler(srv))
-	r.PUT("/v1/tenants/{tenant_id}/members/{user_id}/role", _TenantService_UpdateMemberRole1_HTTP_Handler(srv))
-	r.DELETE("/v1/tenants/{tenant_id}/members/{user_id}", _TenantService_RemoveMember1_HTTP_Handler(srv))
-	r.POST("/v1/tenants/{tenant_id}/transfer-ownership", _TenantService_TransferOwnership1_HTTP_Handler(srv))
+	r.POST("/v1/tenants/{tenant_id}/transfer-ownership", _TenantService_TransferOwnership0_HTTP_Handler(srv))
 }
 
 func _TenantService_CreateTenant0_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
@@ -174,151 +156,7 @@ func _TenantService_DeleteTenant0_HTTP_Handler(srv TenantServiceHTTPServer) func
 	}
 }
 
-func _TenantService_InviteMember0_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in v1.InviteTenantMemberRequest
-		if err := ctx.Bind(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationTenantServiceInviteMember)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.InviteMember(ctx, req.(*v1.InviteTenantMemberRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*v1.InviteTenantMemberResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _TenantService_AcceptInvitation0_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in v1.AcceptTenantInvitationRequest
-		if err := ctx.Bind(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationTenantServiceAcceptInvitation)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.AcceptInvitation(ctx, req.(*v1.AcceptTenantInvitationRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*v1.AcceptTenantInvitationResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _TenantService_RejectInvitation0_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in v1.RejectTenantInvitationRequest
-		if err := ctx.Bind(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationTenantServiceRejectInvitation)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.RejectInvitation(ctx, req.(*v1.RejectTenantInvitationRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*v1.RejectTenantInvitationResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _TenantService_ListMembers1_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in v1.ListTenantMembersRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationTenantServiceListMembers)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.ListMembers(ctx, req.(*v1.ListTenantMembersRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*v1.ListTenantMembersResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _TenantService_UpdateMemberRole1_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in v1.UpdateTenantMemberRoleRequest
-		if err := ctx.Bind(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationTenantServiceUpdateMemberRole)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.UpdateMemberRole(ctx, req.(*v1.UpdateTenantMemberRoleRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*v1.UpdateTenantMemberRoleResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _TenantService_RemoveMember1_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in v1.RemoveTenantMemberRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationTenantServiceRemoveMember)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.RemoveMember(ctx, req.(*v1.RemoveTenantMemberRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*v1.RemoveTenantMemberResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _TenantService_TransferOwnership1_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
+func _TenantService_TransferOwnership0_HTTP_Handler(srv TenantServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in v1.TransferTenantOwnershipRequest
 		if err := ctx.Bind(&in); err != nil {
@@ -344,17 +182,11 @@ func _TenantService_TransferOwnership1_HTTP_Handler(srv TenantServiceHTTPServer)
 }
 
 type TenantServiceHTTPClient interface {
-	AcceptInvitation(ctx context.Context, req *v1.AcceptTenantInvitationRequest, opts ...http.CallOption) (rsp *v1.AcceptTenantInvitationResponse, err error)
 	CreateTenant(ctx context.Context, req *v1.CreateTenantRequest, opts ...http.CallOption) (rsp *v1.CreateTenantResponse, err error)
 	DeleteTenant(ctx context.Context, req *v1.DeleteTenantRequest, opts ...http.CallOption) (rsp *v1.DeleteTenantResponse, err error)
 	GetTenant(ctx context.Context, req *v1.GetTenantRequest, opts ...http.CallOption) (rsp *v1.GetTenantResponse, err error)
-	InviteMember(ctx context.Context, req *v1.InviteTenantMemberRequest, opts ...http.CallOption) (rsp *v1.InviteTenantMemberResponse, err error)
-	ListMembers(ctx context.Context, req *v1.ListTenantMembersRequest, opts ...http.CallOption) (rsp *v1.ListTenantMembersResponse, err error)
 	ListTenants(ctx context.Context, req *v1.ListTenantsRequest, opts ...http.CallOption) (rsp *v1.ListTenantsResponse, err error)
-	RejectInvitation(ctx context.Context, req *v1.RejectTenantInvitationRequest, opts ...http.CallOption) (rsp *v1.RejectTenantInvitationResponse, err error)
-	RemoveMember(ctx context.Context, req *v1.RemoveTenantMemberRequest, opts ...http.CallOption) (rsp *v1.RemoveTenantMemberResponse, err error)
 	TransferOwnership(ctx context.Context, req *v1.TransferTenantOwnershipRequest, opts ...http.CallOption) (rsp *v1.TransferTenantOwnershipResponse, err error)
-	UpdateMemberRole(ctx context.Context, req *v1.UpdateTenantMemberRoleRequest, opts ...http.CallOption) (rsp *v1.UpdateTenantMemberRoleResponse, err error)
 	UpdateTenant(ctx context.Context, req *v1.UpdateTenantRequest, opts ...http.CallOption) (rsp *v1.UpdateTenantResponse, err error)
 }
 
@@ -364,19 +196,6 @@ type TenantServiceHTTPClientImpl struct {
 
 func NewTenantServiceHTTPClient(client *http.Client) TenantServiceHTTPClient {
 	return &TenantServiceHTTPClientImpl{client}
-}
-
-func (c *TenantServiceHTTPClientImpl) AcceptInvitation(ctx context.Context, in *v1.AcceptTenantInvitationRequest, opts ...http.CallOption) (*v1.AcceptTenantInvitationResponse, error) {
-	var out v1.AcceptTenantInvitationResponse
-	pattern := "/v1/tenants/{tenant_id}/invitations/accept"
-	path := binding.EncodeURL(pattern, in, false)
-	opts = append(opts, http.Operation(OperationTenantServiceAcceptInvitation))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
 }
 
 func (c *TenantServiceHTTPClientImpl) CreateTenant(ctx context.Context, in *v1.CreateTenantRequest, opts ...http.CallOption) (*v1.CreateTenantResponse, error) {
@@ -418,32 +237,6 @@ func (c *TenantServiceHTTPClientImpl) GetTenant(ctx context.Context, in *v1.GetT
 	return &out, nil
 }
 
-func (c *TenantServiceHTTPClientImpl) InviteMember(ctx context.Context, in *v1.InviteTenantMemberRequest, opts ...http.CallOption) (*v1.InviteTenantMemberResponse, error) {
-	var out v1.InviteTenantMemberResponse
-	pattern := "/v1/tenants/{tenant_id}/members"
-	path := binding.EncodeURL(pattern, in, false)
-	opts = append(opts, http.Operation(OperationTenantServiceInviteMember))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *TenantServiceHTTPClientImpl) ListMembers(ctx context.Context, in *v1.ListTenantMembersRequest, opts ...http.CallOption) (*v1.ListTenantMembersResponse, error) {
-	var out v1.ListTenantMembersResponse
-	pattern := "/v1/tenants/{tenant_id}/members"
-	path := binding.EncodeURL(pattern, in, true)
-	opts = append(opts, http.Operation(OperationTenantServiceListMembers))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 func (c *TenantServiceHTTPClientImpl) ListTenants(ctx context.Context, in *v1.ListTenantsRequest, opts ...http.CallOption) (*v1.ListTenantsResponse, error) {
 	var out v1.ListTenantsResponse
 	pattern := "/v1/tenants"
@@ -457,32 +250,6 @@ func (c *TenantServiceHTTPClientImpl) ListTenants(ctx context.Context, in *v1.Li
 	return &out, nil
 }
 
-func (c *TenantServiceHTTPClientImpl) RejectInvitation(ctx context.Context, in *v1.RejectTenantInvitationRequest, opts ...http.CallOption) (*v1.RejectTenantInvitationResponse, error) {
-	var out v1.RejectTenantInvitationResponse
-	pattern := "/v1/tenants/{tenant_id}/invitations/reject"
-	path := binding.EncodeURL(pattern, in, false)
-	opts = append(opts, http.Operation(OperationTenantServiceRejectInvitation))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *TenantServiceHTTPClientImpl) RemoveMember(ctx context.Context, in *v1.RemoveTenantMemberRequest, opts ...http.CallOption) (*v1.RemoveTenantMemberResponse, error) {
-	var out v1.RemoveTenantMemberResponse
-	pattern := "/v1/tenants/{tenant_id}/members/{user_id}"
-	path := binding.EncodeURL(pattern, in, true)
-	opts = append(opts, http.Operation(OperationTenantServiceRemoveMember))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "DELETE", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 func (c *TenantServiceHTTPClientImpl) TransferOwnership(ctx context.Context, in *v1.TransferTenantOwnershipRequest, opts ...http.CallOption) (*v1.TransferTenantOwnershipResponse, error) {
 	var out v1.TransferTenantOwnershipResponse
 	pattern := "/v1/tenants/{tenant_id}/transfer-ownership"
@@ -490,19 +257,6 @@ func (c *TenantServiceHTTPClientImpl) TransferOwnership(ctx context.Context, in 
 	opts = append(opts, http.Operation(OperationTenantServiceTransferOwnership))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *TenantServiceHTTPClientImpl) UpdateMemberRole(ctx context.Context, in *v1.UpdateTenantMemberRoleRequest, opts ...http.CallOption) (*v1.UpdateTenantMemberRoleResponse, error) {
-	var out v1.UpdateTenantMemberRoleResponse
-	pattern := "/v1/tenants/{tenant_id}/members/{user_id}/role"
-	path := binding.EncodeURL(pattern, in, false)
-	opts = append(opts, http.Operation(OperationTenantServiceUpdateMemberRole))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

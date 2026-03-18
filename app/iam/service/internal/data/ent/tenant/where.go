@@ -61,6 +61,11 @@ func DeletedAt(v time.Time) predicate.Tenant {
 	return predicate.Tenant(sql.FieldEQ(FieldDeletedAt, v))
 }
 
+// OwnerUserID applies equality check predicate on the "owner_user_id" field. It's identical to OwnerUserIDEQ.
+func OwnerUserID(v uuid.UUID) predicate.Tenant {
+	return predicate.Tenant(sql.FieldEQ(FieldOwnerUserID, v))
+}
+
 // Slug applies equality check predicate on the "slug" field. It's identical to SlugEQ.
 func Slug(v string) predicate.Tenant {
 	return predicate.Tenant(sql.FieldEQ(FieldSlug, v))
@@ -139,6 +144,26 @@ func DeletedAtIsNil() predicate.Tenant {
 // DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
 func DeletedAtNotNil() predicate.Tenant {
 	return predicate.Tenant(sql.FieldNotNull(FieldDeletedAt))
+}
+
+// OwnerUserIDEQ applies the EQ predicate on the "owner_user_id" field.
+func OwnerUserIDEQ(v uuid.UUID) predicate.Tenant {
+	return predicate.Tenant(sql.FieldEQ(FieldOwnerUserID, v))
+}
+
+// OwnerUserIDNEQ applies the NEQ predicate on the "owner_user_id" field.
+func OwnerUserIDNEQ(v uuid.UUID) predicate.Tenant {
+	return predicate.Tenant(sql.FieldNEQ(FieldOwnerUserID, v))
+}
+
+// OwnerUserIDIn applies the In predicate on the "owner_user_id" field.
+func OwnerUserIDIn(vs ...uuid.UUID) predicate.Tenant {
+	return predicate.Tenant(sql.FieldIn(FieldOwnerUserID, vs...))
+}
+
+// OwnerUserIDNotIn applies the NotIn predicate on the "owner_user_id" field.
+func OwnerUserIDNotIn(vs ...uuid.UUID) predicate.Tenant {
+	return predicate.Tenant(sql.FieldNotIn(FieldOwnerUserID, vs...))
 }
 
 // SlugEQ applies the EQ predicate on the "slug" field.
@@ -541,6 +566,29 @@ func UpdatedAtLTE(v time.Time) predicate.Tenant {
 	return predicate.Tenant(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// HasOwner applies the HasEdge predicate on the "owner" edge.
+func HasOwner() predicate.Tenant {
+	return predicate.Tenant(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOwnerWith applies the HasEdge predicate on the "owner" edge with a given conditions (other predicates).
+func HasOwnerWith(preds ...predicate.User) predicate.Tenant {
+	return predicate.Tenant(func(s *sql.Selector) {
+		step := newOwnerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasOrganizations applies the HasEdge predicate on the "organizations" edge.
 func HasOrganizations() predicate.Tenant {
 	return predicate.Tenant(func(s *sql.Selector) {
@@ -564,29 +612,6 @@ func HasOrganizationsWith(preds ...predicate.Organization) predicate.Tenant {
 	})
 }
 
-// HasMembers applies the HasEdge predicate on the "members" edge.
-func HasMembers() predicate.Tenant {
-	return predicate.Tenant(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, MembersTable, MembersColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasMembersWith applies the HasEdge predicate on the "members" edge with a given conditions (other predicates).
-func HasMembersWith(preds ...predicate.TenantMember) predicate.Tenant {
-	return predicate.Tenant(func(s *sql.Selector) {
-		step := newMembersStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasApplications applies the HasEdge predicate on the "applications" edge.
 func HasApplications() predicate.Tenant {
 	return predicate.Tenant(func(s *sql.Selector) {
@@ -602,6 +627,29 @@ func HasApplications() predicate.Tenant {
 func HasApplicationsWith(preds ...predicate.Application) predicate.Tenant {
 	return predicate.Tenant(func(s *sql.Selector) {
 		step := newApplicationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPositions applies the HasEdge predicate on the "positions" edge.
+func HasPositions() predicate.Tenant {
+	return predicate.Tenant(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PositionsTable, PositionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPositionsWith applies the HasEdge predicate on the "positions" edge with a given conditions (other predicates).
+func HasPositionsWith(preds ...predicate.Position) predicate.Tenant {
+	return predicate.Tenant(func(s *sql.Selector) {
+		step := newPositionsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

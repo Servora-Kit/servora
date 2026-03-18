@@ -38,8 +38,10 @@ func (User) Mixin() []ent.Mixin {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("tenant_members", TenantMember.Type),
+		// 用户可以是多个组织的成员
 		edge.To("org_memberships", OrganizationMember.Type),
+		// 用户可以 own 多个租户（通常只有一个 personal tenant）
+		edge.To("owned_tenants", Tenant.Type),
 	}
 }
 

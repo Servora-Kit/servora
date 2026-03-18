@@ -66,11 +66,6 @@ func UserID(v uuid.UUID) predicate.OrganizationMember {
 	return predicate.OrganizationMember(sql.FieldEQ(FieldUserID, v))
 }
 
-// Role applies equality check predicate on the "role" field. It's identical to RoleEQ.
-func Role(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldEQ(FieldRole, v))
-}
-
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.OrganizationMember {
 	return predicate.OrganizationMember(sql.FieldEQ(FieldCreatedAt, v))
@@ -122,88 +117,23 @@ func UserIDNotIn(vs ...uuid.UUID) predicate.OrganizationMember {
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.
-func RoleEQ(v string) predicate.OrganizationMember {
+func RoleEQ(v Role) predicate.OrganizationMember {
 	return predicate.OrganizationMember(sql.FieldEQ(FieldRole, v))
 }
 
 // RoleNEQ applies the NEQ predicate on the "role" field.
-func RoleNEQ(v string) predicate.OrganizationMember {
+func RoleNEQ(v Role) predicate.OrganizationMember {
 	return predicate.OrganizationMember(sql.FieldNEQ(FieldRole, v))
 }
 
 // RoleIn applies the In predicate on the "role" field.
-func RoleIn(vs ...string) predicate.OrganizationMember {
+func RoleIn(vs ...Role) predicate.OrganizationMember {
 	return predicate.OrganizationMember(sql.FieldIn(FieldRole, vs...))
 }
 
 // RoleNotIn applies the NotIn predicate on the "role" field.
-func RoleNotIn(vs ...string) predicate.OrganizationMember {
+func RoleNotIn(vs ...Role) predicate.OrganizationMember {
 	return predicate.OrganizationMember(sql.FieldNotIn(FieldRole, vs...))
-}
-
-// RoleGT applies the GT predicate on the "role" field.
-func RoleGT(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldGT(FieldRole, v))
-}
-
-// RoleGTE applies the GTE predicate on the "role" field.
-func RoleGTE(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldGTE(FieldRole, v))
-}
-
-// RoleLT applies the LT predicate on the "role" field.
-func RoleLT(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldLT(FieldRole, v))
-}
-
-// RoleLTE applies the LTE predicate on the "role" field.
-func RoleLTE(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldLTE(FieldRole, v))
-}
-
-// RoleContains applies the Contains predicate on the "role" field.
-func RoleContains(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldContains(FieldRole, v))
-}
-
-// RoleHasPrefix applies the HasPrefix predicate on the "role" field.
-func RoleHasPrefix(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldHasPrefix(FieldRole, v))
-}
-
-// RoleHasSuffix applies the HasSuffix predicate on the "role" field.
-func RoleHasSuffix(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldHasSuffix(FieldRole, v))
-}
-
-// RoleEqualFold applies the EqualFold predicate on the "role" field.
-func RoleEqualFold(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldEqualFold(FieldRole, v))
-}
-
-// RoleContainsFold applies the ContainsFold predicate on the "role" field.
-func RoleContainsFold(v string) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldContainsFold(FieldRole, v))
-}
-
-// StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v Status) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldEQ(FieldStatus, v))
-}
-
-// StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v Status) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldNEQ(FieldStatus, v))
-}
-
-// StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...Status) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldIn(FieldStatus, vs...))
-}
-
-// StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...Status) predicate.OrganizationMember {
-	return predicate.OrganizationMember(sql.FieldNotIn(FieldStatus, vs...))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

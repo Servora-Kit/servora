@@ -40,6 +40,57 @@ var (
 			},
 		},
 	}
+	// DictItemsColumns holds the columns for the "dict_items" table.
+	DictItemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "label", Type: field.TypeString, Size: 128},
+		{Name: "value", Type: field.TypeString, Size: 128},
+		{Name: "color_tag", Type: field.TypeString, Nullable: true, Size: 64},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "is_default", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "dict_type_id", Type: field.TypeUUID},
+	}
+	// DictItemsTable holds the schema information for the "dict_items" table.
+	DictItemsTable = &schema.Table{
+		Name:       "dict_items",
+		Columns:    DictItemsColumns,
+		PrimaryKey: []*schema.Column{DictItemsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "dict_items_dict_types_items",
+				Columns:    []*schema.Column{DictItemsColumns[9]},
+				RefColumns: []*schema.Column{DictTypesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "dictitem_dict_type_id_value",
+				Unique:  true,
+				Columns: []*schema.Column{DictItemsColumns[9], DictItemsColumns[2]},
+			},
+		},
+	}
+	// DictTypesColumns holds the columns for the "dict_types" table.
+	DictTypesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "code", Type: field.TypeString, Unique: true, Size: 128},
+		{Name: "name", Type: field.TypeString, Size: 128},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// DictTypesTable holds the schema information for the "dict_types" table.
+	DictTypesTable = &schema.Table{
+		Name:       "dict_types",
+		Columns:    DictTypesColumns,
+		PrimaryKey: []*schema.Column{DictTypesColumns[0]},
+	}
 	// OrganizationsColumns holds the columns for the "organizations" table.
 	OrganizationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -47,8 +98,12 @@ var (
 		{Name: "name", Type: field.TypeString, Size: 128},
 		{Name: "slug", Type: field.TypeString, Size: 128},
 		{Name: "display_name", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"COMPANY", "DEPARTMENT", "TEAM"}, Default: "COMPANY"},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "leader_user_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "tenant_id", Type: field.TypeUUID},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
@@ -58,8 +113,14 @@ var (
 		PrimaryKey: []*schema.Column{OrganizationsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "organizations_organizations_children",
+				Columns:    []*schema.Column{OrganizationsColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
 				Symbol:     "organizations_tenants_organizations",
-				Columns:    []*schema.Column{OrganizationsColumns[7]},
+				Columns:    []*schema.Column{OrganizationsColumns[11]},
 				RefColumns: []*schema.Column{TenantsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -68,7 +129,7 @@ var (
 			{
 				Name:    "organization_tenant_id_slug",
 				Unique:  true,
-				Columns: []*schema.Column{OrganizationsColumns[7], OrganizationsColumns[3]},
+				Columns: []*schema.Column{OrganizationsColumns[11], OrganizationsColumns[3]},
 				Annotation: &entsql.IndexAnnotation{
 					Where: "deleted_at IS NULL",
 				},
@@ -78,8 +139,7 @@ var (
 	// OrganizationMembersColumns holds the columns for the "organization_members" table.
 	OrganizationMembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "role", Type: field.TypeString, Size: 32, Default: "member"},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "invited"}, Default: "active"},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"admin", "member"}, Default: "member"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "organization_id", Type: field.TypeUUID},
@@ -93,13 +153,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "organization_members_organizations_members",
-				Columns:    []*schema.Column{OrganizationMembersColumns[5]},
+				Columns:    []*schema.Column{OrganizationMembersColumns[4]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "organization_members_users_org_memberships",
-				Columns:    []*schema.Column{OrganizationMembersColumns[6]},
+				Columns:    []*schema.Column{OrganizationMembersColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -108,7 +168,281 @@ var (
 			{
 				Name:    "organizationmember_organization_id_user_id",
 				Unique:  true,
-				Columns: []*schema.Column{OrganizationMembersColumns[5], OrganizationMembersColumns[6]},
+				Columns: []*schema.Column{OrganizationMembersColumns[4], OrganizationMembersColumns[5]},
+			},
+		},
+	}
+	// PositionsColumns holds the columns for the "positions" table.
+	PositionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "code", Type: field.TypeString, Size: 128},
+		{Name: "name", Type: field.TypeString, Size: 128},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "organization_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "tenant_id", Type: field.TypeUUID},
+	}
+	// PositionsTable holds the schema information for the "positions" table.
+	PositionsTable = &schema.Table{
+		Name:       "positions",
+		Columns:    PositionsColumns,
+		PrimaryKey: []*schema.Column{PositionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "positions_organizations_positions",
+				Columns:    []*schema.Column{PositionsColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "positions_tenants_positions",
+				Columns:    []*schema.Column{PositionsColumns[9]},
+				RefColumns: []*schema.Column{TenantsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "position_tenant_id_code",
+				Unique:  true,
+				Columns: []*schema.Column{PositionsColumns[9], PositionsColumns[1]},
+			},
+		},
+	}
+	// RbacMenusColumns holds the columns for the "rbac_menus" table.
+	RbacMenusColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"CATALOG", "MENU", "BUTTON"}, Default: "MENU"},
+		{Name: "name", Type: field.TypeString, Size: 128},
+		{Name: "path", Type: field.TypeString, Nullable: true, Size: 256},
+		{Name: "component", Type: field.TypeString, Nullable: true, Size: 256},
+		{Name: "redirect", Type: field.TypeString, Nullable: true, Size: 256},
+		{Name: "meta", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// RbacMenusTable holds the schema information for the "rbac_menus" table.
+	RbacMenusTable = &schema.Table{
+		Name:       "rbac_menus",
+		Columns:    RbacMenusColumns,
+		PrimaryKey: []*schema.Column{RbacMenusColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_menus_rbac_menus_children",
+				Columns:    []*schema.Column{RbacMenusColumns[11]},
+				RefColumns: []*schema.Column{RbacMenusColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// RbacPermissionsColumns holds the columns for the "rbac_permissions" table.
+	RbacPermissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "code", Type: field.TypeString, Unique: true, Size: 128},
+		{Name: "name", Type: field.TypeString, Size: 128},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "group_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// RbacPermissionsTable holds the schema information for the "rbac_permissions" table.
+	RbacPermissionsTable = &schema.Table{
+		Name:       "rbac_permissions",
+		Columns:    RbacPermissionsColumns,
+		PrimaryKey: []*schema.Column{RbacPermissionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_permissions_rbac_permission_groups_permissions",
+				Columns:    []*schema.Column{RbacPermissionsColumns[7]},
+				RefColumns: []*schema.Column{RbacPermissionGroupsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// RbacPermissionApisColumns holds the columns for the "rbac_permission_apis" table.
+	RbacPermissionApisColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "api_method", Type: field.TypeString, Size: 16},
+		{Name: "api_path", Type: field.TypeString, Size: 256},
+		{Name: "permission_id", Type: field.TypeUUID},
+	}
+	// RbacPermissionApisTable holds the schema information for the "rbac_permission_apis" table.
+	RbacPermissionApisTable = &schema.Table{
+		Name:       "rbac_permission_apis",
+		Columns:    RbacPermissionApisColumns,
+		PrimaryKey: []*schema.Column{RbacPermissionApisColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_permission_apis_rbac_permissions_permission_apis",
+				Columns:    []*schema.Column{RbacPermissionApisColumns[3]},
+				RefColumns: []*schema.Column{RbacPermissionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rbacpermissionapi_permission_id_api_method_api_path",
+				Unique:  true,
+				Columns: []*schema.Column{RbacPermissionApisColumns[3], RbacPermissionApisColumns[1], RbacPermissionApisColumns[2]},
+			},
+		},
+	}
+	// RbacPermissionGroupsColumns holds the columns for the "rbac_permission_groups" table.
+	RbacPermissionGroupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Size: 128},
+		{Name: "module", Type: field.TypeString, Nullable: true, Size: 64},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// RbacPermissionGroupsTable holds the schema information for the "rbac_permission_groups" table.
+	RbacPermissionGroupsTable = &schema.Table{
+		Name:       "rbac_permission_groups",
+		Columns:    RbacPermissionGroupsColumns,
+		PrimaryKey: []*schema.Column{RbacPermissionGroupsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_permission_groups_rbac_permission_groups_children",
+				Columns:    []*schema.Column{RbacPermissionGroupsColumns[6]},
+				RefColumns: []*schema.Column{RbacPermissionGroupsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// RbacPermissionMenusColumns holds the columns for the "rbac_permission_menus" table.
+	RbacPermissionMenusColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "permission_id", Type: field.TypeUUID},
+		{Name: "menu_id", Type: field.TypeUUID},
+	}
+	// RbacPermissionMenusTable holds the schema information for the "rbac_permission_menus" table.
+	RbacPermissionMenusTable = &schema.Table{
+		Name:       "rbac_permission_menus",
+		Columns:    RbacPermissionMenusColumns,
+		PrimaryKey: []*schema.Column{RbacPermissionMenusColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_permission_menus_rbac_permissions_permission_menus",
+				Columns:    []*schema.Column{RbacPermissionMenusColumns[1]},
+				RefColumns: []*schema.Column{RbacPermissionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "rbac_permission_menus_rbac_menus_menu",
+				Columns:    []*schema.Column{RbacPermissionMenusColumns[2]},
+				RefColumns: []*schema.Column{RbacMenusColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rbacpermissionmenu_permission_id_menu_id",
+				Unique:  true,
+				Columns: []*schema.Column{RbacPermissionMenusColumns[1], RbacPermissionMenusColumns[2]},
+			},
+		},
+	}
+	// RbacRolesColumns holds the columns for the "rbac_roles" table.
+	RbacRolesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "code", Type: field.TypeString, Size: 128},
+		{Name: "name", Type: field.TypeString, Size: 128},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"BUILTIN", "CUSTOM"}, Default: "CUSTOM"},
+		{Name: "is_protected", Type: field.TypeBool, Default: false},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// RbacRolesTable holds the schema information for the "rbac_roles" table.
+	RbacRolesTable = &schema.Table{
+		Name:       "rbac_roles",
+		Columns:    RbacRolesColumns,
+		PrimaryKey: []*schema.Column{RbacRolesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rbacrole_code_tenant_id",
+				Unique:  true,
+				Columns: []*schema.Column{RbacRolesColumns[1], RbacRolesColumns[7]},
+			},
+		},
+	}
+	// RbacRolePermissionsColumns holds the columns for the "rbac_role_permissions" table.
+	RbacRolePermissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "effect", Type: field.TypeEnum, Enums: []string{"ALLOW", "DENY"}, Default: "ALLOW"},
+		{Name: "priority", Type: field.TypeInt, Default: 0},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "permission_id", Type: field.TypeUUID},
+		{Name: "role_id", Type: field.TypeUUID},
+	}
+	// RbacRolePermissionsTable holds the schema information for the "rbac_role_permissions" table.
+	RbacRolePermissionsTable = &schema.Table{
+		Name:       "rbac_role_permissions",
+		Columns:    RbacRolePermissionsColumns,
+		PrimaryKey: []*schema.Column{RbacRolePermissionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_role_permissions_rbac_permissions_role_permissions",
+				Columns:    []*schema.Column{RbacRolePermissionsColumns[6]},
+				RefColumns: []*schema.Column{RbacPermissionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "rbac_role_permissions_rbac_roles_role_permissions",
+				Columns:    []*schema.Column{RbacRolePermissionsColumns[7]},
+				RefColumns: []*schema.Column{RbacRolesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rbacrolepermission_role_id_permission_id_tenant_id",
+				Unique:  true,
+				Columns: []*schema.Column{RbacRolePermissionsColumns[7], RbacRolePermissionsColumns[6], RbacRolePermissionsColumns[3]},
+			},
+		},
+	}
+	// RbacUserRolesColumns holds the columns for the "rbac_user_roles" table.
+	RbacUserRolesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"ACTIVE", "DISABLED"}, Default: "ACTIVE"},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "role_id", Type: field.TypeUUID},
+	}
+	// RbacUserRolesTable holds the schema information for the "rbac_user_roles" table.
+	RbacUserRolesTable = &schema.Table{
+		Name:       "rbac_user_roles",
+		Columns:    RbacUserRolesColumns,
+		PrimaryKey: []*schema.Column{RbacUserRolesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rbac_user_roles_rbac_roles_user_roles",
+				Columns:    []*schema.Column{RbacUserRolesColumns[6]},
+				RefColumns: []*schema.Column{RbacRolesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rbacuserrole_user_id_role_id_tenant_id",
+				Unique:  true,
+				Columns: []*schema.Column{RbacUserRolesColumns[1], RbacUserRolesColumns[6], RbacUserRolesColumns[3]},
 			},
 		},
 	}
@@ -124,48 +458,19 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "disabled"}, Default: "active"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "owner_user_id", Type: field.TypeUUID},
 	}
 	// TenantsTable holds the schema information for the "tenants" table.
 	TenantsTable = &schema.Table{
 		Name:       "tenants",
 		Columns:    TenantsColumns,
 		PrimaryKey: []*schema.Column{TenantsColumns[0]},
-	}
-	// TenantMembersColumns holds the columns for the "tenant_members" table.
-	TenantMembersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "admin", "member"}, Default: "member"},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "invited"}, Default: "active"},
-		{Name: "joined_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "tenant_id", Type: field.TypeUUID},
-		{Name: "user_id", Type: field.TypeUUID},
-	}
-	// TenantMembersTable holds the schema information for the "tenant_members" table.
-	TenantMembersTable = &schema.Table{
-		Name:       "tenant_members",
-		Columns:    TenantMembersColumns,
-		PrimaryKey: []*schema.Column{TenantMembersColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "tenant_members_tenants_members",
-				Columns:    []*schema.Column{TenantMembersColumns[6]},
-				RefColumns: []*schema.Column{TenantsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
-				Symbol:     "tenant_members_users_tenant_members",
-				Columns:    []*schema.Column{TenantMembersColumns[7]},
+				Symbol:     "tenants_users_owned_tenants",
+				Columns:    []*schema.Column{TenantsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "tenantmember_tenant_id_user_id",
-				Unique:  true,
-				Columns: []*schema.Column{TenantMembersColumns[6], TenantMembersColumns[7]},
 			},
 		},
 	}
@@ -191,10 +496,20 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ApplicationsTable,
+		DictItemsTable,
+		DictTypesTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
+		PositionsTable,
+		RbacMenusTable,
+		RbacPermissionsTable,
+		RbacPermissionApisTable,
+		RbacPermissionGroupsTable,
+		RbacPermissionMenusTable,
+		RbacRolesTable,
+		RbacRolePermissionsTable,
+		RbacUserRolesTable,
 		TenantsTable,
-		TenantMembersTable,
 		UsersTable,
 	}
 )
@@ -204,7 +519,15 @@ func init() {
 	ApplicationsTable.Annotation = &entsql.Annotation{
 		Table: "applications",
 	}
-	OrganizationsTable.ForeignKeys[0].RefTable = TenantsTable
+	DictItemsTable.ForeignKeys[0].RefTable = DictTypesTable
+	DictItemsTable.Annotation = &entsql.Annotation{
+		Table: "dict_items",
+	}
+	DictTypesTable.Annotation = &entsql.Annotation{
+		Table: "dict_types",
+	}
+	OrganizationsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	OrganizationsTable.ForeignKeys[1].RefTable = TenantsTable
 	OrganizationsTable.Annotation = &entsql.Annotation{
 		Table: "organizations",
 	}
@@ -213,13 +536,47 @@ func init() {
 	OrganizationMembersTable.Annotation = &entsql.Annotation{
 		Table: "organization_members",
 	}
+	PositionsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	PositionsTable.ForeignKeys[1].RefTable = TenantsTable
+	PositionsTable.Annotation = &entsql.Annotation{
+		Table: "positions",
+	}
+	RbacMenusTable.ForeignKeys[0].RefTable = RbacMenusTable
+	RbacMenusTable.Annotation = &entsql.Annotation{
+		Table: "rbac_menus",
+	}
+	RbacPermissionsTable.ForeignKeys[0].RefTable = RbacPermissionGroupsTable
+	RbacPermissionsTable.Annotation = &entsql.Annotation{
+		Table: "rbac_permissions",
+	}
+	RbacPermissionApisTable.ForeignKeys[0].RefTable = RbacPermissionsTable
+	RbacPermissionApisTable.Annotation = &entsql.Annotation{
+		Table: "rbac_permission_apis",
+	}
+	RbacPermissionGroupsTable.ForeignKeys[0].RefTable = RbacPermissionGroupsTable
+	RbacPermissionGroupsTable.Annotation = &entsql.Annotation{
+		Table: "rbac_permission_groups",
+	}
+	RbacPermissionMenusTable.ForeignKeys[0].RefTable = RbacPermissionsTable
+	RbacPermissionMenusTable.ForeignKeys[1].RefTable = RbacMenusTable
+	RbacPermissionMenusTable.Annotation = &entsql.Annotation{
+		Table: "rbac_permission_menus",
+	}
+	RbacRolesTable.Annotation = &entsql.Annotation{
+		Table: "rbac_roles",
+	}
+	RbacRolePermissionsTable.ForeignKeys[0].RefTable = RbacPermissionsTable
+	RbacRolePermissionsTable.ForeignKeys[1].RefTable = RbacRolesTable
+	RbacRolePermissionsTable.Annotation = &entsql.Annotation{
+		Table: "rbac_role_permissions",
+	}
+	RbacUserRolesTable.ForeignKeys[0].RefTable = RbacRolesTable
+	RbacUserRolesTable.Annotation = &entsql.Annotation{
+		Table: "rbac_user_roles",
+	}
+	TenantsTable.ForeignKeys[0].RefTable = UsersTable
 	TenantsTable.Annotation = &entsql.Annotation{
 		Table: "tenants",
-	}
-	TenantMembersTable.ForeignKeys[0].RefTable = TenantsTable
-	TenantMembersTable.ForeignKeys[1].RefTable = UsersTable
-	TenantMembersTable.Annotation = &entsql.Annotation{
-		Table: "tenant_members",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

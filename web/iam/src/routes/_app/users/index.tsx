@@ -196,7 +196,7 @@ function UserListPage() {
           <Input
             id="create-user-password"
             type="password"
-            placeholder="至少 5 个字符"
+            placeholder="至少 6 个字符"
             value={form.password}
             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           />

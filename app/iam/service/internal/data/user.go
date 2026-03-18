@@ -10,8 +10,9 @@ import (
 
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/Servora-Kit/servora/pkg/helpers"
 	"github.com/Servora-Kit/servora/pkg/logger"
@@ -41,7 +42,12 @@ func (r *userRepo) SaveUser(ctx context.Context, u *entity.User) (*entity.User, 
 		SetName(u.Name).
 		SetEmail(u.Email).
 		SetPassword(u.Password).
-		SetRole(u.Role)
+		SetRole(u.Role).
+		SetEmailVerified(u.EmailVerified)
+
+	if u.EmailVerifiedAt != nil {
+		b.SetEmailVerifiedAt(*u.EmailVerifiedAt)
+	}
 
 	if u.ID != "" {
 		uid, err := uuid.Parse(u.ID)
@@ -105,33 +111,33 @@ func (r *userRepo) PurgeCascade(ctx context.Context, id string) error {
 	return r.data.RunInEntTx(ctx, func(txCtx context.Context) error {
 		c := r.data.Ent(txCtx)
 
-		ownedMembers, err := c.OrganizationMember.Query().
-			Where(
-				organizationmember.UserIDEQ(uid),
-				organizationmember.RoleEQ("owner"),
-			).
-			All(txCtx)
-		if err != nil {
-			return fmt.Errorf("query owned organizations: %w", err)
-		}
-
-		for _, m := range ownedMembers {
-			if err := purgeOrganizationInTx(txCtx, c, m.OrganizationID); err != nil {
-				return fmt.Errorf("purge owned organization %s: %w", m.OrganizationID, err)
-			}
-		}
-
+		// 删除用户在所有组织的成员关系（ON DELETE CASCADE 会清理 org_memberships 行，
+		// 但为了与 FGA 保持同步，这里显式删除）
 		if _, err := c.OrganizationMember.Delete().
 			Where(organizationmember.UserIDEQ(uid)).
 			Exec(txCtx); err != nil {
 			return err
 		}
 
-		// 删除租户成员关系（FK 约束要求在删除 users 行前先删此表）
-		if _, err := c.TenantMember.Delete().
-			Where(tenantmember.UserIDEQ(uid)).
-			Exec(txCtx); err != nil {
-			return err
+		// 检查并更新用户 owned_tenants：若用户是某个租户的 owner，设置 owner_user_id 为 nil 会违反 NOT NULL 约束
+		// 因此在 PurgeCascade 中直接删除这些租户（级联删除）
+		// 通常调用方应提前转移所有权再调用 Purge；此处做兜底处理。
+		ownedTenantIDs, _ := c.Tenant.Query().
+			Where(tenant.OwnerUserIDEQ(uid)).
+			IDs(txCtx)
+		for _, tid := range ownedTenantIDs {
+			orgIDs, _ := c.Organization.Query().
+				Where(organization.TenantIDEQ(tid)).
+				IDs(txCtx)
+			if len(orgIDs) > 0 {
+				_, _ = c.OrganizationMember.Delete().
+					Where(organizationmember.OrganizationIDIn(orgIDs...)).
+					Exec(txCtx)
+				_, _ = c.Organization.Delete().
+					Where(organization.IDIn(orgIDs...)).
+					Exec(txCtx)
+			}
+			_ = c.Tenant.DeleteOneID(tid).Exec(txCtx)
 		}
 
 		return c.User.DeleteOneID(uid).Exec(txCtx)
@@ -206,6 +212,7 @@ func (r *userRepo) ListUsers(ctx context.Context, page int32, pageSize int32) ([
 	return userMapper.MapSlice(entUsers), int64(total), nil
 }
 
+// ListByTenantID returns distinct users who belong to any organization under the given tenant.
 func (r *userRepo) ListByTenantID(ctx context.Context, tenantID string, page int32, pageSize int32) ([]*entity.User, int64, error) {
 	tid, err := uuid.Parse(tenantID)
 	if err != nil {
@@ -215,10 +222,16 @@ func (r *userRepo) ListByTenantID(ctx context.Context, tenantID string, page int
 	offset := int((page - 1) * pageSize)
 	limit := int(pageSize)
 
+	// Derive users from organization_members JOIN organizations WHERE tenant_id = ?
 	query := r.data.Ent(ctx).User.Query().
 		Where(
 			user.DeletedAtIsNil(),
-			user.HasTenantMembersWith(tenantmember.TenantIDEQ(tid)),
+			user.HasOrgMembershipsWith(
+				organizationmember.HasOrganizationWith(
+					organization.TenantIDEQ(tid),
+					organization.DeletedAtIsNil(),
+				),
+			),
 		).
 		Order(user.ByID(sql.OrderDesc()))
 

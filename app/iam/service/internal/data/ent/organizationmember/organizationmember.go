@@ -22,8 +22,6 @@ const (
 	FieldUserID = "user_id"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
-	// FieldStatus holds the string denoting the status field in the database.
-	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -56,7 +54,6 @@ var Columns = []string{
 	FieldOrganizationID,
 	FieldUserID,
 	FieldRole,
-	FieldStatus,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -72,10 +69,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultRole holds the default value on creation for the "role" field.
-	DefaultRole string
-	// RoleValidator is a validator for the "role" field. It is called by the builders before save.
-	RoleValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -86,29 +79,29 @@ var (
 	DefaultID func() uuid.UUID
 )
 
-// Status defines the type for the "status" enum field.
-type Status string
+// Role defines the type for the "role" enum field.
+type Role string
 
-// StatusActive is the default value of the Status enum.
-const DefaultStatus = StatusActive
+// RoleMember is the default value of the Role enum.
+const DefaultRole = RoleMember
 
-// Status values.
+// Role values.
 const (
-	StatusActive  Status = "active"
-	StatusInvited Status = "invited"
+	RoleAdmin  Role = "admin"
+	RoleMember Role = "member"
 )
 
-func (s Status) String() string {
-	return string(s)
+func (r Role) String() string {
+	return string(r)
 }
 
-// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
-func StatusValidator(s Status) error {
-	switch s {
-	case StatusActive, StatusInvited:
+// RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
+func RoleValidator(r Role) error {
+	switch r {
+	case RoleAdmin, RoleMember:
 		return nil
 	default:
-		return fmt.Errorf("organizationmember: invalid enum value for status field: %q", s)
+		return fmt.Errorf("organizationmember: invalid enum value for role field: %q", r)
 	}
 }
 
@@ -133,11 +126,6 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByRole orders the results by the role field.
 func ByRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRole, opts...).ToFunc()
-}
-
-// ByStatus orders the results by the status field.
-func ByStatus(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

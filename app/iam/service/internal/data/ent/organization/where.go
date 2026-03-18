@@ -81,6 +81,21 @@ func DisplayName(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldDisplayName, v))
 }
 
+// ParentID applies equality check predicate on the "parent_id" field. It's identical to ParentIDEQ.
+func ParentID(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldParentID, v))
+}
+
+// Sort applies equality check predicate on the "sort" field. It's identical to SortEQ.
+func Sort(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSort, v))
+}
+
+// LeaderUserID applies equality check predicate on the "leader_user_id" field. It's identical to LeaderUserIDEQ.
+func LeaderUserID(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldLeaderUserID, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldCreatedAt, v))
@@ -366,6 +381,146 @@ func DisplayNameContainsFold(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldContainsFold(FieldDisplayName, v))
 }
 
+// ParentIDEQ applies the EQ predicate on the "parent_id" field.
+func ParentIDEQ(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldParentID, v))
+}
+
+// ParentIDNEQ applies the NEQ predicate on the "parent_id" field.
+func ParentIDNEQ(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldParentID, v))
+}
+
+// ParentIDIn applies the In predicate on the "parent_id" field.
+func ParentIDIn(vs ...uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldParentID, vs...))
+}
+
+// ParentIDNotIn applies the NotIn predicate on the "parent_id" field.
+func ParentIDNotIn(vs ...uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldParentID, vs...))
+}
+
+// ParentIDIsNil applies the IsNil predicate on the "parent_id" field.
+func ParentIDIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldParentID))
+}
+
+// ParentIDNotNil applies the NotNil predicate on the "parent_id" field.
+func ParentIDNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldParentID))
+}
+
+// TypeEQ applies the EQ predicate on the "type" field.
+func TypeEQ(v Type) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldType, v))
+}
+
+// TypeNEQ applies the NEQ predicate on the "type" field.
+func TypeNEQ(v Type) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldType, v))
+}
+
+// TypeIn applies the In predicate on the "type" field.
+func TypeIn(vs ...Type) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldType, vs...))
+}
+
+// TypeNotIn applies the NotIn predicate on the "type" field.
+func TypeNotIn(vs ...Type) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldType, vs...))
+}
+
+// SortEQ applies the EQ predicate on the "sort" field.
+func SortEQ(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSort, v))
+}
+
+// SortNEQ applies the NEQ predicate on the "sort" field.
+func SortNEQ(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldSort, v))
+}
+
+// SortIn applies the In predicate on the "sort" field.
+func SortIn(vs ...int) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldSort, vs...))
+}
+
+// SortNotIn applies the NotIn predicate on the "sort" field.
+func SortNotIn(vs ...int) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldSort, vs...))
+}
+
+// SortGT applies the GT predicate on the "sort" field.
+func SortGT(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldSort, v))
+}
+
+// SortGTE applies the GTE predicate on the "sort" field.
+func SortGTE(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldSort, v))
+}
+
+// SortLT applies the LT predicate on the "sort" field.
+func SortLT(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldSort, v))
+}
+
+// SortLTE applies the LTE predicate on the "sort" field.
+func SortLTE(v int) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldSort, v))
+}
+
+// LeaderUserIDEQ applies the EQ predicate on the "leader_user_id" field.
+func LeaderUserIDEQ(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldLeaderUserID, v))
+}
+
+// LeaderUserIDNEQ applies the NEQ predicate on the "leader_user_id" field.
+func LeaderUserIDNEQ(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldLeaderUserID, v))
+}
+
+// LeaderUserIDIn applies the In predicate on the "leader_user_id" field.
+func LeaderUserIDIn(vs ...uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldLeaderUserID, vs...))
+}
+
+// LeaderUserIDNotIn applies the NotIn predicate on the "leader_user_id" field.
+func LeaderUserIDNotIn(vs ...uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldLeaderUserID, vs...))
+}
+
+// LeaderUserIDGT applies the GT predicate on the "leader_user_id" field.
+func LeaderUserIDGT(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldLeaderUserID, v))
+}
+
+// LeaderUserIDGTE applies the GTE predicate on the "leader_user_id" field.
+func LeaderUserIDGTE(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldLeaderUserID, v))
+}
+
+// LeaderUserIDLT applies the LT predicate on the "leader_user_id" field.
+func LeaderUserIDLT(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldLeaderUserID, v))
+}
+
+// LeaderUserIDLTE applies the LTE predicate on the "leader_user_id" field.
+func LeaderUserIDLTE(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldLeaderUserID, v))
+}
+
+// LeaderUserIDIsNil applies the IsNil predicate on the "leader_user_id" field.
+func LeaderUserIDIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldLeaderUserID))
+}
+
+// LeaderUserIDNotNil applies the NotNil predicate on the "leader_user_id" field.
+func LeaderUserIDNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldLeaderUserID))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldCreatedAt, v))
@@ -484,6 +639,75 @@ func HasMembers() predicate.Organization {
 func HasMembersWith(preds ...predicate.OrganizationMember) predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := newMembersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPositions applies the HasEdge predicate on the "positions" edge.
+func HasPositions() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PositionsTable, PositionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPositionsWith applies the HasEdge predicate on the "positions" edge with a given conditions (other predicates).
+func HasPositionsWith(preds ...predicate.Position) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newPositionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParent applies the HasEdge predicate on the "parent" edge.
+func HasParent() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ParentTable, ParentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParentWith applies the HasEdge predicate on the "parent" edge with a given conditions (other predicates).
+func HasParentWith(preds ...predicate.Organization) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newParentStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasChildren applies the HasEdge predicate on the "children" edge.
+func HasChildren() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChildrenTable, ChildrenColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChildrenWith applies the HasEdge predicate on the "children" edge with a given conditions (other predicates).
+func HasChildrenWith(preds ...predicate.Organization) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newChildrenStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -9,17 +9,47 @@ import (
 // Application is the predicate function for application builders.
 type Application func(*sql.Selector)
 
+// DictItem is the predicate function for dictitem builders.
+type DictItem func(*sql.Selector)
+
+// DictType is the predicate function for dicttype builders.
+type DictType func(*sql.Selector)
+
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
 
 // OrganizationMember is the predicate function for organizationmember builders.
 type OrganizationMember func(*sql.Selector)
 
+// Position is the predicate function for position builders.
+type Position func(*sql.Selector)
+
+// RbacMenu is the predicate function for rbacmenu builders.
+type RbacMenu func(*sql.Selector)
+
+// RbacPermission is the predicate function for rbacpermission builders.
+type RbacPermission func(*sql.Selector)
+
+// RbacPermissionApi is the predicate function for rbacpermissionapi builders.
+type RbacPermissionApi func(*sql.Selector)
+
+// RbacPermissionGroup is the predicate function for rbacpermissiongroup builders.
+type RbacPermissionGroup func(*sql.Selector)
+
+// RbacPermissionMenu is the predicate function for rbacpermissionmenu builders.
+type RbacPermissionMenu func(*sql.Selector)
+
+// RbacRole is the predicate function for rbacrole builders.
+type RbacRole func(*sql.Selector)
+
+// RbacRolePermission is the predicate function for rbacrolepermission builders.
+type RbacRolePermission func(*sql.Selector)
+
+// RbacUserRole is the predicate function for rbacuserrole builders.
+type RbacUserRole func(*sql.Selector)
+
 // Tenant is the predicate function for tenant builders.
 type Tenant func(*sql.Selector)
-
-// TenantMember is the predicate function for tenantmember builders.
-type TenantMember func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

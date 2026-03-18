@@ -14,14 +14,34 @@ type Tx struct {
 	config
 	// Application is the client for interacting with the Application builders.
 	Application *ApplicationClient
+	// DictItem is the client for interacting with the DictItem builders.
+	DictItem *DictItemClient
+	// DictType is the client for interacting with the DictType builders.
+	DictType *DictTypeClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
 	OrganizationMember *OrganizationMemberClient
+	// Position is the client for interacting with the Position builders.
+	Position *PositionClient
+	// RbacMenu is the client for interacting with the RbacMenu builders.
+	RbacMenu *RbacMenuClient
+	// RbacPermission is the client for interacting with the RbacPermission builders.
+	RbacPermission *RbacPermissionClient
+	// RbacPermissionApi is the client for interacting with the RbacPermissionApi builders.
+	RbacPermissionApi *RbacPermissionApiClient
+	// RbacPermissionGroup is the client for interacting with the RbacPermissionGroup builders.
+	RbacPermissionGroup *RbacPermissionGroupClient
+	// RbacPermissionMenu is the client for interacting with the RbacPermissionMenu builders.
+	RbacPermissionMenu *RbacPermissionMenuClient
+	// RbacRole is the client for interacting with the RbacRole builders.
+	RbacRole *RbacRoleClient
+	// RbacRolePermission is the client for interacting with the RbacRolePermission builders.
+	RbacRolePermission *RbacRolePermissionClient
+	// RbacUserRole is the client for interacting with the RbacUserRole builders.
+	RbacUserRole *RbacUserRoleClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
-	// TenantMember is the client for interacting with the TenantMember builders.
-	TenantMember *TenantMemberClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -156,10 +176,20 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Application = NewApplicationClient(tx.config)
+	tx.DictItem = NewDictItemClient(tx.config)
+	tx.DictType = NewDictTypeClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
+	tx.Position = NewPositionClient(tx.config)
+	tx.RbacMenu = NewRbacMenuClient(tx.config)
+	tx.RbacPermission = NewRbacPermissionClient(tx.config)
+	tx.RbacPermissionApi = NewRbacPermissionApiClient(tx.config)
+	tx.RbacPermissionGroup = NewRbacPermissionGroupClient(tx.config)
+	tx.RbacPermissionMenu = NewRbacPermissionMenuClient(tx.config)
+	tx.RbacRole = NewRbacRoleClient(tx.config)
+	tx.RbacRolePermission = NewRbacRolePermissionClient(tx.config)
+	tx.RbacUserRole = NewRbacUserRoleClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)
-	tx.TenantMember = NewTenantMemberClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

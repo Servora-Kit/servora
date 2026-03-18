@@ -1,0 +1,61 @@
+import {
+  LayoutDashboard,
+  Building2,
+  AppWindow,
+  Users,
+  Users2,
+  SlidersHorizontal,
+  Shield,
+  Building,
+  Settings,
+  Settings2,
+  User,
+  Lock,
+  ChevronRight,
+  Minus,
+  FolderTree,
+  Briefcase,
+  UserCog,
+  Key,
+  LayoutList,
+  Store,
+  BookOpen,
+  Layers,
+  CircleUser,
+  Network,
+  ShieldCheck,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  LayoutDashboard,
+  Building2,
+  AppWindow,
+  Users,
+  Users2,
+  SlidersHorizontal,
+  Shield,
+  ShieldCheck,
+  Building,
+  Settings,
+  Settings2,
+  User,
+  Lock,
+  ChevronRight,
+  Minus,
+  FolderTree,
+  Briefcase,
+  UserCog,
+  Key,
+  LayoutList,
+  Store,
+  BookOpen,
+  Layers,
+  CircleUser,
+  Network,
+}
+
+export function getIcon(name: string | undefined): LucideIcon | undefined {
+  if (!name) return undefined
+  return ICON_MAP[name] ?? undefined
+}

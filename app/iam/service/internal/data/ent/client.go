@@ -17,10 +17,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/dictitem"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/dicttype"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/position"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacmenu"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermission"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissionapi"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissiongroup"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissionmenu"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacrole"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacrolepermission"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacuserrole"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 )
 
@@ -31,14 +41,34 @@ type Client struct {
 	Schema *migrate.Schema
 	// Application is the client for interacting with the Application builders.
 	Application *ApplicationClient
+	// DictItem is the client for interacting with the DictItem builders.
+	DictItem *DictItemClient
+	// DictType is the client for interacting with the DictType builders.
+	DictType *DictTypeClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
 	OrganizationMember *OrganizationMemberClient
+	// Position is the client for interacting with the Position builders.
+	Position *PositionClient
+	// RbacMenu is the client for interacting with the RbacMenu builders.
+	RbacMenu *RbacMenuClient
+	// RbacPermission is the client for interacting with the RbacPermission builders.
+	RbacPermission *RbacPermissionClient
+	// RbacPermissionApi is the client for interacting with the RbacPermissionApi builders.
+	RbacPermissionApi *RbacPermissionApiClient
+	// RbacPermissionGroup is the client for interacting with the RbacPermissionGroup builders.
+	RbacPermissionGroup *RbacPermissionGroupClient
+	// RbacPermissionMenu is the client for interacting with the RbacPermissionMenu builders.
+	RbacPermissionMenu *RbacPermissionMenuClient
+	// RbacRole is the client for interacting with the RbacRole builders.
+	RbacRole *RbacRoleClient
+	// RbacRolePermission is the client for interacting with the RbacRolePermission builders.
+	RbacRolePermission *RbacRolePermissionClient
+	// RbacUserRole is the client for interacting with the RbacUserRole builders.
+	RbacUserRole *RbacUserRoleClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
-	// TenantMember is the client for interacting with the TenantMember builders.
-	TenantMember *TenantMemberClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -53,10 +83,20 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Application = NewApplicationClient(c.config)
+	c.DictItem = NewDictItemClient(c.config)
+	c.DictType = NewDictTypeClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
+	c.Position = NewPositionClient(c.config)
+	c.RbacMenu = NewRbacMenuClient(c.config)
+	c.RbacPermission = NewRbacPermissionClient(c.config)
+	c.RbacPermissionApi = NewRbacPermissionApiClient(c.config)
+	c.RbacPermissionGroup = NewRbacPermissionGroupClient(c.config)
+	c.RbacPermissionMenu = NewRbacPermissionMenuClient(c.config)
+	c.RbacRole = NewRbacRoleClient(c.config)
+	c.RbacRolePermission = NewRbacRolePermissionClient(c.config)
+	c.RbacUserRole = NewRbacUserRoleClient(c.config)
 	c.Tenant = NewTenantClient(c.config)
-	c.TenantMember = NewTenantMemberClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -148,14 +188,24 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Application:        NewApplicationClient(cfg),
-		Organization:       NewOrganizationClient(cfg),
-		OrganizationMember: NewOrganizationMemberClient(cfg),
-		Tenant:             NewTenantClient(cfg),
-		TenantMember:       NewTenantMemberClient(cfg),
-		User:               NewUserClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Application:         NewApplicationClient(cfg),
+		DictItem:            NewDictItemClient(cfg),
+		DictType:            NewDictTypeClient(cfg),
+		Organization:        NewOrganizationClient(cfg),
+		OrganizationMember:  NewOrganizationMemberClient(cfg),
+		Position:            NewPositionClient(cfg),
+		RbacMenu:            NewRbacMenuClient(cfg),
+		RbacPermission:      NewRbacPermissionClient(cfg),
+		RbacPermissionApi:   NewRbacPermissionApiClient(cfg),
+		RbacPermissionGroup: NewRbacPermissionGroupClient(cfg),
+		RbacPermissionMenu:  NewRbacPermissionMenuClient(cfg),
+		RbacRole:            NewRbacRoleClient(cfg),
+		RbacRolePermission:  NewRbacRolePermissionClient(cfg),
+		RbacUserRole:        NewRbacUserRoleClient(cfg),
+		Tenant:              NewTenantClient(cfg),
+		User:                NewUserClient(cfg),
 	}, nil
 }
 
@@ -173,14 +223,24 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Application:        NewApplicationClient(cfg),
-		Organization:       NewOrganizationClient(cfg),
-		OrganizationMember: NewOrganizationMemberClient(cfg),
-		Tenant:             NewTenantClient(cfg),
-		TenantMember:       NewTenantMemberClient(cfg),
-		User:               NewUserClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Application:         NewApplicationClient(cfg),
+		DictItem:            NewDictItemClient(cfg),
+		DictType:            NewDictTypeClient(cfg),
+		Organization:        NewOrganizationClient(cfg),
+		OrganizationMember:  NewOrganizationMemberClient(cfg),
+		Position:            NewPositionClient(cfg),
+		RbacMenu:            NewRbacMenuClient(cfg),
+		RbacPermission:      NewRbacPermissionClient(cfg),
+		RbacPermissionApi:   NewRbacPermissionApiClient(cfg),
+		RbacPermissionGroup: NewRbacPermissionGroupClient(cfg),
+		RbacPermissionMenu:  NewRbacPermissionMenuClient(cfg),
+		RbacRole:            NewRbacRoleClient(cfg),
+		RbacRolePermission:  NewRbacRolePermissionClient(cfg),
+		RbacUserRole:        NewRbacUserRoleClient(cfg),
+		Tenant:              NewTenantClient(cfg),
+		User:                NewUserClient(cfg),
 	}, nil
 }
 
@@ -210,8 +270,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Application, c.Organization, c.OrganizationMember, c.Tenant, c.TenantMember,
-		c.User,
+		c.Application, c.DictItem, c.DictType, c.Organization, c.OrganizationMember,
+		c.Position, c.RbacMenu, c.RbacPermission, c.RbacPermissionApi,
+		c.RbacPermissionGroup, c.RbacPermissionMenu, c.RbacRole, c.RbacRolePermission,
+		c.RbacUserRole, c.Tenant, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -221,8 +283,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Application, c.Organization, c.OrganizationMember, c.Tenant, c.TenantMember,
-		c.User,
+		c.Application, c.DictItem, c.DictType, c.Organization, c.OrganizationMember,
+		c.Position, c.RbacMenu, c.RbacPermission, c.RbacPermissionApi,
+		c.RbacPermissionGroup, c.RbacPermissionMenu, c.RbacRole, c.RbacRolePermission,
+		c.RbacUserRole, c.Tenant, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -233,14 +297,34 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ApplicationMutation:
 		return c.Application.mutate(ctx, m)
+	case *DictItemMutation:
+		return c.DictItem.mutate(ctx, m)
+	case *DictTypeMutation:
+		return c.DictType.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
 	case *OrganizationMemberMutation:
 		return c.OrganizationMember.mutate(ctx, m)
+	case *PositionMutation:
+		return c.Position.mutate(ctx, m)
+	case *RbacMenuMutation:
+		return c.RbacMenu.mutate(ctx, m)
+	case *RbacPermissionMutation:
+		return c.RbacPermission.mutate(ctx, m)
+	case *RbacPermissionApiMutation:
+		return c.RbacPermissionApi.mutate(ctx, m)
+	case *RbacPermissionGroupMutation:
+		return c.RbacPermissionGroup.mutate(ctx, m)
+	case *RbacPermissionMenuMutation:
+		return c.RbacPermissionMenu.mutate(ctx, m)
+	case *RbacRoleMutation:
+		return c.RbacRole.mutate(ctx, m)
+	case *RbacRolePermissionMutation:
+		return c.RbacRolePermission.mutate(ctx, m)
+	case *RbacUserRoleMutation:
+		return c.RbacUserRole.mutate(ctx, m)
 	case *TenantMutation:
 		return c.Tenant.mutate(ctx, m)
-	case *TenantMemberMutation:
-		return c.TenantMember.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -397,6 +481,304 @@ func (c *ApplicationClient) mutate(ctx context.Context, m *ApplicationMutation) 
 	}
 }
 
+// DictItemClient is a client for the DictItem schema.
+type DictItemClient struct {
+	config
+}
+
+// NewDictItemClient returns a client for the DictItem from the given config.
+func NewDictItemClient(c config) *DictItemClient {
+	return &DictItemClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `dictitem.Hooks(f(g(h())))`.
+func (c *DictItemClient) Use(hooks ...Hook) {
+	c.hooks.DictItem = append(c.hooks.DictItem, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `dictitem.Intercept(f(g(h())))`.
+func (c *DictItemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DictItem = append(c.inters.DictItem, interceptors...)
+}
+
+// Create returns a builder for creating a DictItem entity.
+func (c *DictItemClient) Create() *DictItemCreate {
+	mutation := newDictItemMutation(c.config, OpCreate)
+	return &DictItemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DictItem entities.
+func (c *DictItemClient) CreateBulk(builders ...*DictItemCreate) *DictItemCreateBulk {
+	return &DictItemCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DictItemClient) MapCreateBulk(slice any, setFunc func(*DictItemCreate, int)) *DictItemCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DictItemCreateBulk{err: fmt.Errorf("calling to DictItemClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DictItemCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DictItemCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DictItem.
+func (c *DictItemClient) Update() *DictItemUpdate {
+	mutation := newDictItemMutation(c.config, OpUpdate)
+	return &DictItemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DictItemClient) UpdateOne(_m *DictItem) *DictItemUpdateOne {
+	mutation := newDictItemMutation(c.config, OpUpdateOne, withDictItem(_m))
+	return &DictItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DictItemClient) UpdateOneID(id uuid.UUID) *DictItemUpdateOne {
+	mutation := newDictItemMutation(c.config, OpUpdateOne, withDictItemID(id))
+	return &DictItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DictItem.
+func (c *DictItemClient) Delete() *DictItemDelete {
+	mutation := newDictItemMutation(c.config, OpDelete)
+	return &DictItemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DictItemClient) DeleteOne(_m *DictItem) *DictItemDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DictItemClient) DeleteOneID(id uuid.UUID) *DictItemDeleteOne {
+	builder := c.Delete().Where(dictitem.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DictItemDeleteOne{builder}
+}
+
+// Query returns a query builder for DictItem.
+func (c *DictItemClient) Query() *DictItemQuery {
+	return &DictItemQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDictItem},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DictItem entity by its id.
+func (c *DictItemClient) Get(ctx context.Context, id uuid.UUID) (*DictItem, error) {
+	return c.Query().Where(dictitem.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DictItemClient) GetX(ctx context.Context, id uuid.UUID) *DictItem {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryDictType queries the dict_type edge of a DictItem.
+func (c *DictItemClient) QueryDictType(_m *DictItem) *DictTypeQuery {
+	query := (&DictTypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(dictitem.Table, dictitem.FieldID, id),
+			sqlgraph.To(dicttype.Table, dicttype.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, dictitem.DictTypeTable, dictitem.DictTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DictItemClient) Hooks() []Hook {
+	return c.hooks.DictItem
+}
+
+// Interceptors returns the client interceptors.
+func (c *DictItemClient) Interceptors() []Interceptor {
+	return c.inters.DictItem
+}
+
+func (c *DictItemClient) mutate(ctx context.Context, m *DictItemMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DictItemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DictItemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DictItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DictItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DictItem mutation op: %q", m.Op())
+	}
+}
+
+// DictTypeClient is a client for the DictType schema.
+type DictTypeClient struct {
+	config
+}
+
+// NewDictTypeClient returns a client for the DictType from the given config.
+func NewDictTypeClient(c config) *DictTypeClient {
+	return &DictTypeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `dicttype.Hooks(f(g(h())))`.
+func (c *DictTypeClient) Use(hooks ...Hook) {
+	c.hooks.DictType = append(c.hooks.DictType, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `dicttype.Intercept(f(g(h())))`.
+func (c *DictTypeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DictType = append(c.inters.DictType, interceptors...)
+}
+
+// Create returns a builder for creating a DictType entity.
+func (c *DictTypeClient) Create() *DictTypeCreate {
+	mutation := newDictTypeMutation(c.config, OpCreate)
+	return &DictTypeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DictType entities.
+func (c *DictTypeClient) CreateBulk(builders ...*DictTypeCreate) *DictTypeCreateBulk {
+	return &DictTypeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DictTypeClient) MapCreateBulk(slice any, setFunc func(*DictTypeCreate, int)) *DictTypeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DictTypeCreateBulk{err: fmt.Errorf("calling to DictTypeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DictTypeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DictTypeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DictType.
+func (c *DictTypeClient) Update() *DictTypeUpdate {
+	mutation := newDictTypeMutation(c.config, OpUpdate)
+	return &DictTypeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DictTypeClient) UpdateOne(_m *DictType) *DictTypeUpdateOne {
+	mutation := newDictTypeMutation(c.config, OpUpdateOne, withDictType(_m))
+	return &DictTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DictTypeClient) UpdateOneID(id uuid.UUID) *DictTypeUpdateOne {
+	mutation := newDictTypeMutation(c.config, OpUpdateOne, withDictTypeID(id))
+	return &DictTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DictType.
+func (c *DictTypeClient) Delete() *DictTypeDelete {
+	mutation := newDictTypeMutation(c.config, OpDelete)
+	return &DictTypeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DictTypeClient) DeleteOne(_m *DictType) *DictTypeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DictTypeClient) DeleteOneID(id uuid.UUID) *DictTypeDeleteOne {
+	builder := c.Delete().Where(dicttype.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DictTypeDeleteOne{builder}
+}
+
+// Query returns a query builder for DictType.
+func (c *DictTypeClient) Query() *DictTypeQuery {
+	return &DictTypeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDictType},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DictType entity by its id.
+func (c *DictTypeClient) Get(ctx context.Context, id uuid.UUID) (*DictType, error) {
+	return c.Query().Where(dicttype.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DictTypeClient) GetX(ctx context.Context, id uuid.UUID) *DictType {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryItems queries the items edge of a DictType.
+func (c *DictTypeClient) QueryItems(_m *DictType) *DictItemQuery {
+	query := (&DictItemClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(dicttype.Table, dicttype.FieldID, id),
+			sqlgraph.To(dictitem.Table, dictitem.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, dicttype.ItemsTable, dicttype.ItemsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DictTypeClient) Hooks() []Hook {
+	return c.hooks.DictType
+}
+
+// Interceptors returns the client interceptors.
+func (c *DictTypeClient) Interceptors() []Interceptor {
+	return c.inters.DictType
+}
+
+func (c *DictTypeClient) mutate(ctx context.Context, m *DictTypeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DictTypeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DictTypeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DictTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DictTypeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DictType mutation op: %q", m.Op())
+	}
+}
+
 // OrganizationClient is a client for the Organization schema.
 type OrganizationClient struct {
 	config
@@ -530,6 +912,54 @@ func (c *OrganizationClient) QueryMembers(_m *Organization) *OrganizationMemberQ
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(organizationmember.Table, organizationmember.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, organization.MembersTable, organization.MembersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPositions queries the positions edge of a Organization.
+func (c *OrganizationClient) QueryPositions(_m *Organization) *PositionQuery {
+	query := (&PositionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(position.Table, position.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, organization.PositionsTable, organization.PositionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParent queries the parent edge of a Organization.
+func (c *OrganizationClient) QueryParent(_m *Organization) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, organization.ParentTable, organization.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a Organization.
+func (c *OrganizationClient) QueryChildren(_m *Organization) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, organization.ChildrenTable, organization.ChildrenColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -727,6 +1157,1523 @@ func (c *OrganizationMemberClient) mutate(ctx context.Context, m *OrganizationMe
 	}
 }
 
+// PositionClient is a client for the Position schema.
+type PositionClient struct {
+	config
+}
+
+// NewPositionClient returns a client for the Position from the given config.
+func NewPositionClient(c config) *PositionClient {
+	return &PositionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `position.Hooks(f(g(h())))`.
+func (c *PositionClient) Use(hooks ...Hook) {
+	c.hooks.Position = append(c.hooks.Position, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `position.Intercept(f(g(h())))`.
+func (c *PositionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Position = append(c.inters.Position, interceptors...)
+}
+
+// Create returns a builder for creating a Position entity.
+func (c *PositionClient) Create() *PositionCreate {
+	mutation := newPositionMutation(c.config, OpCreate)
+	return &PositionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Position entities.
+func (c *PositionClient) CreateBulk(builders ...*PositionCreate) *PositionCreateBulk {
+	return &PositionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PositionClient) MapCreateBulk(slice any, setFunc func(*PositionCreate, int)) *PositionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PositionCreateBulk{err: fmt.Errorf("calling to PositionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PositionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PositionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Position.
+func (c *PositionClient) Update() *PositionUpdate {
+	mutation := newPositionMutation(c.config, OpUpdate)
+	return &PositionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PositionClient) UpdateOne(_m *Position) *PositionUpdateOne {
+	mutation := newPositionMutation(c.config, OpUpdateOne, withPosition(_m))
+	return &PositionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PositionClient) UpdateOneID(id uuid.UUID) *PositionUpdateOne {
+	mutation := newPositionMutation(c.config, OpUpdateOne, withPositionID(id))
+	return &PositionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Position.
+func (c *PositionClient) Delete() *PositionDelete {
+	mutation := newPositionMutation(c.config, OpDelete)
+	return &PositionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PositionClient) DeleteOne(_m *Position) *PositionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PositionClient) DeleteOneID(id uuid.UUID) *PositionDeleteOne {
+	builder := c.Delete().Where(position.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PositionDeleteOne{builder}
+}
+
+// Query returns a query builder for Position.
+func (c *PositionClient) Query() *PositionQuery {
+	return &PositionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePosition},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Position entity by its id.
+func (c *PositionClient) Get(ctx context.Context, id uuid.UUID) (*Position, error) {
+	return c.Query().Where(position.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PositionClient) GetX(ctx context.Context, id uuid.UUID) *Position {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTenant queries the tenant edge of a Position.
+func (c *PositionClient) QueryTenant(_m *Position) *TenantQuery {
+	query := (&TenantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(position.Table, position.FieldID, id),
+			sqlgraph.To(tenant.Table, tenant.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, position.TenantTable, position.TenantColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Position.
+func (c *PositionClient) QueryOrganization(_m *Position) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(position.Table, position.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, position.OrganizationTable, position.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PositionClient) Hooks() []Hook {
+	return c.hooks.Position
+}
+
+// Interceptors returns the client interceptors.
+func (c *PositionClient) Interceptors() []Interceptor {
+	return c.inters.Position
+}
+
+func (c *PositionClient) mutate(ctx context.Context, m *PositionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PositionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PositionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PositionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PositionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Position mutation op: %q", m.Op())
+	}
+}
+
+// RbacMenuClient is a client for the RbacMenu schema.
+type RbacMenuClient struct {
+	config
+}
+
+// NewRbacMenuClient returns a client for the RbacMenu from the given config.
+func NewRbacMenuClient(c config) *RbacMenuClient {
+	return &RbacMenuClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacmenu.Hooks(f(g(h())))`.
+func (c *RbacMenuClient) Use(hooks ...Hook) {
+	c.hooks.RbacMenu = append(c.hooks.RbacMenu, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacmenu.Intercept(f(g(h())))`.
+func (c *RbacMenuClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacMenu = append(c.inters.RbacMenu, interceptors...)
+}
+
+// Create returns a builder for creating a RbacMenu entity.
+func (c *RbacMenuClient) Create() *RbacMenuCreate {
+	mutation := newRbacMenuMutation(c.config, OpCreate)
+	return &RbacMenuCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacMenu entities.
+func (c *RbacMenuClient) CreateBulk(builders ...*RbacMenuCreate) *RbacMenuCreateBulk {
+	return &RbacMenuCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacMenuClient) MapCreateBulk(slice any, setFunc func(*RbacMenuCreate, int)) *RbacMenuCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacMenuCreateBulk{err: fmt.Errorf("calling to RbacMenuClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacMenuCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacMenuCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacMenu.
+func (c *RbacMenuClient) Update() *RbacMenuUpdate {
+	mutation := newRbacMenuMutation(c.config, OpUpdate)
+	return &RbacMenuUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacMenuClient) UpdateOne(_m *RbacMenu) *RbacMenuUpdateOne {
+	mutation := newRbacMenuMutation(c.config, OpUpdateOne, withRbacMenu(_m))
+	return &RbacMenuUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacMenuClient) UpdateOneID(id uuid.UUID) *RbacMenuUpdateOne {
+	mutation := newRbacMenuMutation(c.config, OpUpdateOne, withRbacMenuID(id))
+	return &RbacMenuUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacMenu.
+func (c *RbacMenuClient) Delete() *RbacMenuDelete {
+	mutation := newRbacMenuMutation(c.config, OpDelete)
+	return &RbacMenuDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacMenuClient) DeleteOne(_m *RbacMenu) *RbacMenuDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacMenuClient) DeleteOneID(id uuid.UUID) *RbacMenuDeleteOne {
+	builder := c.Delete().Where(rbacmenu.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacMenuDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacMenu.
+func (c *RbacMenuClient) Query() *RbacMenuQuery {
+	return &RbacMenuQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacMenu},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacMenu entity by its id.
+func (c *RbacMenuClient) Get(ctx context.Context, id uuid.UUID) (*RbacMenu, error) {
+	return c.Query().Where(rbacmenu.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacMenuClient) GetX(ctx context.Context, id uuid.UUID) *RbacMenu {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryParent queries the parent edge of a RbacMenu.
+func (c *RbacMenuClient) QueryParent(_m *RbacMenu) *RbacMenuQuery {
+	query := (&RbacMenuClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacmenu.Table, rbacmenu.FieldID, id),
+			sqlgraph.To(rbacmenu.Table, rbacmenu.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacmenu.ParentTable, rbacmenu.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a RbacMenu.
+func (c *RbacMenuClient) QueryChildren(_m *RbacMenu) *RbacMenuQuery {
+	query := (&RbacMenuClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacmenu.Table, rbacmenu.FieldID, id),
+			sqlgraph.To(rbacmenu.Table, rbacmenu.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacmenu.ChildrenTable, rbacmenu.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPermissionMenus queries the permission_menus edge of a RbacMenu.
+func (c *RbacMenuClient) QueryPermissionMenus(_m *RbacMenu) *RbacPermissionMenuQuery {
+	query := (&RbacPermissionMenuClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacmenu.Table, rbacmenu.FieldID, id),
+			sqlgraph.To(rbacpermissionmenu.Table, rbacpermissionmenu.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, rbacmenu.PermissionMenusTable, rbacmenu.PermissionMenusColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacMenuClient) Hooks() []Hook {
+	return c.hooks.RbacMenu
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacMenuClient) Interceptors() []Interceptor {
+	return c.inters.RbacMenu
+}
+
+func (c *RbacMenuClient) mutate(ctx context.Context, m *RbacMenuMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacMenuCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacMenuUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacMenuUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacMenuDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacMenu mutation op: %q", m.Op())
+	}
+}
+
+// RbacPermissionClient is a client for the RbacPermission schema.
+type RbacPermissionClient struct {
+	config
+}
+
+// NewRbacPermissionClient returns a client for the RbacPermission from the given config.
+func NewRbacPermissionClient(c config) *RbacPermissionClient {
+	return &RbacPermissionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacpermission.Hooks(f(g(h())))`.
+func (c *RbacPermissionClient) Use(hooks ...Hook) {
+	c.hooks.RbacPermission = append(c.hooks.RbacPermission, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacpermission.Intercept(f(g(h())))`.
+func (c *RbacPermissionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacPermission = append(c.inters.RbacPermission, interceptors...)
+}
+
+// Create returns a builder for creating a RbacPermission entity.
+func (c *RbacPermissionClient) Create() *RbacPermissionCreate {
+	mutation := newRbacPermissionMutation(c.config, OpCreate)
+	return &RbacPermissionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacPermission entities.
+func (c *RbacPermissionClient) CreateBulk(builders ...*RbacPermissionCreate) *RbacPermissionCreateBulk {
+	return &RbacPermissionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacPermissionClient) MapCreateBulk(slice any, setFunc func(*RbacPermissionCreate, int)) *RbacPermissionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacPermissionCreateBulk{err: fmt.Errorf("calling to RbacPermissionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacPermissionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacPermissionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacPermission.
+func (c *RbacPermissionClient) Update() *RbacPermissionUpdate {
+	mutation := newRbacPermissionMutation(c.config, OpUpdate)
+	return &RbacPermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacPermissionClient) UpdateOne(_m *RbacPermission) *RbacPermissionUpdateOne {
+	mutation := newRbacPermissionMutation(c.config, OpUpdateOne, withRbacPermission(_m))
+	return &RbacPermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacPermissionClient) UpdateOneID(id uuid.UUID) *RbacPermissionUpdateOne {
+	mutation := newRbacPermissionMutation(c.config, OpUpdateOne, withRbacPermissionID(id))
+	return &RbacPermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacPermission.
+func (c *RbacPermissionClient) Delete() *RbacPermissionDelete {
+	mutation := newRbacPermissionMutation(c.config, OpDelete)
+	return &RbacPermissionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacPermissionClient) DeleteOne(_m *RbacPermission) *RbacPermissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacPermissionClient) DeleteOneID(id uuid.UUID) *RbacPermissionDeleteOne {
+	builder := c.Delete().Where(rbacpermission.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacPermissionDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacPermission.
+func (c *RbacPermissionClient) Query() *RbacPermissionQuery {
+	return &RbacPermissionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacPermission},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacPermission entity by its id.
+func (c *RbacPermissionClient) Get(ctx context.Context, id uuid.UUID) (*RbacPermission, error) {
+	return c.Query().Where(rbacpermission.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacPermissionClient) GetX(ctx context.Context, id uuid.UUID) *RbacPermission {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGroup queries the group edge of a RbacPermission.
+func (c *RbacPermissionClient) QueryGroup(_m *RbacPermission) *RbacPermissionGroupQuery {
+	query := (&RbacPermissionGroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermission.Table, rbacpermission.FieldID, id),
+			sqlgraph.To(rbacpermissiongroup.Table, rbacpermissiongroup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacpermission.GroupTable, rbacpermission.GroupColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRolePermissions queries the role_permissions edge of a RbacPermission.
+func (c *RbacPermissionClient) QueryRolePermissions(_m *RbacPermission) *RbacRolePermissionQuery {
+	query := (&RbacRolePermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermission.Table, rbacpermission.FieldID, id),
+			sqlgraph.To(rbacrolepermission.Table, rbacrolepermission.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacpermission.RolePermissionsTable, rbacpermission.RolePermissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPermissionMenus queries the permission_menus edge of a RbacPermission.
+func (c *RbacPermissionClient) QueryPermissionMenus(_m *RbacPermission) *RbacPermissionMenuQuery {
+	query := (&RbacPermissionMenuClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermission.Table, rbacpermission.FieldID, id),
+			sqlgraph.To(rbacpermissionmenu.Table, rbacpermissionmenu.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacpermission.PermissionMenusTable, rbacpermission.PermissionMenusColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPermissionApis queries the permission_apis edge of a RbacPermission.
+func (c *RbacPermissionClient) QueryPermissionApis(_m *RbacPermission) *RbacPermissionApiQuery {
+	query := (&RbacPermissionApiClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermission.Table, rbacpermission.FieldID, id),
+			sqlgraph.To(rbacpermissionapi.Table, rbacpermissionapi.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacpermission.PermissionApisTable, rbacpermission.PermissionApisColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacPermissionClient) Hooks() []Hook {
+	return c.hooks.RbacPermission
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacPermissionClient) Interceptors() []Interceptor {
+	return c.inters.RbacPermission
+}
+
+func (c *RbacPermissionClient) mutate(ctx context.Context, m *RbacPermissionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacPermissionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacPermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacPermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacPermissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacPermission mutation op: %q", m.Op())
+	}
+}
+
+// RbacPermissionApiClient is a client for the RbacPermissionApi schema.
+type RbacPermissionApiClient struct {
+	config
+}
+
+// NewRbacPermissionApiClient returns a client for the RbacPermissionApi from the given config.
+func NewRbacPermissionApiClient(c config) *RbacPermissionApiClient {
+	return &RbacPermissionApiClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacpermissionapi.Hooks(f(g(h())))`.
+func (c *RbacPermissionApiClient) Use(hooks ...Hook) {
+	c.hooks.RbacPermissionApi = append(c.hooks.RbacPermissionApi, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacpermissionapi.Intercept(f(g(h())))`.
+func (c *RbacPermissionApiClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacPermissionApi = append(c.inters.RbacPermissionApi, interceptors...)
+}
+
+// Create returns a builder for creating a RbacPermissionApi entity.
+func (c *RbacPermissionApiClient) Create() *RbacPermissionApiCreate {
+	mutation := newRbacPermissionApiMutation(c.config, OpCreate)
+	return &RbacPermissionApiCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacPermissionApi entities.
+func (c *RbacPermissionApiClient) CreateBulk(builders ...*RbacPermissionApiCreate) *RbacPermissionApiCreateBulk {
+	return &RbacPermissionApiCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacPermissionApiClient) MapCreateBulk(slice any, setFunc func(*RbacPermissionApiCreate, int)) *RbacPermissionApiCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacPermissionApiCreateBulk{err: fmt.Errorf("calling to RbacPermissionApiClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacPermissionApiCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacPermissionApiCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacPermissionApi.
+func (c *RbacPermissionApiClient) Update() *RbacPermissionApiUpdate {
+	mutation := newRbacPermissionApiMutation(c.config, OpUpdate)
+	return &RbacPermissionApiUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacPermissionApiClient) UpdateOne(_m *RbacPermissionApi) *RbacPermissionApiUpdateOne {
+	mutation := newRbacPermissionApiMutation(c.config, OpUpdateOne, withRbacPermissionApi(_m))
+	return &RbacPermissionApiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacPermissionApiClient) UpdateOneID(id uuid.UUID) *RbacPermissionApiUpdateOne {
+	mutation := newRbacPermissionApiMutation(c.config, OpUpdateOne, withRbacPermissionApiID(id))
+	return &RbacPermissionApiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacPermissionApi.
+func (c *RbacPermissionApiClient) Delete() *RbacPermissionApiDelete {
+	mutation := newRbacPermissionApiMutation(c.config, OpDelete)
+	return &RbacPermissionApiDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacPermissionApiClient) DeleteOne(_m *RbacPermissionApi) *RbacPermissionApiDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacPermissionApiClient) DeleteOneID(id uuid.UUID) *RbacPermissionApiDeleteOne {
+	builder := c.Delete().Where(rbacpermissionapi.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacPermissionApiDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacPermissionApi.
+func (c *RbacPermissionApiClient) Query() *RbacPermissionApiQuery {
+	return &RbacPermissionApiQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacPermissionApi},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacPermissionApi entity by its id.
+func (c *RbacPermissionApiClient) Get(ctx context.Context, id uuid.UUID) (*RbacPermissionApi, error) {
+	return c.Query().Where(rbacpermissionapi.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacPermissionApiClient) GetX(ctx context.Context, id uuid.UUID) *RbacPermissionApi {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPermission queries the permission edge of a RbacPermissionApi.
+func (c *RbacPermissionApiClient) QueryPermission(_m *RbacPermissionApi) *RbacPermissionQuery {
+	query := (&RbacPermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermissionapi.Table, rbacpermissionapi.FieldID, id),
+			sqlgraph.To(rbacpermission.Table, rbacpermission.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacpermissionapi.PermissionTable, rbacpermissionapi.PermissionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacPermissionApiClient) Hooks() []Hook {
+	return c.hooks.RbacPermissionApi
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacPermissionApiClient) Interceptors() []Interceptor {
+	return c.inters.RbacPermissionApi
+}
+
+func (c *RbacPermissionApiClient) mutate(ctx context.Context, m *RbacPermissionApiMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacPermissionApiCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacPermissionApiUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacPermissionApiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacPermissionApiDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacPermissionApi mutation op: %q", m.Op())
+	}
+}
+
+// RbacPermissionGroupClient is a client for the RbacPermissionGroup schema.
+type RbacPermissionGroupClient struct {
+	config
+}
+
+// NewRbacPermissionGroupClient returns a client for the RbacPermissionGroup from the given config.
+func NewRbacPermissionGroupClient(c config) *RbacPermissionGroupClient {
+	return &RbacPermissionGroupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacpermissiongroup.Hooks(f(g(h())))`.
+func (c *RbacPermissionGroupClient) Use(hooks ...Hook) {
+	c.hooks.RbacPermissionGroup = append(c.hooks.RbacPermissionGroup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacpermissiongroup.Intercept(f(g(h())))`.
+func (c *RbacPermissionGroupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacPermissionGroup = append(c.inters.RbacPermissionGroup, interceptors...)
+}
+
+// Create returns a builder for creating a RbacPermissionGroup entity.
+func (c *RbacPermissionGroupClient) Create() *RbacPermissionGroupCreate {
+	mutation := newRbacPermissionGroupMutation(c.config, OpCreate)
+	return &RbacPermissionGroupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacPermissionGroup entities.
+func (c *RbacPermissionGroupClient) CreateBulk(builders ...*RbacPermissionGroupCreate) *RbacPermissionGroupCreateBulk {
+	return &RbacPermissionGroupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacPermissionGroupClient) MapCreateBulk(slice any, setFunc func(*RbacPermissionGroupCreate, int)) *RbacPermissionGroupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacPermissionGroupCreateBulk{err: fmt.Errorf("calling to RbacPermissionGroupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacPermissionGroupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacPermissionGroupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacPermissionGroup.
+func (c *RbacPermissionGroupClient) Update() *RbacPermissionGroupUpdate {
+	mutation := newRbacPermissionGroupMutation(c.config, OpUpdate)
+	return &RbacPermissionGroupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacPermissionGroupClient) UpdateOne(_m *RbacPermissionGroup) *RbacPermissionGroupUpdateOne {
+	mutation := newRbacPermissionGroupMutation(c.config, OpUpdateOne, withRbacPermissionGroup(_m))
+	return &RbacPermissionGroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacPermissionGroupClient) UpdateOneID(id uuid.UUID) *RbacPermissionGroupUpdateOne {
+	mutation := newRbacPermissionGroupMutation(c.config, OpUpdateOne, withRbacPermissionGroupID(id))
+	return &RbacPermissionGroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacPermissionGroup.
+func (c *RbacPermissionGroupClient) Delete() *RbacPermissionGroupDelete {
+	mutation := newRbacPermissionGroupMutation(c.config, OpDelete)
+	return &RbacPermissionGroupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacPermissionGroupClient) DeleteOne(_m *RbacPermissionGroup) *RbacPermissionGroupDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacPermissionGroupClient) DeleteOneID(id uuid.UUID) *RbacPermissionGroupDeleteOne {
+	builder := c.Delete().Where(rbacpermissiongroup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacPermissionGroupDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacPermissionGroup.
+func (c *RbacPermissionGroupClient) Query() *RbacPermissionGroupQuery {
+	return &RbacPermissionGroupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacPermissionGroup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacPermissionGroup entity by its id.
+func (c *RbacPermissionGroupClient) Get(ctx context.Context, id uuid.UUID) (*RbacPermissionGroup, error) {
+	return c.Query().Where(rbacpermissiongroup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacPermissionGroupClient) GetX(ctx context.Context, id uuid.UUID) *RbacPermissionGroup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPermissions queries the permissions edge of a RbacPermissionGroup.
+func (c *RbacPermissionGroupClient) QueryPermissions(_m *RbacPermissionGroup) *RbacPermissionQuery {
+	query := (&RbacPermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermissiongroup.Table, rbacpermissiongroup.FieldID, id),
+			sqlgraph.To(rbacpermission.Table, rbacpermission.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacpermissiongroup.PermissionsTable, rbacpermissiongroup.PermissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParent queries the parent edge of a RbacPermissionGroup.
+func (c *RbacPermissionGroupClient) QueryParent(_m *RbacPermissionGroup) *RbacPermissionGroupQuery {
+	query := (&RbacPermissionGroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermissiongroup.Table, rbacpermissiongroup.FieldID, id),
+			sqlgraph.To(rbacpermissiongroup.Table, rbacpermissiongroup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacpermissiongroup.ParentTable, rbacpermissiongroup.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a RbacPermissionGroup.
+func (c *RbacPermissionGroupClient) QueryChildren(_m *RbacPermissionGroup) *RbacPermissionGroupQuery {
+	query := (&RbacPermissionGroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermissiongroup.Table, rbacpermissiongroup.FieldID, id),
+			sqlgraph.To(rbacpermissiongroup.Table, rbacpermissiongroup.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacpermissiongroup.ChildrenTable, rbacpermissiongroup.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacPermissionGroupClient) Hooks() []Hook {
+	return c.hooks.RbacPermissionGroup
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacPermissionGroupClient) Interceptors() []Interceptor {
+	return c.inters.RbacPermissionGroup
+}
+
+func (c *RbacPermissionGroupClient) mutate(ctx context.Context, m *RbacPermissionGroupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacPermissionGroupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacPermissionGroupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacPermissionGroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacPermissionGroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacPermissionGroup mutation op: %q", m.Op())
+	}
+}
+
+// RbacPermissionMenuClient is a client for the RbacPermissionMenu schema.
+type RbacPermissionMenuClient struct {
+	config
+}
+
+// NewRbacPermissionMenuClient returns a client for the RbacPermissionMenu from the given config.
+func NewRbacPermissionMenuClient(c config) *RbacPermissionMenuClient {
+	return &RbacPermissionMenuClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacpermissionmenu.Hooks(f(g(h())))`.
+func (c *RbacPermissionMenuClient) Use(hooks ...Hook) {
+	c.hooks.RbacPermissionMenu = append(c.hooks.RbacPermissionMenu, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacpermissionmenu.Intercept(f(g(h())))`.
+func (c *RbacPermissionMenuClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacPermissionMenu = append(c.inters.RbacPermissionMenu, interceptors...)
+}
+
+// Create returns a builder for creating a RbacPermissionMenu entity.
+func (c *RbacPermissionMenuClient) Create() *RbacPermissionMenuCreate {
+	mutation := newRbacPermissionMenuMutation(c.config, OpCreate)
+	return &RbacPermissionMenuCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacPermissionMenu entities.
+func (c *RbacPermissionMenuClient) CreateBulk(builders ...*RbacPermissionMenuCreate) *RbacPermissionMenuCreateBulk {
+	return &RbacPermissionMenuCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacPermissionMenuClient) MapCreateBulk(slice any, setFunc func(*RbacPermissionMenuCreate, int)) *RbacPermissionMenuCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacPermissionMenuCreateBulk{err: fmt.Errorf("calling to RbacPermissionMenuClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacPermissionMenuCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacPermissionMenuCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacPermissionMenu.
+func (c *RbacPermissionMenuClient) Update() *RbacPermissionMenuUpdate {
+	mutation := newRbacPermissionMenuMutation(c.config, OpUpdate)
+	return &RbacPermissionMenuUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacPermissionMenuClient) UpdateOne(_m *RbacPermissionMenu) *RbacPermissionMenuUpdateOne {
+	mutation := newRbacPermissionMenuMutation(c.config, OpUpdateOne, withRbacPermissionMenu(_m))
+	return &RbacPermissionMenuUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacPermissionMenuClient) UpdateOneID(id uuid.UUID) *RbacPermissionMenuUpdateOne {
+	mutation := newRbacPermissionMenuMutation(c.config, OpUpdateOne, withRbacPermissionMenuID(id))
+	return &RbacPermissionMenuUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacPermissionMenu.
+func (c *RbacPermissionMenuClient) Delete() *RbacPermissionMenuDelete {
+	mutation := newRbacPermissionMenuMutation(c.config, OpDelete)
+	return &RbacPermissionMenuDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacPermissionMenuClient) DeleteOne(_m *RbacPermissionMenu) *RbacPermissionMenuDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacPermissionMenuClient) DeleteOneID(id uuid.UUID) *RbacPermissionMenuDeleteOne {
+	builder := c.Delete().Where(rbacpermissionmenu.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacPermissionMenuDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacPermissionMenu.
+func (c *RbacPermissionMenuClient) Query() *RbacPermissionMenuQuery {
+	return &RbacPermissionMenuQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacPermissionMenu},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacPermissionMenu entity by its id.
+func (c *RbacPermissionMenuClient) Get(ctx context.Context, id uuid.UUID) (*RbacPermissionMenu, error) {
+	return c.Query().Where(rbacpermissionmenu.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacPermissionMenuClient) GetX(ctx context.Context, id uuid.UUID) *RbacPermissionMenu {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPermission queries the permission edge of a RbacPermissionMenu.
+func (c *RbacPermissionMenuClient) QueryPermission(_m *RbacPermissionMenu) *RbacPermissionQuery {
+	query := (&RbacPermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermissionmenu.Table, rbacpermissionmenu.FieldID, id),
+			sqlgraph.To(rbacpermission.Table, rbacpermission.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacpermissionmenu.PermissionTable, rbacpermissionmenu.PermissionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMenu queries the menu edge of a RbacPermissionMenu.
+func (c *RbacPermissionMenuClient) QueryMenu(_m *RbacPermissionMenu) *RbacMenuQuery {
+	query := (&RbacMenuClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacpermissionmenu.Table, rbacpermissionmenu.FieldID, id),
+			sqlgraph.To(rbacmenu.Table, rbacmenu.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, rbacpermissionmenu.MenuTable, rbacpermissionmenu.MenuColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacPermissionMenuClient) Hooks() []Hook {
+	return c.hooks.RbacPermissionMenu
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacPermissionMenuClient) Interceptors() []Interceptor {
+	return c.inters.RbacPermissionMenu
+}
+
+func (c *RbacPermissionMenuClient) mutate(ctx context.Context, m *RbacPermissionMenuMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacPermissionMenuCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacPermissionMenuUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacPermissionMenuUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacPermissionMenuDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacPermissionMenu mutation op: %q", m.Op())
+	}
+}
+
+// RbacRoleClient is a client for the RbacRole schema.
+type RbacRoleClient struct {
+	config
+}
+
+// NewRbacRoleClient returns a client for the RbacRole from the given config.
+func NewRbacRoleClient(c config) *RbacRoleClient {
+	return &RbacRoleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacrole.Hooks(f(g(h())))`.
+func (c *RbacRoleClient) Use(hooks ...Hook) {
+	c.hooks.RbacRole = append(c.hooks.RbacRole, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacrole.Intercept(f(g(h())))`.
+func (c *RbacRoleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacRole = append(c.inters.RbacRole, interceptors...)
+}
+
+// Create returns a builder for creating a RbacRole entity.
+func (c *RbacRoleClient) Create() *RbacRoleCreate {
+	mutation := newRbacRoleMutation(c.config, OpCreate)
+	return &RbacRoleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacRole entities.
+func (c *RbacRoleClient) CreateBulk(builders ...*RbacRoleCreate) *RbacRoleCreateBulk {
+	return &RbacRoleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacRoleClient) MapCreateBulk(slice any, setFunc func(*RbacRoleCreate, int)) *RbacRoleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacRoleCreateBulk{err: fmt.Errorf("calling to RbacRoleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacRoleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacRoleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacRole.
+func (c *RbacRoleClient) Update() *RbacRoleUpdate {
+	mutation := newRbacRoleMutation(c.config, OpUpdate)
+	return &RbacRoleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacRoleClient) UpdateOne(_m *RbacRole) *RbacRoleUpdateOne {
+	mutation := newRbacRoleMutation(c.config, OpUpdateOne, withRbacRole(_m))
+	return &RbacRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacRoleClient) UpdateOneID(id uuid.UUID) *RbacRoleUpdateOne {
+	mutation := newRbacRoleMutation(c.config, OpUpdateOne, withRbacRoleID(id))
+	return &RbacRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacRole.
+func (c *RbacRoleClient) Delete() *RbacRoleDelete {
+	mutation := newRbacRoleMutation(c.config, OpDelete)
+	return &RbacRoleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacRoleClient) DeleteOne(_m *RbacRole) *RbacRoleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacRoleClient) DeleteOneID(id uuid.UUID) *RbacRoleDeleteOne {
+	builder := c.Delete().Where(rbacrole.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacRoleDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacRole.
+func (c *RbacRoleClient) Query() *RbacRoleQuery {
+	return &RbacRoleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacRole},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacRole entity by its id.
+func (c *RbacRoleClient) Get(ctx context.Context, id uuid.UUID) (*RbacRole, error) {
+	return c.Query().Where(rbacrole.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacRoleClient) GetX(ctx context.Context, id uuid.UUID) *RbacRole {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRolePermissions queries the role_permissions edge of a RbacRole.
+func (c *RbacRoleClient) QueryRolePermissions(_m *RbacRole) *RbacRolePermissionQuery {
+	query := (&RbacRolePermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacrole.Table, rbacrole.FieldID, id),
+			sqlgraph.To(rbacrolepermission.Table, rbacrolepermission.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacrole.RolePermissionsTable, rbacrole.RolePermissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUserRoles queries the user_roles edge of a RbacRole.
+func (c *RbacRoleClient) QueryUserRoles(_m *RbacRole) *RbacUserRoleQuery {
+	query := (&RbacUserRoleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacrole.Table, rbacrole.FieldID, id),
+			sqlgraph.To(rbacuserrole.Table, rbacuserrole.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rbacrole.UserRolesTable, rbacrole.UserRolesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacRoleClient) Hooks() []Hook {
+	return c.hooks.RbacRole
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacRoleClient) Interceptors() []Interceptor {
+	return c.inters.RbacRole
+}
+
+func (c *RbacRoleClient) mutate(ctx context.Context, m *RbacRoleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacRoleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacRoleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacRoleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacRole mutation op: %q", m.Op())
+	}
+}
+
+// RbacRolePermissionClient is a client for the RbacRolePermission schema.
+type RbacRolePermissionClient struct {
+	config
+}
+
+// NewRbacRolePermissionClient returns a client for the RbacRolePermission from the given config.
+func NewRbacRolePermissionClient(c config) *RbacRolePermissionClient {
+	return &RbacRolePermissionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacrolepermission.Hooks(f(g(h())))`.
+func (c *RbacRolePermissionClient) Use(hooks ...Hook) {
+	c.hooks.RbacRolePermission = append(c.hooks.RbacRolePermission, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacrolepermission.Intercept(f(g(h())))`.
+func (c *RbacRolePermissionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacRolePermission = append(c.inters.RbacRolePermission, interceptors...)
+}
+
+// Create returns a builder for creating a RbacRolePermission entity.
+func (c *RbacRolePermissionClient) Create() *RbacRolePermissionCreate {
+	mutation := newRbacRolePermissionMutation(c.config, OpCreate)
+	return &RbacRolePermissionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacRolePermission entities.
+func (c *RbacRolePermissionClient) CreateBulk(builders ...*RbacRolePermissionCreate) *RbacRolePermissionCreateBulk {
+	return &RbacRolePermissionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacRolePermissionClient) MapCreateBulk(slice any, setFunc func(*RbacRolePermissionCreate, int)) *RbacRolePermissionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacRolePermissionCreateBulk{err: fmt.Errorf("calling to RbacRolePermissionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacRolePermissionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacRolePermissionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacRolePermission.
+func (c *RbacRolePermissionClient) Update() *RbacRolePermissionUpdate {
+	mutation := newRbacRolePermissionMutation(c.config, OpUpdate)
+	return &RbacRolePermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacRolePermissionClient) UpdateOne(_m *RbacRolePermission) *RbacRolePermissionUpdateOne {
+	mutation := newRbacRolePermissionMutation(c.config, OpUpdateOne, withRbacRolePermission(_m))
+	return &RbacRolePermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacRolePermissionClient) UpdateOneID(id uuid.UUID) *RbacRolePermissionUpdateOne {
+	mutation := newRbacRolePermissionMutation(c.config, OpUpdateOne, withRbacRolePermissionID(id))
+	return &RbacRolePermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacRolePermission.
+func (c *RbacRolePermissionClient) Delete() *RbacRolePermissionDelete {
+	mutation := newRbacRolePermissionMutation(c.config, OpDelete)
+	return &RbacRolePermissionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacRolePermissionClient) DeleteOne(_m *RbacRolePermission) *RbacRolePermissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacRolePermissionClient) DeleteOneID(id uuid.UUID) *RbacRolePermissionDeleteOne {
+	builder := c.Delete().Where(rbacrolepermission.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacRolePermissionDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacRolePermission.
+func (c *RbacRolePermissionClient) Query() *RbacRolePermissionQuery {
+	return &RbacRolePermissionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacRolePermission},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacRolePermission entity by its id.
+func (c *RbacRolePermissionClient) Get(ctx context.Context, id uuid.UUID) (*RbacRolePermission, error) {
+	return c.Query().Where(rbacrolepermission.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacRolePermissionClient) GetX(ctx context.Context, id uuid.UUID) *RbacRolePermission {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRole queries the role edge of a RbacRolePermission.
+func (c *RbacRolePermissionClient) QueryRole(_m *RbacRolePermission) *RbacRoleQuery {
+	query := (&RbacRoleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacrolepermission.Table, rbacrolepermission.FieldID, id),
+			sqlgraph.To(rbacrole.Table, rbacrole.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacrolepermission.RoleTable, rbacrolepermission.RoleColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPermission queries the permission edge of a RbacRolePermission.
+func (c *RbacRolePermissionClient) QueryPermission(_m *RbacRolePermission) *RbacPermissionQuery {
+	query := (&RbacPermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacrolepermission.Table, rbacrolepermission.FieldID, id),
+			sqlgraph.To(rbacpermission.Table, rbacpermission.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacrolepermission.PermissionTable, rbacrolepermission.PermissionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacRolePermissionClient) Hooks() []Hook {
+	return c.hooks.RbacRolePermission
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacRolePermissionClient) Interceptors() []Interceptor {
+	return c.inters.RbacRolePermission
+}
+
+func (c *RbacRolePermissionClient) mutate(ctx context.Context, m *RbacRolePermissionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacRolePermissionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacRolePermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacRolePermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacRolePermissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacRolePermission mutation op: %q", m.Op())
+	}
+}
+
+// RbacUserRoleClient is a client for the RbacUserRole schema.
+type RbacUserRoleClient struct {
+	config
+}
+
+// NewRbacUserRoleClient returns a client for the RbacUserRole from the given config.
+func NewRbacUserRoleClient(c config) *RbacUserRoleClient {
+	return &RbacUserRoleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rbacuserrole.Hooks(f(g(h())))`.
+func (c *RbacUserRoleClient) Use(hooks ...Hook) {
+	c.hooks.RbacUserRole = append(c.hooks.RbacUserRole, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rbacuserrole.Intercept(f(g(h())))`.
+func (c *RbacUserRoleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RbacUserRole = append(c.inters.RbacUserRole, interceptors...)
+}
+
+// Create returns a builder for creating a RbacUserRole entity.
+func (c *RbacUserRoleClient) Create() *RbacUserRoleCreate {
+	mutation := newRbacUserRoleMutation(c.config, OpCreate)
+	return &RbacUserRoleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RbacUserRole entities.
+func (c *RbacUserRoleClient) CreateBulk(builders ...*RbacUserRoleCreate) *RbacUserRoleCreateBulk {
+	return &RbacUserRoleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RbacUserRoleClient) MapCreateBulk(slice any, setFunc func(*RbacUserRoleCreate, int)) *RbacUserRoleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RbacUserRoleCreateBulk{err: fmt.Errorf("calling to RbacUserRoleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RbacUserRoleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RbacUserRoleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RbacUserRole.
+func (c *RbacUserRoleClient) Update() *RbacUserRoleUpdate {
+	mutation := newRbacUserRoleMutation(c.config, OpUpdate)
+	return &RbacUserRoleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RbacUserRoleClient) UpdateOne(_m *RbacUserRole) *RbacUserRoleUpdateOne {
+	mutation := newRbacUserRoleMutation(c.config, OpUpdateOne, withRbacUserRole(_m))
+	return &RbacUserRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RbacUserRoleClient) UpdateOneID(id uuid.UUID) *RbacUserRoleUpdateOne {
+	mutation := newRbacUserRoleMutation(c.config, OpUpdateOne, withRbacUserRoleID(id))
+	return &RbacUserRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RbacUserRole.
+func (c *RbacUserRoleClient) Delete() *RbacUserRoleDelete {
+	mutation := newRbacUserRoleMutation(c.config, OpDelete)
+	return &RbacUserRoleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RbacUserRoleClient) DeleteOne(_m *RbacUserRole) *RbacUserRoleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RbacUserRoleClient) DeleteOneID(id uuid.UUID) *RbacUserRoleDeleteOne {
+	builder := c.Delete().Where(rbacuserrole.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RbacUserRoleDeleteOne{builder}
+}
+
+// Query returns a query builder for RbacUserRole.
+func (c *RbacUserRoleClient) Query() *RbacUserRoleQuery {
+	return &RbacUserRoleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRbacUserRole},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RbacUserRole entity by its id.
+func (c *RbacUserRoleClient) Get(ctx context.Context, id uuid.UUID) (*RbacUserRole, error) {
+	return c.Query().Where(rbacuserrole.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RbacUserRoleClient) GetX(ctx context.Context, id uuid.UUID) *RbacUserRole {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRole queries the role edge of a RbacUserRole.
+func (c *RbacUserRoleClient) QueryRole(_m *RbacUserRole) *RbacRoleQuery {
+	query := (&RbacRoleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rbacuserrole.Table, rbacuserrole.FieldID, id),
+			sqlgraph.To(rbacrole.Table, rbacrole.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rbacuserrole.RoleTable, rbacuserrole.RoleColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RbacUserRoleClient) Hooks() []Hook {
+	return c.hooks.RbacUserRole
+}
+
+// Interceptors returns the client interceptors.
+func (c *RbacUserRoleClient) Interceptors() []Interceptor {
+	return c.inters.RbacUserRole
+}
+
+func (c *RbacUserRoleClient) mutate(ctx context.Context, m *RbacUserRoleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RbacUserRoleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RbacUserRoleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RbacUserRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RbacUserRoleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RbacUserRole mutation op: %q", m.Op())
+	}
+}
+
 // TenantClient is a client for the Tenant schema.
 type TenantClient struct {
 	config
@@ -835,6 +2782,22 @@ func (c *TenantClient) GetX(ctx context.Context, id uuid.UUID) *Tenant {
 	return obj
 }
 
+// QueryOwner queries the owner edge of a Tenant.
+func (c *TenantClient) QueryOwner(_m *Tenant) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenant.Table, tenant.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tenant.OwnerTable, tenant.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryOrganizations queries the organizations edge of a Tenant.
 func (c *TenantClient) QueryOrganizations(_m *Tenant) *OrganizationQuery {
 	query := (&OrganizationClient{config: c.config}).Query()
@@ -851,22 +2814,6 @@ func (c *TenantClient) QueryOrganizations(_m *Tenant) *OrganizationQuery {
 	return query
 }
 
-// QueryMembers queries the members edge of a Tenant.
-func (c *TenantClient) QueryMembers(_m *Tenant) *TenantMemberQuery {
-	query := (&TenantMemberClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tenant.Table, tenant.FieldID, id),
-			sqlgraph.To(tenantmember.Table, tenantmember.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, tenant.MembersTable, tenant.MembersColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryApplications queries the applications edge of a Tenant.
 func (c *TenantClient) QueryApplications(_m *Tenant) *ApplicationQuery {
 	query := (&ApplicationClient{config: c.config}).Query()
@@ -876,6 +2823,22 @@ func (c *TenantClient) QueryApplications(_m *Tenant) *ApplicationQuery {
 			sqlgraph.From(tenant.Table, tenant.FieldID, id),
 			sqlgraph.To(application.Table, application.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, tenant.ApplicationsTable, tenant.ApplicationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPositions queries the positions edge of a Tenant.
+func (c *TenantClient) QueryPositions(_m *Tenant) *PositionQuery {
+	query := (&PositionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenant.Table, tenant.FieldID, id),
+			sqlgraph.To(position.Table, position.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tenant.PositionsTable, tenant.PositionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -905,171 +2868,6 @@ func (c *TenantClient) mutate(ctx context.Context, m *TenantMutation) (Value, er
 		return (&TenantDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Tenant mutation op: %q", m.Op())
-	}
-}
-
-// TenantMemberClient is a client for the TenantMember schema.
-type TenantMemberClient struct {
-	config
-}
-
-// NewTenantMemberClient returns a client for the TenantMember from the given config.
-func NewTenantMemberClient(c config) *TenantMemberClient {
-	return &TenantMemberClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `tenantmember.Hooks(f(g(h())))`.
-func (c *TenantMemberClient) Use(hooks ...Hook) {
-	c.hooks.TenantMember = append(c.hooks.TenantMember, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `tenantmember.Intercept(f(g(h())))`.
-func (c *TenantMemberClient) Intercept(interceptors ...Interceptor) {
-	c.inters.TenantMember = append(c.inters.TenantMember, interceptors...)
-}
-
-// Create returns a builder for creating a TenantMember entity.
-func (c *TenantMemberClient) Create() *TenantMemberCreate {
-	mutation := newTenantMemberMutation(c.config, OpCreate)
-	return &TenantMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of TenantMember entities.
-func (c *TenantMemberClient) CreateBulk(builders ...*TenantMemberCreate) *TenantMemberCreateBulk {
-	return &TenantMemberCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *TenantMemberClient) MapCreateBulk(slice any, setFunc func(*TenantMemberCreate, int)) *TenantMemberCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &TenantMemberCreateBulk{err: fmt.Errorf("calling to TenantMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*TenantMemberCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &TenantMemberCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for TenantMember.
-func (c *TenantMemberClient) Update() *TenantMemberUpdate {
-	mutation := newTenantMemberMutation(c.config, OpUpdate)
-	return &TenantMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *TenantMemberClient) UpdateOne(_m *TenantMember) *TenantMemberUpdateOne {
-	mutation := newTenantMemberMutation(c.config, OpUpdateOne, withTenantMember(_m))
-	return &TenantMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *TenantMemberClient) UpdateOneID(id uuid.UUID) *TenantMemberUpdateOne {
-	mutation := newTenantMemberMutation(c.config, OpUpdateOne, withTenantMemberID(id))
-	return &TenantMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for TenantMember.
-func (c *TenantMemberClient) Delete() *TenantMemberDelete {
-	mutation := newTenantMemberMutation(c.config, OpDelete)
-	return &TenantMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *TenantMemberClient) DeleteOne(_m *TenantMember) *TenantMemberDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TenantMemberClient) DeleteOneID(id uuid.UUID) *TenantMemberDeleteOne {
-	builder := c.Delete().Where(tenantmember.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &TenantMemberDeleteOne{builder}
-}
-
-// Query returns a query builder for TenantMember.
-func (c *TenantMemberClient) Query() *TenantMemberQuery {
-	return &TenantMemberQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeTenantMember},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a TenantMember entity by its id.
-func (c *TenantMemberClient) Get(ctx context.Context, id uuid.UUID) (*TenantMember, error) {
-	return c.Query().Where(tenantmember.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *TenantMemberClient) GetX(ctx context.Context, id uuid.UUID) *TenantMember {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryTenant queries the tenant edge of a TenantMember.
-func (c *TenantMemberClient) QueryTenant(_m *TenantMember) *TenantQuery {
-	query := (&TenantClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tenantmember.Table, tenantmember.FieldID, id),
-			sqlgraph.To(tenant.Table, tenant.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tenantmember.TenantTable, tenantmember.TenantColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryUser queries the user edge of a TenantMember.
-func (c *TenantMemberClient) QueryUser(_m *TenantMember) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tenantmember.Table, tenantmember.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tenantmember.UserTable, tenantmember.UserColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *TenantMemberClient) Hooks() []Hook {
-	return c.hooks.TenantMember
-}
-
-// Interceptors returns the client interceptors.
-func (c *TenantMemberClient) Interceptors() []Interceptor {
-	return c.inters.TenantMember
-}
-
-func (c *TenantMemberClient) mutate(ctx context.Context, m *TenantMemberMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&TenantMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&TenantMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&TenantMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&TenantMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown TenantMember mutation op: %q", m.Op())
 	}
 }
 
@@ -1181,22 +2979,6 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	return obj
 }
 
-// QueryTenantMembers queries the tenant_members edge of a User.
-func (c *UserClient) QueryTenantMembers(_m *User) *TenantMemberQuery {
-	query := (&TenantMemberClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(tenantmember.Table, tenantmember.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.TenantMembersTable, user.TenantMembersColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryOrgMemberships queries the org_memberships edge of a User.
 func (c *UserClient) QueryOrgMemberships(_m *User) *OrganizationMemberQuery {
 	query := (&OrganizationMemberClient{config: c.config}).Query()
@@ -1206,6 +2988,22 @@ func (c *UserClient) QueryOrgMemberships(_m *User) *OrganizationMemberQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(organizationmember.Table, organizationmember.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.OrgMembershipsTable, user.OrgMembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOwnedTenants queries the owned_tenants edge of a User.
+func (c *UserClient) QueryOwnedTenants(_m *User) *TenantQuery {
+	query := (&TenantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(tenant.Table, tenant.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.OwnedTenantsTable, user.OwnedTenantsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1241,11 +3039,15 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Application, Organization, OrganizationMember, Tenant, TenantMember,
+		Application, DictItem, DictType, Organization, OrganizationMember, Position,
+		RbacMenu, RbacPermission, RbacPermissionApi, RbacPermissionGroup,
+		RbacPermissionMenu, RbacRole, RbacRolePermission, RbacUserRole, Tenant,
 		User []ent.Hook
 	}
 	inters struct {
-		Application, Organization, OrganizationMember, Tenant, TenantMember,
+		Application, DictItem, DictType, Organization, OrganizationMember, Position,
+		RbacMenu, RbacPermission, RbacPermissionApi, RbacPermissionGroup,
+		RbacPermissionMenu, RbacRole, RbacRolePermission, RbacUserRole, Tenant,
 		User []ent.Interceptor
 	}
 )

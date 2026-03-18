@@ -6,7 +6,7 @@ import (
 	iamconf "github.com/Servora-Kit/servora/api/gen/go/iam/conf/v1"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/Servora-Kit/servora/pkg/helpers"
 	"github.com/Servora-Kit/servora/pkg/logger"
@@ -39,8 +39,13 @@ func NewSeeder(ec *ent.Client, tenantUC *biz.TenantUsecase, fga *openfga.Client,
 
 // Run executes all seed steps. Each step is idempotent.
 func (s *Seeder) Run(ctx context.Context) error {
+	// RBAC seed always runs regardless of admin seed config
+	if err := s.SeedRBAC(ctx); err != nil {
+		return err
+	}
+
 	if s.seed == nil || s.seed.AdminEmail == "" {
-		s.log.Info("no seed config provided, skipping")
+		s.log.Info("no seed config provided, skipping user seed")
 		return nil
 	}
 
@@ -120,22 +125,22 @@ func (s *Seeder) ensurePlatformAdmin(ctx context.Context, userID string) {
 		s.log.Infof("seeded platform admin FGA tuple for user %s", userID)
 	}
 
-	// Ensure every tenant this user belongs to has the platform:default → tenant tuple,
-	// enabling the platform admin → tenant admin inheritance chain.
+	// Ensure every tenant this user owns has the platform:default → tenant tuple,
+	// enabling the platform admin → tenant effective_admin inheritance chain.
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		s.log.Warnf("invalid userID for platform-tenant tuple: %v", err)
 		return
 	}
-	memberships, err := s.ec.TenantMember.Query().
-		Where(tenantmember.UserIDEQ(uid)).
+	ownedTenants, err := s.ec.Tenant.Query().
+		Where(tenant.OwnerUserIDEQ(uid)).
 		All(ctx)
 	if err != nil {
-		s.log.Warnf("list tenant memberships for platform admin setup: %v", err)
+		s.log.Warnf("list owned tenants for platform admin setup: %v", err)
 		return
 	}
-	for _, m := range memberships {
-		tid := m.TenantID.String()
+	for _, t := range ownedTenants {
+		tid := t.ID.String()
 		if err := s.fga.EnsureTuples(ctx, openfga.Tuple{
 			User:     "platform:" + platformObjectID,
 			Relation: "platform",
@@ -145,4 +150,3 @@ func (s *Seeder) ensurePlatformAdmin(ctx context.Context, userID string) {
 		}
 	}
 }
-

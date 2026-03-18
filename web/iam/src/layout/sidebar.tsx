@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useStore } from '@tanstack/react-store'
-import { ChevronsLeft, ChevronsRight, ChevronRight } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, ChevronRight, Minus } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '#/lib/utils'
 import { ScrollArea } from '#/components/ui/scroll-area'
-import { Separator } from '#/components/ui/separator'
 import {
   Tooltip,
   TooltipContent,
@@ -31,13 +30,15 @@ import {
 export interface SubMenuItem {
   label: string
   href: string
+  icon?: LucideIcon
 }
 
 export interface MenuItem {
   label: string
   /** If omitted the item is a parent-only group trigger */
   href?: string
-  icon: LucideIcon
+  /** Optional icon; falls back to a neutral icon if omitted */
+  icon?: LucideIcon
   children?: SubMenuItem[]
 }
 
@@ -60,7 +61,7 @@ function LeafItem({
   pathname: string
 }) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
-  const Icon = item.icon
+  const Icon = item.icon ?? Minus
 
   const link = (
     <Link
@@ -96,6 +97,7 @@ function LeafItem({
 
 function SubItem({ item, pathname }: { item: SubMenuItem; pathname: string }) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+  const Icon = item.icon
   return (
     <Link
       to={item.href}
@@ -106,12 +108,21 @@ function SubItem({ item, pathname }: { item: SubMenuItem; pathname: string }) {
           : 'text-sidebar-foreground/70 hover:bg-accent hover:text-sidebar-foreground',
       )}
     >
-      <span
-        className={cn(
-          'mr-2 size-1.5 rounded-full shrink-0 transition-colors',
-          active ? 'bg-primary' : 'bg-sidebar-foreground/30',
-        )}
-      />
+      {Icon ? (
+        <Icon
+          className={cn(
+            'mr-2 size-3.5 shrink-0 transition-colors',
+            active ? 'text-primary' : 'text-sidebar-foreground/40',
+          )}
+        />
+      ) : (
+        <span
+          className={cn(
+            'mr-2 size-1.5 rounded-full shrink-0 transition-colors',
+            active ? 'bg-primary' : 'bg-sidebar-foreground/30',
+          )}
+        />
+      )}
       {item.label}
     </Link>
   )
@@ -128,7 +139,7 @@ function GroupItem({
   collapsed: boolean
   pathname: string
 }) {
-  const Icon = item.icon
+  const Icon = item.icon ?? Minus
   const children = item.children ?? []
   const isChildActive = children.some(
     (c) => pathname === c.href || pathname.startsWith(`${c.href}/`),
@@ -250,7 +261,6 @@ export function Sidebar({ title, titleHref, menuGroups, bottom }: SidebarProps) 
         <nav className="flex flex-col gap-0.5 p-2">
           {menuGroups.map((group, gi) => (
             <div key={gi}>
-              {gi > 0 && <Separator className="my-2" />}
               {group.map((item) => {
                 if (item.children && item.children.length > 0) {
                   return (

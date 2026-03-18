@@ -9,7 +9,8 @@ export type ErrorReason =
   | "ORGANIZATION_MEMBER_ALREADY_EXISTS"
   | "ORGANIZATION_CREATE_FAILED"
   | "ORGANIZATION_UPDATE_FAILED"
-  | "ORGANIZATION_DELETE_FAILED";
+  | "ORGANIZATION_DELETE_FAILED"
+  | "ORGANIZATION_HAS_CHILDREN";
 export type OrganizationInfo = {
   id: string | undefined;
   name: string | undefined;
@@ -17,6 +18,12 @@ export type OrganizationInfo = {
   displayName: string | undefined;
   createdAt: wellKnownTimestamp | undefined;
   updatedAt: wellKnownTimestamp | undefined;
+  // Tree structure fields
+  parentId?: string;
+  type: string | undefined;
+  sort: number | undefined;
+  leaderUserId?: string;
+  children: OrganizationInfo[] | undefined;
 };
 
 // Encoded using RFC 3339, where generated output will always be Z-normalized
@@ -38,6 +45,9 @@ export type CreateOrganizationRequest = {
   name: string | undefined;
   slug: string | undefined;
   displayName: string | undefined;
+  parentId?: string;
+  type: string | undefined;
+  sort: number | undefined;
 };
 
 export type CreateOrganizationResponse = {
@@ -92,10 +102,21 @@ export type paginationv1_CursorPaginationResponse = {
   hasMore: boolean | undefined;
 };
 
+export type ListOrganizationTreeRequest = {
+};
+
+export type ListOrganizationTreeResponse = {
+  roots: OrganizationInfo[] | undefined;
+};
+
 export type UpdateOrganizationRequest = {
   id: string | undefined;
   name: string | undefined;
   displayName: string | undefined;
+  parentId?: string;
+  type: string | undefined;
+  sort: number | undefined;
+  leaderUserId?: string;
 };
 
 export type UpdateOrganizationResponse = {

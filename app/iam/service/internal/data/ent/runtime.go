@@ -6,10 +6,20 @@ import (
 	"time"
 
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/dictitem"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/dicttype"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/position"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacmenu"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermission"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissionapi"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissiongroup"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissionmenu"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacrole"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacrolepermission"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacuserrole"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/schema"
 	"github.com/google/uuid"
@@ -63,6 +73,74 @@ func init() {
 	applicationDescID := applicationFields[0].Descriptor()
 	// application.DefaultID holds the default value on creation for the id field.
 	application.DefaultID = applicationDescID.Default.(func() uuid.UUID)
+	dictitemFields := schema.DictItem{}.Fields()
+	_ = dictitemFields
+	// dictitemDescLabel is the schema descriptor for label field.
+	dictitemDescLabel := dictitemFields[2].Descriptor()
+	// dictitem.LabelValidator is a validator for the "label" field. It is called by the builders before save.
+	dictitem.LabelValidator = dictitemDescLabel.Validators[0].(func(string) error)
+	// dictitemDescValue is the schema descriptor for value field.
+	dictitemDescValue := dictitemFields[3].Descriptor()
+	// dictitem.ValueValidator is a validator for the "value" field. It is called by the builders before save.
+	dictitem.ValueValidator = dictitemDescValue.Validators[0].(func(string) error)
+	// dictitemDescColorTag is the schema descriptor for color_tag field.
+	dictitemDescColorTag := dictitemFields[4].Descriptor()
+	// dictitem.ColorTagValidator is a validator for the "color_tag" field. It is called by the builders before save.
+	dictitem.ColorTagValidator = dictitemDescColorTag.Validators[0].(func(string) error)
+	// dictitemDescSort is the schema descriptor for sort field.
+	dictitemDescSort := dictitemFields[5].Descriptor()
+	// dictitem.DefaultSort holds the default value on creation for the sort field.
+	dictitem.DefaultSort = dictitemDescSort.Default.(int)
+	// dictitemDescIsDefault is the schema descriptor for is_default field.
+	dictitemDescIsDefault := dictitemFields[7].Descriptor()
+	// dictitem.DefaultIsDefault holds the default value on creation for the is_default field.
+	dictitem.DefaultIsDefault = dictitemDescIsDefault.Default.(bool)
+	// dictitemDescCreatedAt is the schema descriptor for created_at field.
+	dictitemDescCreatedAt := dictitemFields[8].Descriptor()
+	// dictitem.DefaultCreatedAt holds the default value on creation for the created_at field.
+	dictitem.DefaultCreatedAt = dictitemDescCreatedAt.Default.(func() time.Time)
+	// dictitemDescUpdatedAt is the schema descriptor for updated_at field.
+	dictitemDescUpdatedAt := dictitemFields[9].Descriptor()
+	// dictitem.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	dictitem.DefaultUpdatedAt = dictitemDescUpdatedAt.Default.(func() time.Time)
+	// dictitem.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	dictitem.UpdateDefaultUpdatedAt = dictitemDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// dictitemDescID is the schema descriptor for id field.
+	dictitemDescID := dictitemFields[0].Descriptor()
+	// dictitem.DefaultID holds the default value on creation for the id field.
+	dictitem.DefaultID = dictitemDescID.Default.(func() uuid.UUID)
+	dicttypeFields := schema.DictType{}.Fields()
+	_ = dicttypeFields
+	// dicttypeDescCode is the schema descriptor for code field.
+	dicttypeDescCode := dicttypeFields[1].Descriptor()
+	// dicttype.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	dicttype.CodeValidator = dicttypeDescCode.Validators[0].(func(string) error)
+	// dicttypeDescName is the schema descriptor for name field.
+	dicttypeDescName := dicttypeFields[2].Descriptor()
+	// dicttype.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	dicttype.NameValidator = dicttypeDescName.Validators[0].(func(string) error)
+	// dicttypeDescDescription is the schema descriptor for description field.
+	dicttypeDescDescription := dicttypeFields[3].Descriptor()
+	// dicttype.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	dicttype.DescriptionValidator = dicttypeDescDescription.Validators[0].(func(string) error)
+	// dicttypeDescSort is the schema descriptor for sort field.
+	dicttypeDescSort := dicttypeFields[5].Descriptor()
+	// dicttype.DefaultSort holds the default value on creation for the sort field.
+	dicttype.DefaultSort = dicttypeDescSort.Default.(int)
+	// dicttypeDescCreatedAt is the schema descriptor for created_at field.
+	dicttypeDescCreatedAt := dicttypeFields[6].Descriptor()
+	// dicttype.DefaultCreatedAt holds the default value on creation for the created_at field.
+	dicttype.DefaultCreatedAt = dicttypeDescCreatedAt.Default.(func() time.Time)
+	// dicttypeDescUpdatedAt is the schema descriptor for updated_at field.
+	dicttypeDescUpdatedAt := dicttypeFields[7].Descriptor()
+	// dicttype.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	dicttype.DefaultUpdatedAt = dicttypeDescUpdatedAt.Default.(func() time.Time)
+	// dicttype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	dicttype.UpdateDefaultUpdatedAt = dicttypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// dicttypeDescID is the schema descriptor for id field.
+	dicttypeDescID := dicttypeFields[0].Descriptor()
+	// dicttype.DefaultID holds the default value on creation for the id field.
+	dicttype.DefaultID = dicttypeDescID.Default.(func() uuid.UUID)
 	organizationFields := schema.Organization{}.Fields()
 	_ = organizationFields
 	// organizationDescName is the schema descriptor for name field.
@@ -77,12 +155,16 @@ func init() {
 	organizationDescDisplayName := organizationFields[4].Descriptor()
 	// organization.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
 	organization.DisplayNameValidator = organizationDescDisplayName.Validators[0].(func(string) error)
+	// organizationDescSort is the schema descriptor for sort field.
+	organizationDescSort := organizationFields[7].Descriptor()
+	// organization.DefaultSort holds the default value on creation for the sort field.
+	organization.DefaultSort = organizationDescSort.Default.(int)
 	// organizationDescCreatedAt is the schema descriptor for created_at field.
-	organizationDescCreatedAt := organizationFields[5].Descriptor()
+	organizationDescCreatedAt := organizationFields[9].Descriptor()
 	// organization.DefaultCreatedAt holds the default value on creation for the created_at field.
 	organization.DefaultCreatedAt = organizationDescCreatedAt.Default.(func() time.Time)
 	// organizationDescUpdatedAt is the schema descriptor for updated_at field.
-	organizationDescUpdatedAt := organizationFields[6].Descriptor()
+	organizationDescUpdatedAt := organizationFields[10].Descriptor()
 	// organization.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	organization.DefaultUpdatedAt = organizationDescUpdatedAt.Default.(func() time.Time)
 	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -93,18 +175,12 @@ func init() {
 	organization.DefaultID = organizationDescID.Default.(func() uuid.UUID)
 	organizationmemberFields := schema.OrganizationMember{}.Fields()
 	_ = organizationmemberFields
-	// organizationmemberDescRole is the schema descriptor for role field.
-	organizationmemberDescRole := organizationmemberFields[3].Descriptor()
-	// organizationmember.DefaultRole holds the default value on creation for the role field.
-	organizationmember.DefaultRole = organizationmemberDescRole.Default.(string)
-	// organizationmember.RoleValidator is a validator for the "role" field. It is called by the builders before save.
-	organizationmember.RoleValidator = organizationmemberDescRole.Validators[0].(func(string) error)
 	// organizationmemberDescCreatedAt is the schema descriptor for created_at field.
-	organizationmemberDescCreatedAt := organizationmemberFields[5].Descriptor()
+	organizationmemberDescCreatedAt := organizationmemberFields[4].Descriptor()
 	// organizationmember.DefaultCreatedAt holds the default value on creation for the created_at field.
 	organizationmember.DefaultCreatedAt = organizationmemberDescCreatedAt.Default.(func() time.Time)
 	// organizationmemberDescUpdatedAt is the schema descriptor for updated_at field.
-	organizationmemberDescUpdatedAt := organizationmemberFields[6].Descriptor()
+	organizationmemberDescUpdatedAt := organizationmemberFields[5].Descriptor()
 	// organizationmember.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	organizationmember.DefaultUpdatedAt = organizationmemberDescUpdatedAt.Default.(func() time.Time)
 	// organizationmember.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -113,30 +189,242 @@ func init() {
 	organizationmemberDescID := organizationmemberFields[0].Descriptor()
 	// organizationmember.DefaultID holds the default value on creation for the id field.
 	organizationmember.DefaultID = organizationmemberDescID.Default.(func() uuid.UUID)
+	positionFields := schema.Position{}.Fields()
+	_ = positionFields
+	// positionDescCode is the schema descriptor for code field.
+	positionDescCode := positionFields[3].Descriptor()
+	// position.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	position.CodeValidator = positionDescCode.Validators[0].(func(string) error)
+	// positionDescName is the schema descriptor for name field.
+	positionDescName := positionFields[4].Descriptor()
+	// position.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	position.NameValidator = positionDescName.Validators[0].(func(string) error)
+	// positionDescDescription is the schema descriptor for description field.
+	positionDescDescription := positionFields[5].Descriptor()
+	// position.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	position.DescriptionValidator = positionDescDescription.Validators[0].(func(string) error)
+	// positionDescSort is the schema descriptor for sort field.
+	positionDescSort := positionFields[6].Descriptor()
+	// position.DefaultSort holds the default value on creation for the sort field.
+	position.DefaultSort = positionDescSort.Default.(int)
+	// positionDescCreatedAt is the schema descriptor for created_at field.
+	positionDescCreatedAt := positionFields[8].Descriptor()
+	// position.DefaultCreatedAt holds the default value on creation for the created_at field.
+	position.DefaultCreatedAt = positionDescCreatedAt.Default.(func() time.Time)
+	// positionDescUpdatedAt is the schema descriptor for updated_at field.
+	positionDescUpdatedAt := positionFields[9].Descriptor()
+	// position.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	position.DefaultUpdatedAt = positionDescUpdatedAt.Default.(func() time.Time)
+	// position.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	position.UpdateDefaultUpdatedAt = positionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// positionDescID is the schema descriptor for id field.
+	positionDescID := positionFields[0].Descriptor()
+	// position.DefaultID holds the default value on creation for the id field.
+	position.DefaultID = positionDescID.Default.(func() uuid.UUID)
+	rbacmenuFields := schema.RbacMenu{}.Fields()
+	_ = rbacmenuFields
+	// rbacmenuDescName is the schema descriptor for name field.
+	rbacmenuDescName := rbacmenuFields[2].Descriptor()
+	// rbacmenu.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rbacmenu.NameValidator = rbacmenuDescName.Validators[0].(func(string) error)
+	// rbacmenuDescPath is the schema descriptor for path field.
+	rbacmenuDescPath := rbacmenuFields[3].Descriptor()
+	// rbacmenu.PathValidator is a validator for the "path" field. It is called by the builders before save.
+	rbacmenu.PathValidator = rbacmenuDescPath.Validators[0].(func(string) error)
+	// rbacmenuDescComponent is the schema descriptor for component field.
+	rbacmenuDescComponent := rbacmenuFields[4].Descriptor()
+	// rbacmenu.ComponentValidator is a validator for the "component" field. It is called by the builders before save.
+	rbacmenu.ComponentValidator = rbacmenuDescComponent.Validators[0].(func(string) error)
+	// rbacmenuDescRedirect is the schema descriptor for redirect field.
+	rbacmenuDescRedirect := rbacmenuFields[5].Descriptor()
+	// rbacmenu.RedirectValidator is a validator for the "redirect" field. It is called by the builders before save.
+	rbacmenu.RedirectValidator = rbacmenuDescRedirect.Validators[0].(func(string) error)
+	// rbacmenuDescSort is the schema descriptor for sort field.
+	rbacmenuDescSort := rbacmenuFields[8].Descriptor()
+	// rbacmenu.DefaultSort holds the default value on creation for the sort field.
+	rbacmenu.DefaultSort = rbacmenuDescSort.Default.(int)
+	// rbacmenuDescCreatedAt is the schema descriptor for created_at field.
+	rbacmenuDescCreatedAt := rbacmenuFields[10].Descriptor()
+	// rbacmenu.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rbacmenu.DefaultCreatedAt = rbacmenuDescCreatedAt.Default.(func() time.Time)
+	// rbacmenuDescUpdatedAt is the schema descriptor for updated_at field.
+	rbacmenuDescUpdatedAt := rbacmenuFields[11].Descriptor()
+	// rbacmenu.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rbacmenu.DefaultUpdatedAt = rbacmenuDescUpdatedAt.Default.(func() time.Time)
+	// rbacmenu.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rbacmenu.UpdateDefaultUpdatedAt = rbacmenuDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rbacmenuDescID is the schema descriptor for id field.
+	rbacmenuDescID := rbacmenuFields[0].Descriptor()
+	// rbacmenu.DefaultID holds the default value on creation for the id field.
+	rbacmenu.DefaultID = rbacmenuDescID.Default.(func() uuid.UUID)
+	rbacpermissionFields := schema.RbacPermission{}.Fields()
+	_ = rbacpermissionFields
+	// rbacpermissionDescCode is the schema descriptor for code field.
+	rbacpermissionDescCode := rbacpermissionFields[1].Descriptor()
+	// rbacpermission.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	rbacpermission.CodeValidator = rbacpermissionDescCode.Validators[0].(func(string) error)
+	// rbacpermissionDescName is the schema descriptor for name field.
+	rbacpermissionDescName := rbacpermissionFields[2].Descriptor()
+	// rbacpermission.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rbacpermission.NameValidator = rbacpermissionDescName.Validators[0].(func(string) error)
+	// rbacpermissionDescDescription is the schema descriptor for description field.
+	rbacpermissionDescDescription := rbacpermissionFields[3].Descriptor()
+	// rbacpermission.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	rbacpermission.DescriptionValidator = rbacpermissionDescDescription.Validators[0].(func(string) error)
+	// rbacpermissionDescCreatedAt is the schema descriptor for created_at field.
+	rbacpermissionDescCreatedAt := rbacpermissionFields[6].Descriptor()
+	// rbacpermission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rbacpermission.DefaultCreatedAt = rbacpermissionDescCreatedAt.Default.(func() time.Time)
+	// rbacpermissionDescUpdatedAt is the schema descriptor for updated_at field.
+	rbacpermissionDescUpdatedAt := rbacpermissionFields[7].Descriptor()
+	// rbacpermission.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rbacpermission.DefaultUpdatedAt = rbacpermissionDescUpdatedAt.Default.(func() time.Time)
+	// rbacpermission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rbacpermission.UpdateDefaultUpdatedAt = rbacpermissionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rbacpermissionDescID is the schema descriptor for id field.
+	rbacpermissionDescID := rbacpermissionFields[0].Descriptor()
+	// rbacpermission.DefaultID holds the default value on creation for the id field.
+	rbacpermission.DefaultID = rbacpermissionDescID.Default.(func() uuid.UUID)
+	rbacpermissionapiFields := schema.RbacPermissionApi{}.Fields()
+	_ = rbacpermissionapiFields
+	// rbacpermissionapiDescAPIMethod is the schema descriptor for api_method field.
+	rbacpermissionapiDescAPIMethod := rbacpermissionapiFields[2].Descriptor()
+	// rbacpermissionapi.APIMethodValidator is a validator for the "api_method" field. It is called by the builders before save.
+	rbacpermissionapi.APIMethodValidator = rbacpermissionapiDescAPIMethod.Validators[0].(func(string) error)
+	// rbacpermissionapiDescAPIPath is the schema descriptor for api_path field.
+	rbacpermissionapiDescAPIPath := rbacpermissionapiFields[3].Descriptor()
+	// rbacpermissionapi.APIPathValidator is a validator for the "api_path" field. It is called by the builders before save.
+	rbacpermissionapi.APIPathValidator = rbacpermissionapiDescAPIPath.Validators[0].(func(string) error)
+	// rbacpermissionapiDescID is the schema descriptor for id field.
+	rbacpermissionapiDescID := rbacpermissionapiFields[0].Descriptor()
+	// rbacpermissionapi.DefaultID holds the default value on creation for the id field.
+	rbacpermissionapi.DefaultID = rbacpermissionapiDescID.Default.(func() uuid.UUID)
+	rbacpermissiongroupFields := schema.RbacPermissionGroup{}.Fields()
+	_ = rbacpermissiongroupFields
+	// rbacpermissiongroupDescName is the schema descriptor for name field.
+	rbacpermissiongroupDescName := rbacpermissiongroupFields[1].Descriptor()
+	// rbacpermissiongroup.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rbacpermissiongroup.NameValidator = rbacpermissiongroupDescName.Validators[0].(func(string) error)
+	// rbacpermissiongroupDescModule is the schema descriptor for module field.
+	rbacpermissiongroupDescModule := rbacpermissiongroupFields[2].Descriptor()
+	// rbacpermissiongroup.ModuleValidator is a validator for the "module" field. It is called by the builders before save.
+	rbacpermissiongroup.ModuleValidator = rbacpermissiongroupDescModule.Validators[0].(func(string) error)
+	// rbacpermissiongroupDescSort is the schema descriptor for sort field.
+	rbacpermissiongroupDescSort := rbacpermissiongroupFields[4].Descriptor()
+	// rbacpermissiongroup.DefaultSort holds the default value on creation for the sort field.
+	rbacpermissiongroup.DefaultSort = rbacpermissiongroupDescSort.Default.(int)
+	// rbacpermissiongroupDescCreatedAt is the schema descriptor for created_at field.
+	rbacpermissiongroupDescCreatedAt := rbacpermissiongroupFields[5].Descriptor()
+	// rbacpermissiongroup.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rbacpermissiongroup.DefaultCreatedAt = rbacpermissiongroupDescCreatedAt.Default.(func() time.Time)
+	// rbacpermissiongroupDescUpdatedAt is the schema descriptor for updated_at field.
+	rbacpermissiongroupDescUpdatedAt := rbacpermissiongroupFields[6].Descriptor()
+	// rbacpermissiongroup.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rbacpermissiongroup.DefaultUpdatedAt = rbacpermissiongroupDescUpdatedAt.Default.(func() time.Time)
+	// rbacpermissiongroup.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rbacpermissiongroup.UpdateDefaultUpdatedAt = rbacpermissiongroupDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rbacpermissiongroupDescID is the schema descriptor for id field.
+	rbacpermissiongroupDescID := rbacpermissiongroupFields[0].Descriptor()
+	// rbacpermissiongroup.DefaultID holds the default value on creation for the id field.
+	rbacpermissiongroup.DefaultID = rbacpermissiongroupDescID.Default.(func() uuid.UUID)
+	rbacpermissionmenuFields := schema.RbacPermissionMenu{}.Fields()
+	_ = rbacpermissionmenuFields
+	// rbacpermissionmenuDescID is the schema descriptor for id field.
+	rbacpermissionmenuDescID := rbacpermissionmenuFields[0].Descriptor()
+	// rbacpermissionmenu.DefaultID holds the default value on creation for the id field.
+	rbacpermissionmenu.DefaultID = rbacpermissionmenuDescID.Default.(func() uuid.UUID)
+	rbacroleFields := schema.RbacRole{}.Fields()
+	_ = rbacroleFields
+	// rbacroleDescCode is the schema descriptor for code field.
+	rbacroleDescCode := rbacroleFields[1].Descriptor()
+	// rbacrole.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	rbacrole.CodeValidator = rbacroleDescCode.Validators[0].(func(string) error)
+	// rbacroleDescName is the schema descriptor for name field.
+	rbacroleDescName := rbacroleFields[2].Descriptor()
+	// rbacrole.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rbacrole.NameValidator = rbacroleDescName.Validators[0].(func(string) error)
+	// rbacroleDescDescription is the schema descriptor for description field.
+	rbacroleDescDescription := rbacroleFields[3].Descriptor()
+	// rbacrole.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	rbacrole.DescriptionValidator = rbacroleDescDescription.Validators[0].(func(string) error)
+	// rbacroleDescIsProtected is the schema descriptor for is_protected field.
+	rbacroleDescIsProtected := rbacroleFields[5].Descriptor()
+	// rbacrole.DefaultIsProtected holds the default value on creation for the is_protected field.
+	rbacrole.DefaultIsProtected = rbacroleDescIsProtected.Default.(bool)
+	// rbacroleDescCreatedAt is the schema descriptor for created_at field.
+	rbacroleDescCreatedAt := rbacroleFields[8].Descriptor()
+	// rbacrole.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rbacrole.DefaultCreatedAt = rbacroleDescCreatedAt.Default.(func() time.Time)
+	// rbacroleDescUpdatedAt is the schema descriptor for updated_at field.
+	rbacroleDescUpdatedAt := rbacroleFields[9].Descriptor()
+	// rbacrole.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rbacrole.DefaultUpdatedAt = rbacroleDescUpdatedAt.Default.(func() time.Time)
+	// rbacrole.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rbacrole.UpdateDefaultUpdatedAt = rbacroleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rbacroleDescID is the schema descriptor for id field.
+	rbacroleDescID := rbacroleFields[0].Descriptor()
+	// rbacrole.DefaultID holds the default value on creation for the id field.
+	rbacrole.DefaultID = rbacroleDescID.Default.(func() uuid.UUID)
+	rbacrolepermissionFields := schema.RbacRolePermission{}.Fields()
+	_ = rbacrolepermissionFields
+	// rbacrolepermissionDescPriority is the schema descriptor for priority field.
+	rbacrolepermissionDescPriority := rbacrolepermissionFields[4].Descriptor()
+	// rbacrolepermission.DefaultPriority holds the default value on creation for the priority field.
+	rbacrolepermission.DefaultPriority = rbacrolepermissionDescPriority.Default.(int)
+	// rbacrolepermissionDescCreatedAt is the schema descriptor for created_at field.
+	rbacrolepermissionDescCreatedAt := rbacrolepermissionFields[6].Descriptor()
+	// rbacrolepermission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rbacrolepermission.DefaultCreatedAt = rbacrolepermissionDescCreatedAt.Default.(func() time.Time)
+	// rbacrolepermissionDescUpdatedAt is the schema descriptor for updated_at field.
+	rbacrolepermissionDescUpdatedAt := rbacrolepermissionFields[7].Descriptor()
+	// rbacrolepermission.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rbacrolepermission.DefaultUpdatedAt = rbacrolepermissionDescUpdatedAt.Default.(func() time.Time)
+	// rbacrolepermission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rbacrolepermission.UpdateDefaultUpdatedAt = rbacrolepermissionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rbacrolepermissionDescID is the schema descriptor for id field.
+	rbacrolepermissionDescID := rbacrolepermissionFields[0].Descriptor()
+	// rbacrolepermission.DefaultID holds the default value on creation for the id field.
+	rbacrolepermission.DefaultID = rbacrolepermissionDescID.Default.(func() uuid.UUID)
+	rbacuserroleFields := schema.RbacUserRole{}.Fields()
+	_ = rbacuserroleFields
+	// rbacuserroleDescCreatedAt is the schema descriptor for created_at field.
+	rbacuserroleDescCreatedAt := rbacuserroleFields[5].Descriptor()
+	// rbacuserrole.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rbacuserrole.DefaultCreatedAt = rbacuserroleDescCreatedAt.Default.(func() time.Time)
+	// rbacuserroleDescUpdatedAt is the schema descriptor for updated_at field.
+	rbacuserroleDescUpdatedAt := rbacuserroleFields[6].Descriptor()
+	// rbacuserrole.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rbacuserrole.DefaultUpdatedAt = rbacuserroleDescUpdatedAt.Default.(func() time.Time)
+	// rbacuserrole.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rbacuserrole.UpdateDefaultUpdatedAt = rbacuserroleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rbacuserroleDescID is the schema descriptor for id field.
+	rbacuserroleDescID := rbacuserroleFields[0].Descriptor()
+	// rbacuserrole.DefaultID holds the default value on creation for the id field.
+	rbacuserrole.DefaultID = rbacuserroleDescID.Default.(func() uuid.UUID)
 	tenantFields := schema.Tenant{}.Fields()
 	_ = tenantFields
 	// tenantDescSlug is the schema descriptor for slug field.
-	tenantDescSlug := tenantFields[1].Descriptor()
+	tenantDescSlug := tenantFields[2].Descriptor()
 	// tenant.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
 	tenant.SlugValidator = tenantDescSlug.Validators[0].(func(string) error)
 	// tenantDescName is the schema descriptor for name field.
-	tenantDescName := tenantFields[2].Descriptor()
+	tenantDescName := tenantFields[3].Descriptor()
 	// tenant.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tenant.NameValidator = tenantDescName.Validators[0].(func(string) error)
 	// tenantDescDisplayName is the schema descriptor for display_name field.
-	tenantDescDisplayName := tenantFields[3].Descriptor()
+	tenantDescDisplayName := tenantFields[4].Descriptor()
 	// tenant.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
 	tenant.DisplayNameValidator = tenantDescDisplayName.Validators[0].(func(string) error)
 	// tenantDescDomain is the schema descriptor for domain field.
-	tenantDescDomain := tenantFields[5].Descriptor()
+	tenantDescDomain := tenantFields[6].Descriptor()
 	// tenant.DomainValidator is a validator for the "domain" field. It is called by the builders before save.
 	tenant.DomainValidator = tenantDescDomain.Validators[0].(func(string) error)
 	// tenantDescCreatedAt is the schema descriptor for created_at field.
-	tenantDescCreatedAt := tenantFields[7].Descriptor()
+	tenantDescCreatedAt := tenantFields[8].Descriptor()
 	// tenant.DefaultCreatedAt holds the default value on creation for the created_at field.
 	tenant.DefaultCreatedAt = tenantDescCreatedAt.Default.(func() time.Time)
 	// tenantDescUpdatedAt is the schema descriptor for updated_at field.
-	tenantDescUpdatedAt := tenantFields[8].Descriptor()
+	tenantDescUpdatedAt := tenantFields[9].Descriptor()
 	// tenant.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	tenant.DefaultUpdatedAt = tenantDescUpdatedAt.Default.(func() time.Time)
 	// tenant.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -145,22 +433,6 @@ func init() {
 	tenantDescID := tenantFields[0].Descriptor()
 	// tenant.DefaultID holds the default value on creation for the id field.
 	tenant.DefaultID = tenantDescID.Default.(func() uuid.UUID)
-	tenantmemberFields := schema.TenantMember{}.Fields()
-	_ = tenantmemberFields
-	// tenantmemberDescCreatedAt is the schema descriptor for created_at field.
-	tenantmemberDescCreatedAt := tenantmemberFields[6].Descriptor()
-	// tenantmember.DefaultCreatedAt holds the default value on creation for the created_at field.
-	tenantmember.DefaultCreatedAt = tenantmemberDescCreatedAt.Default.(func() time.Time)
-	// tenantmemberDescUpdatedAt is the schema descriptor for updated_at field.
-	tenantmemberDescUpdatedAt := tenantmemberFields[7].Descriptor()
-	// tenantmember.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	tenantmember.DefaultUpdatedAt = tenantmemberDescUpdatedAt.Default.(func() time.Time)
-	// tenantmember.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	tenantmember.UpdateDefaultUpdatedAt = tenantmemberDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// tenantmemberDescID is the schema descriptor for id field.
-	tenantmemberDescID := tenantmemberFields[0].Descriptor()
-	// tenantmember.DefaultID holds the default value on creation for the id field.
-	tenantmember.DefaultID = tenantmemberDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

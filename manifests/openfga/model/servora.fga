@@ -13,21 +13,18 @@ type tenant
   relations
     define platform: [platform]
     define owner: [user]
-    define admin: [user] or owner or admin from platform
-    define member: [user] or admin
-    define can_view: member
-    define can_manage: admin
-    define can_manage_members: owner or admin
-    define can_transfer_ownership: owner or admin from platform
+    # effective_admin 是计算关系：租户 owner 或平台 admin 都视为有效管理员
+    define effective_admin: owner or admin from platform
+    define can_view: effective_admin
+    define can_manage: effective_admin
+    define can_transfer_ownership: effective_admin
 
 type organization
   relations
     define tenant: [tenant]
-    define owner: [user]
-    define admin: [user] or owner or admin from tenant
-    define member: [user] or admin or member from tenant
-    define viewer: [user] or member
-    define can_view: member or viewer
+    # 组织 admin = 显式指定的 admin，或租户 effective_admin（owner / platform admin）
+    define admin: [user] or effective_admin from tenant
+    define member: [user] or admin
+    define can_view: member
     define can_manage: admin
     define can_manage_members: admin
-    define can_transfer_ownership: owner or admin from tenant

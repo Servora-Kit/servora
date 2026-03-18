@@ -13,10 +13,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/dictitem"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/dicttype"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/position"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacmenu"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermission"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissionapi"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissiongroup"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacpermissionmenu"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacrole"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacrolepermission"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/rbacuserrole"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 )
 
@@ -78,12 +88,22 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			application.Table:        application.ValidColumn,
-			organization.Table:       organization.ValidColumn,
-			organizationmember.Table: organizationmember.ValidColumn,
-			tenant.Table:             tenant.ValidColumn,
-			tenantmember.Table:       tenantmember.ValidColumn,
-			user.Table:               user.ValidColumn,
+			application.Table:         application.ValidColumn,
+			dictitem.Table:            dictitem.ValidColumn,
+			dicttype.Table:            dicttype.ValidColumn,
+			organization.Table:        organization.ValidColumn,
+			organizationmember.Table:  organizationmember.ValidColumn,
+			position.Table:            position.ValidColumn,
+			rbacmenu.Table:            rbacmenu.ValidColumn,
+			rbacpermission.Table:      rbacpermission.ValidColumn,
+			rbacpermissionapi.Table:   rbacpermissionapi.ValidColumn,
+			rbacpermissiongroup.Table: rbacpermissiongroup.ValidColumn,
+			rbacpermissionmenu.Table:  rbacpermissionmenu.ValidColumn,
+			rbacrole.Table:            rbacrole.ValidColumn,
+			rbacrolepermission.Table:  rbacrolepermission.ValidColumn,
+			rbacuserrole.Table:        rbacuserrole.ValidColumn,
+			tenant.Table:              tenant.ValidColumn,
+			user.Table:                user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

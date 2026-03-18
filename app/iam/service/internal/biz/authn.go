@@ -127,6 +127,12 @@ func (uc *AuthnUsecase) SignupByEmail(ctx context.Context, user *entity.User) (*
 	return createdUser, nil
 }
 
+// SendVerificationEmail is the public wrapper used by other usecases (e.g. UserUsecase)
+// to trigger email verification for a newly created user.
+func (uc *AuthnUsecase) SendVerificationEmail(ctx context.Context, user *entity.User) error {
+	return uc.sendVerificationEmail(ctx, user)
+}
+
 // sendVerificationEmail generates a verification token and sends the email.
 func (uc *AuthnUsecase) sendVerificationEmail(ctx context.Context, user *entity.User) error {
 	raw, err := uc.generateOpaqueToken()

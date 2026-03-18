@@ -24,7 +24,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var ProviderSet = wire.NewSet(registry.NewDiscovery, NewEntDriver, NewDBClient, NewRedis, NewData, NewAuthnRepo, NewAuthZRepo, NewUserRepo, NewTestRepo, NewTenantRepo, NewOrganizationRepo, NewOTPRepo, NewMailSender, NewApplicationRepo, NewOIDCStorage, NewSeeder)
+var ProviderSet = wire.NewSet(registry.NewDiscovery, NewEntDriver, NewDBClient, NewRedis, NewData, NewAuthnRepo, NewAuthZRepo, NewUserRepo, NewTestRepo, NewTenantRepo, NewOrganizationRepo, NewOTPRepo, NewMailSender, NewApplicationRepo, NewOIDCStorage, NewSeeder, NewRbacRoleRepo, NewRbacPermissionRepo, NewRbacMenuRepo, NewPositionRepo, NewDictRepo)
 
 type Data struct {
 	entClient *ent.Client

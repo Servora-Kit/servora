@@ -21,12 +21,14 @@ enum ErrorReason {
   ORGANIZATION_CREATE_FAILED = 4 [(errors.code) = 500];
   ORGANIZATION_UPDATE_FAILED = 5 [(errors.code) = 500];
   ORGANIZATION_DELETE_FAILED = 6 [(errors.code) = 500];
+  ORGANIZATION_HAS_CHILDREN = 7 [(errors.code) = 409];
 }
 
 service OrganizationService {
   rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse);
   rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse);
   rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+  rpc ListOrganizationTree(ListOrganizationTreeRequest) returns (ListOrganizationTreeResponse);
   rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse);
   rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
   rpc PurgeOrganization(PurgeOrganizationRequest) returns (PurgeOrganizationResponse);
@@ -45,6 +47,12 @@ message OrganizationInfo {
   string display_name = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 6;
+  // Tree structure fields
+  optional string parent_id = 7;
+  string type = 8;      // COMPANY | DEPARTMENT | TEAM
+  int32 sort = 9;
+  optional string leader_user_id = 10;
+  repeated OrganizationInfo children = 11;
 }
 
 message OrganizationMemberInfo {
@@ -64,6 +72,9 @@ message CreateOrganizationRequest {
     pattern: "^$|^[a-z0-9][a-z0-9-]*[a-z0-9]$"
   }];
   string display_name = 3;
+  optional string parent_id = 4;
+  string type = 5;   // COMPANY | DEPARTMENT | TEAM; defaults to COMPANY
+  int32 sort = 6;
 }
 
 message CreateOrganizationResponse {
@@ -87,10 +98,20 @@ message ListOrganizationsResponse {
   pagination.v1.PaginationResponse pagination = 2;
 }
 
+message ListOrganizationTreeRequest {}
+
+message ListOrganizationTreeResponse {
+  repeated OrganizationInfo roots = 1;
+}
+
 message UpdateOrganizationRequest {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2;
   string display_name = 3;
+  optional string parent_id = 4;
+  string type = 5;
+  int32 sort = 6;
+  optional string leader_user_id = 7;
 }
 
 message UpdateOrganizationResponse {

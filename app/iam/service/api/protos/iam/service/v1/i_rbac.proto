@@ -1,0 +1,191 @@
+syntax = "proto3";
+
+package iam.service.v1;
+
+import "google/api/annotations.proto";
+import "authz/service/v1/authz.proto";
+import "rbac/service/v1/rbac.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/iam/service/v1;iampb";
+
+// RbacService exposes RBAC management APIs and user-facing portal APIs.
+service RbacService {
+  // ── Portal (all authenticated users) ──────────────────────────────────────
+
+  // GetMyPermissionCodes returns the current user's effective permission codes.
+  // Used by the frontend to drive menu visibility and button guards.
+  rpc GetMyPermissionCodes(rbac.service.v1.GetMyPermissionCodesRequest)
+      returns (rbac.service.v1.GetMyPermissionCodesResponse) {
+    option (google.api.http) = {get: "/v1/user/perm-codes"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  // GetNavigation returns the menu tree the current user is allowed to see.
+  rpc GetNavigation(rbac.service.v1.GetNavigationRequest)
+      returns (rbac.service.v1.GetNavigationResponse) {
+    option (google.api.http) = {get: "/v1/user/navigation"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  // ── Role management ───────────────────────────────────────────────────────
+
+  rpc ListRoles(rbac.service.v1.ListRolesRequest)
+      returns (rbac.service.v1.ListRolesResponse) {
+    option (google.api.http) = {get: "/v1/rbac/roles"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc GetRole(rbac.service.v1.GetRoleRequest)
+      returns (rbac.service.v1.GetRoleResponse) {
+    option (google.api.http) = {get: "/v1/rbac/roles/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc CreateRole(rbac.service.v1.CreateRoleRequest)
+      returns (rbac.service.v1.CreateRoleResponse) {
+    option (google.api.http) = {
+      post: "/v1/rbac/roles"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_OBJECT
+      object_type: OBJECT_TYPE_TENANT
+      relation: RELATION_CAN_MANAGE
+    };
+  }
+
+  rpc UpdateRole(rbac.service.v1.UpdateRoleRequest)
+      returns (rbac.service.v1.UpdateRoleResponse) {
+    option (google.api.http) = {
+      put: "/v1/rbac/roles/{id}"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_OBJECT
+      object_type: OBJECT_TYPE_TENANT
+      relation: RELATION_CAN_MANAGE
+    };
+  }
+
+  rpc DeleteRole(rbac.service.v1.DeleteRoleRequest)
+      returns (rbac.service.v1.DeleteRoleResponse) {
+    option (google.api.http) = {delete: "/v1/rbac/roles/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_OBJECT
+      object_type: OBJECT_TYPE_TENANT
+      relation: RELATION_CAN_MANAGE
+    };
+  }
+
+  // ── Permission management (platform admin only) ───────────────────────────
+
+  rpc ListPermissions(rbac.service.v1.ListPermissionsRequest)
+      returns (rbac.service.v1.ListPermissionsResponse) {
+    option (google.api.http) = {get: "/v1/rbac/permissions"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc ListPermissionGroups(rbac.service.v1.ListPermissionGroupsRequest)
+      returns (rbac.service.v1.ListPermissionGroupsResponse) {
+    option (google.api.http) = {get: "/v1/rbac/permission-groups"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc GetPermission(rbac.service.v1.GetPermissionRequest)
+      returns (rbac.service.v1.GetPermissionResponse) {
+    option (google.api.http) = {get: "/v1/rbac/permissions/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc CreatePermission(rbac.service.v1.CreatePermissionRequest)
+      returns (rbac.service.v1.CreatePermissionResponse) {
+    option (google.api.http) = {
+      post: "/v1/rbac/permissions"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc UpdatePermission(rbac.service.v1.UpdatePermissionRequest)
+      returns (rbac.service.v1.UpdatePermissionResponse) {
+    option (google.api.http) = {
+      put: "/v1/rbac/permissions/{id}"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc DeletePermission(rbac.service.v1.DeletePermissionRequest)
+      returns (rbac.service.v1.DeletePermissionResponse) {
+    option (google.api.http) = {delete: "/v1/rbac/permissions/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  // ── Menu management ───────────────────────────────────────────────────────
+
+  rpc ListMenus(rbac.service.v1.ListMenusRequest)
+      returns (rbac.service.v1.ListMenusResponse) {
+    option (google.api.http) = {get: "/v1/rbac/menus"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc GetMenu(rbac.service.v1.GetMenuRequest)
+      returns (rbac.service.v1.GetMenuResponse) {
+    option (google.api.http) = {get: "/v1/rbac/menus/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc CreateMenu(rbac.service.v1.CreateMenuRequest)
+      returns (rbac.service.v1.CreateMenuResponse) {
+    option (google.api.http) = {
+      post: "/v1/rbac/menus"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc UpdateMenu(rbac.service.v1.UpdateMenuRequest)
+      returns (rbac.service.v1.UpdateMenuResponse) {
+    option (google.api.http) = {
+      put: "/v1/rbac/menus/{id}"
+      body: "*"
+    };
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+
+  rpc DeleteMenu(rbac.service.v1.DeleteMenuRequest)
+      returns (rbac.service.v1.DeleteMenuResponse) {
+    option (google.api.http) = {delete: "/v1/rbac/menus/{id}"};
+    option (authz.service.v1.rule) = {
+      mode: AUTHZ_MODE_NONE
+    };
+  }
+}

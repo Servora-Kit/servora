@@ -11,7 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
-	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
 	"github.com/google/uuid"
 )
@@ -139,21 +139,6 @@ func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
 	return _c
 }
 
-// AddTenantMemberIDs adds the "tenant_members" edge to the TenantMember entity by IDs.
-func (_c *UserCreate) AddTenantMemberIDs(ids ...uuid.UUID) *UserCreate {
-	_c.mutation.AddTenantMemberIDs(ids...)
-	return _c
-}
-
-// AddTenantMembers adds the "tenant_members" edges to the TenantMember entity.
-func (_c *UserCreate) AddTenantMembers(v ...*TenantMember) *UserCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddTenantMemberIDs(ids...)
-}
-
 // AddOrgMembershipIDs adds the "org_memberships" edge to the OrganizationMember entity by IDs.
 func (_c *UserCreate) AddOrgMembershipIDs(ids ...uuid.UUID) *UserCreate {
 	_c.mutation.AddOrgMembershipIDs(ids...)
@@ -167,6 +152,21 @@ func (_c *UserCreate) AddOrgMemberships(v ...*OrganizationMember) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddOrgMembershipIDs(ids...)
+}
+
+// AddOwnedTenantIDs adds the "owned_tenants" edge to the Tenant entity by IDs.
+func (_c *UserCreate) AddOwnedTenantIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddOwnedTenantIDs(ids...)
+	return _c
+}
+
+// AddOwnedTenants adds the "owned_tenants" edges to the Tenant entity.
+func (_c *UserCreate) AddOwnedTenants(v ...*Tenant) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddOwnedTenantIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -340,22 +340,6 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := _c.mutation.TenantMembersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.TenantMembersTable,
-			Columns: []string{user.TenantMembersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantmember.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.OrgMembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -365,6 +349,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationmember.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.OwnedTenantsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnedTenantsTable,
+			Columns: []string{user.OwnedTenantsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

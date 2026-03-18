@@ -551,29 +551,6 @@ func UpdatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
-// HasTenantMembers applies the HasEdge predicate on the "tenant_members" edge.
-func HasTenantMembers() predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, TenantMembersTable, TenantMembersColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasTenantMembersWith applies the HasEdge predicate on the "tenant_members" edge with a given conditions (other predicates).
-func HasTenantMembersWith(preds ...predicate.TenantMember) predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := newTenantMembersStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasOrgMemberships applies the HasEdge predicate on the "org_memberships" edge.
 func HasOrgMemberships() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -589,6 +566,29 @@ func HasOrgMemberships() predicate.User {
 func HasOrgMembershipsWith(preds ...predicate.OrganizationMember) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newOrgMembershipsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasOwnedTenants applies the HasEdge predicate on the "owned_tenants" edge.
+func HasOwnedTenants() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OwnedTenantsTable, OwnedTenantsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOwnedTenantsWith applies the HasEdge predicate on the "owned_tenants" edge with a given conditions (other predicates).
+func HasOwnedTenantsWith(preds ...predicate.Tenant) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newOwnedTenantsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

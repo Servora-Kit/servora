@@ -29,6 +29,14 @@ type Organization struct {
 	Slug string `json:"slug,omitempty"`
 	// DisplayName holds the value of the "display_name" field.
 	DisplayName *string `json:"display_name,omitempty"`
+	// ParentID holds the value of the "parent_id" field.
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
+	// Type holds the value of the "type" field.
+	Type organization.Type `json:"type,omitempty"`
+	// Sort holds the value of the "sort" field.
+	Sort int `json:"sort,omitempty"`
+	// LeaderUserID holds the value of the "leader_user_id" field.
+	LeaderUserID *uuid.UUID `json:"leader_user_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -45,9 +53,15 @@ type OrganizationEdges struct {
 	Tenant *Tenant `json:"tenant,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*OrganizationMember `json:"members,omitempty"`
+	// Positions holds the value of the positions edge.
+	Positions []*Position `json:"positions,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *Organization `json:"parent,omitempty"`
+	// Children holds the value of the children edge.
+	Children []*Organization `json:"children,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [5]bool
 }
 
 // TenantOrErr returns the Tenant value or an error if the edge
@@ -70,12 +84,45 @@ func (e OrganizationEdges) MembersOrErr() ([]*OrganizationMember, error) {
 	return nil, &NotLoadedError{edge: "members"}
 }
 
+// PositionsOrErr returns the Positions value or an error if the edge
+// was not loaded in eager-loading.
+func (e OrganizationEdges) PositionsOrErr() ([]*Position, error) {
+	if e.loadedTypes[2] {
+		return e.Positions, nil
+	}
+	return nil, &NotLoadedError{edge: "positions"}
+}
+
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) ParentOrErr() (*Organization, error) {
+	if e.Parent != nil {
+		return e.Parent, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: organization.Label}
+	}
+	return nil, &NotLoadedError{edge: "parent"}
+}
+
+// ChildrenOrErr returns the Children value or an error if the edge
+// was not loaded in eager-loading.
+func (e OrganizationEdges) ChildrenOrErr() ([]*Organization, error) {
+	if e.loadedTypes[4] {
+		return e.Children, nil
+	}
+	return nil, &NotLoadedError{edge: "children"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Organization) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case organization.FieldName, organization.FieldSlug, organization.FieldDisplayName:
+		case organization.FieldParentID, organization.FieldLeaderUserID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case organization.FieldSort:
+			values[i] = new(sql.NullInt64)
+		case organization.FieldName, organization.FieldSlug, organization.FieldDisplayName, organization.FieldType:
 			values[i] = new(sql.NullString)
 		case organization.FieldDeletedAt, organization.FieldCreatedAt, organization.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -134,6 +181,32 @@ func (_m *Organization) assignValues(columns []string, values []any) error {
 				_m.DisplayName = new(string)
 				*_m.DisplayName = value.String
 			}
+		case organization.FieldParentID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
+			} else if value.Valid {
+				_m.ParentID = new(uuid.UUID)
+				*_m.ParentID = *value.S.(*uuid.UUID)
+			}
+		case organization.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				_m.Type = organization.Type(value.String)
+			}
+		case organization.FieldSort:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sort", values[i])
+			} else if value.Valid {
+				_m.Sort = int(value.Int64)
+			}
+		case organization.FieldLeaderUserID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field leader_user_id", values[i])
+			} else if value.Valid {
+				_m.LeaderUserID = new(uuid.UUID)
+				*_m.LeaderUserID = *value.S.(*uuid.UUID)
+			}
 		case organization.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -167,6 +240,21 @@ func (_m *Organization) QueryTenant() *TenantQuery {
 // QueryMembers queries the "members" edge of the Organization entity.
 func (_m *Organization) QueryMembers() *OrganizationMemberQuery {
 	return NewOrganizationClient(_m.config).QueryMembers(_m)
+}
+
+// QueryPositions queries the "positions" edge of the Organization entity.
+func (_m *Organization) QueryPositions() *PositionQuery {
+	return NewOrganizationClient(_m.config).QueryPositions(_m)
+}
+
+// QueryParent queries the "parent" edge of the Organization entity.
+func (_m *Organization) QueryParent() *OrganizationQuery {
+	return NewOrganizationClient(_m.config).QueryParent(_m)
+}
+
+// QueryChildren queries the "children" edge of the Organization entity.
+func (_m *Organization) QueryChildren() *OrganizationQuery {
+	return NewOrganizationClient(_m.config).QueryChildren(_m)
 }
 
 // Update returns a builder for updating this Organization.
@@ -209,6 +297,22 @@ func (_m *Organization) String() string {
 	if v := _m.DisplayName; v != nil {
 		builder.WriteString("display_name=")
 		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Type))
+	builder.WriteString(", ")
+	builder.WriteString("sort=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Sort))
+	builder.WriteString(", ")
+	if v := _m.LeaderUserID; v != nil {
+		builder.WriteString("leader_user_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")

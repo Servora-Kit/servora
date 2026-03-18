@@ -547,10 +547,338 @@ export type authnservicev1_ResetPasswordResponse = {
   success: boolean | undefined;
 };
 
+// DictService manages system-level dictionary types and items (platform admin only for writes).
+export interface DictService {
+  ListDictTypes(request: dictservicev1_ListDictTypesRequest): Promise<dictservicev1_ListDictTypesResponse>;
+  GetDictType(request: dictservicev1_GetDictTypeRequest): Promise<dictservicev1_GetDictTypeResponse>;
+  CreateDictType(request: dictservicev1_CreateDictTypeRequest): Promise<dictservicev1_CreateDictTypeResponse>;
+  UpdateDictType(request: dictservicev1_UpdateDictTypeRequest): Promise<dictservicev1_UpdateDictTypeResponse>;
+  DeleteDictType(request: dictservicev1_DeleteDictTypeRequest): Promise<dictservicev1_DeleteDictTypeResponse>;
+  ListDictItems(request: dictservicev1_ListDictItemsRequest): Promise<dictservicev1_ListDictItemsResponse>;
+  CreateDictItem(request: dictservicev1_CreateDictItemRequest): Promise<dictservicev1_CreateDictItemResponse>;
+  UpdateDictItem(request: dictservicev1_UpdateDictItemRequest): Promise<dictservicev1_UpdateDictItemResponse>;
+  DeleteDictItem(request: dictservicev1_DeleteDictItemRequest): Promise<dictservicev1_DeleteDictItemResponse>;
+}
+
+export function createDictServiceClient(
+  handler: RequestHandler
+): DictService {
+  return {
+    ListDictTypes(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/dict/types`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.pagination?.page?.page) {
+        queryParams.push(`pagination.page.page=${encodeURIComponent(request.pagination.page.page.toString())}`)
+      }
+      if (request.pagination?.page?.pageSize) {
+        queryParams.push(`pagination.page.pageSize=${encodeURIComponent(request.pagination.page.pageSize.toString())}`)
+      }
+      if (request.pagination?.cursor?.cursor) {
+        queryParams.push(`pagination.cursor.cursor=${encodeURIComponent(request.pagination.cursor.cursor.toString())}`)
+      }
+      if (request.pagination?.cursor?.limit) {
+        queryParams.push(`pagination.cursor.limit=${encodeURIComponent(request.pagination.cursor.limit.toString())}`)
+      }
+      if (request.status) {
+        queryParams.push(`status=${encodeURIComponent(request.status.toString())}`)
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "DictService",
+        method: "ListDictTypes",
+      }) as Promise<dictservicev1_ListDictTypesResponse>;
+    },
+    GetDictType(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.idOrCode) {
+        throw new Error("missing required field request.id_or_code");
+      }
+      const path = `v1/dict/types/${request.idOrCode}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "DictService",
+        method: "GetDictType",
+      }) as Promise<dictservicev1_GetDictTypeResponse>;
+    },
+    CreateDictType(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/dict/types`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "POST",
+        body,
+      }, {
+        service: "DictService",
+        method: "CreateDictType",
+      }) as Promise<dictservicev1_CreateDictTypeResponse>;
+    },
+    UpdateDictType(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/dict/types/${request.id}`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "PUT",
+        body,
+      }, {
+        service: "DictService",
+        method: "UpdateDictType",
+      }) as Promise<dictservicev1_UpdateDictTypeResponse>;
+    },
+    DeleteDictType(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/dict/types/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "DELETE",
+        body,
+      }, {
+        service: "DictService",
+        method: "DeleteDictType",
+      }) as Promise<dictservicev1_DeleteDictTypeResponse>;
+    },
+    ListDictItems(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/dict/items`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.dictTypeIdOrCode) {
+        queryParams.push(`dictTypeIdOrCode=${encodeURIComponent(request.dictTypeIdOrCode.toString())}`)
+      }
+      if (request.status) {
+        queryParams.push(`status=${encodeURIComponent(request.status.toString())}`)
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "DictService",
+        method: "ListDictItems",
+      }) as Promise<dictservicev1_ListDictItemsResponse>;
+    },
+    CreateDictItem(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/dict/items`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "POST",
+        body,
+      }, {
+        service: "DictService",
+        method: "CreateDictItem",
+      }) as Promise<dictservicev1_CreateDictItemResponse>;
+    },
+    UpdateDictItem(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/dict/items/${request.id}`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "PUT",
+        body,
+      }, {
+        service: "DictService",
+        method: "UpdateDictItem",
+      }) as Promise<dictservicev1_UpdateDictItemResponse>;
+    },
+    DeleteDictItem(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/dict/items/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "DELETE",
+        body,
+      }, {
+        service: "DictService",
+        method: "DeleteDictItem",
+      }) as Promise<dictservicev1_DeleteDictItemResponse>;
+    },
+  };
+}
+export type dictservicev1_ListDictTypesRequest = {
+  pagination: paginationv1_PaginationRequest | undefined;
+  status?: string;
+};
+
+export type dictservicev1_ListDictTypesResponse = {
+  dictTypes: dictservicev1_DictTypeInfo[] | undefined;
+  pagination: paginationv1_PaginationResponse | undefined;
+};
+
+export type dictservicev1_DictTypeInfo = {
+  id: string | undefined;
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  status: string | undefined;
+  sort: number | undefined;
+  items: dictservicev1_DictItemInfo[] | undefined;
+  createdAt: wellKnownTimestamp | undefined;
+  updatedAt: wellKnownTimestamp | undefined;
+};
+
+export type dictservicev1_DictItemInfo = {
+  id: string | undefined;
+  dictTypeId: string | undefined;
+  label: string | undefined;
+  value: string | undefined;
+  colorTag?: string;
+  sort: number | undefined;
+  status: string | undefined;
+  isDefault: boolean | undefined;
+  createdAt: wellKnownTimestamp | undefined;
+  updatedAt: wellKnownTimestamp | undefined;
+};
+
+export type dictservicev1_GetDictTypeRequest = {
+  // Accepts either UUID (id) or code string
+  idOrCode: string | undefined;
+};
+
+export type dictservicev1_GetDictTypeResponse = {
+  dictType: dictservicev1_DictTypeInfo | undefined;
+};
+
+export type dictservicev1_CreateDictTypeRequest = {
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  sort: number | undefined;
+};
+
+export type dictservicev1_CreateDictTypeResponse = {
+  dictType: dictservicev1_DictTypeInfo | undefined;
+};
+
+export type dictservicev1_UpdateDictTypeRequest = {
+  id: string | undefined;
+  name?: string;
+  description?: string;
+  sort?: number;
+  status?: string;
+};
+
+export type dictservicev1_UpdateDictTypeResponse = {
+  dictType: dictservicev1_DictTypeInfo | undefined;
+};
+
+export type dictservicev1_DeleteDictTypeRequest = {
+  id: string | undefined;
+};
+
+export type dictservicev1_DeleteDictTypeResponse = {
+  success: boolean | undefined;
+};
+
+export type dictservicev1_ListDictItemsRequest = {
+  // Filter by type UUID or code
+  dictTypeIdOrCode: string | undefined;
+  status?: string;
+};
+
+export type dictservicev1_ListDictItemsResponse = {
+  items: dictservicev1_DictItemInfo[] | undefined;
+};
+
+export type dictservicev1_CreateDictItemRequest = {
+  dictTypeId: string | undefined;
+  label: string | undefined;
+  value: string | undefined;
+  colorTag?: string;
+  sort: number | undefined;
+  isDefault: boolean | undefined;
+};
+
+export type dictservicev1_CreateDictItemResponse = {
+  item: dictservicev1_DictItemInfo | undefined;
+};
+
+export type dictservicev1_UpdateDictItemRequest = {
+  id: string | undefined;
+  label?: string;
+  colorTag?: string;
+  sort?: number;
+  status?: string;
+  isDefault?: boolean;
+};
+
+export type dictservicev1_UpdateDictItemResponse = {
+  item: dictservicev1_DictItemInfo | undefined;
+};
+
+export type dictservicev1_DeleteDictItemRequest = {
+  id: string | undefined;
+};
+
+export type dictservicev1_DeleteDictItemResponse = {
+  success: boolean | undefined;
+};
+
 export interface OrganizationService {
   CreateOrganization(request: organizationservicev1_CreateOrganizationRequest): Promise<organizationservicev1_CreateOrganizationResponse>;
   GetOrganization(request: organizationservicev1_GetOrganizationRequest): Promise<organizationservicev1_GetOrganizationResponse>;
   ListOrganizations(request: organizationservicev1_ListOrganizationsRequest): Promise<organizationservicev1_ListOrganizationsResponse>;
+  ListOrganizationTree(request: organizationservicev1_ListOrganizationTreeRequest): Promise<organizationservicev1_ListOrganizationTreeResponse>;
   UpdateOrganization(request: organizationservicev1_UpdateOrganizationRequest): Promise<organizationservicev1_UpdateOrganizationResponse>;
   DeleteOrganization(request: organizationservicev1_DeleteOrganizationRequest): Promise<organizationservicev1_DeleteOrganizationResponse>;
   PurgeOrganization(request: organizationservicev1_PurgeOrganizationRequest): Promise<organizationservicev1_PurgeOrganizationResponse>;
@@ -559,7 +887,6 @@ export interface OrganizationService {
   RemoveMember(request: organizationservicev1_RemoveMemberRequest): Promise<organizationservicev1_RemoveMemberResponse>;
   ListMembers(request: organizationservicev1_ListMembersRequest): Promise<organizationservicev1_ListMembersResponse>;
   UpdateMemberRole(request: organizationservicev1_UpdateMemberRoleRequest): Promise<organizationservicev1_UpdateMemberRoleResponse>;
-  TransferOwnership(request: organizationservicev1_TransferOrganizationOwnershipRequest): Promise<organizationservicev1_TransferOrganizationOwnershipResponse>;
 }
 
 export function createOrganizationServiceClient(
@@ -631,6 +958,23 @@ export function createOrganizationServiceClient(
         service: "OrganizationService",
         method: "ListOrganizations",
       }) as Promise<organizationservicev1_ListOrganizationsResponse>;
+    },
+    ListOrganizationTree(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/organizations/tree`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "OrganizationService",
+        method: "ListOrganizationTree",
+      }) as Promise<organizationservicev1_ListOrganizationTreeResponse>;
     },
     UpdateOrganization(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
       if (!request.id) {
@@ -810,32 +1154,15 @@ export function createOrganizationServiceClient(
         method: "UpdateMemberRole",
       }) as Promise<organizationservicev1_UpdateMemberRoleResponse>;
     },
-    TransferOwnership(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.organizationId) {
-        throw new Error("missing required field request.organization_id");
-      }
-      const path = `v1/organizations/${request.organizationId}/transfer-ownership`; // eslint-disable-line quotes
-      const body = JSON.stringify(request);
-      const queryParams: string[] = [];
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "POST",
-        body,
-      }, {
-        service: "OrganizationService",
-        method: "TransferOwnership",
-      }) as Promise<organizationservicev1_TransferOrganizationOwnershipResponse>;
-    },
   };
 }
 export type organizationservicev1_CreateOrganizationRequest = {
   name: string | undefined;
   slug: string | undefined;
   displayName: string | undefined;
+  parentId?: string;
+  type: string | undefined;
+  sort: number | undefined;
 };
 
 export type organizationservicev1_CreateOrganizationResponse = {
@@ -849,6 +1176,12 @@ export type organizationservicev1_OrganizationInfo = {
   displayName: string | undefined;
   createdAt: wellKnownTimestamp | undefined;
   updatedAt: wellKnownTimestamp | undefined;
+  // Tree structure fields
+  parentId?: string;
+  type: string | undefined;
+  sort: number | undefined;
+  leaderUserId?: string;
+  children: organizationservicev1_OrganizationInfo[] | undefined;
 };
 
 export type organizationservicev1_GetOrganizationRequest = {
@@ -868,10 +1201,21 @@ export type organizationservicev1_ListOrganizationsResponse = {
   pagination: paginationv1_PaginationResponse | undefined;
 };
 
+export type organizationservicev1_ListOrganizationTreeRequest = {
+};
+
+export type organizationservicev1_ListOrganizationTreeResponse = {
+  roots: organizationservicev1_OrganizationInfo[] | undefined;
+};
+
 export type organizationservicev1_UpdateOrganizationRequest = {
   id: string | undefined;
   name: string | undefined;
   displayName: string | undefined;
+  parentId?: string;
+  type: string | undefined;
+  sort: number | undefined;
+  leaderUserId?: string;
 };
 
 export type organizationservicev1_UpdateOrganizationResponse = {
@@ -951,13 +1295,826 @@ export type organizationservicev1_UpdateMemberRoleResponse = {
   member: organizationservicev1_OrganizationMemberInfo | undefined;
 };
 
-export type organizationservicev1_TransferOrganizationOwnershipRequest = {
-  organizationId: string | undefined;
-  newOwnerUserId: string | undefined;
+// PositionService manages positions within a tenant's organizational structure.
+export interface PositionService {
+  ListPositions(request: positionservicev1_ListPositionsRequest): Promise<positionservicev1_ListPositionsResponse>;
+  GetPosition(request: positionservicev1_GetPositionRequest): Promise<positionservicev1_GetPositionResponse>;
+  CreatePosition(request: positionservicev1_CreatePositionRequest): Promise<positionservicev1_CreatePositionResponse>;
+  UpdatePosition(request: positionservicev1_UpdatePositionRequest): Promise<positionservicev1_UpdatePositionResponse>;
+  DeletePosition(request: positionservicev1_DeletePositionRequest): Promise<positionservicev1_DeletePositionResponse>;
+}
+
+export function createPositionServiceClient(
+  handler: RequestHandler
+): PositionService {
+  return {
+    ListPositions(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/positions`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.pagination?.page?.page) {
+        queryParams.push(`pagination.page.page=${encodeURIComponent(request.pagination.page.page.toString())}`)
+      }
+      if (request.pagination?.page?.pageSize) {
+        queryParams.push(`pagination.page.pageSize=${encodeURIComponent(request.pagination.page.pageSize.toString())}`)
+      }
+      if (request.pagination?.cursor?.cursor) {
+        queryParams.push(`pagination.cursor.cursor=${encodeURIComponent(request.pagination.cursor.cursor.toString())}`)
+      }
+      if (request.pagination?.cursor?.limit) {
+        queryParams.push(`pagination.cursor.limit=${encodeURIComponent(request.pagination.cursor.limit.toString())}`)
+      }
+      if (request.organizationId) {
+        queryParams.push(`organizationId=${encodeURIComponent(request.organizationId.toString())}`)
+      }
+      if (request.status) {
+        queryParams.push(`status=${encodeURIComponent(request.status.toString())}`)
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "PositionService",
+        method: "ListPositions",
+      }) as Promise<positionservicev1_ListPositionsResponse>;
+    },
+    GetPosition(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/positions/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "PositionService",
+        method: "GetPosition",
+      }) as Promise<positionservicev1_GetPositionResponse>;
+    },
+    CreatePosition(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/positions`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "POST",
+        body,
+      }, {
+        service: "PositionService",
+        method: "CreatePosition",
+      }) as Promise<positionservicev1_CreatePositionResponse>;
+    },
+    UpdatePosition(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/positions/${request.id}`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "PUT",
+        body,
+      }, {
+        service: "PositionService",
+        method: "UpdatePosition",
+      }) as Promise<positionservicev1_UpdatePositionResponse>;
+    },
+    DeletePosition(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/positions/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "DELETE",
+        body,
+      }, {
+        service: "PositionService",
+        method: "DeletePosition",
+      }) as Promise<positionservicev1_DeletePositionResponse>;
+    },
+  };
+}
+export type positionservicev1_ListPositionsRequest = {
+  pagination: paginationv1_PaginationRequest | undefined;
+  organizationId?: string;
+  status?: string;
 };
 
-export type organizationservicev1_TransferOrganizationOwnershipResponse = {
+export type positionservicev1_ListPositionsResponse = {
+  positions: positionservicev1_PositionInfo[] | undefined;
+  pagination: paginationv1_PaginationResponse | undefined;
+};
+
+export type positionservicev1_PositionInfo = {
+  id: string | undefined;
+  tenantId: string | undefined;
+  organizationId?: string;
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  sort: number | undefined;
+  status: string | undefined;
+  createdAt: wellKnownTimestamp | undefined;
+  updatedAt: wellKnownTimestamp | undefined;
+};
+
+export type positionservicev1_GetPositionRequest = {
+  id: string | undefined;
+};
+
+export type positionservicev1_GetPositionResponse = {
+  position: positionservicev1_PositionInfo | undefined;
+};
+
+export type positionservicev1_CreatePositionRequest = {
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  organizationId?: string;
+  sort: number | undefined;
+};
+
+export type positionservicev1_CreatePositionResponse = {
+  position: positionservicev1_PositionInfo | undefined;
+};
+
+export type positionservicev1_UpdatePositionRequest = {
+  id: string | undefined;
+  name?: string;
+  description?: string;
+  organizationId?: string;
+  sort?: number;
+  status?: string;
+};
+
+export type positionservicev1_UpdatePositionResponse = {
+  position: positionservicev1_PositionInfo | undefined;
+};
+
+export type positionservicev1_DeletePositionRequest = {
+  id: string | undefined;
+};
+
+export type positionservicev1_DeletePositionResponse = {
   success: boolean | undefined;
+};
+
+// RbacService exposes RBAC management APIs and user-facing portal APIs.
+export interface RbacService {
+  // GetMyPermissionCodes returns the current user's effective permission codes.
+  // Used by the frontend to drive menu visibility and button guards.
+  GetMyPermissionCodes(request: rbacservicev1_GetMyPermissionCodesRequest): Promise<rbacservicev1_GetMyPermissionCodesResponse>;
+  // GetNavigation returns the menu tree the current user is allowed to see.
+  GetNavigation(request: rbacservicev1_GetNavigationRequest): Promise<rbacservicev1_GetNavigationResponse>;
+  ListRoles(request: rbacservicev1_ListRolesRequest): Promise<rbacservicev1_ListRolesResponse>;
+  GetRole(request: rbacservicev1_GetRoleRequest): Promise<rbacservicev1_GetRoleResponse>;
+  CreateRole(request: rbacservicev1_CreateRoleRequest): Promise<rbacservicev1_CreateRoleResponse>;
+  UpdateRole(request: rbacservicev1_UpdateRoleRequest): Promise<rbacservicev1_UpdateRoleResponse>;
+  DeleteRole(request: rbacservicev1_DeleteRoleRequest): Promise<rbacservicev1_DeleteRoleResponse>;
+  ListPermissions(request: rbacservicev1_ListPermissionsRequest): Promise<rbacservicev1_ListPermissionsResponse>;
+  ListPermissionGroups(request: rbacservicev1_ListPermissionGroupsRequest): Promise<rbacservicev1_ListPermissionGroupsResponse>;
+  GetPermission(request: rbacservicev1_GetPermissionRequest): Promise<rbacservicev1_GetPermissionResponse>;
+  CreatePermission(request: rbacservicev1_CreatePermissionRequest): Promise<rbacservicev1_CreatePermissionResponse>;
+  UpdatePermission(request: rbacservicev1_UpdatePermissionRequest): Promise<rbacservicev1_UpdatePermissionResponse>;
+  DeletePermission(request: rbacservicev1_DeletePermissionRequest): Promise<rbacservicev1_DeletePermissionResponse>;
+  ListMenus(request: rbacservicev1_ListMenusRequest): Promise<rbacservicev1_ListMenusResponse>;
+  GetMenu(request: rbacservicev1_GetMenuRequest): Promise<rbacservicev1_GetMenuResponse>;
+  CreateMenu(request: rbacservicev1_CreateMenuRequest): Promise<rbacservicev1_CreateMenuResponse>;
+  UpdateMenu(request: rbacservicev1_UpdateMenuRequest): Promise<rbacservicev1_UpdateMenuResponse>;
+  DeleteMenu(request: rbacservicev1_DeleteMenuRequest): Promise<rbacservicev1_DeleteMenuResponse>;
+}
+
+export function createRbacServiceClient(
+  handler: RequestHandler
+): RbacService {
+  return {
+    GetMyPermissionCodes(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/user/perm-codes`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "GetMyPermissionCodes",
+      }) as Promise<rbacservicev1_GetMyPermissionCodesResponse>;
+    },
+    GetNavigation(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/user/navigation`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "GetNavigation",
+      }) as Promise<rbacservicev1_GetNavigationResponse>;
+    },
+    ListRoles(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/roles`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.tenantId) {
+        queryParams.push(`tenantId=${encodeURIComponent(request.tenantId.toString())}`)
+      }
+      if (request.pagination?.page?.page) {
+        queryParams.push(`pagination.page.page=${encodeURIComponent(request.pagination.page.page.toString())}`)
+      }
+      if (request.pagination?.page?.pageSize) {
+        queryParams.push(`pagination.page.pageSize=${encodeURIComponent(request.pagination.page.pageSize.toString())}`)
+      }
+      if (request.pagination?.cursor?.cursor) {
+        queryParams.push(`pagination.cursor.cursor=${encodeURIComponent(request.pagination.cursor.cursor.toString())}`)
+      }
+      if (request.pagination?.cursor?.limit) {
+        queryParams.push(`pagination.cursor.limit=${encodeURIComponent(request.pagination.cursor.limit.toString())}`)
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "ListRoles",
+      }) as Promise<rbacservicev1_ListRolesResponse>;
+    },
+    GetRole(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/roles/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "GetRole",
+      }) as Promise<rbacservicev1_GetRoleResponse>;
+    },
+    CreateRole(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/roles`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "POST",
+        body,
+      }, {
+        service: "RbacService",
+        method: "CreateRole",
+      }) as Promise<rbacservicev1_CreateRoleResponse>;
+    },
+    UpdateRole(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/roles/${request.id}`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "PUT",
+        body,
+      }, {
+        service: "RbacService",
+        method: "UpdateRole",
+      }) as Promise<rbacservicev1_UpdateRoleResponse>;
+    },
+    DeleteRole(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/roles/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "DELETE",
+        body,
+      }, {
+        service: "RbacService",
+        method: "DeleteRole",
+      }) as Promise<rbacservicev1_DeleteRoleResponse>;
+    },
+    ListPermissions(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/permissions`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.groupId) {
+        queryParams.push(`groupId=${encodeURIComponent(request.groupId.toString())}`)
+      }
+      if (request.pagination?.page?.page) {
+        queryParams.push(`pagination.page.page=${encodeURIComponent(request.pagination.page.page.toString())}`)
+      }
+      if (request.pagination?.page?.pageSize) {
+        queryParams.push(`pagination.page.pageSize=${encodeURIComponent(request.pagination.page.pageSize.toString())}`)
+      }
+      if (request.pagination?.cursor?.cursor) {
+        queryParams.push(`pagination.cursor.cursor=${encodeURIComponent(request.pagination.cursor.cursor.toString())}`)
+      }
+      if (request.pagination?.cursor?.limit) {
+        queryParams.push(`pagination.cursor.limit=${encodeURIComponent(request.pagination.cursor.limit.toString())}`)
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "ListPermissions",
+      }) as Promise<rbacservicev1_ListPermissionsResponse>;
+    },
+    ListPermissionGroups(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/permission-groups`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "ListPermissionGroups",
+      }) as Promise<rbacservicev1_ListPermissionGroupsResponse>;
+    },
+    GetPermission(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/permissions/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "GetPermission",
+      }) as Promise<rbacservicev1_GetPermissionResponse>;
+    },
+    CreatePermission(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/permissions`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "POST",
+        body,
+      }, {
+        service: "RbacService",
+        method: "CreatePermission",
+      }) as Promise<rbacservicev1_CreatePermissionResponse>;
+    },
+    UpdatePermission(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/permissions/${request.id}`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "PUT",
+        body,
+      }, {
+        service: "RbacService",
+        method: "UpdatePermission",
+      }) as Promise<rbacservicev1_UpdatePermissionResponse>;
+    },
+    DeletePermission(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/permissions/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "DELETE",
+        body,
+      }, {
+        service: "RbacService",
+        method: "DeletePermission",
+      }) as Promise<rbacservicev1_DeletePermissionResponse>;
+    },
+    ListMenus(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/menus`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      if (request.parentId) {
+        queryParams.push(`parentId=${encodeURIComponent(request.parentId.toString())}`)
+      }
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "ListMenus",
+      }) as Promise<rbacservicev1_ListMenusResponse>;
+    },
+    GetMenu(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/menus/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "GET",
+        body,
+      }, {
+        service: "RbacService",
+        method: "GetMenu",
+      }) as Promise<rbacservicev1_GetMenuResponse>;
+    },
+    CreateMenu(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const path = `v1/rbac/menus`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "POST",
+        body,
+      }, {
+        service: "RbacService",
+        method: "CreateMenu",
+      }) as Promise<rbacservicev1_CreateMenuResponse>;
+    },
+    UpdateMenu(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/menus/${request.id}`; // eslint-disable-line quotes
+      const body = JSON.stringify(request);
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "PUT",
+        body,
+      }, {
+        service: "RbacService",
+        method: "UpdateMenu",
+      }) as Promise<rbacservicev1_UpdateMenuResponse>;
+    },
+    DeleteMenu(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      if (!request.id) {
+        throw new Error("missing required field request.id");
+      }
+      const path = `v1/rbac/menus/${request.id}`; // eslint-disable-line quotes
+      const body = null;
+      const queryParams: string[] = [];
+      let uri = path;
+      if (queryParams.length > 0) {
+        uri += `?${queryParams.join("&")}`
+      }
+      return handler({
+        path: uri,
+        method: "DELETE",
+        body,
+      }, {
+        service: "RbacService",
+        method: "DeleteMenu",
+      }) as Promise<rbacservicev1_DeleteMenuResponse>;
+    },
+  };
+}
+export type rbacservicev1_GetMyPermissionCodesRequest = {
+};
+
+export type rbacservicev1_GetMyPermissionCodesResponse = {
+  codes: string[] | undefined;
+};
+
+export type rbacservicev1_GetNavigationRequest = {
+};
+
+export type rbacservicev1_GetNavigationResponse = {
+  menus: rbacservicev1_MenuInfo[] | undefined;
+};
+
+export type rbacservicev1_MenuInfo = {
+  id: string | undefined;
+  // CATALOG, MENU, or BUTTON
+  type: string | undefined;
+  name: string | undefined;
+  path?: string;
+  component?: string;
+  redirect?: string;
+  // JSON blob: icon, order, hideInMenu, etc.
+  meta?: string;
+  parentId?: string;
+  sort: number | undefined;
+  // ACTIVE or DISABLED
+  status: string | undefined;
+  children: rbacservicev1_MenuInfo[] | undefined;
+};
+
+export type rbacservicev1_ListRolesRequest = {
+  tenantId?: string;
+  pagination: paginationv1_PaginationRequest | undefined;
+};
+
+export type rbacservicev1_ListRolesResponse = {
+  roles: rbacservicev1_RoleInfo[] | undefined;
+  pagination: paginationv1_PaginationResponse | undefined;
+};
+
+export type rbacservicev1_RoleInfo = {
+  id: string | undefined;
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  // BUILTIN or CUSTOM
+  type: string | undefined;
+  isProtected: boolean | undefined;
+  // ACTIVE or DISABLED
+  status: string | undefined;
+  tenantId?: string;
+  createdAt: wellKnownTimestamp | undefined;
+  updatedAt: wellKnownTimestamp | undefined;
+  // IDs of permissions assigned to this role
+  permissionIds: string[] | undefined;
+};
+
+export type rbacservicev1_GetRoleRequest = {
+  id: string | undefined;
+};
+
+export type rbacservicev1_GetRoleResponse = {
+  role: rbacservicev1_RoleInfo | undefined;
+};
+
+export type rbacservicev1_CreateRoleRequest = {
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  tenantId?: string;
+  permissionIds: string[] | undefined;
+};
+
+export type rbacservicev1_CreateRoleResponse = {
+  role: rbacservicev1_RoleInfo | undefined;
+};
+
+export type rbacservicev1_UpdateRoleRequest = {
+  id: string | undefined;
+  name?: string;
+  description?: string;
+  status?: string;
+  permissionIds: string[] | undefined;
+};
+
+export type rbacservicev1_UpdateRoleResponse = {
+  role: rbacservicev1_RoleInfo | undefined;
+};
+
+export type rbacservicev1_DeleteRoleRequest = {
+  id: string | undefined;
+};
+
+export type rbacservicev1_DeleteRoleResponse = {
+};
+
+export type rbacservicev1_ListPermissionsRequest = {
+  groupId?: string;
+  pagination: paginationv1_PaginationRequest | undefined;
+};
+
+export type rbacservicev1_ListPermissionsResponse = {
+  permissions: rbacservicev1_PermissionInfo[] | undefined;
+  pagination: paginationv1_PaginationResponse | undefined;
+};
+
+export type rbacservicev1_PermissionInfo = {
+  id: string | undefined;
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  groupId?: string;
+  groupName?: string;
+  // ACTIVE or DISABLED
+  status: string | undefined;
+  createdAt: wellKnownTimestamp | undefined;
+  // API endpoints associated with this permission (metadata only)
+  apis: rbacservicev1_PermissionApiInfo[] | undefined;
+};
+
+export type rbacservicev1_PermissionApiInfo = {
+  apiMethod: string | undefined;
+  apiPath: string | undefined;
+};
+
+export type rbacservicev1_ListPermissionGroupsRequest = {
+};
+
+export type rbacservicev1_ListPermissionGroupsResponse = {
+  groups: rbacservicev1_PermissionGroupInfo[] | undefined;
+};
+
+export type rbacservicev1_PermissionGroupInfo = {
+  id: string | undefined;
+  name: string | undefined;
+  module?: string;
+  parentId?: string;
+  sort: number | undefined;
+  children: rbacservicev1_PermissionGroupInfo[] | undefined;
+};
+
+export type rbacservicev1_GetPermissionRequest = {
+  id: string | undefined;
+};
+
+export type rbacservicev1_GetPermissionResponse = {
+  permission: rbacservicev1_PermissionInfo | undefined;
+};
+
+export type rbacservicev1_CreatePermissionRequest = {
+  code: string | undefined;
+  name: string | undefined;
+  description?: string;
+  groupId?: string;
+};
+
+export type rbacservicev1_CreatePermissionResponse = {
+  permission: rbacservicev1_PermissionInfo | undefined;
+};
+
+export type rbacservicev1_UpdatePermissionRequest = {
+  id: string | undefined;
+  name?: string;
+  description?: string;
+  status?: string;
+};
+
+export type rbacservicev1_UpdatePermissionResponse = {
+  permission: rbacservicev1_PermissionInfo | undefined;
+};
+
+export type rbacservicev1_DeletePermissionRequest = {
+  id: string | undefined;
+};
+
+export type rbacservicev1_DeletePermissionResponse = {
+};
+
+export type rbacservicev1_ListMenusRequest = {
+  parentId?: string;
+};
+
+export type rbacservicev1_ListMenusResponse = {
+  menus: rbacservicev1_MenuInfo[] | undefined;
+};
+
+export type rbacservicev1_GetMenuRequest = {
+  id: string | undefined;
+};
+
+export type rbacservicev1_GetMenuResponse = {
+  menu: rbacservicev1_MenuInfo | undefined;
+};
+
+export type rbacservicev1_CreateMenuRequest = {
+  type: string | undefined;
+  name: string | undefined;
+  path?: string;
+  component?: string;
+  redirect?: string;
+  meta?: string;
+  parentId?: string;
+  sort: number | undefined;
+};
+
+export type rbacservicev1_CreateMenuResponse = {
+  menu: rbacservicev1_MenuInfo | undefined;
+};
+
+export type rbacservicev1_UpdateMenuRequest = {
+  id: string | undefined;
+  name?: string;
+  path?: string;
+  component?: string;
+  redirect?: string;
+  meta?: string;
+  parentId?: string;
+  sort?: number;
+  status?: string;
+};
+
+export type rbacservicev1_UpdateMenuResponse = {
+  menu: rbacservicev1_MenuInfo | undefined;
+};
+
+export type rbacservicev1_DeleteMenuRequest = {
+  id: string | undefined;
+};
+
+export type rbacservicev1_DeleteMenuResponse = {
 };
 
 export interface TenantService {
@@ -966,12 +2123,6 @@ export interface TenantService {
   ListTenants(request: tenantservicev1_ListTenantsRequest): Promise<tenantservicev1_ListTenantsResponse>;
   UpdateTenant(request: tenantservicev1_UpdateTenantRequest): Promise<tenantservicev1_UpdateTenantResponse>;
   DeleteTenant(request: tenantservicev1_DeleteTenantRequest): Promise<tenantservicev1_DeleteTenantResponse>;
-  InviteMember(request: tenantservicev1_InviteTenantMemberRequest): Promise<tenantservicev1_InviteTenantMemberResponse>;
-  AcceptInvitation(request: tenantservicev1_AcceptTenantInvitationRequest): Promise<tenantservicev1_AcceptTenantInvitationResponse>;
-  RejectInvitation(request: tenantservicev1_RejectTenantInvitationRequest): Promise<tenantservicev1_RejectTenantInvitationResponse>;
-  ListMembers(request: tenantservicev1_ListTenantMembersRequest): Promise<tenantservicev1_ListTenantMembersResponse>;
-  UpdateMemberRole(request: tenantservicev1_UpdateTenantMemberRoleRequest): Promise<tenantservicev1_UpdateTenantMemberRoleResponse>;
-  RemoveMember(request: tenantservicev1_RemoveTenantMemberRequest): Promise<tenantservicev1_RemoveTenantMemberResponse>;
   TransferOwnership(request: tenantservicev1_TransferTenantOwnershipRequest): Promise<tenantservicev1_TransferTenantOwnershipResponse>;
 }
 
@@ -1085,144 +2236,6 @@ export function createTenantServiceClient(
         method: "DeleteTenant",
       }) as Promise<tenantservicev1_DeleteTenantResponse>;
     },
-    InviteMember(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.tenantId) {
-        throw new Error("missing required field request.tenant_id");
-      }
-      const path = `v1/tenants/${request.tenantId}/members`; // eslint-disable-line quotes
-      const body = JSON.stringify(request);
-      const queryParams: string[] = [];
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "POST",
-        body,
-      }, {
-        service: "TenantService",
-        method: "InviteMember",
-      }) as Promise<tenantservicev1_InviteTenantMemberResponse>;
-    },
-    AcceptInvitation(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.tenantId) {
-        throw new Error("missing required field request.tenant_id");
-      }
-      const path = `v1/tenants/${request.tenantId}/invitations/accept`; // eslint-disable-line quotes
-      const body = JSON.stringify(request);
-      const queryParams: string[] = [];
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "POST",
-        body,
-      }, {
-        service: "TenantService",
-        method: "AcceptInvitation",
-      }) as Promise<tenantservicev1_AcceptTenantInvitationResponse>;
-    },
-    RejectInvitation(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.tenantId) {
-        throw new Error("missing required field request.tenant_id");
-      }
-      const path = `v1/tenants/${request.tenantId}/invitations/reject`; // eslint-disable-line quotes
-      const body = JSON.stringify(request);
-      const queryParams: string[] = [];
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "POST",
-        body,
-      }, {
-        service: "TenantService",
-        method: "RejectInvitation",
-      }) as Promise<tenantservicev1_RejectTenantInvitationResponse>;
-    },
-    ListMembers(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.tenantId) {
-        throw new Error("missing required field request.tenant_id");
-      }
-      const path = `v1/tenants/${request.tenantId}/members`; // eslint-disable-line quotes
-      const body = null;
-      const queryParams: string[] = [];
-      if (request.pagination?.page?.page) {
-        queryParams.push(`pagination.page.page=${encodeURIComponent(request.pagination.page.page.toString())}`)
-      }
-      if (request.pagination?.page?.pageSize) {
-        queryParams.push(`pagination.page.pageSize=${encodeURIComponent(request.pagination.page.pageSize.toString())}`)
-      }
-      if (request.pagination?.cursor?.cursor) {
-        queryParams.push(`pagination.cursor.cursor=${encodeURIComponent(request.pagination.cursor.cursor.toString())}`)
-      }
-      if (request.pagination?.cursor?.limit) {
-        queryParams.push(`pagination.cursor.limit=${encodeURIComponent(request.pagination.cursor.limit.toString())}`)
-      }
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "GET",
-        body,
-      }, {
-        service: "TenantService",
-        method: "ListMembers",
-      }) as Promise<tenantservicev1_ListTenantMembersResponse>;
-    },
-    UpdateMemberRole(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.tenantId) {
-        throw new Error("missing required field request.tenant_id");
-      }
-      if (!request.userId) {
-        throw new Error("missing required field request.user_id");
-      }
-      const path = `v1/tenants/${request.tenantId}/members/${request.userId}/role`; // eslint-disable-line quotes
-      const body = JSON.stringify(request);
-      const queryParams: string[] = [];
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "PUT",
-        body,
-      }, {
-        service: "TenantService",
-        method: "UpdateMemberRole",
-      }) as Promise<tenantservicev1_UpdateTenantMemberRoleResponse>;
-    },
-    RemoveMember(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      if (!request.tenantId) {
-        throw new Error("missing required field request.tenant_id");
-      }
-      if (!request.userId) {
-        throw new Error("missing required field request.user_id");
-      }
-      const path = `v1/tenants/${request.tenantId}/members/${request.userId}`; // eslint-disable-line quotes
-      const body = null;
-      const queryParams: string[] = [];
-      let uri = path;
-      if (queryParams.length > 0) {
-        uri += `?${queryParams.join("&")}`
-      }
-      return handler({
-        path: uri,
-        method: "DELETE",
-        body,
-      }, {
-        service: "TenantService",
-        method: "RemoveMember",
-      }) as Promise<tenantservicev1_RemoveTenantMemberResponse>;
-    },
     TransferOwnership(request) { // eslint-disable-line @typescript-eslint/no-unused-vars
       if (!request.tenantId) {
         throw new Error("missing required field request.tenant_id");
@@ -1267,6 +2280,7 @@ export type tenantservicev1_TenantInfo = {
   createdAt: wellKnownTimestamp | undefined;
   updatedAt: wellKnownTimestamp | undefined;
   displayName: string | undefined;
+  ownerUserId: string | undefined;
 };
 
 export type tenantservicev1_GetTenantRequest = {
@@ -1303,73 +2317,6 @@ export type tenantservicev1_DeleteTenantRequest = {
 };
 
 export type tenantservicev1_DeleteTenantResponse = {
-  success: boolean | undefined;
-};
-
-export type tenantservicev1_InviteTenantMemberRequest = {
-  tenantId: string | undefined;
-  userId: string | undefined;
-  role: string | undefined;
-};
-
-export type tenantservicev1_InviteTenantMemberResponse = {
-  member: tenantservicev1_TenantMemberInfo | undefined;
-};
-
-export type tenantservicev1_TenantMemberInfo = {
-  id: string | undefined;
-  tenantId: string | undefined;
-  userId: string | undefined;
-  userName: string | undefined;
-  userEmail: string | undefined;
-  role: string | undefined;
-  status: string | undefined;
-  joinedAt: wellKnownTimestamp | undefined;
-  createdAt: wellKnownTimestamp | undefined;
-};
-
-export type tenantservicev1_AcceptTenantInvitationRequest = {
-  tenantId: string | undefined;
-};
-
-export type tenantservicev1_AcceptTenantInvitationResponse = {
-  success: boolean | undefined;
-};
-
-export type tenantservicev1_RejectTenantInvitationRequest = {
-  tenantId: string | undefined;
-};
-
-export type tenantservicev1_RejectTenantInvitationResponse = {
-  success: boolean | undefined;
-};
-
-export type tenantservicev1_ListTenantMembersRequest = {
-  tenantId: string | undefined;
-  pagination: paginationv1_PaginationRequest | undefined;
-};
-
-export type tenantservicev1_ListTenantMembersResponse = {
-  members: tenantservicev1_TenantMemberInfo[] | undefined;
-  pagination: paginationv1_PaginationResponse | undefined;
-};
-
-export type tenantservicev1_UpdateTenantMemberRoleRequest = {
-  tenantId: string | undefined;
-  userId: string | undefined;
-  role: string | undefined;
-};
-
-export type tenantservicev1_UpdateTenantMemberRoleResponse = {
-  member: tenantservicev1_TenantMemberInfo | undefined;
-};
-
-export type tenantservicev1_RemoveTenantMemberRequest = {
-  tenantId: string | undefined;
-  userId: string | undefined;
-};
-
-export type tenantservicev1_RemoveTenantMemberResponse = {
   success: boolean | undefined;
 };
 

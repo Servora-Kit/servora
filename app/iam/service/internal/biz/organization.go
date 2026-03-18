@@ -24,12 +24,13 @@ type OrganizationRepo interface {
 	PurgeCascade(ctx context.Context, id string) error
 	Restore(ctx context.Context, id string) (*entity.Organization, error)
 	GetByIDIncludingDeleted(ctx context.Context, id string) (*entity.Organization, error)
+	HasChildren(ctx context.Context, id string) (bool, error)
+	ListAllByTenant(ctx context.Context, tenantID string) ([]*entity.Organization, error)
 	AddMember(ctx context.Context, m *entity.OrganizationMember) (*entity.OrganizationMember, error)
 	RemoveMember(ctx context.Context, orgID, userID string) error
 	ListMembers(ctx context.Context, orgID string, page, pageSize int32) ([]*entity.OrganizationMember, int64, error)
 	GetMember(ctx context.Context, orgID, userID string) (*entity.OrganizationMember, error)
 	UpdateMemberRole(ctx context.Context, orgID, userID, role string) (*entity.OrganizationMember, error)
-	GetOwnerMember(ctx context.Context, orgID string) (*entity.OrganizationMember, error)
 	ListAllMembers(ctx context.Context, orgID string) ([]*entity.OrganizationMember, error)
 	DeleteAllMembers(ctx context.Context, orgID string) (int, error)
 	ListMembershipsByUserID(ctx context.Context, userID string) ([]*entity.OrganizationMember, error)
@@ -84,19 +85,19 @@ func (uc *OrganizationUsecase) Create(ctx context.Context, userID string, org *e
 	if _, err := uc.repo.AddMember(ctx, &entity.OrganizationMember{
 		OrganizationID: created.ID,
 		UserID:         userID,
-		Role:           string(RoleOwner),
+		Role:           string(RoleAdmin),
 	}); err != nil {
-		uc.log.Errorf("add owner member failed, rolling back org: %v", err)
+		uc.log.Errorf("add admin member failed, rolling back org: %v", err)
 		if delErr := uc.repo.Purge(ctx, created.ID); delErr != nil {
 			uc.log.Errorf("rollback purge org failed: %v", delErr)
 		}
-		return nil, orgpb.ErrorOrganizationCreateFailed("failed to add owner member")
+		return nil, orgpb.ErrorOrganizationCreateFailed("failed to add admin member")
 	}
 
 	if uc.authz != nil {
 		if err := uc.authz.WriteTuples(ctx,
 			Tuple{User: "tenant:" + created.TenantID, Relation: "tenant", Object: "organization:" + created.ID},
-			Tuple{User: "user:" + userID, Relation: string(RoleOwner), Object: "organization:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: string(RoleAdmin), Object: "organization:" + created.ID},
 		); err != nil {
 			uc.log.Errorf("write FGA tuples failed, rolling back org: %v", err)
 			_ = uc.repo.RemoveMember(ctx, created.ID, userID)
@@ -131,19 +132,19 @@ func (uc *OrganizationUsecase) CreateDefault(ctx context.Context, userID, name, 
 	if _, err := uc.repo.AddMember(ctx, &entity.OrganizationMember{
 		OrganizationID: created.ID,
 		UserID:         userID,
-		Role:           string(RoleOwner),
+		Role:           string(RoleAdmin),
 	}); err != nil {
-		uc.log.Errorf("add owner member failed, rolling back org: %v", err)
+		uc.log.Errorf("add admin member failed, rolling back org: %v", err)
 		if delErr := uc.repo.Purge(ctx, created.ID); delErr != nil {
 			uc.log.Errorf("rollback purge org failed: %v", delErr)
 		}
-		return nil, orgpb.ErrorOrganizationCreateFailed("failed to add owner member")
+		return nil, orgpb.ErrorOrganizationCreateFailed("failed to add admin member")
 	}
 
 	if uc.authz != nil {
 		if err := uc.authz.WriteTuples(ctx,
 			Tuple{User: "tenant:" + tenantID, Relation: "tenant", Object: "organization:" + created.ID},
-			Tuple{User: "user:" + userID, Relation: string(RoleOwner), Object: "organization:" + created.ID},
+			Tuple{User: "user:" + userID, Relation: string(RoleAdmin), Object: "organization:" + created.ID},
 		); err != nil {
 			uc.log.Errorf("write FGA tuples failed, rolling back org: %v", err)
 			_ = uc.repo.RemoveMember(ctx, created.ID, userID)
@@ -221,11 +222,48 @@ func (uc *OrganizationUsecase) Delete(ctx context.Context, id string) error {
 		uc.log.Errorf("get organization failed: %v", err)
 		return errors.InternalServer("INTERNAL", "internal error")
 	}
+	hasChildren, err := uc.repo.HasChildren(ctx, id)
+	if err != nil {
+		uc.log.Errorf("check children failed: %v", err)
+		return errors.InternalServer("INTERNAL", "internal error")
+	}
+	if hasChildren {
+		return orgpb.ErrorOrganizationHasChildren("cannot delete organization with child organizations")
+	}
 	if err := uc.repo.Delete(ctx, id); err != nil {
 		uc.log.Errorf("soft delete organization failed: %v", err)
 		return orgpb.ErrorOrganizationDeleteFailed("failed to delete organization")
 	}
 	return nil
+}
+
+// ListTree returns all tenant organizations as a tree (in-memory construction).
+func (uc *OrganizationUsecase) ListTree(ctx context.Context, tenantID string) ([]*entity.Organization, error) {
+	all, err := uc.repo.ListAllByTenant(ctx, tenantID)
+	if err != nil {
+		uc.log.Errorf("list all orgs failed: %v", err)
+		return nil, errors.InternalServer("INTERNAL", "internal error")
+	}
+	return buildOrgTree(all), nil
+}
+
+// buildOrgTree converts a flat list of organizations into a tree by ID linkage.
+func buildOrgTree(orgs []*entity.Organization) []*entity.Organization {
+	byID := make(map[string]*entity.Organization, len(orgs))
+	for _, o := range orgs {
+		byID[o.ID] = o
+	}
+	var roots []*entity.Organization
+	for _, o := range orgs {
+		if o.ParentID == nil || *o.ParentID == "" {
+			roots = append(roots, o)
+		} else if parent, ok := byID[*o.ParentID]; ok {
+			parent.Children = append(parent.Children, o)
+		} else {
+			roots = append(roots, o)
+		}
+	}
+	return roots
 }
 
 func (uc *OrganizationUsecase) Purge(ctx context.Context, id string) error {
@@ -321,10 +359,6 @@ func (uc *OrganizationUsecase) RemoveMember(ctx context.Context, orgID, userID s
 		return orgpb.ErrorOrganizationMemberNotFound("member not found")
 	}
 
-	if Role(member.Role).IsOwner() {
-		return orgpb.ErrorOrganizationDeleteFailed("owner cannot be removed; transfer ownership first")
-	}
-
 	if err := uc.repo.RemoveMember(ctx, orgID, userID); err != nil {
 		uc.log.Errorf("remove member failed: %v", err)
 		return orgpb.ErrorOrganizationDeleteFailed("%v", err)
@@ -367,10 +401,6 @@ func (uc *OrganizationUsecase) UpdateMemberRole(ctx context.Context, orgID, user
 		return nil, orgpb.ErrorOrganizationMemberNotFound("member not found")
 	}
 
-	if Role(oldMember.Role).IsOwner() {
-		return nil, orgpb.ErrorOrganizationUpdateFailed("cannot change owner's role; use TransferOwnership instead")
-	}
-
 	updated, err := uc.repo.UpdateMemberRole(ctx, orgID, userID, newRole)
 	if err != nil {
 		uc.log.Errorf("update member role failed: %v", err)
@@ -391,7 +421,6 @@ func (uc *OrganizationUsecase) UpdateMemberRole(ctx context.Context, orgID, user
 			Tuple{User: "user:" + userID, Relation: newRole, Object: "organization:" + orgID},
 		); err != nil {
 			uc.log.Errorf("write new FGA tuple failed, rolling back role: %v", err)
-			// Best-effort restore old FGA tuple; caller already gets "failed to update authorization"
 			_ = uc.authz.WriteTuples(ctx,
 				Tuple{User: "user:" + userID, Relation: oldMember.Role, Object: "organization:" + orgID},
 			)
@@ -417,7 +446,6 @@ func (uc *OrganizationUsecase) InviteMember(ctx context.Context, orgID, userID, 
 		OrganizationID: orgID,
 		UserID:         userID,
 		Role:           role,
-		Status:         "invited",
 	})
 	if err != nil {
 		uc.log.Errorf("invite member failed: %v", err)
@@ -453,61 +481,8 @@ func (uc *OrganizationUsecase) AcceptInvitation(ctx context.Context, orgID, user
 	return nil
 }
 
-// TransferOwnership atomically transfers organization ownership to a target user who
-// must currently be an admin. The caller must hold can_transfer_ownership (verified by
-// the authz middleware); this method only enforces business rules.
-func (uc *OrganizationUsecase) TransferOwnership(ctx context.Context, orgID, callerID, newOwnerUserID string) error {
-	if callerID == newOwnerUserID {
-		return orgpb.ErrorOrganizationUpdateFailed("new owner must be a different user")
-	}
-
-	// Find and validate the transfer target (must be an existing admin member).
-	newOwnerMember, err := uc.repo.GetMember(ctx, orgID, newOwnerUserID)
-	if err != nil {
-		return orgpb.ErrorOrganizationMemberNotFound("target user is not an organization member")
-	}
-	if Role(newOwnerMember.Role) != RoleAdmin {
-		return orgpb.ErrorOrganizationUpdateFailed("target user must currently be an admin")
-	}
-
-	// Find the current owner (they may differ from the caller when a tenant/platform admin forces transfer).
-	currentOwner, err := uc.repo.GetOwnerMember(ctx, orgID)
-	if err != nil {
-		uc.log.Errorf("find current owner failed: %v", err)
-		return orgpb.ErrorOrganizationUpdateFailed("could not locate current owner")
-	}
-
-	// Demote current owner → admin, then promote target → owner.
-	if _, err := uc.repo.UpdateMemberRole(ctx, orgID, currentOwner.UserID, string(RoleAdmin)); err != nil {
-		uc.log.Errorf("demote old owner failed: %v", err)
-		return orgpb.ErrorOrganizationUpdateFailed("failed to transfer ownership")
-	}
-
-	if _, err := uc.repo.UpdateMemberRole(ctx, orgID, newOwnerUserID, string(RoleOwner)); err != nil {
-		uc.log.Errorf("promote new owner failed, rolling back: %v", err)
-		if _, rbErr := uc.repo.UpdateMemberRole(ctx, orgID, currentOwner.UserID, string(RoleOwner)); rbErr != nil {
-			uc.log.Errorf("rollback old owner failed: %v", rbErr)
-		}
-		return orgpb.ErrorOrganizationUpdateFailed("failed to transfer ownership")
-	}
-
-	if uc.authz != nil {
-		if err := uc.authz.DeleteTuples(ctx,
-			Tuple{User: "user:" + currentOwner.UserID, Relation: string(RoleOwner), Object: "organization:" + orgID},
-			Tuple{User: "user:" + newOwnerUserID, Relation: string(RoleAdmin), Object: "organization:" + orgID},
-		); err != nil {
-			uc.log.Warnf("delete old FGA tuples failed during transfer: %v", err)
-		}
-		if err := uc.authz.WriteTuples(ctx,
-			Tuple{User: "user:" + currentOwner.UserID, Relation: string(RoleAdmin), Object: "organization:" + orgID},
-			Tuple{User: "user:" + newOwnerUserID, Relation: string(RoleOwner), Object: "organization:" + orgID},
-		); err != nil {
-			uc.log.Errorf("write new FGA tuples failed during transfer: %v", err)
-			return orgpb.ErrorOrganizationUpdateFailed("failed to update authorization tuples")
-		}
-	}
-
-	return nil
+func (uc *OrganizationUsecase) GetUserMemberships(ctx context.Context, userID string) ([]*entity.OrganizationMember, error) {
+	return uc.repo.ListMembershipsByUserID(ctx, userID)
 }
 
 func (uc *OrganizationUsecase) RejectInvitation(ctx context.Context, orgID, userID string) error {

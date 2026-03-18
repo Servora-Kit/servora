@@ -4,6 +4,8 @@ import { AppShell } from '#/layout/app-shell'
 import { LoginExpiredDialog } from '#/components/login-expired-dialog'
 import { isAuthenticated } from '#/stores/auth'
 
+// Single unified layout for all authenticated users.
+// Menu visibility is controlled entirely by backend permission codes.
 export const Route = createFileRoute('/_app')({
   beforeLoad: ({ location }) => {
     if (typeof window === 'undefined') return

@@ -136,7 +136,7 @@ function CreateOrgButton({ onCreated }: { onCreated: () => void }) {
   async function handleSubmit() {
     setLoading(true)
     try {
-      await iamClients.organization.CreateOrganization({ name, slug: '', displayName: name })
+      await iamClients.organization.CreateOrganization({ name, slug: '', displayName: name, type: 'COMPANY', sort: 0 })
       setOpen(false)
       setName('')
       onCreated()

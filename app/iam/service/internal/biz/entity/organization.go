@@ -3,13 +3,19 @@ package entity
 import "time"
 
 type Organization struct {
-	ID       string
-	TenantID string
+	ID          string
+	TenantID    string
 	Name        string
 	Slug        string
 	DisplayName string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// Tree structure fields
+	ParentID     *string
+	Type         string // COMPANY | DEPARTMENT | TEAM
+	Sort         int
+	LeaderUserID *string
+	Children     []*Organization
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type OrganizationMember struct {

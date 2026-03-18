@@ -59,72 +59,6 @@ service TenantService {
     };
   }
 
-  rpc InviteMember(tenant.service.v1.InviteTenantMemberRequest) returns (tenant.service.v1.InviteTenantMemberResponse) {
-    option (google.api.http) = {
-      post: "/v1/tenants/{tenant_id}/members"
-      body: "*"
-    };
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_MANAGE_MEMBERS
-      id_field: "tenant_id"
-    };
-  }
-
-  rpc AcceptInvitation(tenant.service.v1.AcceptTenantInvitationRequest) returns (tenant.service.v1.AcceptTenantInvitationResponse) {
-    option (google.api.http) = {
-      post: "/v1/tenants/{tenant_id}/invitations/accept"
-      body: "*"
-    };
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
-    };
-  }
-
-  rpc RejectInvitation(tenant.service.v1.RejectTenantInvitationRequest) returns (tenant.service.v1.RejectTenantInvitationResponse) {
-    option (google.api.http) = {
-      post: "/v1/tenants/{tenant_id}/invitations/reject"
-      body: "*"
-    };
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
-    };
-  }
-
-  rpc ListMembers(tenant.service.v1.ListTenantMembersRequest) returns (tenant.service.v1.ListTenantMembersResponse) {
-    option (google.api.http) = {get: "/v1/tenants/{tenant_id}/members"};
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_VIEW
-      id_field: "tenant_id"
-    };
-  }
-
-  rpc UpdateMemberRole(tenant.service.v1.UpdateTenantMemberRoleRequest) returns (tenant.service.v1.UpdateTenantMemberRoleResponse) {
-    option (google.api.http) = {
-      put: "/v1/tenants/{tenant_id}/members/{user_id}/role"
-      body: "*"
-    };
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_MANAGE_MEMBERS
-      id_field: "tenant_id"
-    };
-  }
-
-  rpc RemoveMember(tenant.service.v1.RemoveTenantMemberRequest) returns (tenant.service.v1.RemoveTenantMemberResponse) {
-    option (google.api.http) = {delete: "/v1/tenants/{tenant_id}/members/{user_id}"};
-    option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_OBJECT
-      object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_MANAGE_MEMBERS
-      id_field: "tenant_id"
-    };
-  }
-
   rpc TransferOwnership(tenant.service.v1.TransferTenantOwnershipRequest) returns (tenant.service.v1.TransferTenantOwnershipResponse) {
     option (google.api.http) = {
       post: "/v1/tenants/{tenant_id}/transfer-ownership"
@@ -133,7 +67,7 @@ service TenantService {
     option (authz.service.v1.rule) = {
       mode: AUTHZ_MODE_OBJECT
       object_type: OBJECT_TYPE_TENANT
-      relation: RELATION_CAN_MANAGE_MEMBERS
+      relation: RELATION_CAN_MANAGE
       id_field: "tenant_id"
     };
   }

@@ -1,6 +1,7 @@
 /**
  * IAM / Servora frontend — global styles.
- * Tailwind + shadcn/ui. Theme tokens derived from go-wind-admin (Vben Admin).
+ * Tailwind + shadcn/ui. Theme: Catppuccin Latte (light) / Mocha (dark), Blue accent.
+ * Base palette: https://github.com/catppuccin/shadcn-ui
  */
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -10,125 +11,145 @@
 @plugin '@tailwindcss/typography';
 
 /* ---------------------------------------------------------------------------
- * Theme tokens — Vben-style blue primary + refined neutrals.
+ * Theme tokens — Catppuccin Latte (light mode)
+ * Palette reference: https://catppuccin.com/palette
  */
 :root {
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --font-size-base: 16px;
 
-  --background: hsl(0 0% 100%);
-  --background-deep: hsl(216 20% 95.5%);
-  --foreground: hsl(210 6% 21%);
+  /* Latte: base=eff1f5, mantle=e6e9ef, crust=dce0e8 */
+  --background: hsl(220 23% 95%);        /* base */
+  --background-deep: hsl(220 21% 89%);   /* crust */
+  --foreground: hsl(234 16% 35%);        /* text */
 
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222 84% 4.9%);
+  --card: hsl(220 23% 95%);             /* base */
+  --card-foreground: hsl(234 16% 35%);   /* text */
 
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222 84% 4.9%);
+  --popover: hsl(220 23% 95%);          /* base */
+  --popover-foreground: hsl(234 16% 35%); /* text */
 
-  --primary: hsl(212 100% 45%);
-  --primary-foreground: hsl(0 0% 98%);
+  /* Latte Blue accent: #1e66f5 */
+  --primary: hsl(220 91% 54%);           /* blue */
+  --primary-foreground: hsl(220 23% 95%); /* base */
 
-  --secondary: hsl(240 5% 96%);
-  --secondary-foreground: hsl(240 6% 10%);
+  /* Latte surface0: ccd0da */
+  --secondary: hsl(223 16% 83%);         /* surface0 */
+  --secondary-foreground: hsl(234 16% 35%); /* text */
 
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
+  --muted: hsl(223 16% 83%);            /* surface0 */
+  --muted-foreground: hsl(233 13% 41%);  /* subtext1 */
 
-  --accent: hsl(240 5% 96%);
-  --accent-foreground: hsl(240 6% 10%);
-  --accent-hover: hsl(200 10% 90%);
+  --accent: hsl(223 16% 83%);           /* surface0 */
+  --accent-foreground: hsl(234 16% 35%); /* text */
+  --accent-hover: hsl(225 14% 77%);     /* surface1 */
 
-  --destructive: hsl(359 100% 65%);
-  --destructive-foreground: hsl(0 0% 98%);
+  /* Latte Red: #d20f39 */
+  --destructive: hsl(347 87% 44%);       /* red */
+  --destructive-foreground: hsl(220 23% 95%); /* base */
 
-  --success: hsl(144 57% 58%);
-  --success-foreground: hsl(0 0% 98%);
-  --warning: hsl(42 84% 61%);
-  --warning-foreground: hsl(0 0% 9%);
+  /* Latte Green: #40a02b / Peach: #fe640b */
+  --success: hsl(109 58% 40%);           /* green */
+  --success-foreground: hsl(220 23% 95%); /* base */
+  --warning: hsl(22 99% 52%);            /* peach */
+  --warning-foreground: hsl(234 16% 35%); /* text (dark on bright peach) */
 
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --input-background: hsl(0 0% 100%);
-  --input-placeholder: hsl(217 10.6% 65%);
-  --ring: hsl(212 100% 45%);
+  /* Latte surface1: bcc0cc / surface2: acb0be */
+  --border: hsl(225 14% 77%);            /* surface1 */
+  --input: hsl(225 14% 77%);             /* surface1 */
+  --input-background: hsl(220 23% 95%);  /* base */
+  --input-placeholder: hsl(233 10% 47%); /* subtext0 */
+  --ring: hsl(220 91% 54%);             /* blue */
 
-  --chart-1: hsl(212 100% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
+  /* Latte chart colors */
+  --chart-1: hsl(220 91% 54%);          /* blue */
+  --chart-2: hsl(109 58% 40%);          /* green */
+  --chart-3: hsl(22 99% 52%);           /* peach */
+  --chart-4: hsl(266 85% 58%);          /* mauve */
+  --chart-5: hsl(347 87% 44%);          /* red */
 
-  --sidebar: hsl(0 0% 100%);
-  --sidebar-deep: hsl(0 0% 100%);
-  --sidebar-foreground: hsl(210 6% 21%);
-  --sidebar-primary: hsl(212 100% 45%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(212 100% 45% / 15%);
-  --sidebar-accent-foreground: hsl(212 100% 45%);
-  --sidebar-border: hsl(240 5.9% 90%);
-  --sidebar-ring: hsl(212 100% 45%);
+  /* Latte sidebar: mantle=e6e9ef */
+  --sidebar: hsl(218 25% 94%);           /* mantle */
+  --sidebar-deep: hsl(220 21% 89%);      /* crust */
+  --sidebar-foreground: hsl(234 16% 35%); /* text */
+  --sidebar-primary: hsl(220 91% 54%);   /* blue */
+  --sidebar-primary-foreground: hsl(220 23% 95%); /* base */
+  --sidebar-accent: hsl(220 23% 95%);    /* base (active item bg) */
+  --sidebar-accent-foreground: hsl(234 16% 35%); /* text */
+  --sidebar-border: hsl(225 14% 77%);    /* surface1 */
+  --sidebar-ring: hsl(220 91% 54%);      /* blue */
 
-  --header: hsl(0 0% 100%);
+  --header: hsl(218 25% 94%);            /* mantle */
 
   color-scheme: light;
 }
 
+/* ---------------------------------------------------------------------------
+ * Theme tokens — Catppuccin Mocha (dark mode)
+ */
 .dark {
-  --background: hsl(222 10% 12.3%);
-  --background-deep: hsl(220 13% 9%);
-  --foreground: hsl(0 0% 95%);
+  /* Mocha: base=1e1e2e, mantle=181825, crust=11111b */
+  --background: hsl(240 21% 15%);        /* base */
+  --background-deep: hsl(240 21% 12%);   /* mantle */
+  --foreground: hsl(226 64% 88%);        /* text */
 
-  --card: hsl(222 10% 12.3%);
-  --card-foreground: hsl(210 40% 98%);
+  --card: hsl(240 21% 15%);             /* base */
+  --card-foreground: hsl(226 64% 88%);   /* text */
 
-  --popover: hsl(223 8.4% 12.3%);
-  --popover-foreground: hsl(210 40% 98%);
+  --popover: hsl(240 21% 15%);          /* base */
+  --popover-foreground: hsl(226 64% 88%); /* text */
 
-  --primary: hsl(212 100% 48%);
-  --primary-foreground: hsl(0 0% 98%);
+  /* Mocha Blue accent: #89b4fa */
+  --primary: hsl(217 92% 76%);           /* blue */
+  --primary-foreground: hsl(240 21% 15%); /* base */
 
-  --secondary: hsl(240 5% 17%);
-  --secondary-foreground: hsl(0 0% 98%);
+  /* Mocha surface0: 313244 */
+  --secondary: hsl(237 16% 23%);         /* surface0 */
+  --secondary-foreground: hsl(226 64% 88%); /* text */
 
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
+  --muted: hsl(237 16% 23%);            /* surface0 */
+  --muted-foreground: hsl(227 35% 80%);  /* subtext1 */
 
-  --accent: hsl(216 5% 19%);
-  --accent-foreground: hsl(0 0% 98%);
-  --accent-hover: hsl(216 5% 24%);
+  --accent: hsl(237 16% 23%);           /* surface0 */
+  --accent-foreground: hsl(226 64% 88%); /* text */
+  --accent-hover: hsl(233 12% 39%);     /* surface2 */
 
-  --destructive: hsl(359 100% 65%);
-  --destructive-foreground: hsl(0 0% 98%);
+  /* Mocha Red: #f38ba8 */
+  --destructive: hsl(343 81% 75%);       /* red */
+  --destructive-foreground: hsl(240 23% 9%); /* crust */
 
-  --success: hsl(144 57% 58%);
-  --success-foreground: hsl(0 0% 98%);
-  --warning: hsl(42 84% 61%);
-  --warning-foreground: hsl(0 0% 9%);
+  /* Mocha Green: #a6e3a1 / Peach: #fab387 */
+  --success: hsl(115 54% 76%);           /* green */
+  --success-foreground: hsl(240 23% 9%); /* crust */
+  --warning: hsl(23 92% 75%);            /* peach */
+  --warning-foreground: hsl(240 23% 9%); /* crust */
 
-  --border: hsl(240 3.7% 22%);
-  --input: hsl(0 0% 100% / 10%);
-  --input-background: hsl(0 0% 100% / 5%);
-  --input-placeholder: hsl(218 11% 65%);
-  --ring: hsl(212 100% 48%);
+  /* Mocha surface1: 45475a */
+  --border: hsl(234 13% 31%);            /* surface1 */
+  --input: hsl(234 13% 31%);             /* surface1 */
+  --input-background: hsl(237 16% 23%);  /* surface0 */
+  --input-placeholder: hsl(231 11% 47%); /* overlay0 */
+  --ring: hsl(217 92% 76%);             /* blue */
 
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
+  /* Mocha chart colors */
+  --chart-1: hsl(217 92% 76%);          /* blue */
+  --chart-2: hsl(115 54% 76%);          /* green */
+  --chart-3: hsl(23 92% 75%);           /* peach */
+  --chart-4: hsl(267 84% 81%);          /* mauve */
+  --chart-5: hsl(343 81% 75%);          /* red */
 
-  --sidebar: hsl(222 10% 12.3%);
-  --sidebar-deep: hsl(220 13% 9%);
-  --sidebar-foreground: hsl(0 0% 95%);
-  --sidebar-primary: hsl(212 100% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(216 5% 19%);
-  --sidebar-accent-foreground: hsl(0 0% 98%);
-  --sidebar-border: hsl(240 3.7% 22%);
-  --sidebar-ring: hsl(212 100% 48%);
+  /* Mocha sidebar: mantle=181825 */
+  --sidebar: hsl(240 21% 12%);           /* mantle */
+  --sidebar-deep: hsl(240 23% 9%);       /* crust */
+  --sidebar-foreground: hsl(226 64% 88%); /* text */
+  --sidebar-primary: hsl(217 92% 76%);   /* blue */
+  --sidebar-primary-foreground: hsl(240 21% 15%); /* base */
+  --sidebar-accent: hsl(240 21% 15%);    /* base (active item bg) */
+  --sidebar-accent-foreground: hsl(226 64% 88%); /* text */
+  --sidebar-border: hsl(234 13% 31%);    /* surface1 */
+  --sidebar-ring: hsl(234 13% 31%);      /* surface1 */
 
-  --header: hsl(222 10% 12.3%);
+  --header: hsl(240 21% 12%);            /* mantle */
 
   color-scheme: dark;
 }
@@ -163,6 +184,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-input-placeholder: var(--input-placeholder);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

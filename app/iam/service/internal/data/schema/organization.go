@@ -24,6 +24,13 @@ func (Organization) Fields() []ent.Field {
 		field.String("name").MaxLen(128),
 		field.String("slug").MaxLen(128),
 		field.String("display_name").MaxLen(255).Optional().Nillable(),
+		// Tree structure
+		field.UUID("parent_id", uuid.UUID{}).Optional().Nillable(),
+		// Organization type: COMPANY > DEPARTMENT > TEAM
+		field.Enum("type").Values("COMPANY", "DEPARTMENT", "TEAM").Default("COMPANY"),
+		field.Int("sort").Default(0),
+		// Optional leader (a user within the org)
+		field.UUID("leader_user_id", uuid.UUID{}).Optional().Nillable(),
 		field.Time("created_at").Default(time.Now).Immutable(),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}
@@ -43,6 +50,12 @@ func (Organization) Edges() []ent.Edge {
 			Unique().
 			Required(),
 		edge.To("members", OrganizationMember.Type),
+		edge.To("positions", Position.Type),
+		// Self-referential tree: one parent, many children
+		edge.To("children", Organization.Type).
+			From("parent").
+			Field("parent_id").
+			Unique(),
 	}
 }
 

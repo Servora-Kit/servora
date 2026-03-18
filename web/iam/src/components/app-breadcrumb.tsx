@@ -26,14 +26,13 @@ const ROUTE_LABELS: Record<string, string> = {
   members: '成员管理',
   profile: '个人信息',
   security: '安全',
+  roles: '角色管理',
+  permissions: '权限码管理',
+  menus: '菜单管理',
+  platform: '平台管理',
 }
 
-interface DynamicSegment {
-  placeholder: string
-  paramName: string
-  paramValue: string
-}
-
+/** Map paramName → { queryKey, queryFn } for entity name resolution */
 function getEntityQueryConfig(paramName: string, paramValue: string) {
   switch (paramName) {
     case 'orgId':
@@ -85,30 +84,44 @@ function extractEntityName(paramName: string, data: unknown): string | undefined
   }
 }
 
-// Parse the leaf routeId into logical path segments, stripping layout prefixes (_app, _platform, etc.)
-function parseLogicalParts(routeId: string): string[] {
-  return routeId
-    .split('/')
-    .filter(Boolean)
-    .filter((p) => !p.startsWith('_'))
+/** Determine if a URL segment looks like a UUID or other dynamic ID */
+function looksLikeDynamicId(segment: string): boolean {
+  // UUID v4 pattern
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
 }
 
 export function AppBreadcrumb() {
   const matches = useMatches()
 
   const leafMatch = matches.length > 0 ? matches[matches.length - 1] : null
+
+  // Use actual resolved pathname (e.g., /organizations/some-uuid/members)
+  // instead of routeId which may use {param} or $param syntax depending on TanStack Router version.
+  const pathname = leafMatch?.pathname ?? ''
   const params = (leafMatch?.params ?? {}) as Record<string, string>
-  const logicalParts = leafMatch ? parseLogicalParts(leafMatch.routeId) : []
 
-  const dynamicSegments: DynamicSegment[] = logicalParts
-    .filter((p) => p.startsWith('$'))
-    .map((p) => ({
-      placeholder: p,
-      paramName: p.slice(1),
-      paramValue: params[p.slice(1)] ?? '',
-    }))
+  // Build a reverse map: paramValue → paramName
+  // e.g., { 'some-uuid': 'orgId' }
+  const valueToParamName = new Map(
+    Object.entries(params)
+      .filter(([, v]) => v && looksLikeDynamicId(v))
+      .map(([k, v]) => [v, k]),
+  )
 
-  // Fetch entity display names via React Query — deduped with queries already made by the page.
+  // Split pathname into logical path segments (strip leading slash)
+  const pathParts = pathname.split('/').filter(Boolean)
+
+  // Collect unique dynamic segments for entity queries
+  const dynamicSegmentsMap = new Map<string, { paramName: string; paramValue: string }>()
+  pathParts.forEach((segment) => {
+    const paramName = valueToParamName.get(segment)
+    if (paramName && !dynamicSegmentsMap.has(paramName)) {
+      dynamicSegmentsMap.set(paramName, { paramName, paramValue: segment })
+    }
+  })
+  const dynamicSegments = [...dynamicSegmentsMap.values()]
+
+  // Fetch entity display names — deduped with queries already made by the page
   const entityQueries = useQueries({
     queries: dynamicSegments.map(({ paramName, paramValue }) => {
       const config = getEntityQueryConfig(paramName, paramValue)
@@ -123,25 +136,25 @@ export function AppBreadcrumb() {
     }),
   })
 
-  // Map each dynamic placeholder to its resolved display name.
-  const entityNameMap = new Map<string, string>()
-  dynamicSegments.forEach(({ placeholder, paramName, paramValue }, idx) => {
+  // Map: paramValue → resolved display name
+  const entityNameByValue = new Map<string, string>()
+  dynamicSegments.forEach(({ paramName, paramValue }, idx) => {
     const name = extractEntityName(paramName, entityQueries[idx]?.data)
-    // Fallback to first 8 chars of the raw ID while loading.
-    entityNameMap.set(placeholder, name ?? paramValue.slice(0, 8))
+    if (name) {
+      entityNameByValue.set(paramValue, name)
+    }
   })
 
-  // Build breadcrumb segments, accumulating the href as we go.
+  // Build breadcrumb segments from the actual URL parts
   const segments: BreadcrumbSegment[] = []
   let accumulatedPath = ''
 
-  for (const part of logicalParts) {
-    const isDynamic = part.startsWith('$')
-    const actualValue = isDynamic ? (params[part.slice(1)] ?? part) : part
-    accumulatedPath += '/' + actualValue
+  for (const part of pathParts) {
+    accumulatedPath += '/' + part
 
+    const isDynamic = valueToParamName.has(part)
     const label = isDynamic
-      ? (entityNameMap.get(part) ?? actualValue.slice(0, 8))
+      ? (entityNameByValue.get(part) ?? part.slice(0, 8)) // fallback to truncated ID while loading
       : (ROUTE_LABELS[part] ?? part)
 
     segments.push({ label, href: accumulatedPath })

@@ -55,7 +55,7 @@ function SecurityPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
-            {success && <div className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">密码修改成功</div>}
+            {success && <div className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">密码修改成功</div>}
             <div className="space-y-2">
               <Label>当前密码</Label>
               <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />

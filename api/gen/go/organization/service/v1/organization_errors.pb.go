@@ -94,3 +94,15 @@ func IsOrganizationDeleteFailed(err error) bool {
 func ErrorOrganizationDeleteFailed(format string, args ...interface{}) *errors.Error {
 	return errors.New(500, ErrorReason_ORGANIZATION_DELETE_FAILED.String(), fmt.Sprintf(format, args...))
 }
+
+func IsOrganizationHasChildren(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_ORGANIZATION_HAS_CHILDREN.String() && e.Code == 409
+}
+
+func ErrorOrganizationHasChildren(format string, args ...interface{}) *errors.Error {
+	return errors.New(409, ErrorReason_ORGANIZATION_HAS_CHILDREN.String(), fmt.Sprintf(format, args...))
+}

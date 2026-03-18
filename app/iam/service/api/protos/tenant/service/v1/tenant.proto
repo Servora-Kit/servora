@@ -29,12 +29,6 @@ service TenantService {
   rpc ListTenants(ListTenantsRequest) returns (ListTenantsResponse);
   rpc UpdateTenant(UpdateTenantRequest) returns (UpdateTenantResponse);
   rpc DeleteTenant(DeleteTenantRequest) returns (DeleteTenantResponse);
-  rpc InviteMember(InviteTenantMemberRequest) returns (InviteTenantMemberResponse);
-  rpc AcceptInvitation(AcceptTenantInvitationRequest) returns (AcceptTenantInvitationResponse);
-  rpc RejectInvitation(RejectTenantInvitationRequest) returns (RejectTenantInvitationResponse);
-  rpc ListMembers(ListTenantMembersRequest) returns (ListTenantMembersResponse);
-  rpc UpdateMemberRole(UpdateTenantMemberRoleRequest) returns (UpdateTenantMemberRoleResponse);
-  rpc RemoveMember(RemoveTenantMemberRequest) returns (RemoveTenantMemberResponse);
   rpc TransferOwnership(TransferTenantOwnershipRequest) returns (TransferTenantOwnershipResponse);
 }
 
@@ -48,18 +42,7 @@ message TenantInfo {
   google.protobuf.Timestamp created_at = 7;
   google.protobuf.Timestamp updated_at = 8;
   string display_name = 9;
-}
-
-message TenantMemberInfo {
-  string id = 1;
-  string tenant_id = 2;
-  string user_id = 3;
-  string user_name = 4;
-  string user_email = 5;
-  string role = 6;
-  string status = 7;
-  google.protobuf.Timestamp joined_at = 8;
-  google.protobuf.Timestamp created_at = 9;
+  string owner_user_id = 10;
 }
 
 message CreateTenantRequest {
@@ -111,61 +94,6 @@ message DeleteTenantRequest {
 }
 
 message DeleteTenantResponse {
-  bool success = 1;
-}
-
-message InviteTenantMemberRequest {
-  string tenant_id = 1 [(buf.validate.field).string.uuid = true];
-  string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string role = 3 [(buf.validate.field).string = {in: ["admin", "member"]}];
-}
-
-message InviteTenantMemberResponse {
-  TenantMemberInfo member = 1;
-}
-
-message AcceptTenantInvitationRequest {
-  string tenant_id = 1 [(buf.validate.field).string.uuid = true];
-}
-
-message AcceptTenantInvitationResponse {
-  bool success = 1;
-}
-
-message RejectTenantInvitationRequest {
-  string tenant_id = 1 [(buf.validate.field).string.uuid = true];
-}
-
-message RejectTenantInvitationResponse {
-  bool success = 1;
-}
-
-message ListTenantMembersRequest {
-  string tenant_id = 1 [(buf.validate.field).string.uuid = true];
-  pagination.v1.PaginationRequest pagination = 2;
-}
-
-message ListTenantMembersResponse {
-  repeated TenantMemberInfo members = 1;
-  pagination.v1.PaginationResponse pagination = 2;
-}
-
-message UpdateTenantMemberRoleRequest {
-  string tenant_id = 1 [(buf.validate.field).string.uuid = true];
-  string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string role = 3 [(buf.validate.field).string = {in: ["admin", "member"]}];
-}
-
-message UpdateTenantMemberRoleResponse {
-  TenantMemberInfo member = 1;
-}
-
-message RemoveTenantMemberRequest {
-  string tenant_id = 1 [(buf.validate.field).string.uuid = true];
-  string user_id = 2 [(buf.validate.field).string.uuid = true];
-}
-
-message RemoveTenantMemberResponse {
   bool success = 1;
 }
 

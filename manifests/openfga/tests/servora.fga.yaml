@@ -16,21 +16,9 @@ tuples:
     relation: owner
     object: tenant:root
 
-  - user: user:tenant-admin
-    relation: admin
-    object: tenant:root
-
-  - user: user:tenant-member
-    relation: member
-    object: tenant:root
-
   # Organization setup
   - user: tenant:root
     relation: tenant
-    object: organization:acme
-
-  - user: user:org-owner
-    relation: owner
     object: organization:acme
 
   - user: user:org-admin
@@ -39,10 +27,6 @@ tuples:
 
   - user: user:org-member
     relation: member
-    object: organization:acme
-
-  - user: user:org-viewer
-    relation: viewer
     object: organization:acme
 
 tests:
@@ -57,9 +41,9 @@ tests:
           can_view_all_tenants: true
           can_manage_all_tenants: true
 
-  - name: tenant admin has no platform admin permission
+  - name: tenant owner has no platform admin permission
     check:
-      - user: user:tenant-admin
+      - user: user:tenant-owner
         object: platform:default
         assertions:
           admin: false
@@ -68,154 +52,92 @@ tests:
 
   # --- Tenant tests ---
 
-  - name: tenant owner inherits admin and member
+  - name: tenant owner can view manage and transfer
     check:
       - user: user:tenant-owner
         object: tenant:root
         assertions:
           owner: true
-          admin: true
-          member: true
+          effective_admin: true
           can_view: true
           can_manage: true
-          can_manage_members: true
           can_transfer_ownership: true
 
-  - name: tenant admin has member and can_manage access but cannot transfer ownership
-    check:
-      - user: user:tenant-admin
-        object: tenant:root
-        assertions:
-          owner: false
-          admin: true
-          member: true
-          can_view: true
-          can_manage: true
-          can_manage_members: true
-          can_transfer_ownership: false
-
-  - name: tenant member can view but not manage
-    check:
-      - user: user:tenant-member
-        object: tenant:root
-        assertions:
-          owner: false
-          admin: false
-          member: true
-          can_view: true
-          can_manage: false
-          can_manage_members: false
-          can_transfer_ownership: false
-
-  - name: platform admin inherits tenant admin via inheritance chain
+  - name: platform admin inherits tenant effective_admin via inheritance chain
     check:
       - user: user:platform-admin
         object: tenant:root
         assertions:
           owner: false
-          admin: true
-          member: true
+          effective_admin: true
           can_view: true
           can_manage: true
-          can_manage_members: true
           can_transfer_ownership: true
+
+  - name: org member has no direct tenant permissions
+    check:
+      - user: user:org-member
+        object: tenant:root
+        assertions:
+          owner: false
+          effective_admin: false
+          can_view: false
+          can_manage: false
+          can_transfer_ownership: false
 
   # --- Organization tests ---
 
-  - name: organization owner inherits admin and member and can transfer ownership
-    check:
-      - user: user:org-owner
-        object: organization:acme
-        assertions:
-          owner: true
-          admin: true
-          member: true
-          viewer: true
-          can_view: true
-          can_manage: true
-          can_manage_members: true
-          can_transfer_ownership: true
-
-  - name: organization admin inherits member but not owner and cannot transfer ownership
+  - name: org admin can manage org and members
     check:
       - user: user:org-admin
         object: organization:acme
         assertions:
-          owner: false
           admin: true
           member: true
-          viewer: true
           can_view: true
           can_manage: true
           can_manage_members: true
-          can_transfer_ownership: false
 
-  - name: organization member can view but not manage
+  - name: org member can view but not manage
     check:
       - user: user:org-member
         object: organization:acme
         assertions:
-          owner: false
           admin: false
           member: true
-          viewer: true
           can_view: true
           can_manage: false
           can_manage_members: false
-          can_transfer_ownership: false
 
-  - name: organization viewer can only view
+  - name: tenant owner inherits org admin via effective_admin
     check:
-      - user: user:org-viewer
+      - user: user:tenant-owner
         object: organization:acme
         assertions:
-          owner: false
-          admin: false
-          member: false
-          viewer: true
-          can_view: true
-          can_manage: false
-          can_manage_members: false
-          can_transfer_ownership: false
-
-  - name: tenant admin inherits organization admin via tenant relation
-    check:
-      - user: user:tenant-admin
-        object: organization:acme
-        assertions:
-          owner: false
           admin: true
           member: true
-          viewer: true
           can_view: true
           can_manage: true
           can_manage_members: true
-          can_transfer_ownership: true
 
-  - name: tenant member inherits organization member via tenant relation
-    check:
-      - user: user:tenant-member
-        object: organization:acme
-        assertions:
-          owner: false
-          admin: false
-          member: true
-          viewer: true
-          can_view: true
-          can_manage: false
-          can_manage_members: false
-          can_transfer_ownership: false
-
-  - name: platform admin inherits organization admin via full inheritance chain
+  - name: platform admin inherits org admin via full inheritance chain
     check:
       - user: user:platform-admin
         object: organization:acme
         assertions:
-          owner: false
           admin: true
           member: true
-          viewer: true
           can_view: true
           can_manage: true
           can_manage_members: true
-          can_transfer_ownership: true
+
+  - name: unrelated user has no org permissions
+    check:
+      - user: user:tenant-owner
+        object: organization:other
+        assertions:
+          admin: false
+          member: false
+          can_view: false
+          can_manage: false
+          can_manage_members: false
