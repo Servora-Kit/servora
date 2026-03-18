@@ -11,6 +11,9 @@ import (
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/biz/entity"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/application"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organization"
+	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/organizationmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenant"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/tenantmember"
 	"github.com/Servora-Kit/servora/app/iam/service/internal/data/ent/user"
@@ -165,7 +168,49 @@ func (r *tenantRepo) Purge(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("invalid tenant ID: %w", err)
 	}
-	return r.data.Ent(ctx).Tenant.DeleteOneID(uid).Exec(ctx)
+	return r.data.RunInEntTx(ctx, func(txCtx context.Context) error {
+		c := r.data.Ent(txCtx)
+
+		// 1. 找出租户下所有组织 ID
+		orgIDs, err := c.Organization.Query().
+			Where(organization.TenantIDEQ(uid)).
+			IDs(txCtx)
+		if err != nil {
+			return fmt.Errorf("query tenant organizations: %w", err)
+		}
+
+		// 2. 删除这些组织的所有成员
+		if len(orgIDs) > 0 {
+			if _, err := c.OrganizationMember.Delete().
+				Where(organizationmember.OrganizationIDIn(orgIDs...)).
+				Exec(txCtx); err != nil {
+				return err
+			}
+			// 3. 删除这些组织（含软删除记录）
+			if _, err := c.Organization.Delete().
+				Where(organization.IDIn(orgIDs...)).
+				Exec(txCtx); err != nil {
+				return err
+			}
+		}
+
+		// 4. 删除租户成员
+		if _, err := c.TenantMember.Delete().
+			Where(tenantmember.TenantIDEQ(uid)).
+			Exec(txCtx); err != nil {
+			return err
+		}
+
+		// 5. 删除租户下应用（含软删除记录）
+		if _, err := c.Application.Delete().
+			Where(application.TenantIDEQ(uid)).
+			Exec(txCtx); err != nil {
+			return err
+		}
+
+		// 6. 删除租户本身
+		return c.Tenant.DeleteOneID(uid).Exec(txCtx)
+	})
 }
 
 func (r *tenantRepo) AddMember(ctx context.Context, m *entity.TenantMember) (*entity.TenantMember, error) {

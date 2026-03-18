@@ -181,11 +181,14 @@ func (r *organizationRepo) Delete(ctx context.Context, id string) error {
 }
 
 func (r *organizationRepo) Purge(ctx context.Context, id string) error {
-	uid, err := uuid.Parse(id)
+	oid, err := uuid.Parse(id)
 	if err != nil {
 		return fmt.Errorf("invalid organization ID: %w", err)
 	}
-	return r.data.Ent(ctx).Organization.DeleteOneID(uid).Exec(ctx)
+	// 与 PurgeCascade 保持一致：先删成员再删组织，避免 FK 约束报错
+	return r.data.RunInEntTx(ctx, func(txCtx context.Context) error {
+		return purgeOrganizationInTx(txCtx, r.data.Ent(txCtx), oid)
+	})
 }
 
 func (r *organizationRepo) PurgeCascade(ctx context.Context, id string) error {
@@ -435,6 +438,59 @@ func (r *organizationRepo) DeleteMembershipsByUserID(ctx context.Context, userID
 	}
 	return r.data.Ent(ctx).OrganizationMember.Delete().
 		Where(organizationmember.UserIDEQ(uid)).Exec(ctx)
+}
+
+// ListOrgMembershipsByUserIDs returns a map of userID -> []orgID for all users in userIDs
+// whose memberships are within orgs that belong to tenantID.
+func (r *organizationRepo) ListOrgMembershipsByUserIDs(ctx context.Context, tenantID string, userIDs []string) (map[string][]string, error) {
+	if len(userIDs) == 0 {
+		return map[string][]string{}, nil
+	}
+	tid, err := uuid.Parse(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tenant ID: %w", err)
+	}
+
+	userUUIDs := make([]uuid.UUID, 0, len(userIDs))
+	for _, id := range userIDs {
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			continue
+		}
+		userUUIDs = append(userUUIDs, uid)
+	}
+	if len(userUUIDs) == 0 {
+		return map[string][]string{}, nil
+	}
+
+	// Get all org IDs under this tenant first.
+	orgIDs, err := r.data.Ent(ctx).Organization.Query().
+		Where(organization.TenantIDEQ(tid), organization.DeletedAtIsNil()).
+		IDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list tenant orgs: %w", err)
+	}
+	if len(orgIDs) == 0 {
+		return map[string][]string{}, nil
+	}
+
+	members, err := r.data.Ent(ctx).OrganizationMember.Query().
+		Where(
+			organizationmember.UserIDIn(userUUIDs...),
+			organizationmember.OrganizationIDIn(orgIDs...),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list org memberships: %w", err)
+	}
+
+	result := make(map[string][]string)
+	for _, m := range members {
+		uid := m.UserID.String()
+		oid := m.OrganizationID.String()
+		result[uid] = append(result[uid], oid)
+	}
+	return result, nil
 }
 
 func (r *organizationRepo) enrichMember(ctx context.Context, m *ent.OrganizationMember) (*entity.OrganizationMember, error) {

@@ -126,6 +126,14 @@ func (r *userRepo) PurgeCascade(ctx context.Context, id string) error {
 			Exec(txCtx); err != nil {
 			return err
 		}
+
+		// 删除租户成员关系（FK 约束要求在删除 users 行前先删此表）
+		if _, err := c.TenantMember.Delete().
+			Where(tenantmember.UserIDEQ(uid)).
+			Exec(txCtx); err != nil {
+			return err
+		}
+
 		return c.User.DeleteOneID(uid).Exec(txCtx)
 	})
 }

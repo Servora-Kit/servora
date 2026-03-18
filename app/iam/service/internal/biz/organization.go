@@ -34,6 +34,9 @@ type OrganizationRepo interface {
 	DeleteAllMembers(ctx context.Context, orgID string) (int, error)
 	ListMembershipsByUserID(ctx context.Context, userID string) ([]*entity.OrganizationMember, error)
 	DeleteMembershipsByUserID(ctx context.Context, userID string) (int, error)
+	// ListOrgMembershipsByUserIDs returns a map of userID -> []orgID for the given users
+	// scoped to the organizations belonging to tenantID.
+	ListOrgMembershipsByUserIDs(ctx context.Context, tenantID string, userIDs []string) (map[string][]string, error)
 }
 
 type OrganizationUsecase struct {

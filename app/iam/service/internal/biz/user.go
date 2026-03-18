@@ -188,20 +188,36 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, tenantID, organizationID 
 }
 
 func (uc *UserUsecase) ListUsers(ctx context.Context, tenantID string, page, pageSize int32) ([]*entity.User, int64, error) {
-	if tenantID != "" {
-		users, total, err := uc.repo.ListByTenantID(ctx, tenantID, page, pageSize)
-		if err != nil {
-			uc.log.Errorf("list users by tenant failed: %v", err)
-			return nil, 0, errors.InternalServer("INTERNAL", "internal error")
-		}
-		return users, total, nil
-	}
+	var users []*entity.User
+	var total int64
+	var err error
 
-	users, total, err := uc.repo.ListUsers(ctx, page, pageSize)
+	if tenantID != "" {
+		users, total, err = uc.repo.ListByTenantID(ctx, tenantID, page, pageSize)
+	} else {
+		users, total, err = uc.repo.ListUsers(ctx, page, pageSize)
+	}
 	if err != nil {
 		uc.log.Errorf("list users failed: %v", err)
 		return nil, 0, errors.InternalServer("INTERNAL", "internal error")
 	}
+
+	// Enrich users with their org memberships within the current tenant scope.
+	if tenantID != "" && len(users) > 0 {
+		userIDs := make([]string, len(users))
+		for i, u := range users {
+			userIDs[i] = u.ID
+		}
+		orgMap, enrichErr := uc.orgRepo.ListOrgMembershipsByUserIDs(ctx, tenantID, userIDs)
+		if enrichErr != nil {
+			uc.log.Warnf("enrich user org memberships failed: %v", enrichErr)
+		} else {
+			for _, u := range users {
+				u.OrganizationIDs = orgMap[u.ID]
+			}
+		}
+	}
+
 	return users, total, nil
 }
 

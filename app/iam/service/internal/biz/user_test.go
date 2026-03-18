@@ -129,6 +129,9 @@ func (r *fakeOrgRepo) GetOwnerMember(context.Context, string) (*entity.Organizat
 func (r *fakeOrgRepo) DeleteMembershipsByUserID(context.Context, string) (int, error) {
 	return 0, nil
 }
+func (r *fakeOrgRepo) ListOrgMembershipsByUserIDs(context.Context, string, []string) (map[string][]string, error) {
+	return map[string][]string{}, nil
+}
 
 type fakeAuthZRepo struct {
 	deleteTuplesCalls [][]Tuple
