@@ -2,10 +2,13 @@ package biz
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/Servora-Kit/servora/api/gen/go/conf/v1"
 )
@@ -30,14 +33,29 @@ type ResetPasswordData struct {
 var (
 	defaultVerifyEmailSubject   = "Verify your email"
 	defaultResetPasswordSubject = "Reset your password"
-	defaultVerifyEmailHTML      = `<p>Click <a href="{{.Link}}">here</a> to verify your email. This link expires in {{.ExpiryHours}} hours.</p>`
-	defaultResetPasswordHTML    = `<p>Click <a href="{{.Link}}">here</a> to reset your password. This link expires in {{.ExpiryHours}} hour(s).</p>`
+
+	//go:embed mail_templates/verify_email.html
+	embeddedVerifyEmailHTML []byte
+
+	//go:embed mail_templates/reset_password.html
+	embeddedResetPasswordHTML []byte
 )
 
-// RenderVerifyEmail 渲染邮箱验证邮件主题与正文。若 conf 中配置了 template_dir 且存在 verify_email.html 则使用该文件，否则使用内嵌默认。
-func RenderVerifyEmail(cfg *conf.Mail, link string) (subject string, html []byte, err error) {
+// ttlHours 将 duration 转换为整数小时字符串，最小显示 1
+func ttlHours(d time.Duration) string {
+	h := int(d.Hours())
+	if h < 1 {
+		h = 1
+	}
+	return strconv.Itoa(h)
+}
+
+// RenderVerifyEmail 渲染邮箱验证邮件主题与正文。
+// ttl 用于在模板中显示有效期（小时数）。
+// 若 conf 中配置了 template_dir 且存在 verify_email.html 则优先使用，否则使用内嵌模板。
+func RenderVerifyEmail(cfg *conf.Mail, link string, ttl time.Duration) (subject string, html []byte, err error) {
 	subject = defaultVerifyEmailSubject
-	data := VerifyEmailData{Link: link, ExpiryHours: "24"}
+	data := VerifyEmailData{Link: link, ExpiryHours: ttlHours(ttl)}
 
 	if cfg != nil && cfg.GetTemplateDir() != "" {
 		path := filepath.Join(cfg.GetTemplateDir(), verifyEmailTmplName)
@@ -46,21 +64,16 @@ func RenderVerifyEmail(cfg *conf.Mail, link string) (subject string, html []byte
 		}
 	}
 
-	t, err := template.New("").Parse(defaultVerifyEmailHTML)
-	if err != nil {
-		return "", nil, err
-	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, data); err != nil {
-		return "", nil, err
-	}
-	return subject, buf.Bytes(), nil
+	b, err := renderEmbedded(embeddedVerifyEmailHTML, data)
+	return subject, b, err
 }
 
-// RenderResetPassword 渲染密码重置邮件主题与正文。若 conf 中配置了 template_dir 且存在 reset_password.html 则使用该文件，否则使用内嵌默认。
-func RenderResetPassword(cfg *conf.Mail, link string) (subject string, html []byte, err error) {
+// RenderResetPassword 渲染密码重置邮件主题与正文。
+// ttl 用于在模板中显示有效期（小时数）。
+// 若 conf 中配置了 template_dir 且存在 reset_password.html 则优先使用，否则使用内嵌模板。
+func RenderResetPassword(cfg *conf.Mail, link string, ttl time.Duration) (subject string, html []byte, err error) {
 	subject = defaultResetPasswordSubject
-	data := ResetPasswordData{Link: link, ExpiryHours: "1"}
+	data := ResetPasswordData{Link: link, ExpiryHours: ttlHours(ttl)}
 
 	if cfg != nil && cfg.GetTemplateDir() != "" {
 		path := filepath.Join(cfg.GetTemplateDir(), resetPasswordTmplName)
@@ -69,15 +82,21 @@ func RenderResetPassword(cfg *conf.Mail, link string) (subject string, html []by
 		}
 	}
 
-	t, err := template.New("").Parse(defaultResetPasswordHTML)
+	b, err := renderEmbedded(embeddedResetPasswordHTML, data)
+	return subject, b, err
+}
+
+// renderEmbedded 渲染内嵌模板，出错时直接 panic（模板语法在编译期即确定，运行时不应出错）
+func renderEmbedded(tmpl []byte, data any) ([]byte, error) {
+	t, err := template.New("").Parse(string(tmpl))
 	if err != nil {
-		return "", nil, err
+		return nil, fmt.Errorf("parse embedded template: %w", err)
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
-		return "", nil, err
+		return nil, fmt.Errorf("execute embedded template: %w", err)
 	}
-	return subject, buf.Bytes(), nil
+	return buf.Bytes(), nil
 }
 
 func renderTemplateFile(path string, data any) ([]byte, error) {

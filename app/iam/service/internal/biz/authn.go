@@ -132,11 +132,12 @@ func (uc *AuthnUsecase) sendVerificationEmail(ctx context.Context, user *entity.
 	if err != nil {
 		return err
 	}
-	if err := uc.tokenStore.SetToken(ctx, purposeVerifyEmail, tokenHash(raw), user.ID, verifyEmailTTL); err != nil {
+	ttl := uc.verifyEmailTTL()
+	if err := uc.tokenStore.SetToken(ctx, purposeVerifyEmail, tokenHash(raw), user.ID, ttl); err != nil {
 		return err
 	}
 	link := uc.buildTokenLink(mailPathVerifyEmail, raw)
-	subject, html, err := RenderVerifyEmail(uc.mailCfg, link)
+	subject, html, err := RenderVerifyEmail(uc.mailCfg, link, ttl)
 	if err != nil {
 		return err
 	}
@@ -337,12 +338,33 @@ func (uc *AuthnUsecase) LogoutAllDevices(ctx context.Context, userID string) err
 const (
 	purposeVerifyEmail   = "verify_email"
 	purposeResetPassword = "reset_password"
-	verifyEmailTTL       = 24 * time.Hour
-	resetPasswordTTL     = 1 * time.Hour
+
+	defaultVerifyEmailTTL    = 24 * time.Hour
+	defaultResetPasswordTTL  = 1 * time.Hour
 
 	mailPathVerifyEmail   = "/verify-email"
 	mailPathResetPassword = "/reset-password"
 )
+
+// verifyEmailTTL 返回邮箱验证链接有效期，优先读配置，未设置则使用默认值 24h。
+func (uc *AuthnUsecase) verifyEmailTTL() time.Duration {
+	if uc.mailCfg != nil && uc.mailCfg.GetVerifyEmailTtl() != nil {
+		if d := uc.mailCfg.GetVerifyEmailTtl().AsDuration(); d > 0 {
+			return d
+		}
+	}
+	return defaultVerifyEmailTTL
+}
+
+// resetPasswordTTL 返回密码重置链接有效期，优先读配置，未设置则使用默认值 1h。
+func (uc *AuthnUsecase) resetPasswordTTL() time.Duration {
+	if uc.mailCfg != nil && uc.mailCfg.GetResetPasswordTtl() != nil {
+		if d := uc.mailCfg.GetResetPasswordTtl().AsDuration(); d > 0 {
+			return d
+		}
+	}
+	return defaultResetPasswordTTL
+}
 
 func tokenHash(raw string) string {
 	h := sha256.Sum256([]byte(raw))
@@ -361,13 +383,14 @@ func (uc *AuthnUsecase) RequestEmailVerification(ctx context.Context, email stri
 		return kerrors.InternalServer("INTERNAL", "internal error")
 	}
 
-	if err := uc.tokenStore.SetToken(ctx, purposeVerifyEmail, tokenHash(raw), user.ID, verifyEmailTTL); err != nil {
+	ttl := uc.verifyEmailTTL()
+	if err := uc.tokenStore.SetToken(ctx, purposeVerifyEmail, tokenHash(raw), user.ID, ttl); err != nil {
 		uc.log.Errorf("save verify token failed: %v", err)
 		return kerrors.InternalServer("INTERNAL", "internal error")
 	}
 
 	link := uc.buildTokenLink(mailPathVerifyEmail, raw)
-	subject, html, err := RenderVerifyEmail(uc.mailCfg, link)
+	subject, html, err := RenderVerifyEmail(uc.mailCfg, link, ttl)
 	if err != nil {
 		uc.log.Errorf("render verify email template failed: %v", err)
 		return kerrors.InternalServer("INTERNAL", "internal error")
@@ -408,13 +431,14 @@ func (uc *AuthnUsecase) RequestPasswordReset(ctx context.Context, email string) 
 		return kerrors.InternalServer("INTERNAL", "internal error")
 	}
 
-	if err := uc.tokenStore.SetToken(ctx, purposeResetPassword, tokenHash(raw), user.ID, resetPasswordTTL); err != nil {
+	resetTTL := uc.resetPasswordTTL()
+	if err := uc.tokenStore.SetToken(ctx, purposeResetPassword, tokenHash(raw), user.ID, resetTTL); err != nil {
 		uc.log.Errorf("save reset token failed: %v", err)
 		return kerrors.InternalServer("INTERNAL", "internal error")
 	}
 
 	link := uc.buildTokenLink(mailPathResetPassword, raw)
-	subject, html, err := RenderResetPassword(uc.mailCfg, link)
+	subject, html, err := RenderResetPassword(uc.mailCfg, link, resetTTL)
 	if err != nil {
 		uc.log.Errorf("render reset password template failed: %v", err)
 		return kerrors.InternalServer("INTERNAL", "internal error")
