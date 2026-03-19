@@ -66,7 +66,7 @@ func (ErrorReason) EnumDescriptor() ([]byte, []int) {
 	return file_authz_service_v1_authz_proto_rawDescGZIP(), []int{0}
 }
 
-// AuthzMode 定义了 AuthZ 中间件如何解析目标对象。
+// AuthzMode 定义了 AuthZ 中间件的鉴权模式。
 type AuthzMode int32
 
 const (
@@ -74,10 +74,8 @@ const (
 	AuthzMode_AUTHZ_MODE_UNSPECIFIED AuthzMode = 0
 	// 完全跳过鉴权（公开接口）。
 	AuthzMode_AUTHZ_MODE_NONE AuthzMode = 1
-	// 从请求中解析 organization_id，并校验 organization:{id} 上的关系。
-	AuthzMode_AUTHZ_MODE_ORGANIZATION AuthzMode = 2
-	// 从请求中解析 object_type 和 object_id，并校验 {type}:{id} 上的关系。
-	AuthzMode_AUTHZ_MODE_OBJECT AuthzMode = 4
+	// 执行 OpenFGA check。object_type / relation / id_field 由 AuthzRule 指定。
+	AuthzMode_AUTHZ_MODE_CHECK AuthzMode = 2
 )
 
 // Enum value maps for AuthzMode.
@@ -85,14 +83,12 @@ var (
 	AuthzMode_name = map[int32]string{
 		0: "AUTHZ_MODE_UNSPECIFIED",
 		1: "AUTHZ_MODE_NONE",
-		2: "AUTHZ_MODE_ORGANIZATION",
-		4: "AUTHZ_MODE_OBJECT",
+		2: "AUTHZ_MODE_CHECK",
 	}
 	AuthzMode_value = map[string]int32{
-		"AUTHZ_MODE_UNSPECIFIED":  0,
-		"AUTHZ_MODE_NONE":         1,
-		"AUTHZ_MODE_ORGANIZATION": 2,
-		"AUTHZ_MODE_OBJECT":       4,
+		"AUTHZ_MODE_UNSPECIFIED": 0,
+		"AUTHZ_MODE_NONE":        1,
+		"AUTHZ_MODE_CHECK":       2,
 	}
 )
 
@@ -123,142 +119,17 @@ func (AuthzMode) EnumDescriptor() ([]byte, []int) {
 	return file_authz_service_v1_authz_proto_rawDescGZIP(), []int{1}
 }
 
-// ObjectType 枚举了 OpenFGA 模型中的资源类型。
-type ObjectType int32
-
-const (
-	// 未指定
-	ObjectType_OBJECT_TYPE_UNSPECIFIED ObjectType = 0
-	// 租户
-	ObjectType_OBJECT_TYPE_TENANT ObjectType = 1
-	// 组织
-	ObjectType_OBJECT_TYPE_ORGANIZATION ObjectType = 2
-)
-
-// Enum value maps for ObjectType.
-var (
-	ObjectType_name = map[int32]string{
-		0: "OBJECT_TYPE_UNSPECIFIED",
-		1: "OBJECT_TYPE_TENANT",
-		2: "OBJECT_TYPE_ORGANIZATION",
-	}
-	ObjectType_value = map[string]int32{
-		"OBJECT_TYPE_UNSPECIFIED":  0,
-		"OBJECT_TYPE_TENANT":       1,
-		"OBJECT_TYPE_ORGANIZATION": 2,
-	}
-)
-
-func (x ObjectType) Enum() *ObjectType {
-	p := new(ObjectType)
-	*p = x
-	return p
-}
-
-func (x ObjectType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ObjectType) Descriptor() protoreflect.EnumDescriptor {
-	return file_authz_service_v1_authz_proto_enumTypes[2].Descriptor()
-}
-
-func (ObjectType) Type() protoreflect.EnumType {
-	return &file_authz_service_v1_authz_proto_enumTypes[2]
-}
-
-func (x ObjectType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ObjectType.Descriptor instead.
-func (ObjectType) EnumDescriptor() ([]byte, []int) {
-	return file_authz_service_v1_authz_proto_rawDescGZIP(), []int{2}
-}
-
-// Relation 枚举了 OpenFGA 模型中所有可分配的角色和计算所得的权限。
-type Relation int32
-
-const (
-	Relation_RELATION_UNSPECIFIED Relation = 0
-	// --- 可分配角色 ---
-	Relation_RELATION_OWNER  Relation = 1 // 拥有者
-	Relation_RELATION_ADMIN  Relation = 2 // 管理员
-	Relation_RELATION_MEMBER Relation = 3 // 成员
-	Relation_RELATION_VIEWER Relation = 5 // 只读者
-	// --- 计算权限（由 OpenFGA 模型解析） ---
-	Relation_RELATION_CAN_VIEW           Relation = 10 // 可查看
-	Relation_RELATION_CAN_EDIT           Relation = 11 // 可编辑
-	Relation_RELATION_CAN_ADMIN          Relation = 12 // 可管理
-	Relation_RELATION_CAN_MANAGE         Relation = 13 // 可运营
-	Relation_RELATION_CAN_MANAGE_MEMBERS Relation = 14 // 可管理成员
-)
-
-// Enum value maps for Relation.
-var (
-	Relation_name = map[int32]string{
-		0:  "RELATION_UNSPECIFIED",
-		1:  "RELATION_OWNER",
-		2:  "RELATION_ADMIN",
-		3:  "RELATION_MEMBER",
-		5:  "RELATION_VIEWER",
-		10: "RELATION_CAN_VIEW",
-		11: "RELATION_CAN_EDIT",
-		12: "RELATION_CAN_ADMIN",
-		13: "RELATION_CAN_MANAGE",
-		14: "RELATION_CAN_MANAGE_MEMBERS",
-	}
-	Relation_value = map[string]int32{
-		"RELATION_UNSPECIFIED":        0,
-		"RELATION_OWNER":              1,
-		"RELATION_ADMIN":              2,
-		"RELATION_MEMBER":             3,
-		"RELATION_VIEWER":             5,
-		"RELATION_CAN_VIEW":           10,
-		"RELATION_CAN_EDIT":           11,
-		"RELATION_CAN_ADMIN":          12,
-		"RELATION_CAN_MANAGE":         13,
-		"RELATION_CAN_MANAGE_MEMBERS": 14,
-	}
-)
-
-func (x Relation) Enum() *Relation {
-	p := new(Relation)
-	*p = x
-	return p
-}
-
-func (x Relation) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Relation) Descriptor() protoreflect.EnumDescriptor {
-	return file_authz_service_v1_authz_proto_enumTypes[3].Descriptor()
-}
-
-func (Relation) Type() protoreflect.EnumType {
-	return &file_authz_service_v1_authz_proto_enumTypes[3]
-}
-
-func (x Relation) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Relation.Descriptor instead.
-func (Relation) EnumDescriptor() ([]byte, []int) {
-	return file_authz_service_v1_authz_proto_rawDescGZIP(), []int{3}
-}
-
 // AuthzRule 用于绑定到 RPC 方法，声明其授权需求。
+// object_type 和 relation 为自由字符串，与 OpenFGA model 中的类型/关系名称对应。
 type AuthzRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 目标对象的解析方式（组织/项目/自定义对象）。
+	// 鉴权模式。
 	Mode AuthzMode `protobuf:"varint,1,opt,name=mode,proto3,enum=authz.service.v1.AuthzMode" json:"mode,omitempty"`
-	// 需要在目标对象上拥有的关系（权限）。
-	Relation Relation `protobuf:"varint,2,opt,name=relation,proto3,enum=authz.service.v1.Relation" json:"relation,omitempty"`
-	// 对于 AUTHZ_MODE_OBJECT：需要校验的具体对象类型。
-	ObjectType ObjectType `protobuf:"varint,3,opt,name=object_type,json=objectType,proto3,enum=authz.service.v1.ObjectType" json:"object_type,omitempty"`
-	// 请求中携带资源 ID 的字段名（如 "id", "organization_id"）。
+	// OpenFGA 中需要校验的关系，如 "admin", "can_delete"。
+	Relation string `protobuf:"bytes,2,opt,name=relation,proto3" json:"relation,omitempty"`
+	// OpenFGA 中的资源类型，如 "platform", "video", "server"。
+	ObjectType string `protobuf:"bytes,3,opt,name=object_type,json=objectType,proto3" json:"object_type,omitempty"`
+	// 请求中携带资源 ID 的字段名，如 "id"。空时从 actor scope 推断。
 	IdField       string `protobuf:"bytes,4,opt,name=id_field,json=idField,proto3" json:"id_field,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -301,18 +172,18 @@ func (x *AuthzRule) GetMode() AuthzMode {
 	return AuthzMode_AUTHZ_MODE_UNSPECIFIED
 }
 
-func (x *AuthzRule) GetRelation() Relation {
+func (x *AuthzRule) GetRelation() string {
 	if x != nil {
 		return x.Relation
 	}
-	return Relation_RELATION_UNSPECIFIED
+	return ""
 }
 
-func (x *AuthzRule) GetObjectType() ObjectType {
+func (x *AuthzRule) GetObjectType() string {
 	if x != nil {
 		return x.ObjectType
 	}
-	return ObjectType_OBJECT_TYPE_UNSPECIFIED
+	return ""
 }
 
 func (x *AuthzRule) GetIdField() string {
@@ -457,11 +328,11 @@ var File_authz_service_v1_authz_proto protoreflect.FileDescriptor
 
 const file_authz_service_v1_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x1cauthz/service/v1/authz.proto\x12\x10authz.service.v1\x1a\x13errors/errors.proto\x1a google/protobuf/descriptor.proto\"\xce\x01\n" +
+	"\x1cauthz/service/v1/authz.proto\x12\x10authz.service.v1\x1a\x13errors/errors.proto\x1a google/protobuf/descriptor.proto\"\x94\x01\n" +
 	"\tAuthzRule\x12/\n" +
-	"\x04mode\x18\x01 \x01(\x0e2\x1b.authz.service.v1.AuthzModeR\x04mode\x126\n" +
-	"\brelation\x18\x02 \x01(\x0e2\x1a.authz.service.v1.RelationR\brelation\x12=\n" +
-	"\vobject_type\x18\x03 \x01(\x0e2\x1c.authz.service.v1.ObjectTypeR\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x1b.authz.service.v1.AuthzModeR\x04mode\x12\x1a\n" +
+	"\brelation\x18\x02 \x01(\tR\brelation\x12\x1f\n" +
+	"\vobject_type\x18\x03 \x01(\tR\n" +
 	"objectType\x12\x19\n" +
 	"\bid_field\x18\x04 \x01(\tR\aidField\"\x8b\x01\n" +
 	"\x16CheckPermissionRequest\x12\x17\n" +
@@ -473,29 +344,11 @@ const file_authz_service_v1_authz_proto_rawDesc = "" +
 	"\x17CheckPermissionResponse\x12\x18\n" +
 	"\aallowed\x18\x01 \x01(\bR\aallowed*0\n" +
 	"\vErrorReason\x12\x1b\n" +
-	"\x11PERMISSION_DENIED\x10\x00\x1a\x04\xa8E\x93\x03\x1a\x04\xa0E\xf4\x03*p\n" +
+	"\x11PERMISSION_DENIED\x10\x00\x1a\x04\xa8E\x93\x03\x1a\x04\xa0E\xf4\x03*R\n" +
 	"\tAuthzMode\x12\x1a\n" +
 	"\x16AUTHZ_MODE_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fAUTHZ_MODE_NONE\x10\x01\x12\x1b\n" +
-	"\x17AUTHZ_MODE_ORGANIZATION\x10\x02\x12\x15\n" +
-	"\x11AUTHZ_MODE_OBJECT\x10\x04*_\n" +
-	"\n" +
-	"ObjectType\x12\x1b\n" +
-	"\x17OBJECT_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
-	"\x12OBJECT_TYPE_TENANT\x10\x01\x12\x1c\n" +
-	"\x18OBJECT_TYPE_ORGANIZATION\x10\x02*\xf6\x01\n" +
-	"\bRelation\x12\x18\n" +
-	"\x14RELATION_UNSPECIFIED\x10\x00\x12\x12\n" +
-	"\x0eRELATION_OWNER\x10\x01\x12\x12\n" +
-	"\x0eRELATION_ADMIN\x10\x02\x12\x13\n" +
-	"\x0fRELATION_MEMBER\x10\x03\x12\x13\n" +
-	"\x0fRELATION_VIEWER\x10\x05\x12\x15\n" +
-	"\x11RELATION_CAN_VIEW\x10\n" +
-	"\x12\x15\n" +
-	"\x11RELATION_CAN_EDIT\x10\v\x12\x16\n" +
-	"\x12RELATION_CAN_ADMIN\x10\f\x12\x17\n" +
-	"\x13RELATION_CAN_MANAGE\x10\r\x12\x1f\n" +
-	"\x1bRELATION_CAN_MANAGE_MEMBERS\x10\x0e2v\n" +
+	"\x0fAUTHZ_MODE_NONE\x10\x01\x12\x14\n" +
+	"\x10AUTHZ_MODE_CHECK\x10\x022v\n" +
 	"\fAuthzService\x12f\n" +
 	"\x0fCheckPermission\x12(.authz.service.v1.CheckPermissionRequest\x1a).authz.service.v1.CheckPermissionResponse:Q\n" +
 	"\x04rule\x12\x1e.google.protobuf.MethodOptions\x18\xb4\x87\x03 \x01(\v2\x1b.authz.service.v1.AuthzRuleR\x04ruleB\xc8\x01\n" +
@@ -514,31 +367,27 @@ func file_authz_service_v1_authz_proto_rawDescGZIP() []byte {
 	return file_authz_service_v1_authz_proto_rawDescData
 }
 
-var file_authz_service_v1_authz_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_authz_service_v1_authz_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_authz_service_v1_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_authz_service_v1_authz_proto_goTypes = []any{
 	(ErrorReason)(0),                   // 0: authz.service.v1.ErrorReason
 	(AuthzMode)(0),                     // 1: authz.service.v1.AuthzMode
-	(ObjectType)(0),                    // 2: authz.service.v1.ObjectType
-	(Relation)(0),                      // 3: authz.service.v1.Relation
-	(*AuthzRule)(nil),                  // 4: authz.service.v1.AuthzRule
-	(*CheckPermissionRequest)(nil),     // 5: authz.service.v1.CheckPermissionRequest
-	(*CheckPermissionResponse)(nil),    // 6: authz.service.v1.CheckPermissionResponse
-	(*descriptorpb.MethodOptions)(nil), // 7: google.protobuf.MethodOptions
+	(*AuthzRule)(nil),                  // 2: authz.service.v1.AuthzRule
+	(*CheckPermissionRequest)(nil),     // 3: authz.service.v1.CheckPermissionRequest
+	(*CheckPermissionResponse)(nil),    // 4: authz.service.v1.CheckPermissionResponse
+	(*descriptorpb.MethodOptions)(nil), // 5: google.protobuf.MethodOptions
 }
 var file_authz_service_v1_authz_proto_depIdxs = []int32{
 	1, // 0: authz.service.v1.AuthzRule.mode:type_name -> authz.service.v1.AuthzMode
-	3, // 1: authz.service.v1.AuthzRule.relation:type_name -> authz.service.v1.Relation
-	2, // 2: authz.service.v1.AuthzRule.object_type:type_name -> authz.service.v1.ObjectType
-	7, // 3: authz.service.v1.rule:extendee -> google.protobuf.MethodOptions
-	4, // 4: authz.service.v1.rule:type_name -> authz.service.v1.AuthzRule
-	5, // 5: authz.service.v1.AuthzService.CheckPermission:input_type -> authz.service.v1.CheckPermissionRequest
-	6, // 6: authz.service.v1.AuthzService.CheckPermission:output_type -> authz.service.v1.CheckPermissionResponse
-	6, // [6:7] is the sub-list for method output_type
-	5, // [5:6] is the sub-list for method input_type
-	4, // [4:5] is the sub-list for extension type_name
-	3, // [3:4] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	5, // 1: authz.service.v1.rule:extendee -> google.protobuf.MethodOptions
+	2, // 2: authz.service.v1.rule:type_name -> authz.service.v1.AuthzRule
+	3, // 3: authz.service.v1.AuthzService.CheckPermission:input_type -> authz.service.v1.CheckPermissionRequest
+	4, // 4: authz.service.v1.AuthzService.CheckPermission:output_type -> authz.service.v1.CheckPermissionResponse
+	4, // [4:5] is the sub-list for method output_type
+	3, // [3:4] is the sub-list for method input_type
+	2, // [2:3] is the sub-list for extension type_name
+	1, // [1:2] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_authz_service_v1_authz_proto_init() }
@@ -551,7 +400,7 @@ func file_authz_service_v1_authz_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_authz_service_v1_authz_proto_rawDesc), len(file_authz_service_v1_authz_proto_rawDesc)),
-			NumEnums:      4,
+			NumEnums:      2,
 			NumMessages:   3,
 			NumExtensions: 1,
 			NumServices:   1,

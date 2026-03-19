@@ -38,6 +38,7 @@ type UserServiceClient interface {
 	GetUser(ctx context.Context, in *v1.GetUserRequest, opts ...grpc.CallOption) (*v1.GetUserResponse, error)
 	ListUsers(ctx context.Context, in *v1.ListUsersRequest, opts ...grpc.CallOption) (*v1.ListUsersResponse, error)
 	UpdateUser(ctx context.Context, in *v1.UpdateUserRequest, opts ...grpc.CallOption) (*v1.UpdateUserResponse, error)
+	// 创建用户需要平台管理员权限
 	CreateUser(ctx context.Context, in *v1.CreateUserRequest, opts ...grpc.CallOption) (*v1.CreateUserResponse, error)
 	DeleteUser(ctx context.Context, in *v1.DeleteUserRequest, opts ...grpc.CallOption) (*v1.DeleteUserResponse, error)
 	PurgeUser(ctx context.Context, in *v1.PurgeUserRequest, opts ...grpc.CallOption) (*v1.PurgeUserResponse, error)
@@ -140,6 +141,7 @@ type UserServiceServer interface {
 	GetUser(context.Context, *v1.GetUserRequest) (*v1.GetUserResponse, error)
 	ListUsers(context.Context, *v1.ListUsersRequest) (*v1.ListUsersResponse, error)
 	UpdateUser(context.Context, *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error)
+	// 创建用户需要平台管理员权限
 	CreateUser(context.Context, *v1.CreateUserRequest) (*v1.CreateUserResponse, error)
 	DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
 	PurgeUser(context.Context, *v1.PurgeUserRequest) (*v1.PurgeUserResponse, error)

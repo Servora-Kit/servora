@@ -67,7 +67,7 @@ func (m *ApplicationInfo) validate(all bool) error {
 
 	// no validation rules for AccessTokenType
 
-	// no validation rules for TenantId
+	// no validation rules for Type
 
 	// no validation rules for IdTokenLifetime
 
@@ -241,6 +241,10 @@ func (m *CreateApplicationRequest) validate(all bool) error {
 
 	if m.IdTokenLifetime != nil {
 		// no validation rules for IdTokenLifetime
+	}
+
+	if m.Type != nil {
+		// no validation rules for Type
 	}
 
 	if len(errors) > 0 {

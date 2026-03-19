@@ -32,6 +32,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApplicationServiceClient interface {
+	// 创建应用需要平台管理员权限
 	CreateApplication(ctx context.Context, in *v1.CreateApplicationRequest, opts ...grpc.CallOption) (*v1.CreateApplicationResponse, error)
 	GetApplication(ctx context.Context, in *v1.GetApplicationRequest, opts ...grpc.CallOption) (*v1.GetApplicationResponse, error)
 	ListApplications(ctx context.Context, in *v1.ListApplicationsRequest, opts ...grpc.CallOption) (*v1.ListApplicationsResponse, error)
@@ -112,6 +113,7 @@ func (c *applicationServiceClient) RegenerateClientSecret(ctx context.Context, i
 // All implementations must embed UnimplementedApplicationServiceServer
 // for forward compatibility.
 type ApplicationServiceServer interface {
+	// 创建应用需要平台管理员权限
 	CreateApplication(context.Context, *v1.CreateApplicationRequest) (*v1.CreateApplicationResponse, error)
 	GetApplication(context.Context, *v1.GetApplicationRequest) (*v1.GetApplicationResponse, error)
 	ListApplications(context.Context, *v1.ListApplicationsRequest) (*v1.ListApplicationsResponse, error)

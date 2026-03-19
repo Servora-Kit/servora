@@ -65,8 +65,8 @@ func main() {
 type ruleEntry struct {
 	Operation  string
 	Mode       authzpb.AuthzMode
-	Relation   authzpb.Relation
-	ObjectType authzpb.ObjectType
+	Relation   string
+	ObjectType string
 	IDField    string
 }
 
@@ -79,14 +79,12 @@ func generateFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rul
 	g.P()
 
 	authzMode := g.QualifiedGoIdent(protogen.GoIdent{GoName: "AuthzMode", GoImportPath: authzPkg})
-	relation := g.QualifiedGoIdent(protogen.GoIdent{GoName: "Relation", GoImportPath: authzPkg})
-	objectType := g.QualifiedGoIdent(protogen.GoIdent{GoName: "ObjectType", GoImportPath: authzPkg})
 
 	g.P("// AuthzRuleEntry describes the authorization requirement for a single RPC operation.")
 	g.P("type AuthzRuleEntry struct {")
 	g.P("	Mode       ", authzMode)
-	g.P("	Relation   ", relation)
-	g.P("	ObjectType ", objectType)
+	g.P("	Relation   string")
+	g.P("	ObjectType string")
 	g.P("	IDField    string")
 	g.P("}")
 	g.P()
@@ -100,20 +98,11 @@ func generateFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rul
 		})
 		g.P(fmt.Sprintf("	%q: {", r.Operation))
 		g.P("		Mode: ", modeIdent, ",")
-
-		if r.Relation != authzpb.Relation_RELATION_UNSPECIFIED {
-			relIdent := g.QualifiedGoIdent(protogen.GoIdent{
-				GoName:       "Relation_" + r.Relation.String(),
-				GoImportPath: authzPkg,
-			})
-			g.P("		Relation: ", relIdent, ",")
+		if r.Relation != "" {
+			g.P(fmt.Sprintf("		Relation: %q,", r.Relation))
 		}
-		if r.ObjectType != authzpb.ObjectType_OBJECT_TYPE_UNSPECIFIED {
-			otIdent := g.QualifiedGoIdent(protogen.GoIdent{
-				GoName:       "ObjectType_" + r.ObjectType.String(),
-				GoImportPath: authzPkg,
-			})
-			g.P("		ObjectType: ", otIdent, ",")
+		if r.ObjectType != "" {
+			g.P(fmt.Sprintf("		ObjectType: %q,", r.ObjectType))
 		}
 		if r.IDField != "" {
 			g.P(fmt.Sprintf("		IDField: %q,", r.IDField))

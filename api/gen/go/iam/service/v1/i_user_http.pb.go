@@ -30,6 +30,7 @@ const OperationUserServiceRestoreUser = "/iam.service.v1.UserService/RestoreUser
 const OperationUserServiceUpdateUser = "/iam.service.v1.UserService/UpdateUser"
 
 type UserServiceHTTPServer interface {
+	// CreateUser 创建用户需要平台管理员权限
 	CreateUser(context.Context, *v1.CreateUserRequest) (*v1.CreateUserResponse, error)
 	CurrentUserInfo(context.Context, *v1.CurrentUserInfoRequest) (*v1.CurrentUserInfoResponse, error)
 	DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
@@ -226,6 +227,7 @@ func _UserService_RestoreUser0_HTTP_Handler(srv UserServiceHTTPServer) func(ctx 
 }
 
 type UserServiceHTTPClient interface {
+	// CreateUser 创建用户需要平台管理员权限
 	CreateUser(ctx context.Context, req *v1.CreateUserRequest, opts ...http.CallOption) (rsp *v1.CreateUserResponse, err error)
 	CurrentUserInfo(ctx context.Context, req *v1.CurrentUserInfoRequest, opts ...http.CallOption) (rsp *v1.CurrentUserInfoResponse, err error)
 	DeleteUser(ctx context.Context, req *v1.DeleteUserRequest, opts ...http.CallOption) (rsp *v1.DeleteUserResponse, err error)
@@ -244,6 +246,7 @@ func NewUserServiceHTTPClient(client *http.Client) UserServiceHTTPClient {
 	return &UserServiceHTTPClientImpl{client}
 }
 
+// CreateUser 创建用户需要平台管理员权限
 func (c *UserServiceHTTPClientImpl) CreateUser(ctx context.Context, in *v1.CreateUserRequest, opts ...http.CallOption) (*v1.CreateUserResponse, error) {
 	var out v1.CreateUserResponse
 	pattern := "/v1/users"

@@ -9,22 +9,22 @@ import (
 // AuthzRuleEntry describes the authorization requirement for a single RPC operation.
 type AuthzRuleEntry struct {
 	Mode       v1.AuthzMode
-	Relation   v1.Relation
-	ObjectType v1.ObjectType
+	Relation   string
+	ObjectType string
 	IDField    string
 }
 
 // AuthzRules maps each annotated RPC operation to its authorization rule.
 var AuthzRules = map[string]AuthzRuleEntry{
 	"/iam.service.v1.ApplicationService/CreateApplication": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.ApplicationService/DeleteApplication": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.ApplicationService/GetApplication": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
@@ -33,14 +33,14 @@ var AuthzRules = map[string]AuthzRuleEntry{
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
 	"/iam.service.v1.ApplicationService/RegenerateClientSecret": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.ApplicationService/UpdateApplication": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.AuthnService/ChangePassword": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
@@ -72,219 +72,18 @@ var AuthzRules = map[string]AuthzRuleEntry{
 	"/iam.service.v1.AuthnService/VerifyEmail": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
-	"/iam.service.v1.DictService/CreateDictItem": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/CreateDictType": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/DeleteDictItem": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/DeleteDictType": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/GetDictType": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/ListDictItems": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/ListDictTypes": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/UpdateDictItem": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.DictService/UpdateDictType": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.OrganizationService/AddMember": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_MANAGE_MEMBERS,
-		IDField:  "organization_id",
-	},
-	"/iam.service.v1.OrganizationService/CreateOrganization": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.OrganizationService/DeleteOrganization": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_MANAGE,
-		IDField:  "id",
-	},
-	"/iam.service.v1.OrganizationService/GetOrganization": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_VIEW,
-		IDField:  "id",
-	},
-	"/iam.service.v1.OrganizationService/ListMembers": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_VIEW,
-		IDField:  "organization_id",
-	},
-	"/iam.service.v1.OrganizationService/ListOrganizationTree": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.OrganizationService/ListOrganizations": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.OrganizationService/PurgeOrganization": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_ADMIN,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.OrganizationService/RemoveMember": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_MANAGE_MEMBERS,
-		IDField:  "organization_id",
-	},
-	"/iam.service.v1.OrganizationService/RestoreOrganization": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_ADMIN,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.OrganizationService/UpdateMemberRole": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_MANAGE_MEMBERS,
-		IDField:  "organization_id",
-	},
-	"/iam.service.v1.OrganizationService/UpdateOrganization": {
-		Mode:     v1.AuthzMode_AUTHZ_MODE_ORGANIZATION,
-		Relation: v1.Relation_RELATION_CAN_MANAGE,
-		IDField:  "id",
-	},
-	"/iam.service.v1.PositionService/CreatePosition": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.PositionService/DeletePosition": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.PositionService/GetPosition": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.PositionService/ListPositions": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.PositionService/UpdatePosition": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.RbacService/CreateMenu": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/CreatePermission": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/CreateRole": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.RbacService/DeleteMenu": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/DeletePermission": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/DeleteRole": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.RbacService/GetMenu": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/GetMyPermissionCodes": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/GetNavigation": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/GetPermission": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/GetRole": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/ListMenus": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/ListPermissionGroups": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/ListPermissions": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/ListRoles": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/UpdateMenu": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/UpdatePermission": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.RbacService/UpdateRole": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-	},
-	"/iam.service.v1.TenantService/CreateTenant": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.TenantService/DeleteTenant": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-		IDField:    "id",
-	},
-	"/iam.service.v1.TenantService/GetTenant": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_VIEW,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-		IDField:    "id",
-	},
-	"/iam.service.v1.TenantService/ListTenants": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.TenantService/TransferOwnership": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-		IDField:    "tenant_id",
-	},
-	"/iam.service.v1.TenantService/UpdateTenant": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
-		IDField:    "id",
-	},
-	"/iam.service.v1.TestService/Hello": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.TestService/PrivateTest": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
-	"/iam.service.v1.TestService/Test": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
-	},
 	"/iam.service.v1.UserService/CreateUser": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/CurrentUserInfo": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
 	"/iam.service.v1.UserService/DeleteUser": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/GetUser": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
@@ -293,14 +92,14 @@ var AuthzRules = map[string]AuthzRuleEntry{
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
 	"/iam.service.v1.UserService/PurgeUser": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/RestoreUser": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_OBJECT,
-		Relation:   v1.Relation_RELATION_CAN_MANAGE,
-		ObjectType: v1.ObjectType_OBJECT_TYPE_TENANT,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "admin",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/UpdateUser": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,

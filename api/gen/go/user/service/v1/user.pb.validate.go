@@ -35,6 +35,123 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on UserProfile with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *UserProfile) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UserProfile with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in UserProfileMultiError, or
+// nil if none found.
+func (m *UserProfile) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UserProfile) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for GivenName
+
+	// no validation rules for FamilyName
+
+	// no validation rules for Nickname
+
+	// no validation rules for Picture
+
+	// no validation rules for Gender
+
+	// no validation rules for Birthdate
+
+	// no validation rules for Zoneinfo
+
+	// no validation rules for Locale
+
+	if len(errors) > 0 {
+		return UserProfileMultiError(errors)
+	}
+
+	return nil
+}
+
+// UserProfileMultiError is an error wrapping multiple validation errors
+// returned by UserProfile.ValidateAll() if the designated constraints aren't met.
+type UserProfileMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UserProfileMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UserProfileMultiError) AllErrors() []error { return m }
+
+// UserProfileValidationError is the validation error returned by
+// UserProfile.Validate if the designated constraints aren't met.
+type UserProfileValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UserProfileValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UserProfileValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UserProfileValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UserProfileValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UserProfileValidationError) ErrorName() string { return "UserProfileValidationError" }
+
+// Error satisfies the builtin error interface
+func (e UserProfileValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUserProfile.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UserProfileValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UserProfileValidationError{}
+
 // Validate checks the field values on UserInfo with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -59,13 +176,48 @@ func (m *UserInfo) validate(all bool) error {
 
 	// no validation rules for Id
 
-	// no validation rules for Name
+	// no validation rules for Username
 
 	// no validation rules for Email
 
 	// no validation rules for Role
 
 	// no validation rules for EmailVerified
+
+	// no validation rules for Phone
+
+	// no validation rules for PhoneVerified
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetProfile()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, UserInfoValidationError{
+					field:  "Profile",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, UserInfoValidationError{
+					field:  "Profile",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetProfile()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UserInfoValidationError{
+				field:  "Profile",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return UserInfoMultiError(errors)
@@ -270,11 +422,42 @@ func (m *CurrentUserInfoResponse) validate(all bool) error {
 
 	// no validation rules for Id
 
-	// no validation rules for Name
+	// no validation rules for Username
 
 	// no validation rules for Email
 
 	// no validation rules for Role
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetProfile()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CurrentUserInfoResponseValidationError{
+					field:  "Profile",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CurrentUserInfoResponseValidationError{
+					field:  "Profile",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetProfile()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CurrentUserInfoResponseValidationError{
+				field:  "Profile",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return CurrentUserInfoResponseMultiError(errors)
@@ -1554,11 +1737,54 @@ func (m *UpdateUserRequest) validate(all bool) error {
 
 	// no validation rules for Id
 
-	// no validation rules for Name
+	if m.Username != nil {
+		// no validation rules for Username
+	}
 
-	// no validation rules for Email
+	if m.Email != nil {
+		// no validation rules for Email
+	}
 
-	// no validation rules for Password
+	if m.Phone != nil {
+		// no validation rules for Phone
+	}
+
+	if m.Status != nil {
+		// no validation rules for Status
+	}
+
+	if m.Profile != nil {
+
+		if all {
+			switch v := interface{}(m.GetProfile()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, UpdateUserRequestValidationError{
+						field:  "Profile",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, UpdateUserRequestValidationError{
+						field:  "Profile",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetProfile()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return UpdateUserRequestValidationError{
+					field:  "Profile",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return UpdateUserRequestMultiError(errors)
@@ -1793,13 +2019,11 @@ func (m *CreateUserRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	// no validation rules for Username
 
 	// no validation rules for Email
 
 	// no validation rules for Password
-
-	// no validation rules for OrganizationId
 
 	if len(errors) > 0 {
 		return CreateUserRequestMultiError(errors)

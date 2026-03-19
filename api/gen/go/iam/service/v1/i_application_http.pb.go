@@ -28,6 +28,7 @@ const OperationApplicationServiceRegenerateClientSecret = "/iam.service.v1.Appli
 const OperationApplicationServiceUpdateApplication = "/iam.service.v1.ApplicationService/UpdateApplication"
 
 type ApplicationServiceHTTPServer interface {
+	// CreateApplication 创建应用需要平台管理员权限
 	CreateApplication(context.Context, *v1.CreateApplicationRequest) (*v1.CreateApplicationResponse, error)
 	DeleteApplication(context.Context, *v1.DeleteApplicationRequest) (*v1.DeleteApplicationResponse, error)
 	GetApplication(context.Context, *v1.GetApplicationRequest) (*v1.GetApplicationResponse, error)
@@ -182,6 +183,7 @@ func _ApplicationService_RegenerateClientSecret0_HTTP_Handler(srv ApplicationSer
 }
 
 type ApplicationServiceHTTPClient interface {
+	// CreateApplication 创建应用需要平台管理员权限
 	CreateApplication(ctx context.Context, req *v1.CreateApplicationRequest, opts ...http.CallOption) (rsp *v1.CreateApplicationResponse, err error)
 	DeleteApplication(ctx context.Context, req *v1.DeleteApplicationRequest, opts ...http.CallOption) (rsp *v1.DeleteApplicationResponse, err error)
 	GetApplication(ctx context.Context, req *v1.GetApplicationRequest, opts ...http.CallOption) (rsp *v1.GetApplicationResponse, err error)
@@ -198,6 +200,7 @@ func NewApplicationServiceHTTPClient(client *http.Client) ApplicationServiceHTTP
 	return &ApplicationServiceHTTPClientImpl{client}
 }
 
+// CreateApplication 创建应用需要平台管理员权限
 func (c *ApplicationServiceHTTPClientImpl) CreateApplication(ctx context.Context, in *v1.CreateApplicationRequest, opts ...http.CallOption) (*v1.CreateApplicationResponse, error) {
 	var out v1.CreateApplicationResponse
 	pattern := "/v1/applications"

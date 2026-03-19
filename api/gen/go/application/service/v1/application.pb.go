@@ -93,7 +93,8 @@ type ApplicationInfo struct {
 	GrantTypes      []string               `protobuf:"bytes,6,rep,name=grant_types,json=grantTypes,proto3" json:"grant_types,omitempty"`
 	ApplicationType string                 `protobuf:"bytes,7,opt,name=application_type,json=applicationType,proto3" json:"application_type,omitempty"`
 	AccessTokenType string                 `protobuf:"bytes,8,opt,name=access_token_type,json=accessTokenType,proto3" json:"access_token_type,omitempty"`
-	TenantId        string                 `protobuf:"bytes,9,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// type 区分应用类型：web | native | m2m
+	Type            string                 `protobuf:"bytes,9,opt,name=type,proto3" json:"type,omitempty"`
 	IdTokenLifetime int32                  `protobuf:"varint,10,opt,name=id_token_lifetime,json=idTokenLifetime,proto3" json:"id_token_lifetime,omitempty"`
 	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
@@ -187,9 +188,9 @@ func (x *ApplicationInfo) GetAccessTokenType() string {
 	return ""
 }
 
-func (x *ApplicationInfo) GetTenantId() string {
+func (x *ApplicationInfo) GetType() string {
 	if x != nil {
-		return x.TenantId
+		return x.Type
 	}
 	return ""
 }
@@ -217,15 +218,17 @@ func (x *ApplicationInfo) GetUpdatedAt() *timestamppb.Timestamp {
 
 type CreateApplicationRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	RedirectUris    []string               `protobuf:"bytes,3,rep,name=redirect_uris,json=redirectUris,proto3" json:"redirect_uris,omitempty"`
-	Scopes          []string               `protobuf:"bytes,4,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	GrantTypes      []string               `protobuf:"bytes,5,rep,name=grant_types,json=grantTypes,proto3" json:"grant_types,omitempty"`
-	ApplicationType *string                `protobuf:"bytes,6,opt,name=application_type,json=applicationType,proto3,oneof" json:"application_type,omitempty"`
-	AccessTokenType *string                `protobuf:"bytes,7,opt,name=access_token_type,json=accessTokenType,proto3,oneof" json:"access_token_type,omitempty"`
-	IdTokenLifetime *int32                 `protobuf:"varint,8,opt,name=id_token_lifetime,json=idTokenLifetime,proto3,oneof" json:"id_token_lifetime,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	Name            string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	RedirectUris    []string               `protobuf:"bytes,2,rep,name=redirect_uris,json=redirectUris,proto3" json:"redirect_uris,omitempty"`
+	Scopes          []string               `protobuf:"bytes,3,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	GrantTypes      []string               `protobuf:"bytes,4,rep,name=grant_types,json=grantTypes,proto3" json:"grant_types,omitempty"`
+	ApplicationType *string                `protobuf:"bytes,5,opt,name=application_type,json=applicationType,proto3,oneof" json:"application_type,omitempty"`
+	AccessTokenType *string                `protobuf:"bytes,6,opt,name=access_token_type,json=accessTokenType,proto3,oneof" json:"access_token_type,omitempty"`
+	IdTokenLifetime *int32                 `protobuf:"varint,7,opt,name=id_token_lifetime,json=idTokenLifetime,proto3,oneof" json:"id_token_lifetime,omitempty"`
+	// type: "web" | "native" | "m2m"（默认 "web"）
+	Type          *string `protobuf:"bytes,8,opt,name=type,proto3,oneof" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateApplicationRequest) Reset() {
@@ -305,6 +308,13 @@ func (x *CreateApplicationRequest) GetIdTokenLifetime() int32 {
 		return *x.IdTokenLifetime
 	}
 	return 0
+}
+
+func (x *CreateApplicationRequest) GetType() string {
+	if x != nil && x.Type != nil {
+		return *x.Type
+	}
+	return ""
 }
 
 type CreateApplicationResponse struct {
@@ -449,7 +459,7 @@ func (x *GetApplicationResponse) GetApplication() *ApplicationInfo {
 
 type ListApplicationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pagination    *v1.PaginationRequest  `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	Pagination    *v1.PaginationRequest  `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -851,7 +861,7 @@ var File_application_service_v1_application_proto protoreflect.FileDescriptor
 
 const file_application_service_v1_application_proto_rawDesc = "" +
 	"\n" +
-	"(application/service/v1/application.proto\x12\x16application.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xc6\x03\n" +
+	"(application/service/v1/application.proto\x12\x16application.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xbd\x03\n" +
 	"\x0fApplicationInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x12\n" +
@@ -861,38 +871,40 @@ const file_application_service_v1_application_proto_rawDesc = "" +
 	"\vgrant_types\x18\x06 \x03(\tR\n" +
 	"grantTypes\x12)\n" +
 	"\x10application_type\x18\a \x01(\tR\x0fapplicationType\x12*\n" +
-	"\x11access_token_type\x18\b \x01(\tR\x0faccessTokenType\x12\x1b\n" +
-	"\ttenant_id\x18\t \x01(\tR\btenantId\x12*\n" +
+	"\x11access_token_type\x18\b \x01(\tR\x0faccessTokenType\x12\x12\n" +
+	"\x04type\x18\t \x01(\tR\x04type\x12*\n" +
 	"\x11id_token_lifetime\x18\n" +
 	" \x01(\x05R\x0fidTokenLifetime\x129\n" +
 	"\n" +
 	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xf1\x02\n" +
+	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x8d\x03\n" +
 	"\x18CreateApplicationRequest\x12\x1e\n" +
-	"\x04name\x18\x02 \x01(\tB\n" +
+	"\x04name\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x02\x18\x80\x01R\x04name\x12#\n" +
-	"\rredirect_uris\x18\x03 \x03(\tR\fredirectUris\x12\x16\n" +
-	"\x06scopes\x18\x04 \x03(\tR\x06scopes\x12\x1f\n" +
-	"\vgrant_types\x18\x05 \x03(\tR\n" +
+	"\rredirect_uris\x18\x02 \x03(\tR\fredirectUris\x12\x16\n" +
+	"\x06scopes\x18\x03 \x03(\tR\x06scopes\x12\x1f\n" +
+	"\vgrant_types\x18\x04 \x03(\tR\n" +
 	"grantTypes\x12.\n" +
-	"\x10application_type\x18\x06 \x01(\tH\x00R\x0fapplicationType\x88\x01\x01\x12/\n" +
-	"\x11access_token_type\x18\a \x01(\tH\x01R\x0faccessTokenType\x88\x01\x01\x12/\n" +
-	"\x11id_token_lifetime\x18\b \x01(\x05H\x02R\x0fidTokenLifetime\x88\x01\x01B\x13\n" +
+	"\x10application_type\x18\x05 \x01(\tH\x00R\x0fapplicationType\x88\x01\x01\x12/\n" +
+	"\x11access_token_type\x18\x06 \x01(\tH\x01R\x0faccessTokenType\x88\x01\x01\x12/\n" +
+	"\x11id_token_lifetime\x18\a \x01(\x05H\x02R\x0fidTokenLifetime\x88\x01\x01\x12\x17\n" +
+	"\x04type\x18\b \x01(\tH\x03R\x04type\x88\x01\x01B\x13\n" +
 	"\x11_application_typeB\x14\n" +
 	"\x12_access_token_typeB\x14\n" +
-	"\x12_id_token_lifetimeJ\x04\b\x01\x10\x02\"\x8b\x01\n" +
+	"\x12_id_token_lifetimeB\a\n" +
+	"\x05_type\"\x8b\x01\n" +
 	"\x19CreateApplicationResponse\x12I\n" +
 	"\vapplication\x18\x01 \x01(\v2'.application.service.v1.ApplicationInfoR\vapplication\x12#\n" +
 	"\rclient_secret\x18\x02 \x01(\tR\fclientSecret\"1\n" +
 	"\x15GetApplicationRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"c\n" +
 	"\x16GetApplicationResponse\x12I\n" +
-	"\vapplication\x18\x01 \x01(\v2'.application.service.v1.ApplicationInfoR\vapplication\"a\n" +
+	"\vapplication\x18\x01 \x01(\v2'.application.service.v1.ApplicationInfoR\vapplication\"[\n" +
 	"\x17ListApplicationsRequest\x12@\n" +
 	"\n" +
-	"pagination\x18\x02 \x01(\v2 .pagination.v1.PaginationRequestR\n" +
-	"paginationJ\x04\b\x01\x10\x02\"\xaa\x01\n" +
+	"pagination\x18\x01 \x01(\v2 .pagination.v1.PaginationRequestR\n" +
+	"pagination\"\xaa\x01\n" +
 	"\x18ListApplicationsResponse\x12K\n" +
 	"\fapplications\x18\x01 \x03(\v2'.application.service.v1.ApplicationInfoR\fapplications\x12A\n" +
 	"\n" +
