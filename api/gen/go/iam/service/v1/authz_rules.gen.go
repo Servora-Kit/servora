@@ -86,10 +86,14 @@ var AuthzRules = map[string]AuthzRuleEntry{
 		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/GetUser": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "can_manage_users",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/ListUsers": {
-		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
+		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Relation:   "can_manage_users",
+		ObjectType: "platform",
 	},
 	"/iam.service.v1.UserService/PurgeUser": {
 		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,

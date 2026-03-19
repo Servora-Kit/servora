@@ -27,11 +27,11 @@ var File_iam_service_v1_i_user_proto protoreflect.FileDescriptor
 
 const file_iam_service_v1_i_user_proto_rawDesc = "" +
 	"\n" +
-	"\x1biam/service/v1/i_user.proto\x12\x0eiam.service.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cauthz/service/v1/authz.proto\x1a\x1auser/service/v1/user.proto2\x8e\b\n" +
+	"\x1biam/service/v1/i_user.proto\x12\x0eiam.service.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1cauthz/service/v1/authz.proto\x1a\x1auser/service/v1/user.proto2\xc8\b\n" +
 	"\vUserService\x12\x81\x01\n" +
-	"\x0fCurrentUserInfo\x12'.user.service.v1.CurrentUserInfoRequest\x1a(.user.service.v1.CurrentUserInfoResponse\"\x1b\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/user/info\x12j\n" +
-	"\aGetUser\x12\x1f.user.service.v1.GetUserRequest\x1a .user.service.v1.GetUserResponse\"\x1c\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x10\x12\x0e/v1/users/{id}\x12k\n" +
-	"\tListUsers\x12!.user.service.v1.ListUsersRequest\x1a\".user.service.v1.ListUsersResponse\"\x17\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\v\x12\t/v1/users\x12w\n" +
+	"\x0fCurrentUserInfo\x12'.user.service.v1.CurrentUserInfoRequest\x1a(.user.service.v1.CurrentUserInfoResponse\"\x1b\xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x0f\x12\r/v1/user/info\x12\x86\x01\n" +
+	"\aGetUser\x12\x1f.user.service.v1.GetUserRequest\x1a .user.service.v1.GetUserResponse\"8\xa2\xbb\x18\x1e\b\x02\x12\x10can_manage_users\x1a\bplatform\x82\xd3\xe4\x93\x02\x10\x12\x0e/v1/users/{id}\x12\x87\x01\n" +
+	"\tListUsers\x12!.user.service.v1.ListUsersRequest\x1a\".user.service.v1.ListUsersResponse\"3\xa2\xbb\x18\x1e\b\x02\x12\x10can_manage_users\x1a\bplatform\x82\xd3\xe4\x93\x02\v\x12\t/v1/users\x12w\n" +
 	"\n" +
 	"UpdateUser\x12\".user.service.v1.UpdateUserRequest\x1a#.user.service.v1.UpdateUserResponse\" \xa2\xbb\x18\x02\b\x01\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/user/update\x12\x82\x01\n" +
 	"\n" +

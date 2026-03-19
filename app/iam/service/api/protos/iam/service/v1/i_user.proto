@@ -19,14 +19,18 @@ service UserService {
   rpc GetUser(user.service.v1.GetUserRequest) returns (user.service.v1.GetUserResponse) {
     option (google.api.http) = {get: "/v1/users/{id}"};
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
+      mode: AUTHZ_MODE_CHECK
+      object_type: "platform"
+      relation: "can_manage_users"
     };
   }
 
   rpc ListUsers(user.service.v1.ListUsersRequest) returns (user.service.v1.ListUsersResponse) {
     option (google.api.http) = {get: "/v1/users"};
     option (authz.service.v1.rule) = {
-      mode: AUTHZ_MODE_NONE
+      mode: AUTHZ_MODE_CHECK
+      object_type: "platform"
+      relation: "can_manage_users"
     };
   }
 
