@@ -1,157 +1,41 @@
 package middleware
 
 import (
-	"context"
-	"fmt"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/transport"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
-	authzpb "github.com/Servora-Kit/servora/api/gen/go/authz/service/v1"
 	iamv1 "github.com/Servora-Kit/servora/api/gen/go/iam/service/v1"
-	"github.com/Servora-Kit/servora/pkg/actor"
+	pkgauthz "github.com/Servora-Kit/servora/pkg/authz"
 	"github.com/Servora-Kit/servora/pkg/openfga"
 	"github.com/Servora-Kit/servora/pkg/redis"
 )
 
-// AuthzOption configures the Authz middleware.
-type AuthzOption func(*authzConfig)
+// AuthzOption is an alias for pkgauthz.Option so callers don't need to import pkg/authz directly.
+type AuthzOption = pkgauthz.Option
 
-type authzConfig struct {
-	fga      *openfga.Client
-	redis    *redis.Client
-	cacheTTL time.Duration
-	rules    map[string]iamv1.AuthzRuleEntry
-}
+// WithFGAClient sets the OpenFGA client used for authorization checks.
+func WithFGAClient(c *openfga.Client) AuthzOption { return pkgauthz.WithFGAClient(c) }
 
-func WithFGAClient(c *openfga.Client) AuthzOption {
-	return func(cfg *authzConfig) { cfg.fga = c }
-}
-
-// WithAuthzRules sets the operation→rule mapping directly from generated code.
-func WithAuthzRules(rules map[string]iamv1.AuthzRuleEntry) AuthzOption {
-	return func(cfg *authzConfig) { cfg.rules = rules }
-}
-
+// WithAuthzCache enables Redis caching of authorization check results.
 func WithAuthzCache(rdb *redis.Client, ttl time.Duration) AuthzOption {
-	return func(cfg *authzConfig) {
-		cfg.redis = rdb
-		cfg.cacheTTL = ttl
-	}
+	return pkgauthz.WithAuthzCache(rdb, ttl)
 }
 
-// Authz creates a Kratos middleware that performs authorization checks
-// using OpenFGA based on proto-declared rules.
-//
-// Behavior:
-//   - AUTHZ_MODE_NONE: skip authorization (public endpoints)
-//   - AUTHZ_MODE_CHECK: check relation on {object_type}:{object_id}
-//   - No rule found (fail-closed): deny
-//   - OpenFGA unavailable (fail-closed): 503
-func Authz(opts ...AuthzOption) middleware.Middleware {
-	cfg := &authzConfig{}
-	for _, o := range opts {
-		o(cfg)
-	}
-
-	return func(handler middleware.Handler) middleware.Handler {
-		return func(ctx context.Context, req any) (any, error) {
-			tr, ok := transport.FromServerContext(ctx)
-			if !ok {
-				return handler(ctx, req)
-			}
-
-			operation := tr.Operation()
-			rule, found := cfg.rules[operation]
-			if !found {
-				return nil, errors.Forbidden("AUTHZ_NO_RULE",
-					fmt.Sprintf("no authorization rule for operation %s", operation))
-			}
-
-			if rule.Mode == authzpb.AuthzMode_AUTHZ_MODE_NONE {
-				return handler(ctx, req)
-			}
-
-			a, ok := actor.FromContext(ctx)
-			if !ok || a.Type() != actor.TypeUser {
-				return nil, errors.Forbidden("AUTHZ_DENIED", "authentication required")
-			}
-			userID := a.ID()
-
-			if cfg.fga == nil {
-				return nil, errors.ServiceUnavailable("AUTHZ_UNAVAILABLE", "authorization service not available")
-			}
-
-			objectType, objectID, err := resolveObject(rule, req)
-			if err != nil {
-				return nil, errors.BadRequest("AUTHZ_BAD_REQUEST",
-					fmt.Sprintf("cannot resolve authorization target: %v", err))
-			}
-
-			relation := rule.Relation
-			ttl := cfg.cacheTTL
-			if ttl == 0 {
-				ttl = openfga.DefaultCheckCacheTTL
-			}
-			allowed, err := cfg.fga.CachedCheck(ctx, cfg.redis, ttl,
-				userID, relation, objectType, objectID)
-			if err != nil {
-				return nil, errors.ServiceUnavailable("AUTHZ_CHECK_FAILED",
-					fmt.Sprintf("authorization check failed: %v", err))
-			}
-			if !allowed {
-				return nil, errors.Forbidden("AUTHZ_DENIED", "insufficient permissions")
-			}
-
-			return handler(ctx, req)
+// WithAuthzRules converts IAM-generated AuthzRuleEntry map to pkg/authz AuthzRule map.
+func WithAuthzRules(rules map[string]iamv1.AuthzRuleEntry) AuthzOption {
+	converted := make(map[string]pkgauthz.AuthzRule, len(rules))
+	for op, r := range rules {
+		converted[op] = pkgauthz.AuthzRule{
+			Mode:       r.Mode,
+			Relation:   r.Relation,
+			ObjectType: r.ObjectType,
+			IDField:    r.IDField,
 		}
 	}
+	return pkgauthz.WithAuthzRules(converted)
 }
 
-// resolveObject determines the FGA object type and ID for the given rule and request.
-// For AUTHZ_MODE_CHECK:
-//   - ObjectType is taken directly from rule.ObjectType (e.g. "platform")
-//   - ObjectID is extracted from the proto request field named by rule.IDField,
-//     or defaults to "default" when IDField is empty (e.g. platform-level checks).
-func resolveObject(rule iamv1.AuthzRuleEntry, req any) (objectType, objectID string, err error) {
-	objectType = rule.ObjectType
-	if objectType == "" {
-		return "", "", fmt.Errorf("object_type not specified in authz rule")
-	}
-
-	if rule.IDField == "" {
-		// No ID field means the object is a singleton (e.g. platform:default).
-		return objectType, "default", nil
-	}
-
-	objectID, err = extractProtoField(req, rule.IDField)
-	return
-}
-
-func extractProtoField(req any, fieldName string) (string, error) {
-	if fieldName == "" {
-		return "", fmt.Errorf("id_field not specified")
-	}
-
-	msg, ok := req.(proto.Message)
-	if !ok {
-		return "", fmt.Errorf("request is not a proto message")
-	}
-
-	md := msg.ProtoReflect().Descriptor()
-	fd := md.Fields().ByName(protoreflect.Name(fieldName))
-	if fd == nil {
-		return "", fmt.Errorf("field %q not found in %s", fieldName, md.FullName())
-	}
-
-	val := msg.ProtoReflect().Get(fd)
-	s := val.String()
-	if s == "" {
-		return "", fmt.Errorf("field %q is empty", fieldName)
-	}
-	return s, nil
-}
+// Authz returns a Kratos middleware that performs OpenFGA authorization checks
+// based on proto-declared rules. See pkg/authz for full behavior documentation.
+func Authz(opts ...AuthzOption) middleware.Middleware { return pkgauthz.Authz(opts...) }
