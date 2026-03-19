@@ -72,7 +72,7 @@ services:
     restart: unless-stopped
     command: ["-config.file=/etc/loki/config.yaml"]
     ports:
-      - "3100:3100"
+      - "16685:3100"
     volumes:
       - ./manifests/loki/loki.yaml:/etc/loki/config.yaml:ro
       - servora-loki-data:/loki
