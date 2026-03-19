@@ -119,7 +119,10 @@ make compose.stop  # 仅停止基础设施容器
 make compose.down  # 移除容器/网络，保留数据卷
 make compose.reset # 移除容器/网络/数据卷
 make test          # 运行测试
-make lint.go       # Go 代码检查
+make lint          # lint.go + lint.ts（不含 proto；需时 `make lint.proto`）
+make lint.go       # Go：根模块 + GO_WORKSPACE_MODULES（手写服务模块；不含 api/gen）
+make lint.ts       # TS：WEB_APPS（web/*）+ api/ts-client，见根 Makefile
+make lint.proto    # Buf proto lint
 ```
 
 ### CLI 工具

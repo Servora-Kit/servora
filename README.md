@@ -173,7 +173,12 @@ make build                  # 生成 + 构建所有服务
 # 质量检查
 make test                   # 运行测试
 make cover                  # 测试覆盖率
-make lint.go                # Go 代码检查
+make lint                   # lint.go + lint.ts（不含 proto；需要时单独 `make lint.proto`）
+make lint.go                # Go：根模块 + 各服务子模块（GO_WORKSPACE_MODULES；不含 api/gen 生成代码）
+make lint.ts                # TS：`WEB_APPS` 对应 web/* + `api/ts-client`（无对应 script 的包会跳过）
+make lint.proto             # Buf proto lint
+# 单服务仅扫本模块：cd app/<svc>/service && make lint.go
+# 单前端：cd web/<app> && make lint.ts（web-app.mk）
 
 # CLI 工具
 svr gen gorm <service...>   # GORM GEN 代码生成
@@ -202,7 +207,7 @@ make openfga.model.apply    # 应用 model 更新
 - 不要手动编辑生成代码：`api/gen/go/`、`wire_gen.go`、`openapi.yaml`、`authz_rules.gen.go`
 - 修改 proto 后务必执行 `make gen`
 - 修改 Wire 依赖图后务必执行 `make wire`
-- 提交前确保通过 `make lint.go` 和 `make test`
+- 提交前建议通过 `make lint`（或分项 `make lint.go` / `make lint.ts` / `make lint.proto`）与 `make test`（`WEB_APPS` 与 pnpm 一致；`GO_WORKSPACE_MODULES` 为各服务 Go 模块，**不含** `api/gen`）
 - 修改 OpenFGA model 后执行 `make openfga.model.apply`
 
 ## License
