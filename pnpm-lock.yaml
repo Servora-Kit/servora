@@ -8,7 +8,11 @@ importers:
 
   .: {}
 
-  api/ts-client: {}
+  api/ts-client:
+    dependencies:
+      ofetch:
+        specifier: '>=1.0.0'
+        version: 1.5.1
 
   web/iam:
     dependencies:

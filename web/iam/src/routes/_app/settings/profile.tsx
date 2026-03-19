@@ -20,21 +20,21 @@ function ProfilePage() {
     queryFn: () => iamClients.user.CurrentUserInfo({}),
   })
 
-  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (userInfo?.name) setName(userInfo.name)
-  }, [userInfo?.name])
+    if (userInfo?.username) setUsername(userInfo.username)
+  }, [userInfo?.username])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
-      await iamClients.user.UpdateUser({ id: userInfo?.id ?? '', name, email: userInfo?.email, password: undefined })
+      await iamClients.user.UpdateUser({ id: userInfo?.id ?? '', username, email: userInfo?.email })
       setUser({
         id: userInfo?.id ?? '',
-        name,
+        name: username,
         email: userInfo?.email ?? '',
         role: userInfo?.role ?? '',
       })
@@ -59,7 +59,7 @@ function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label>用户名</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required />
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} required />
               </div>
               <Button type="submit" disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
             </form>

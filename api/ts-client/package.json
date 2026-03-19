@@ -2,5 +2,8 @@
   "name": "@servora/api-client",
   "version": "0.0.0",
   "private": true,
-  "description": "Generated TypeScript HTTP clients from Proto definitions (output: ../gen/ts/)"
+  "description": "Generated TypeScript HTTP clients and shared request handler for Proto-generated clients",
+  "peerDependencies": {
+    "ofetch": ">=1.0.0"
+  }
 }

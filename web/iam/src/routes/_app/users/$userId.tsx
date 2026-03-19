@@ -34,11 +34,11 @@ function UserDetailPage() {
   return (
     <div className="space-y-6">
       <DataState isLoading={isLoading} isError={isError} isEmpty={!user} onRetry={() => void refetch()}>
-        <h1 className="text-xl font-semibold">{user?.user?.name}</h1>
+        <h1 className="text-xl font-semibold">{user?.user?.username}</h1>
         <Card>
           <CardHeader><CardTitle className="text-base">用户信息</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <div className="flex gap-2"><span className="w-20 text-muted-foreground">用户名</span><span>{user?.user?.name}</span></div>
+            <div className="flex gap-2"><span className="w-20 text-muted-foreground">用户名</span><span>{user?.user?.username}</span></div>
             <div className="flex gap-2"><span className="w-20 text-muted-foreground">邮箱</span><span>{user?.user?.email}</span></div>
             <div className="flex gap-2"><span className="w-20 text-muted-foreground">角色</span><span>{user?.user?.role}</span></div>
           </CardContent>

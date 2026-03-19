@@ -9,7 +9,7 @@
 
 import { toast as sonner } from 'sonner'
 import type { ExternalToast } from 'sonner'
-import type { ApiError } from '#/service/request/requestHandler'
+import type { ApiError } from '@servora/api-client/request'
 
 // ---------- 防重复机制 ----------
 // 用 WeakSet 标记已被 toast.promise 处理过的 error，避免全局 onError 再次弹出
