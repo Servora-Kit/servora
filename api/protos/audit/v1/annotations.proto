@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package audit.v1;
+
+import "audit/v1/audit.proto";
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/audit/v1;auditv1";
+
+// =============================================================================
+// 审计注解扩展
+// 用法: 在 RPC 方法上标注审计规则，供 protoc-gen-servora-audit（阶段4）消费。
+// =============================================================================
+
+// AuditRule 声明一个 RPC 方法的审计规则。
+message AuditRule {
+  // 是否产生审计事件。false 则跳过（默认 true）。
+  bool enabled = 1;
+
+  // 事件类型，通常对应 RESOURCE_MUTATION 或 AUTHZ_TUPLE_CHANGED 等。
+  AuditEventType event_type = 2;
+
+  // 操作语义（"create" | "update" | "delete" | "read" | 自定义）
+  string operation = 3;
+
+  // 目标资源类型（如 "user"、"project"）。
+  // 支持 proto field path 引用（如 "req.resource_type"）。
+  string target_type = 4;
+
+  // 目标 ID 的 proto field path（如 "req.id"、"resp.id"）。
+  string target_id_field = 5;
+
+  // 是否在 handler 返回错误时仍记录审计事件。默认 false（仅成功记录）。
+  bool record_on_error = 6;
+}
+
+// audit_rule 是方法级别的扩展选项。
+// 使用示例:
+//   rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
+//     option (audit.v1.audit_rule) = {
+//       enabled: true
+//       event_type: AUDIT_EVENT_TYPE_RESOURCE_MUTATION
+//       operation: "create"
+//       target_type: "user"
+//       target_id_field: "resp.id"
+//     };
+//   }
+extend google.protobuf.MethodOptions {
+  AuditRule audit_rule = 50000;
+}

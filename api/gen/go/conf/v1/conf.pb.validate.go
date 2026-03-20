@@ -1041,6 +1041,64 @@ func (m *Data) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetKafka()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DataValidationError{
+					field:  "Kafka",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DataValidationError{
+					field:  "Kafka",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetKafka()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DataValidationError{
+				field:  "Kafka",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetClickhouse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DataValidationError{
+					field:  "Clickhouse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DataValidationError{
+					field:  "Clickhouse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetClickhouse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DataValidationError{
+				field:  "Clickhouse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return DataMultiError(errors)
 	}
@@ -1259,6 +1317,35 @@ func (m *App) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return AppValidationError{
 				field:  "Oidc",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAudit()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AppValidationError{
+					field:  "Audit",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AppValidationError{
+					field:  "Audit",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAudit()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AppValidationError{
+				field:  "Audit",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -4238,6 +4325,457 @@ var _ interface {
 	ErrorName() string
 } = Data_ClientValidationError{}
 
+// Validate checks the field values on Data_Kafka with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Data_Kafka) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Data_Kafka with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Data_KafkaMultiError, or
+// nil if none found.
+func (m *Data_Kafka) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Data_Kafka) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ClientId
+
+	// no validation rules for ConsumerGroup
+
+	// no validation rules for RequiredAcks
+
+	// no validation rules for RetryMax
+
+	if all {
+		switch v := interface{}(m.GetRetryBackoff()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "RetryBackoff",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "RetryBackoff",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRetryBackoff()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_KafkaValidationError{
+				field:  "RetryBackoff",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetDialTimeout()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "DialTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "DialTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDialTimeout()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_KafkaValidationError{
+				field:  "DialTimeout",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetReadTimeout()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "ReadTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "ReadTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetReadTimeout()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_KafkaValidationError{
+				field:  "ReadTimeout",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWriteTimeout()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "WriteTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "WriteTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWriteTimeout()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_KafkaValidationError{
+				field:  "WriteTimeout",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Compression
+
+	if all {
+		switch v := interface{}(m.GetSasl()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "Sasl",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_KafkaValidationError{
+					field:  "Sasl",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSasl()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_KafkaValidationError{
+				field:  "Sasl",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Data_KafkaMultiError(errors)
+	}
+
+	return nil
+}
+
+// Data_KafkaMultiError is an error wrapping multiple validation errors
+// returned by Data_Kafka.ValidateAll() if the designated constraints aren't met.
+type Data_KafkaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Data_KafkaMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Data_KafkaMultiError) AllErrors() []error { return m }
+
+// Data_KafkaValidationError is the validation error returned by
+// Data_Kafka.Validate if the designated constraints aren't met.
+type Data_KafkaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Data_KafkaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Data_KafkaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Data_KafkaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Data_KafkaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Data_KafkaValidationError) ErrorName() string { return "Data_KafkaValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Data_KafkaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sData_Kafka.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Data_KafkaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Data_KafkaValidationError{}
+
+// Validate checks the field values on Data_ClickHouse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Data_ClickHouse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Data_ClickHouse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Data_ClickHouseMultiError, or nil if none found.
+func (m *Data_ClickHouse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Data_ClickHouse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Database
+
+	// no validation rules for Username
+
+	// no validation rules for Password
+
+	if all {
+		switch v := interface{}(m.GetDialTimeout()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_ClickHouseValidationError{
+					field:  "DialTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_ClickHouseValidationError{
+					field:  "DialTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDialTimeout()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_ClickHouseValidationError{
+				field:  "DialTimeout",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetReadTimeout()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_ClickHouseValidationError{
+					field:  "ReadTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_ClickHouseValidationError{
+					field:  "ReadTimeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetReadTimeout()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_ClickHouseValidationError{
+				field:  "ReadTimeout",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for MaxOpenConns
+
+	// no validation rules for MaxIdleConns
+
+	if all {
+		switch v := interface{}(m.GetConnMaxLifetime()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_ClickHouseValidationError{
+					field:  "ConnMaxLifetime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_ClickHouseValidationError{
+					field:  "ConnMaxLifetime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConnMaxLifetime()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_ClickHouseValidationError{
+				field:  "ConnMaxLifetime",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Data_ClickHouseMultiError(errors)
+	}
+
+	return nil
+}
+
+// Data_ClickHouseMultiError is an error wrapping multiple validation errors
+// returned by Data_ClickHouse.ValidateAll() if the designated constraints
+// aren't met.
+type Data_ClickHouseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Data_ClickHouseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Data_ClickHouseMultiError) AllErrors() []error { return m }
+
+// Data_ClickHouseValidationError is the validation error returned by
+// Data_ClickHouse.Validate if the designated constraints aren't met.
+type Data_ClickHouseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Data_ClickHouseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Data_ClickHouseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Data_ClickHouseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Data_ClickHouseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Data_ClickHouseValidationError) ErrorName() string { return "Data_ClickHouseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Data_ClickHouseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sData_ClickHouse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Data_ClickHouseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Data_ClickHouseValidationError{}
+
 // Validate checks the field values on Data_Client_HTTP with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -4503,6 +5041,112 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Data_Client_GRPCValidationError{}
+
+// Validate checks the field values on Data_Kafka_SASL with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Data_Kafka_SASL) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Data_Kafka_SASL with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Data_Kafka_SASLMultiError, or nil if none found.
+func (m *Data_Kafka_SASL) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Data_Kafka_SASL) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Mechanism
+
+	// no validation rules for Username
+
+	// no validation rules for Password
+
+	if len(errors) > 0 {
+		return Data_Kafka_SASLMultiError(errors)
+	}
+
+	return nil
+}
+
+// Data_Kafka_SASLMultiError is an error wrapping multiple validation errors
+// returned by Data_Kafka_SASL.ValidateAll() if the designated constraints
+// aren't met.
+type Data_Kafka_SASLMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Data_Kafka_SASLMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Data_Kafka_SASLMultiError) AllErrors() []error { return m }
+
+// Data_Kafka_SASLValidationError is the validation error returned by
+// Data_Kafka_SASL.Validate if the designated constraints aren't met.
+type Data_Kafka_SASLValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Data_Kafka_SASLValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Data_Kafka_SASLValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Data_Kafka_SASLValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Data_Kafka_SASLValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Data_Kafka_SASLValidationError) ErrorName() string { return "Data_Kafka_SASLValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Data_Kafka_SASLValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sData_Kafka_SASL.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Data_Kafka_SASLValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Data_Kafka_SASLValidationError{}
 
 // Validate checks the field values on App_Jwt with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -4937,3 +5581,110 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = App_OidcValidationError{}
+
+// Validate checks the field values on App_Audit with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *App_Audit) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on App_Audit with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in App_AuditMultiError, or nil
+// if none found.
+func (m *App_Audit) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *App_Audit) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Enabled
+
+	// no validation rules for EmitterType
+
+	// no validation rules for Topic
+
+	// no validation rules for ServiceName
+
+	if len(errors) > 0 {
+		return App_AuditMultiError(errors)
+	}
+
+	return nil
+}
+
+// App_AuditMultiError is an error wrapping multiple validation errors returned
+// by App_Audit.ValidateAll() if the designated constraints aren't met.
+type App_AuditMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m App_AuditMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m App_AuditMultiError) AllErrors() []error { return m }
+
+// App_AuditValidationError is the validation error returned by
+// App_Audit.Validate if the designated constraints aren't met.
+type App_AuditValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e App_AuditValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e App_AuditValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e App_AuditValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e App_AuditValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e App_AuditValidationError) ErrorName() string { return "App_AuditValidationError" }
+
+// Error satisfies the builtin error interface
+func (e App_AuditValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sApp_Audit.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = App_AuditValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = App_AuditValidationError{}

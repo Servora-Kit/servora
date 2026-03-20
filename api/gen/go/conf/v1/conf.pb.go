@@ -398,6 +398,8 @@ type Data struct {
 	Database      *Data_Database         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Redis         *Data_Redis            `protobuf:"bytes,2,opt,name=redis,proto3" json:"redis,omitempty"`
 	Client        *Data_Client           `protobuf:"bytes,3,opt,name=client,proto3" json:"client,omitempty"`
+	Kafka         *Data_Kafka            `protobuf:"bytes,4,opt,name=kafka,proto3" json:"kafka,omitempty"`
+	Clickhouse    *Data_ClickHouse       `protobuf:"bytes,5,opt,name=clickhouse,proto3" json:"clickhouse,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -453,6 +455,20 @@ func (x *Data) GetClient() *Data_Client {
 	return nil
 }
 
+func (x *Data) GetKafka() *Data_Kafka {
+	if x != nil {
+		return x.Kafka
+	}
+	return nil
+}
+
+func (x *Data) GetClickhouse() *Data_ClickHouse {
+	if x != nil {
+		return x.Clickhouse
+	}
+	return nil
+}
+
 // 应用配置
 type App struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -465,6 +481,7 @@ type App struct {
 	Openfga       *App_OpenFGA           `protobuf:"bytes,7,opt,name=openfga,proto3" json:"openfga,omitempty"`                                                                             // OpenFGA 配置
 	ExternalUrl   string                 `protobuf:"bytes,8,opt,name=external_url,json=externalUrl,proto3" json:"external_url,omitempty"`                                                  // 应用外部访问基地址（如 https://iam.example.com），用于 OIDC Discovery、邮件链接等
 	Oidc          *App_Oidc              `protobuf:"bytes,9,opt,name=oidc,proto3" json:"oidc,omitempty"`                                                                                   // OIDC Provider 配置
+	Audit         *App_Audit             `protobuf:"bytes,10,opt,name=audit,proto3" json:"audit,omitempty"`                                                                                // 审计配置
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -558,6 +575,13 @@ func (x *App) GetExternalUrl() string {
 func (x *App) GetOidc() *App_Oidc {
 	if x != nil {
 		return x.Oidc
+	}
+	return nil
+}
+
+func (x *App) GetAudit() *App_Audit {
+	if x != nil {
+		return x.Audit
 	}
 	return nil
 }
@@ -1968,6 +1992,240 @@ func (x *Data_Client) GetHttp() []*Data_Client_HTTP {
 	return nil
 }
 
+// Kafka 配置（消息代理，用于审计事件等异步管线）
+type Data_Kafka struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Brokers       []string               `protobuf:"bytes,1,rep,name=brokers,proto3" json:"brokers,omitempty"`                                  // Broker 地址列表（如 ["kafka:9092"]）
+	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`                // 客户端标识
+	ConsumerGroup string                 `protobuf:"bytes,3,opt,name=consumer_group,json=consumerGroup,proto3" json:"consumer_group,omitempty"` // 消费者组 ID
+	RequiredAcks  int32                  `protobuf:"varint,4,opt,name=required_acks,json=requiredAcks,proto3" json:"required_acks,omitempty"`   // 0=none, 1=leader, -1=all
+	RetryMax      int32                  `protobuf:"varint,5,opt,name=retry_max,json=retryMax,proto3" json:"retry_max,omitempty"`               // 最大重试次数
+	RetryBackoff  *durationpb.Duration   `protobuf:"bytes,6,opt,name=retry_backoff,json=retryBackoff,proto3" json:"retry_backoff,omitempty"`    // 重试退避间隔
+	DialTimeout   *durationpb.Duration   `protobuf:"bytes,7,opt,name=dial_timeout,json=dialTimeout,proto3" json:"dial_timeout,omitempty"`       // 连接超时
+	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,8,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`       // 读超时
+	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,9,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`    // 写超时
+	Compression   string                 `protobuf:"bytes,10,opt,name=compression,proto3" json:"compression,omitempty"`                         // 压缩算法（none/gzip/snappy/lz4/zstd）
+	Sasl          *Data_Kafka_SASL       `protobuf:"bytes,11,opt,name=sasl,proto3" json:"sasl,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_Kafka) Reset() {
+	*x = Data_Kafka{}
+	mi := &file_conf_v1_conf_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Kafka) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Kafka) ProtoMessage() {}
+
+func (x *Data_Kafka) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Kafka.ProtoReflect.Descriptor instead.
+func (*Data_Kafka) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{5, 3}
+}
+
+func (x *Data_Kafka) GetBrokers() []string {
+	if x != nil {
+		return x.Brokers
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *Data_Kafka) GetConsumerGroup() string {
+	if x != nil {
+		return x.ConsumerGroup
+	}
+	return ""
+}
+
+func (x *Data_Kafka) GetRequiredAcks() int32 {
+	if x != nil {
+		return x.RequiredAcks
+	}
+	return 0
+}
+
+func (x *Data_Kafka) GetRetryMax() int32 {
+	if x != nil {
+		return x.RetryMax
+	}
+	return 0
+}
+
+func (x *Data_Kafka) GetRetryBackoff() *durationpb.Duration {
+	if x != nil {
+		return x.RetryBackoff
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetDialTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.DialTimeout
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetReadTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.ReadTimeout
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetWriteTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.WriteTimeout
+	}
+	return nil
+}
+
+func (x *Data_Kafka) GetCompression() string {
+	if x != nil {
+		return x.Compression
+	}
+	return ""
+}
+
+func (x *Data_Kafka) GetSasl() *Data_Kafka_SASL {
+	if x != nil {
+		return x.Sasl
+	}
+	return nil
+}
+
+// ClickHouse 配置（审计事件存储，由 app/audit/service 使用）
+type Data_ClickHouse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Addrs           []string               `protobuf:"bytes,1,rep,name=addrs,proto3" json:"addrs,omitempty"` // ClickHouse 地址列表（如 ["clickhouse:9000"]）
+	Database        string                 `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
+	Username        string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	Password        string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	DialTimeout     *durationpb.Duration   `protobuf:"bytes,5,opt,name=dial_timeout,json=dialTimeout,proto3" json:"dial_timeout,omitempty"`
+	ReadTimeout     *durationpb.Duration   `protobuf:"bytes,6,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
+	MaxOpenConns    int32                  `protobuf:"varint,7,opt,name=max_open_conns,json=maxOpenConns,proto3" json:"max_open_conns,omitempty"`
+	MaxIdleConns    int32                  `protobuf:"varint,8,opt,name=max_idle_conns,json=maxIdleConns,proto3" json:"max_idle_conns,omitempty"`
+	ConnMaxLifetime *durationpb.Duration   `protobuf:"bytes,9,opt,name=conn_max_lifetime,json=connMaxLifetime,proto3" json:"conn_max_lifetime,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Data_ClickHouse) Reset() {
+	*x = Data_ClickHouse{}
+	mi := &file_conf_v1_conf_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_ClickHouse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_ClickHouse) ProtoMessage() {}
+
+func (x *Data_ClickHouse) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_ClickHouse.ProtoReflect.Descriptor instead.
+func (*Data_ClickHouse) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{5, 4}
+}
+
+func (x *Data_ClickHouse) GetAddrs() []string {
+	if x != nil {
+		return x.Addrs
+	}
+	return nil
+}
+
+func (x *Data_ClickHouse) GetDatabase() string {
+	if x != nil {
+		return x.Database
+	}
+	return ""
+}
+
+func (x *Data_ClickHouse) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *Data_ClickHouse) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *Data_ClickHouse) GetDialTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.DialTimeout
+	}
+	return nil
+}
+
+func (x *Data_ClickHouse) GetReadTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.ReadTimeout
+	}
+	return nil
+}
+
+func (x *Data_ClickHouse) GetMaxOpenConns() int32 {
+	if x != nil {
+		return x.MaxOpenConns
+	}
+	return 0
+}
+
+func (x *Data_ClickHouse) GetMaxIdleConns() int32 {
+	if x != nil {
+		return x.MaxIdleConns
+	}
+	return 0
+}
+
+func (x *Data_ClickHouse) GetConnMaxLifetime() *durationpb.Duration {
+	if x != nil {
+		return x.ConnMaxLifetime
+	}
+	return nil
+}
+
 type Data_Client_HTTP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
@@ -1979,7 +2237,7 @@ type Data_Client_HTTP struct {
 
 func (x *Data_Client_HTTP) Reset() {
 	*x = Data_Client_HTTP{}
-	mi := &file_conf_v1_conf_proto_msgTypes[26]
+	mi := &file_conf_v1_conf_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1991,7 +2249,7 @@ func (x *Data_Client_HTTP) String() string {
 func (*Data_Client_HTTP) ProtoMessage() {}
 
 func (x *Data_Client_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[26]
+	mi := &file_conf_v1_conf_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2039,7 +2297,7 @@ type Data_Client_GRPC struct {
 
 func (x *Data_Client_GRPC) Reset() {
 	*x = Data_Client_GRPC{}
-	mi := &file_conf_v1_conf_proto_msgTypes[27]
+	mi := &file_conf_v1_conf_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2051,7 +2309,7 @@ func (x *Data_Client_GRPC) String() string {
 func (*Data_Client_GRPC) ProtoMessage() {}
 
 func (x *Data_Client_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[27]
+	mi := &file_conf_v1_conf_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2088,6 +2346,67 @@ func (x *Data_Client_GRPC) GetTimeout() *durationpb.Duration {
 	return nil
 }
 
+// SASL 认证配置（可选）
+type Data_Kafka_SASL struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mechanism     string                 `protobuf:"bytes,1,opt,name=mechanism,proto3" json:"mechanism,omitempty"` // PLAIN | SCRAM-SHA-256 | SCRAM-SHA-512
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_Kafka_SASL) Reset() {
+	*x = Data_Kafka_SASL{}
+	mi := &file_conf_v1_conf_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Kafka_SASL) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Kafka_SASL) ProtoMessage() {}
+
+func (x *Data_Kafka_SASL) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Kafka_SASL.ProtoReflect.Descriptor instead.
+func (*Data_Kafka_SASL) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{5, 3, 0}
+}
+
+func (x *Data_Kafka_SASL) GetMechanism() string {
+	if x != nil {
+		return x.Mechanism
+	}
+	return ""
+}
+
+func (x *Data_Kafka_SASL) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *Data_Kafka_SASL) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
 // JWT 配置（RS256 非对称签名）
 //
 // IAM 签发端需配置 private_key_path 或 private_key_pem（二选一，path 优先）。
@@ -2106,7 +2425,7 @@ type App_Jwt struct {
 
 func (x *App_Jwt) Reset() {
 	*x = App_Jwt{}
-	mi := &file_conf_v1_conf_proto_msgTypes[28]
+	mi := &file_conf_v1_conf_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2118,7 +2437,7 @@ func (x *App_Jwt) String() string {
 func (*App_Jwt) ProtoMessage() {}
 
 func (x *App_Jwt) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[28]
+	mi := &file_conf_v1_conf_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2190,7 +2509,7 @@ type App_Log struct {
 
 func (x *App_Log) Reset() {
 	*x = App_Log{}
-	mi := &file_conf_v1_conf_proto_msgTypes[29]
+	mi := &file_conf_v1_conf_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2202,7 +2521,7 @@ func (x *App_Log) String() string {
 func (*App_Log) ProtoMessage() {}
 
 func (x *App_Log) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[29]
+	mi := &file_conf_v1_conf_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2272,7 +2591,7 @@ type App_OpenFGA struct {
 
 func (x *App_OpenFGA) Reset() {
 	*x = App_OpenFGA{}
-	mi := &file_conf_v1_conf_proto_msgTypes[30]
+	mi := &file_conf_v1_conf_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2284,7 +2603,7 @@ func (x *App_OpenFGA) String() string {
 func (*App_OpenFGA) ProtoMessage() {}
 
 func (x *App_OpenFGA) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[30]
+	mi := &file_conf_v1_conf_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2340,7 +2659,7 @@ type App_Oidc struct {
 
 func (x *App_Oidc) Reset() {
 	*x = App_Oidc{}
-	mi := &file_conf_v1_conf_proto_msgTypes[31]
+	mi := &file_conf_v1_conf_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2352,7 +2671,7 @@ func (x *App_Oidc) String() string {
 func (*App_Oidc) ProtoMessage() {}
 
 func (x *App_Oidc) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[31]
+	mi := &file_conf_v1_conf_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2392,6 +2711,75 @@ func (x *App_Oidc) GetDefaultLogoutRedirectUri() string {
 func (x *App_Oidc) GetLoginBaseUrl() string {
 	if x != nil {
 		return x.LoginBaseUrl
+	}
+	return ""
+}
+
+// 审计配置（控制 pkg/audit 的 Emitter 类型与目标）
+type App_Audit struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`                           // 是否启用审计事件采集
+	EmitterType   string                 `protobuf:"bytes,2,opt,name=emitter_type,json=emitterType,proto3" json:"emitter_type,omitempty"` // "broker"（→ Kafka）| "log"（→ 日志）| "noop"（丢弃）
+	Topic         string                 `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`                                // Kafka topic（默认 "servora.audit.events"）
+	ServiceName   string                 `protobuf:"bytes,4,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"` // 服务名称（覆盖 App.name，用于多实例场景）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *App_Audit) Reset() {
+	*x = App_Audit{}
+	mi := &file_conf_v1_conf_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *App_Audit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*App_Audit) ProtoMessage() {}
+
+func (x *App_Audit) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use App_Audit.ProtoReflect.Descriptor instead.
+func (*App_Audit) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{6, 4}
+}
+
+func (x *App_Audit) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *App_Audit) GetEmitterType() string {
+	if x != nil {
+		return x.EmitterType
+	}
+	return ""
+}
+
+func (x *App_Audit) GetTopic() string {
+	if x != nil {
+		return x.Topic
+	}
+	return ""
+}
+
+func (x *App_Audit) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
 	}
 	return ""
 }
@@ -2445,11 +2833,15 @@ const file_conf_v1_conf_proto_rawDesc = "" +
 	"\x03tls\x18\x02 \x01(\v2\x12.conf.v1.TLSConfigR\x03tls\x1aM\n" +
 	"\tGrpcEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
-	"\x05value\x18\x02 \x01(\v2\x14.conf.v1.Client.GRPCR\x05value:\x028\x01\"\xed\x06\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.conf.v1.Client.GRPCR\x05value:\x028\x01\"\xae\x0f\n" +
 	"\x04Data\x122\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x16.conf.v1.Data.DatabaseR\bdatabase\x12)\n" +
 	"\x05redis\x18\x02 \x01(\v2\x13.conf.v1.Data.RedisR\x05redis\x12,\n" +
-	"\x06client\x18\x03 \x01(\v2\x14.conf.v1.Data.ClientR\x06client\x1a:\n" +
+	"\x06client\x18\x03 \x01(\v2\x14.conf.v1.Data.ClientR\x06client\x12)\n" +
+	"\x05kafka\x18\x04 \x01(\v2\x13.conf.v1.Data.KafkaR\x05kafka\x128\n" +
+	"\n" +
+	"clickhouse\x18\x05 \x01(\v2\x18.conf.v1.Data.ClickHouseR\n" +
+	"clickhouse\x1a:\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x1a\xba\x02\n" +
@@ -2472,7 +2864,35 @@ const file_conf_v1_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12!\n" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1a\n" +
 	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xbe\b\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a\xd1\x04\n" +
+	"\x05Kafka\x12\x18\n" +
+	"\abrokers\x18\x01 \x03(\tR\abrokers\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12%\n" +
+	"\x0econsumer_group\x18\x03 \x01(\tR\rconsumerGroup\x12#\n" +
+	"\rrequired_acks\x18\x04 \x01(\x05R\frequiredAcks\x12\x1b\n" +
+	"\tretry_max\x18\x05 \x01(\x05R\bretryMax\x12>\n" +
+	"\rretry_backoff\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\fretryBackoff\x12<\n" +
+	"\fdial_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
+	"\fread_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
+	"\rwrite_timeout\x18\t \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x12 \n" +
+	"\vcompression\x18\n" +
+	" \x01(\tR\vcompression\x12,\n" +
+	"\x04sasl\x18\v \x01(\v2\x18.conf.v1.Data.Kafka.SASLR\x04sasl\x1a\\\n" +
+	"\x04SASL\x12\x1c\n" +
+	"\tmechanism\x18\x01 \x01(\tR\tmechanism\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x1a\x85\x03\n" +
+	"\n" +
+	"ClickHouse\x12\x14\n" +
+	"\x05addrs\x18\x01 \x03(\tR\x05addrs\x12\x1a\n" +
+	"\bdatabase\x18\x02 \x01(\tR\bdatabase\x12\x1a\n" +
+	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12<\n" +
+	"\fdial_timeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
+	"\fread_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12$\n" +
+	"\x0emax_open_conns\x18\a \x01(\x05R\fmaxOpenConns\x12$\n" +
+	"\x0emax_idle_conns\x18\b \x01(\x05R\fmaxIdleConns\x12E\n" +
+	"\x11conn_max_lifetime\x18\t \x01(\v2\x19.google.protobuf.DurationR\x0fconnMaxLifetime\"\xe7\t\n" +
 	"\x03App\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -2482,7 +2902,9 @@ const file_conf_v1_conf_proto_rawDesc = "" +
 	"\bmetadata\x18\x06 \x03(\v2\x1a.conf.v1.App.MetadataEntryR\bmetadata\x12.\n" +
 	"\aopenfga\x18\a \x01(\v2\x14.conf.v1.App.OpenFGAR\aopenfga\x12!\n" +
 	"\fexternal_url\x18\b \x01(\tR\vexternalUrl\x12%\n" +
-	"\x04oidc\x18\t \x01(\v2\x11.conf.v1.App.OidcR\x04oidc\x1a\xd7\x01\n" +
+	"\x04oidc\x18\t \x01(\v2\x11.conf.v1.App.OidcR\x04oidc\x12(\n" +
+	"\x05audit\x18\n" +
+	" \x01(\v2\x12.conf.v1.App.AuditR\x05audit\x1a\xd7\x01\n" +
 	"\x03Jwt\x12(\n" +
 	"\x10private_key_path\x18\x01 \x01(\tR\x0eprivateKeyPath\x12&\n" +
 	"\x0fprivate_key_pem\x18\x02 \x01(\tR\rprivateKeyPem\x12#\n" +
@@ -2508,7 +2930,12 @@ const file_conf_v1_conf_proto_rawDesc = "" +
 	"crypto_key\x18\x01 \x01(\tR\tcryptoKey\x127\n" +
 	"\x18grant_type_refresh_token\x18\x02 \x01(\bR\x15grantTypeRefreshToken\x12=\n" +
 	"\x1bdefault_logout_redirect_uri\x18\x03 \x01(\tR\x18defaultLogoutRedirectUri\x12$\n" +
-	"\x0elogin_base_url\x18\x04 \x01(\tR\floginBaseUrl\x1a;\n" +
+	"\x0elogin_base_url\x18\x04 \x01(\tR\floginBaseUrl\x1a}\n" +
+	"\x05Audit\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12!\n" +
+	"\femitter_type\x18\x02 \x01(\tR\vemitterType\x12\x14\n" +
+	"\x05topic\x18\x03 \x01(\tR\x05topic\x12!\n" +
+	"\fservice_name\x18\x04 \x01(\tR\vserviceName\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdd\x01\n" +
@@ -2604,7 +3031,7 @@ func file_conf_v1_conf_proto_rawDescGZIP() []byte {
 	return file_conf_v1_conf_proto_rawDescData
 }
 
-var file_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_conf_v1_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: conf.v1.Bootstrap
 	(*TLSConfig)(nil),           // 1: conf.v1.TLSConfig
@@ -2632,14 +3059,18 @@ var file_conf_v1_conf_proto_goTypes = []any{
 	(*Data_Database)(nil),       // 23: conf.v1.Data.Database
 	(*Data_Redis)(nil),          // 24: conf.v1.Data.Redis
 	(*Data_Client)(nil),         // 25: conf.v1.Data.Client
-	(*Data_Client_HTTP)(nil),    // 26: conf.v1.Data.Client.HTTP
-	(*Data_Client_GRPC)(nil),    // 27: conf.v1.Data.Client.GRPC
-	(*App_Jwt)(nil),             // 28: conf.v1.App.Jwt
-	(*App_Log)(nil),             // 29: conf.v1.App.Log
-	(*App_OpenFGA)(nil),         // 30: conf.v1.App.OpenFGA
-	(*App_Oidc)(nil),            // 31: conf.v1.App.Oidc
-	nil,                         // 32: conf.v1.App.MetadataEntry
-	(*durationpb.Duration)(nil), // 33: google.protobuf.Duration
+	(*Data_Kafka)(nil),          // 26: conf.v1.Data.Kafka
+	(*Data_ClickHouse)(nil),     // 27: conf.v1.Data.ClickHouse
+	(*Data_Client_HTTP)(nil),    // 28: conf.v1.Data.Client.HTTP
+	(*Data_Client_GRPC)(nil),    // 29: conf.v1.Data.Client.GRPC
+	(*Data_Kafka_SASL)(nil),     // 30: conf.v1.Data.Kafka.SASL
+	(*App_Jwt)(nil),             // 31: conf.v1.App.Jwt
+	(*App_Log)(nil),             // 32: conf.v1.App.Log
+	(*App_OpenFGA)(nil),         // 33: conf.v1.App.OpenFGA
+	(*App_Oidc)(nil),            // 34: conf.v1.App.Oidc
+	(*App_Audit)(nil),           // 35: conf.v1.App.Audit
+	nil,                         // 36: conf.v1.App.MetadataEntry
+	(*durationpb.Duration)(nil), // 37: google.protobuf.Duration
 }
 var file_conf_v1_conf_proto_depIdxs = []int32{
 	6,  // 0: conf.v1.Bootstrap.app:type_name -> conf.v1.App
@@ -2651,56 +3082,67 @@ var file_conf_v1_conf_proto_depIdxs = []int32{
 	14, // 6: conf.v1.Bootstrap.trace:type_name -> conf.v1.Trace
 	15, // 7: conf.v1.Bootstrap.metrics:type_name -> conf.v1.Metrics
 	16, // 8: conf.v1.Bootstrap.mail:type_name -> conf.v1.Mail
-	33, // 9: conf.v1.CORS.max_age:type_name -> google.protobuf.Duration
+	37, // 9: conf.v1.CORS.max_age:type_name -> google.protobuf.Duration
 	19, // 10: conf.v1.Server.http:type_name -> conf.v1.Server.HTTP
 	20, // 11: conf.v1.Server.grpc:type_name -> conf.v1.Server.GRPC
 	22, // 12: conf.v1.Client.grpc:type_name -> conf.v1.Client.GrpcEntry
 	23, // 13: conf.v1.Data.database:type_name -> conf.v1.Data.Database
 	24, // 14: conf.v1.Data.redis:type_name -> conf.v1.Data.Redis
 	25, // 15: conf.v1.Data.client:type_name -> conf.v1.Data.Client
-	28, // 16: conf.v1.App.jwt:type_name -> conf.v1.App.Jwt
-	29, // 17: conf.v1.App.log:type_name -> conf.v1.App.Log
-	32, // 18: conf.v1.App.metadata:type_name -> conf.v1.App.MetadataEntry
-	30, // 19: conf.v1.App.openfga:type_name -> conf.v1.App.OpenFGA
-	31, // 20: conf.v1.App.oidc:type_name -> conf.v1.App.Oidc
-	10, // 21: conf.v1.Registry.consul:type_name -> conf.v1.ConsulConfig
-	11, // 22: conf.v1.Registry.etcd:type_name -> conf.v1.EtcdConfig
-	12, // 23: conf.v1.Registry.nacos:type_name -> conf.v1.NacosConfig
-	13, // 24: conf.v1.Registry.kubernetes:type_name -> conf.v1.KubernetesConfig
-	10, // 25: conf.v1.Discovery.consul:type_name -> conf.v1.ConsulConfig
-	11, // 26: conf.v1.Discovery.etcd:type_name -> conf.v1.EtcdConfig
-	12, // 27: conf.v1.Discovery.nacos:type_name -> conf.v1.NacosConfig
-	13, // 28: conf.v1.Discovery.kubernetes:type_name -> conf.v1.KubernetesConfig
-	10, // 29: conf.v1.Config.consul:type_name -> conf.v1.ConsulConfig
-	11, // 30: conf.v1.Config.etcd:type_name -> conf.v1.EtcdConfig
-	12, // 31: conf.v1.Config.nacos:type_name -> conf.v1.NacosConfig
-	33, // 32: conf.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
-	33, // 33: conf.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
-	33, // 34: conf.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
-	17, // 35: conf.v1.Mail.smtp:type_name -> conf.v1.Smtp
-	18, // 36: conf.v1.Mail.from:type_name -> conf.v1.MailFrom
-	33, // 37: conf.v1.Mail.verify_email_ttl:type_name -> google.protobuf.Duration
-	33, // 38: conf.v1.Mail.reset_password_ttl:type_name -> google.protobuf.Duration
-	33, // 39: conf.v1.Smtp.send_timeout:type_name -> google.protobuf.Duration
-	33, // 40: conf.v1.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	1,  // 41: conf.v1.Server.HTTP.tls:type_name -> conf.v1.TLSConfig
-	2,  // 42: conf.v1.Server.HTTP.cors:type_name -> conf.v1.CORS
-	33, // 43: conf.v1.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	1,  // 44: conf.v1.Server.GRPC.tls:type_name -> conf.v1.TLSConfig
-	1,  // 45: conf.v1.Client.GRPC.tls:type_name -> conf.v1.TLSConfig
-	21, // 46: conf.v1.Client.GrpcEntry.value:type_name -> conf.v1.Client.GRPC
-	33, // 47: conf.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
-	33, // 48: conf.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	33, // 49: conf.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	27, // 50: conf.v1.Data.Client.grpc:type_name -> conf.v1.Data.Client.GRPC
-	26, // 51: conf.v1.Data.Client.http:type_name -> conf.v1.Data.Client.HTTP
-	33, // 52: conf.v1.Data.Client.HTTP.timeout:type_name -> google.protobuf.Duration
-	33, // 53: conf.v1.Data.Client.GRPC.timeout:type_name -> google.protobuf.Duration
-	54, // [54:54] is the sub-list for method output_type
-	54, // [54:54] is the sub-list for method input_type
-	54, // [54:54] is the sub-list for extension type_name
-	54, // [54:54] is the sub-list for extension extendee
-	0,  // [0:54] is the sub-list for field type_name
+	26, // 16: conf.v1.Data.kafka:type_name -> conf.v1.Data.Kafka
+	27, // 17: conf.v1.Data.clickhouse:type_name -> conf.v1.Data.ClickHouse
+	31, // 18: conf.v1.App.jwt:type_name -> conf.v1.App.Jwt
+	32, // 19: conf.v1.App.log:type_name -> conf.v1.App.Log
+	36, // 20: conf.v1.App.metadata:type_name -> conf.v1.App.MetadataEntry
+	33, // 21: conf.v1.App.openfga:type_name -> conf.v1.App.OpenFGA
+	34, // 22: conf.v1.App.oidc:type_name -> conf.v1.App.Oidc
+	35, // 23: conf.v1.App.audit:type_name -> conf.v1.App.Audit
+	10, // 24: conf.v1.Registry.consul:type_name -> conf.v1.ConsulConfig
+	11, // 25: conf.v1.Registry.etcd:type_name -> conf.v1.EtcdConfig
+	12, // 26: conf.v1.Registry.nacos:type_name -> conf.v1.NacosConfig
+	13, // 27: conf.v1.Registry.kubernetes:type_name -> conf.v1.KubernetesConfig
+	10, // 28: conf.v1.Discovery.consul:type_name -> conf.v1.ConsulConfig
+	11, // 29: conf.v1.Discovery.etcd:type_name -> conf.v1.EtcdConfig
+	12, // 30: conf.v1.Discovery.nacos:type_name -> conf.v1.NacosConfig
+	13, // 31: conf.v1.Discovery.kubernetes:type_name -> conf.v1.KubernetesConfig
+	10, // 32: conf.v1.Config.consul:type_name -> conf.v1.ConsulConfig
+	11, // 33: conf.v1.Config.etcd:type_name -> conf.v1.EtcdConfig
+	12, // 34: conf.v1.Config.nacos:type_name -> conf.v1.NacosConfig
+	37, // 35: conf.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
+	37, // 36: conf.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
+	37, // 37: conf.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
+	17, // 38: conf.v1.Mail.smtp:type_name -> conf.v1.Smtp
+	18, // 39: conf.v1.Mail.from:type_name -> conf.v1.MailFrom
+	37, // 40: conf.v1.Mail.verify_email_ttl:type_name -> google.protobuf.Duration
+	37, // 41: conf.v1.Mail.reset_password_ttl:type_name -> google.protobuf.Duration
+	37, // 42: conf.v1.Smtp.send_timeout:type_name -> google.protobuf.Duration
+	37, // 43: conf.v1.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	1,  // 44: conf.v1.Server.HTTP.tls:type_name -> conf.v1.TLSConfig
+	2,  // 45: conf.v1.Server.HTTP.cors:type_name -> conf.v1.CORS
+	37, // 46: conf.v1.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	1,  // 47: conf.v1.Server.GRPC.tls:type_name -> conf.v1.TLSConfig
+	1,  // 48: conf.v1.Client.GRPC.tls:type_name -> conf.v1.TLSConfig
+	21, // 49: conf.v1.Client.GrpcEntry.value:type_name -> conf.v1.Client.GRPC
+	37, // 50: conf.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
+	37, // 51: conf.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	37, // 52: conf.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	29, // 53: conf.v1.Data.Client.grpc:type_name -> conf.v1.Data.Client.GRPC
+	28, // 54: conf.v1.Data.Client.http:type_name -> conf.v1.Data.Client.HTTP
+	37, // 55: conf.v1.Data.Kafka.retry_backoff:type_name -> google.protobuf.Duration
+	37, // 56: conf.v1.Data.Kafka.dial_timeout:type_name -> google.protobuf.Duration
+	37, // 57: conf.v1.Data.Kafka.read_timeout:type_name -> google.protobuf.Duration
+	37, // 58: conf.v1.Data.Kafka.write_timeout:type_name -> google.protobuf.Duration
+	30, // 59: conf.v1.Data.Kafka.sasl:type_name -> conf.v1.Data.Kafka.SASL
+	37, // 60: conf.v1.Data.ClickHouse.dial_timeout:type_name -> google.protobuf.Duration
+	37, // 61: conf.v1.Data.ClickHouse.read_timeout:type_name -> google.protobuf.Duration
+	37, // 62: conf.v1.Data.ClickHouse.conn_max_lifetime:type_name -> google.protobuf.Duration
+	37, // 63: conf.v1.Data.Client.HTTP.timeout:type_name -> google.protobuf.Duration
+	37, // 64: conf.v1.Data.Client.GRPC.timeout:type_name -> google.protobuf.Duration
+	65, // [65:65] is the sub-list for method output_type
+	65, // [65:65] is the sub-list for method input_type
+	65, // [65:65] is the sub-list for extension type_name
+	65, // [65:65] is the sub-list for extension extendee
+	0,  // [0:65] is the sub-list for field type_name
 }
 
 func init() { file_conf_v1_conf_proto_init() }
@@ -2731,7 +3173,7 @@ func file_conf_v1_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_v1_conf_proto_rawDesc), len(file_conf_v1_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
