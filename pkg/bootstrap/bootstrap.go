@@ -96,19 +96,9 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	hostname, _ := os.Hostname()
 	identity := resolveServiceIdentity(name, version, hostname, bc.App)
 
-	appLog := bc.App.GetLog()
-
-	appLogger := logger.NewLogger(&logger.Config{
-		Env:        bc.App.Env,
-		Level:      appLog.GetLevel(),
-		Filename:   appLog.GetFilename(),
-		MaxSize:    appLog.GetMaxSize(),
-		MaxBackups: appLog.GetMaxBackups(),
-		MaxAge:     appLog.GetMaxAge(),
-		Compress:   appLog.GetCompress(),
-	})
-	appLogger = log.With(
-		appLogger,
+	zapLogger := logger.New(bc.App)
+	appLogger := log.With(
+		zapLogger,
 		"service", identity.Name,
 		"trace_id", tracing.TraceID(),
 		"span_id", tracing.SpanID(),

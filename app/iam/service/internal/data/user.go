@@ -24,7 +24,7 @@ type userRepo struct {
 func NewUserRepo(data *Data, l logger.Logger) biz.UserRepo {
 	return &userRepo{
 		data: data,
-		log:  logger.NewHelper(l, logger.WithModule("user/data/iam-service")),
+		log:  logger.For(l, "user/data/iam"),
 	}
 }
 

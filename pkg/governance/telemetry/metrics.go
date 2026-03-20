@@ -20,7 +20,7 @@ type Metrics struct {
 
 func NewMetrics(c *conf.Metrics, app *conf.App, l logger.Logger) (*Metrics, error) {
 	if c == nil || !c.Enable {
-		logger.NewHelper(l, logger.WithModule("metrics/pkg")).Info("metrics config is empty, skip metrics init")
+		logger.For(l, "metrics/pkg").Info("metrics config is empty, skip metrics init")
 		return nil, nil
 	}
 

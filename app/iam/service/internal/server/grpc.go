@@ -31,7 +31,7 @@ func NewGRPCMiddleware(
 	fga *openfga.Client,
 	rdb *redis.Client,
 ) GRPCMiddleware {
-	ms := svrmw.NewChainBuilder(logger.With(l, logger.WithModule("grpc/server/iam-service"))).
+	ms := svrmw.NewChainBuilder(logger.With(l, "grpc/server/iam")).
 		WithTrace(trace).
 		WithMetrics(mtc).
 		Build()
@@ -70,7 +70,7 @@ func NewGRPCServer(
 	authn *service.AuthnService,
 	user *service.UserService,
 ) *kgrpc.Server {
-	glog := logger.With(l, logger.WithModule("grpc/server/iam-service"))
+	glog := logger.With(l, "grpc/server/iam")
 
 	opts := []grpc.ServerOption{
 		grpc.WithLogger(glog),

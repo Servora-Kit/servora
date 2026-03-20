@@ -22,7 +22,7 @@ type authnRepo struct {
 func NewAuthnRepo(data *Data, l logger.Logger) biz.AuthnRepo {
 	return &authnRepo{
 		data: data,
-		log:  logger.NewHelper(l, logger.WithModule("authn/data/iam-service")),
+		log:  logger.For(l, "authn/data/iam"),
 	}
 }
 

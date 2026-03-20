@@ -39,7 +39,7 @@ func NewHTTPMiddleware(
 	fga *openfga.Client,
 	rdb *redis.Client,
 ) HTTPMiddleware {
-	ms := svrmw.NewChainBuilder(logger.With(l, logger.WithModule("http/server/iam-service"))).
+	ms := svrmw.NewChainBuilder(logger.With(l, "http/server/iam")).
 		WithTrace(trace).
 		WithMetrics(m).
 		Build()
@@ -99,7 +99,7 @@ func NewHTTPServer(
 	loginHandler *oidc.LoginHandler,
 	loginCompleteHandler *oidc.LoginCompleteHandler,
 ) *khttp.Server {
-	hlog := logger.With(l, logger.WithModule("http/server/iam-service"))
+	hlog := logger.With(l, "http/server/iam")
 
 	opts := []http.ServerOption{
 		http.WithLogger(hlog),

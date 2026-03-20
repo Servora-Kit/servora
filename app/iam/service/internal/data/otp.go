@@ -18,7 +18,7 @@ type otpRepo struct {
 func NewOTPRepo(redisClient *redis.Client, l logger.Logger) biz.OTPRepo {
 	return &otpRepo{
 		redis: redisClient,
-		log:   logger.NewHelper(l, logger.WithModule("otp/data/iam-service")),
+		log:   logger.For(l, "otp/data/iam"),
 	}
 }
 

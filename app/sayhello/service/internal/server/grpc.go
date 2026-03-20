@@ -13,7 +13,7 @@ import (
 )
 
 func NewGRPCServer(c *conf.Server, trace *conf.Trace, mtc *telemetry.Metrics, l logger.Logger, sayhello *service.SayHelloService) *kgrpc.Server {
-	grpcLogger := logger.With(l, logger.WithModule("grpc/server/sayhello-service"))
+	grpcLogger := logger.With(l, "grpc/server/sayhello")
 
 	mw := middleware.NewChainBuilder(grpcLogger).
 		WithTrace(trace).

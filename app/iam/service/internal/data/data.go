@@ -36,14 +36,14 @@ type Data struct {
 func NewData(entClient *ent.Client, c *conf.Data, l logger.Logger, client client.Client, redisClient *redis.Client) (*Data, func(), error) {
 	_ = c
 	cleanup := func() {
-		logger.NewHelper(l).Info("closing the data resources")
+		logger.For(l, "core/data/iam").Info("closing the data resources")
 		if err := entClient.Close(); err != nil {
-			logger.NewHelper(l).Warnf("failed to close ent client: %v", err)
+			logger.For(l, "core/data/iam").Warnf("failed to close ent client: %v", err)
 		}
 	}
 	return &Data{
 		entClient: entClient,
-		log:       logger.NewHelper(l, logger.WithModule("core/data/iam-service")),
+		log:       logger.For(l, "core/data/iam"),
 		client:    client,
 		redis:     redisClient,
 	}, cleanup, nil
@@ -110,7 +110,7 @@ func NewRedis(cfg *conf.Data, l logger.Logger) (*redis.Client, func(), error) {
 		return nil, nil, errors.New("redis configuration is required")
 	}
 
-	return redis.NewClient(redisConfig, logger.With(l, logger.WithModule("redis/data/iam-service")))
+	return redis.NewClient(redisConfig, logger.With(l, "redis/data/iam"))
 }
 
 func NewMailSender(c *conf.Mail) mail.Sender {

@@ -45,7 +45,7 @@ func NewAuthnUsecase(
 		tokenStore: tokenStore,
 		mailer:     mailer,
 		mailCfg:    mailCfg,
-		log:        logger.NewHelper(l, logger.WithModule("authn/biz/iam-service")),
+		log:        logger.For(l, "authn/biz/iam"),
 		cfg:        cfg,
 		keyManager: km,
 	}

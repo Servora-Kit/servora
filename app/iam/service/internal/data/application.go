@@ -22,7 +22,7 @@ type applicationRepo struct {
 func NewApplicationRepo(data *Data, l logger.Logger) biz.ApplicationRepo {
 	return &applicationRepo{
 		data: data,
-		log:  logger.NewHelper(l, logger.WithModule("application/data/iam-service")),
+		log:  logger.For(l, "application/data/iam"),
 	}
 }
 

@@ -46,7 +46,7 @@ func WithIssuerURLOverride(url string) EndpointOption {
 // If external_url is empty a warning is logged and the issuer URL in the
 // OIDC Discovery response will be blank.
 func NewEndpoints(km *KeyManager, appCfg *conf.App, l logger.Logger, opts ...EndpointOption) *Endpoints {
-	log := logger.NewHelper(l, logger.WithModule("jwks/pkg"))
+	log := logger.For(l, "jwks/pkg")
 	e := &Endpoints{
 		jwksPath:      DefaultJWKSPath,
 		discoveryPath: DefaultDiscoveryPath,

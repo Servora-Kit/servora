@@ -56,7 +56,7 @@ func NewOIDCStorage(
 		km:        km,
 		authnRepo: authnRepo,
 		env:       appCfg.GetEnv(),
-		log:       logger.NewHelper(l, logger.WithModule("oidc-storage/data/iam-service")),
+		log:       logger.For(l, "oidc-storage/data/iam"),
 		redis:     rdb,
 	}
 }

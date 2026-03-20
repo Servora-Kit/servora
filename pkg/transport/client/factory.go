@@ -28,7 +28,7 @@ func NewClient(
 		dataCfg:     dataCfg,
 		traceCfg:    traceCfg,
 		discovery:   discovery,
-		logger:      logger.With(l, logger.WithModule("client/pkg")),
+		logger:      logger.With(l, "client/pkg"),
 		grpcClients: initGRPCClients(dataCfg),
 	}, nil
 }

@@ -44,7 +44,7 @@ func NewUserUsecase(
 ) *UserUsecase {
 	return &UserUsecase{
 		repo:      repo,
-		log:       logger.NewHelper(l, logger.WithModule("user/biz/iam-service")),
+		log:       logger.For(l, "user/biz/iam"),
 		cfg:       cfg,
 		authnRepo: authnRepo,
 		authnUC:   authnUC,

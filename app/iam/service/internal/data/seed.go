@@ -27,7 +27,7 @@ func NewSeeder(ec *ent.Client, fga *openfga.Client, bizConf *iamconf.Biz, l logg
 		ec:   ec,
 		fga:  fga,
 		seed: bizConf.GetSeed(),
-		log:  logger.NewHelper(l, logger.WithModule("seed/data/iam-service")),
+		log:  logger.For(l, "seed/data/iam"),
 	}
 }
 

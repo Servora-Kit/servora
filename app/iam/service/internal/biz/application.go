@@ -29,7 +29,7 @@ type ApplicationUsecase struct {
 func NewApplicationUsecase(repo ApplicationRepo, l logger.Logger) *ApplicationUsecase {
 	return &ApplicationUsecase{
 		repo: repo,
-		log:  logger.NewHelper(l, logger.WithModule("application/biz/iam-service")),
+		log:  logger.For(l, "application/biz/iam"),
 	}
 }
 

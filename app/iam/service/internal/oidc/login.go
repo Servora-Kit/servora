@@ -36,7 +36,7 @@ func NewLoginHandler(app *conf.App, rdb *redis.Client, l logger.Logger) *LoginHa
 
 	return &LoginHandler{
 		redis:        rdb,
-		log:          logger.NewHelper(l, logger.WithModule("oidc/login/iam-service")),
+		log:          logger.For(l, "oidc/login/iam"),
 		loginBaseURL: loginBaseURL,
 	}
 }
