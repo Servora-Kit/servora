@@ -14,7 +14,7 @@ const testOrgUUID = "550e8400-e29b-41d4-a716-446655440000"
 const testProjUUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 
 func scopeCtx(headers map[string]string) context.Context {
-	ua := actor.NewUserActor("user-1", "Test", "test@example.com", nil)
+	ua := actor.NewUserActor(actor.UserActorParams{ID: "user-1", DisplayName: "Test", Email: "test@example.com"})
 	ctx := actor.NewContext(context.Background(), ua)
 	return transport.NewServerContext(ctx, &fakeTransport{headers: headers})
 }

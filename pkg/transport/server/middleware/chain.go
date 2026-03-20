@@ -28,7 +28,7 @@ import (
 //
 // 使用示例：
 //
-//	httpLogger := logger.With(l, logger.WithModule("http/server/my-service"))
+//	httpLogger := logger.With(l, "http/server/my-service")
 //	ms := middleware.NewChainBuilder(httpLogger).
 //	    WithTrace(trace).
 //	    WithMetrics(mtc).
@@ -49,8 +49,8 @@ type ChainBuilder struct {
 // NewChainBuilder 创建中间件链构建器。
 //
 // logger 参数是必须的，用于 logging 中间件。
-// 建议使用 logger.With(l, logger.WithModule("http/server/xxx")) 或
-// logger.With(l, logger.WithModule("grpc/server/xxx")) 来区分协议。
+// 建议使用 logger.With(l, "http/server/xxx") 或
+// logger.With(l, "grpc/server/xxx") 来区分协议。
 func NewChainBuilder(l log.Logger) *ChainBuilder {
 	return &ChainBuilder{
 		logger:    l,
