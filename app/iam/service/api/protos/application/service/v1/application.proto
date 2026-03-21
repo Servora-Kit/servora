@@ -39,7 +39,7 @@ message Application {
     presets: ["common_proto_entity"]
   };
 
-  string id = 1 [(mapper.v1.mapper_field) = {rename: "ID"}];
+  string id = 1 [(mapper.v1.mapper_field) = {rename: "ID", converter: CONVERTER_KIND_UUID_STRING}];
   string client_id = 2 [(mapper.v1.mapper_field) = {rename: "ClientID"}];
   string name = 3;
   repeated string redirect_uris = 4;
@@ -49,7 +49,7 @@ message Application {
   string access_token_type = 8;
   // type 区分应用类型：web | native | m2m
   string type = 9;
-  int32 id_token_lifetime = 10 [(mapper.v1.mapper_field) = {rename: "IDTokenLifetime"}];
+  int32 id_token_lifetime = 10 [(mapper.v1.mapper_field) = {rename: "IDTokenLifetime", converter: CONVERTER_KIND_INT_INT32}];
   optional google.protobuf.Timestamp created_at = 100 [(mapper.v1.mapper_field) = {converter: CONVERTER_KIND_TIMESTAMP_TIME}];
   optional google.protobuf.Timestamp updated_at = 101 [(mapper.v1.mapper_field) = {converter: CONVERTER_KIND_TIMESTAMP_TIME}];
 }

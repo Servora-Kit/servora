@@ -19,6 +19,10 @@ enum ConverterKind {
   CONVERTER_KIND_INT64_PTR = 4;
   // protobuf enum int32 <-> entity string
   CONVERTER_KIND_ENUM_STRING = 5;
+  // uuid.UUID <-> string (ent UUID primary key <-> proto string)
+  CONVERTER_KIND_UUID_STRING = 6;
+  // int <-> int32 (ent int <-> proto int32)
+  CONVERTER_KIND_INT_INT32 = 7;
 }
 
 // MapperMessageRule is a message-level annotation controlling mapper codegen.

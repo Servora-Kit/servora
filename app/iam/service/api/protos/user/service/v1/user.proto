@@ -62,7 +62,7 @@ message User {
     presets: ["common_proto_entity"]
   };
 
-  string id = 1 [(mapper.v1.mapper_field) = {rename: "ID", converter: CONVERTER_KIND_STRING_PTR}];
+  string id = 1 [(mapper.v1.mapper_field) = {rename: "ID", converter: CONVERTER_KIND_UUID_STRING}];
   string username = 2;
   string email = 3;
   string role = 4;
