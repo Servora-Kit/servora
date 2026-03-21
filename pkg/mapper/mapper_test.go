@@ -26,11 +26,64 @@ type entLikeUser struct {
 	Role     string
 }
 
-// ---------- CopierDBMapper (legacy) ----------
+// ---------- CopierMapper (unified) ----------
 
-func TestCopierDBMapperWithEntLikeStruct(t *testing.T) {
+func TestCopierMapper_ToProto(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.AppendConverters(AllBuiltinConverters())
+
+	src := &entLikeUser{ID: 7, Name: "alice", Email: "alice@example.com", Password: "hashed", Role: "admin"}
+	dst, err := m.ToProto(src)
+	require.NoError(t, err)
+	require.NotNil(t, dst)
+	require.Equal(t, src.ID, dst.ID)
+	require.Equal(t, src.Name, dst.Name)
+}
+
+func TestCopierMapper_ToEntity(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.AppendConverters(AllBuiltinConverters())
+
+	src := &domainUser{ID: 3, Name: "bob", Email: "bob@example.com", Role: "user"}
+	dst, err := m.ToEntity(src)
+	require.NoError(t, err)
+	require.NotNil(t, dst)
+	require.Equal(t, src.ID, dst.ID)
+}
+
+func TestCopierMapper_ErrorReturn(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	dst, err := m.ToProto(nil)
+	require.NoError(t, err)
+	require.Nil(t, dst)
+}
+
+func TestCopierMapper_MustToProto(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.AppendConverters(AllBuiltinConverters())
+
+	src := &entLikeUser{ID: 1, Name: "test"}
+	dst := m.MustToProto(src)
+	require.NotNil(t, dst)
+	require.Equal(t, int64(1), dst.ID)
+}
+
+func TestCopierMapper_ListConversions(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.AppendConverters(AllBuiltinConverters())
+
+	entities := []*entLikeUser{{ID: 1, Name: "a"}, nil, {ID: 2, Name: "b"}}
+	protos, err := m.ToProtoList(entities)
+	require.NoError(t, err)
+	require.Len(t, protos, 2)
+}
+
+func TestCopierMapper_RoundTrip(t *testing.T) {
 	phone := "13800000000"
-	domain := &domainUser{
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.AppendConverters(AllBuiltinConverters())
+
+	original := &domainUser{
 		ID:       7,
 		Name:     "alice",
 		Email:    "alice@example.com",
@@ -39,20 +92,19 @@ func TestCopierDBMapperWithEntLikeStruct(t *testing.T) {
 		Role:     "admin",
 	}
 
-	m := NewCopierDBMapper[domainUser, entLikeUser]().RegisterConverters(AllBuiltinConverters())
-
-	entity := m.ToEntity(domain)
+	entity, err := m.ToEntity(original)
+	require.NoError(t, err)
 	require.NotNil(t, entity)
-	require.Equal(t, domain.ID, entity.ID)
-	require.Equal(t, domain.Name, entity.Name)
-	require.Equal(t, domain.Email, entity.Email)
+	require.Equal(t, original.ID, entity.ID)
+	require.Equal(t, original.Name, entity.Name)
 
-	back := m.ToDomain(entity)
+	back, err := m.ToProto(entity)
+	require.NoError(t, err)
 	require.NotNil(t, back)
-	require.Equal(t, domain, back)
+	require.Equal(t, original, back)
 }
 
-func TestCopierDBMapperListWithNilItems(t *testing.T) {
+func TestCopierMapper_ToEntityListWithNilItems(t *testing.T) {
 	phone := "13900000000"
 	entities := []*entLikeUser{
 		{ID: 1, Name: "u1", Email: "u1@example.com", Phone: &phone, Role: "user"},
@@ -60,11 +112,13 @@ func TestCopierDBMapperListWithNilItems(t *testing.T) {
 		{ID: 2, Name: "u2", Email: "u2@example.com", Role: "admin"},
 	}
 
-	m := NewCopierDBMapper[domainUser, entLikeUser]().RegisterConverters(AllBuiltinConverters())
-	domains := m.ToDomainList(entities)
-	require.Len(t, domains, 2)
-	require.Equal(t, int64(1), domains[0].ID)
-	require.Equal(t, int64(2), domains[1].ID)
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.AppendConverters(AllBuiltinConverters())
+	protos, err := m.ToProtoList(entities)
+	require.NoError(t, err)
+	require.Len(t, protos, 2)
+	require.Equal(t, int64(1), protos[0].ID)
+	require.Equal(t, int64(2), protos[1].ID)
 }
 
 // ---------- Functional Mapper ----------
