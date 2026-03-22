@@ -135,7 +135,7 @@ Servora 采用：
 - custom registry；
 - generated plan apply；
 - hook 校验；
-- future patch/query helper runtime。
+- future: patch/apply helper runtime、typed JSON converter、query/filter helper runtime（见 §15.1）。
 
 ### 4.4 data 层 repo 的职责边界
 
@@ -706,25 +706,95 @@ mapper 如果也进入这条路线，整个框架方法论会更一致。
 
 ### 15.1 可自然演进的能力
 
-后续可在本设计上继续扩展：
+后续可在本设计上继续扩展（按推荐优先级排列）：
 
-1. patch/apply helper codegen
-2. query/filter helper codegen
-3. repo skeleton 辅助生成
-4. create/update field set 规则
-5. typed JSON 标准能力
-6. 资源治理级 annotation 体系
+#### 15.1.1 patch/apply helper codegen
+
+**问题：** 当前 `UpdateUser` 等方法需要手写大量 `if u.Xxx != "" { update.SetXxx(u.Xxx) }` 逻辑，每个可选字段一行，容易遗漏且与 proto 定义重复。
+
+**方案：** 在 proto field 级注解中增加 `patchable: true` 标记，由 `protoc-gen-servora-mapper` 生成 `ApplyPatch(update *ent.XxxUpdateOne, pb *xxxpb.Xxx)` 函数。生成代码读取 proto 字段是否被设置（presence / zero-value 判断），自动调用对应 ent setter。
+
+**衔接点：**
+- 复用已有的 `mapper.v1.mapper_field` 注解体系，新增 `patchable` bool 字段
+- 复用已有的 `FieldMapping`（rename）和 `FieldConverters`（类型转换）
+- 生成代码位于同一 `xxx_mapper.gen.go` 文件
+
+#### 15.1.2 create/update field set 规则
+
+**问题：** 同一个 proto message 同时用于 Create 和 Update，但两种操作的"哪些字段必填 / 可选 / 只读"规则不同。当前只能在 biz 层手写校验。
+
+**方案：** 在 proto field 注解中增加 `writable` 枚举（`CREATE_ONLY` / `UPDATE_ONLY` / `ALWAYS` / `READ_ONLY`），由插件生成 `ValidateForCreate(pb *xxxpb.Xxx) error` 和 `ValidateForUpdate(pb *xxxpb.Xxx) error` 校验函数。
+
+**衔接点：**
+- 扩展 `mapper.v1.mapper_field` 注解
+- 校验函数可在 biz 层或 service 层调用
+- 与 `patchable`（15.1.1）配合：`READ_ONLY` 字段自动排除在 patch 之外
+
+#### 15.1.3 query/filter helper codegen
+
+**问题：** `ListUsers` 等查询接口若要支持字段过滤（如 `?status=active&role=admin`），需要在 data 层手写 `if filter.Status != "" { query = query.Where(user.StatusEQ(filter.Status)) }` 等重复代码。
+
+**方案：** 在 proto field 注解中增加 `filterable: true` 标记，由插件生成 `ApplyFilters(query *ent.XxxQuery, filter *xxxpb.XxxFilter) *ent.XxxQuery` 函数。支持基本比较操作（EQ / IN / LIKE / GT / LT）。
+
+**衔接点：**
+- 需要新增 `XxxFilter` proto message 或在 `ListXxxRequest` 中内嵌 filter 字段
+- 与已有 `pagination.v1` 注解体系配合
+- 生成代码依赖 ent 的 predicate 包，因此属于 ORM 相关生成（与当前 ORM-agnostic 的 mapper plan 不同，需要独立的生成模板或配置项）
+
+#### 15.1.4 typed JSON 标准能力
+
+**问题：** `User.Profile` 等字段在 ent 中是 `map[string]any`，在 proto 中是结构化 message（`UserProfile`）。当前通过 post-processing hook 手写转换（见 §12.3.1），每个 JSON 字段都需要一套 `xxxFromJSON` / `xxxToJSON`。
+
+**方案：** 定义标准化的 typed JSON 转换协议：
+- proto 注解标记 `json_type: "UserProfile"` 关联 JSON 字段与其 typed message
+- `pkg/mapper` 提供 `TypedJSONConverter[T proto.Message]`，基于 `protojson` 自动完成 `map[string]any ↔ T` 转换
+- 消灭 `profileFromJSON` 等手写 helper
+
+**衔接点：**
+- 替代当前的 post-processing hook 模式
+- 可作为新的 `ConverterKind`（如 `CONVERTER_KIND_TYPED_JSON`）纳入 `FieldConverters` 体系
+- 运行时在 `pkg/mapper`，生成时在 `protoc-gen-servora-mapper`
+
+#### 15.1.5 repo skeleton 辅助生成
+
+**问题：** 新增一个资源时，需要手写 `NewXxxRepo()` + mapper 初始化 + CRUD 方法骨架，模式高度重复。
+
+**方案：** 提供 `svr gen repo <service> <resource>` CLI 命令（扩展现有 `cmd/svr`），读取 proto message 的 mapper 注解，生成：
+- `data/xxx.go` repo 骨架（struct 定义 + mapper 字段 + `NewXxxRepo` 构造 + CRUD 接口骨架）
+- `biz/xxx.go` usecase 骨架（接口定义 + 基础实现）
+- Wire provider 注册
+
+**衔接点：**
+- 不是 protoc 插件，而是 CLI 工具（一次性脚手架，生成后可自由修改）
+- 读取已有 `XxxMapperPlan()` 函数确定 mapper 配置
+- 与 `patch`（15.1.1）、`filter`（15.1.3）生成的 helper 自然组合
+
+#### 15.1.6 资源治理级 annotation 体系
+
+**问题：** 随着 mapper / authz / audit 三套注解体系成熟，proto message 上承载的元信息越来越多，但缺少统一的"资源级"元数据（如资源名称、所属域、版本、生命周期策略）。
+
+**方案：** 定义 `servora.resource.v1` 注解，在 message 级声明：
+- `resource_name`：规范化资源名（如 `iam.user`）
+- `domain`：所属业务域
+- `lifecycle`：软删除 / 硬删除 / 归档策略
+- `audit_level`：审计级别（与 audit 注解联动）
+- `authz_object_type`：授权对象类型（与 authz 注解联动）
+
+**衔接点：**
+- 统一已有 `servora.mapper`、`servora.authz`、`servora.audit` 三套注解的 message 级元信息
+- 为未来的资源发现、API 文档生成、治理面板提供结构化数据源
+- 渐进式引入：先声明注解，各子系统逐步读取
 
 ### 15.2 不建议立即扩展的能力
 
 当前不建议同时做：
 
-1. 自动生成完整 repo 实现
-2. 自动生成 biz/service
-3. 自动生成复杂 query DSL
-4. 大而全的 ORM 适配器矩阵
+1. **自动生成完整 repo 实现** — 与 15.1.5 的 skeleton 不同，全自动 repo 会锁死 ORM 细节，丧失灵活性
+2. **自动生成 biz/service** — 业务逻辑不应由模板驱动
+3. **自动生成复杂 query DSL** — 15.1.3 的 filter helper 足够覆盖 80% 场景，复杂查询应手写
+4. **大而全的 ORM 适配器矩阵** — 当前只支持 ent，不需要提前抽象多 ORM 适配层
 
-先把 mapper/runtime/plugin 跑顺，再向外扩。
+先把 mapper/runtime/plugin 跑顺，再按 15.1 的优先级逐项推进。
 
 ---
 
