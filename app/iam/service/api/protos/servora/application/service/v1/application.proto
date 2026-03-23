@@ -24,6 +24,7 @@ enum ErrorReason {
 }
 
 service ApplicationService {
+  // 创建应用需要平台管理员权限
   rpc CreateApplication(CreateApplicationRequest) returns (CreateApplicationResponse);
   rpc GetApplication(GetApplicationRequest) returns (GetApplicationResponse);
   rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
