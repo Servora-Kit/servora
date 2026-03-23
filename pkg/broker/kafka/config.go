@@ -13,7 +13,7 @@ import (
 // nil when Kafka is not configured. It follows the optional-initialisation pattern of
 // pkg/openfga.NewClientOptional: callers check for nil before use.
 func NewBrokerOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) broker.Broker {
-	log := logger.For(l, "broker/kafka")
+	log := logger.For(l, "kafka/broker/pkg")
 	if cfg == nil || cfg.Kafka == nil || len(cfg.Kafka.Brokers) == 0 {
 		log.Info("Kafka not configured, broker disabled")
 		return nil
