@@ -61,7 +61,7 @@ func (m *AuditRule) validate(all bool) error {
 
 	// no validation rules for EventType
 
-	// no validation rules for Operation
+	// no validation rules for MutationType
 
 	// no validation rules for TargetType
 

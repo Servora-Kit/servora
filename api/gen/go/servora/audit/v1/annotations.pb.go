@@ -29,12 +29,15 @@ type AuditRule struct {
 	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	// 事件类型，通常对应 RESOURCE_MUTATION 或 AUTHZ_TUPLE_CHANGED 等。
 	EventType AuditEventType `protobuf:"varint,2,opt,name=event_type,json=eventType,proto3,enum=servora.audit.v1.AuditEventType" json:"event_type,omitempty"`
-	// 操作语义（"create" | "update" | "delete" | "read" | 自定义）
-	Operation string `protobuf:"bytes,3,opt,name=operation,proto3" json:"operation,omitempty"`
-	// 目标资源类型（如 "user"、"project"）。
-	// 支持 proto field path 引用（如 "req.resource_type"）。
+	// 操作语义：CREATE / UPDATE / DELETE。仅用于 RESOURCE_MUTATION 事件类型。
+	// 使用 ResourceMutationType 枚举，编译期校验，防止拼写错误。
+	MutationType ResourceMutationType `protobuf:"varint,3,opt,name=mutation_type,json=mutationType,proto3,enum=servora.audit.v1.ResourceMutationType" json:"mutation_type,omitempty"`
+	// 目标资源类型（如 "user"、"project"、"greeting"）。
+	// 指的是被操作的资源类别，不是 actor 类型。
+	// 支持字符串字面量（本阶段不支持 field path 引用）。
 	TargetType string `protobuf:"bytes,4,opt,name=target_type,json=targetType,proto3" json:"target_type,omitempty"`
 	// 目标 ID 的 proto field path（如 "req.id"、"resp.id"）。
+	// 由 protoc-gen-servora-audit 生成提取函数，留空则不提取。
 	TargetIdField string `protobuf:"bytes,5,opt,name=target_id_field,json=targetIdField,proto3" json:"target_id_field,omitempty"`
 	// 是否在 handler 返回错误时仍记录审计事件。默认 false（仅成功记录）。
 	RecordOnError bool `protobuf:"varint,6,opt,name=record_on_error,json=recordOnError,proto3" json:"record_on_error,omitempty"`
@@ -86,11 +89,11 @@ func (x *AuditRule) GetEventType() AuditEventType {
 	return AuditEventType_AUDIT_EVENT_TYPE_UNSPECIFIED
 }
 
-func (x *AuditRule) GetOperation() string {
+func (x *AuditRule) GetMutationType() ResourceMutationType {
 	if x != nil {
-		return x.Operation
+		return x.MutationType
 	}
-	return ""
+	return ResourceMutationType_RESOURCE_MUTATION_TYPE_UNSPECIFIED
 }
 
 func (x *AuditRule) GetTargetType() string {
@@ -135,12 +138,12 @@ var File_servora_audit_v1_annotations_proto protoreflect.FileDescriptor
 
 const file_servora_audit_v1_annotations_proto_rawDesc = "" +
 	"\n" +
-	"\"servora/audit/v1/annotations.proto\x12\x10servora.audit.v1\x1a\x1cservora/audit/v1/audit.proto\x1a google/protobuf/descriptor.proto\"\xf5\x01\n" +
+	"\"servora/audit/v1/annotations.proto\x12\x10servora.audit.v1\x1a\x1cservora/audit/v1/audit.proto\x1a google/protobuf/descriptor.proto\"\xa4\x02\n" +
 	"\tAuditRule\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12?\n" +
 	"\n" +
-	"event_type\x18\x02 \x01(\x0e2 .servora.audit.v1.AuditEventTypeR\teventType\x12\x1c\n" +
-	"\toperation\x18\x03 \x01(\tR\toperation\x12\x1f\n" +
+	"event_type\x18\x02 \x01(\x0e2 .servora.audit.v1.AuditEventTypeR\teventType\x12K\n" +
+	"\rmutation_type\x18\x03 \x01(\x0e2&.servora.audit.v1.ResourceMutationTypeR\fmutationType\x12\x1f\n" +
 	"\vtarget_type\x18\x04 \x01(\tR\n" +
 	"targetType\x12&\n" +
 	"\x0ftarget_id_field\x18\x05 \x01(\tR\rtargetIdField\x12&\n" +
@@ -165,17 +168,19 @@ var file_servora_audit_v1_annotations_proto_msgTypes = make([]protoimpl.MessageI
 var file_servora_audit_v1_annotations_proto_goTypes = []any{
 	(*AuditRule)(nil),                  // 0: servora.audit.v1.AuditRule
 	(AuditEventType)(0),                // 1: servora.audit.v1.AuditEventType
-	(*descriptorpb.MethodOptions)(nil), // 2: google.protobuf.MethodOptions
+	(ResourceMutationType)(0),          // 2: servora.audit.v1.ResourceMutationType
+	(*descriptorpb.MethodOptions)(nil), // 3: google.protobuf.MethodOptions
 }
 var file_servora_audit_v1_annotations_proto_depIdxs = []int32{
 	1, // 0: servora.audit.v1.AuditRule.event_type:type_name -> servora.audit.v1.AuditEventType
-	2, // 1: servora.audit.v1.audit_rule:extendee -> google.protobuf.MethodOptions
-	0, // 2: servora.audit.v1.audit_rule:type_name -> servora.audit.v1.AuditRule
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	2, // [2:3] is the sub-list for extension type_name
-	1, // [1:2] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 1: servora.audit.v1.AuditRule.mutation_type:type_name -> servora.audit.v1.ResourceMutationType
+	3, // 2: servora.audit.v1.audit_rule:extendee -> google.protobuf.MethodOptions
+	0, // 3: servora.audit.v1.audit_rule:type_name -> servora.audit.v1.AuditRule
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	3, // [3:4] is the sub-list for extension type_name
+	2, // [2:3] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_servora_audit_v1_annotations_proto_init() }
