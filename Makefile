@@ -125,6 +125,7 @@ plugin:
 	@go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
 	@go install github.com/envoyproxy/protoc-gen-validate@latest
 	@go install ./cmd/protoc-gen-servora-authz
+	@go install ./cmd/protoc-gen-servora-audit
 	@go install ./cmd/protoc-gen-servora-mapper
 	@echo "$(GREEN)✓ Protoc plugins installed$(RESET)"
 
