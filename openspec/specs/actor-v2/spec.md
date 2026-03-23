@@ -17,7 +17,7 @@ Defines requirements for the `actor-v2` capability.
 - `Scopes() []string` — OAuth2 scope 列表
 - `Attrs() map[string]string` — 扩展属性 bag
 
-现有的 `Scope(key string) string` 方法 SHALL 保留，用于请求级维度（tenant/org/project）。
+现有的 `Scope(key string) string` 方法 SHALL 保留，用于请求级维度（由调用方定义 key，框架不预设具体 key）。
 
 #### Scenario: UserActor carries all identity fields
 
@@ -29,36 +29,27 @@ Defines requirements for the `actor-v2` capability.
 - **WHEN** a `UserActor` is constructed with only id and type
 - **THEN** `Email()` SHALL return `""`, `Roles()` SHALL return `nil` or empty slice, `Attrs()` SHALL return empty map
 
-### Requirement: ServiceActor type for service-to-service calls
+#### Scenario: No business-specific scope convenience methods
 
-The system SHALL provide a `ServiceActor` implementing `Actor` with `Type()` returning `TypeService` ("service").
+- **WHEN** `UserActor` is inspected
+- **THEN** it SHALL NOT expose `TenantID()`, `OrganizationID()`, `ProjectID()` or their setters — only generic `Scope(key)` / `SetScope(key, val)`
 
-`ServiceActor` SHALL carry at minimum: `ID`, `ClientID`, `DisplayName`.
+#### Scenario: No Metadata legacy field
 
-#### Scenario: ServiceActor is recognized by type
-
-- **WHEN** a `ServiceActor` is constructed with id "order-svc" and clientID "order-client"
-- **THEN** `Type()` SHALL return `TypeService`, `ID()` SHALL return "order-svc", `ClientID()` SHALL return "order-client"
-
-### Requirement: Actor Type enum includes service type
-
-The `Type` constants SHALL include `TypeService Type = "service"` in addition to existing `TypeUser`, `TypeSystem`, `TypeAnonymous`.
-
-#### Scenario: Type constant availability
-
-- **WHEN** code references `actor.TypeService`
-- **THEN** it SHALL compile and equal the string "service"
+- **WHEN** `UserActorParams` is inspected
+- **THEN** it SHALL NOT have a `Metadata` field — use `Attrs` instead
 
 ### Requirement: Existing callers compile after migration
 
-All existing code that creates `UserActor` or consumes `Actor` interface SHALL be updated to compile with the new interface signature. This includes `pkg/authn`, `pkg/transport/server/middleware`, `app/iam/service`, `app/sayhello/service`.
+All existing code that creates `UserActor` or consumes `Actor` interface SHALL be updated to compile with the interface changes. This includes `pkg/authn`, `pkg/transport/server/middleware`, `app/iam/service`, `app/sayhello/service`.
 
-#### Scenario: pkg/authn defaultClaimsMapper adapts to new UserActor
-
-- **WHEN** `defaultClaimsMapper` is called with JWT MapClaims containing "sub", "name", "email", "realm_access.roles"
-- **THEN** it SHALL return a `UserActor` with `Subject()` populated from "sub" and `Roles()` populated from claims
-
-#### Scenario: Full project compiles after actor v2
+#### Scenario: Full project compiles after actor changes
 
 - **WHEN** `go build ./...` is run across all workspace modules
 - **THEN** compilation SHALL succeed with zero errors
+
+## REMOVED Requirements
+
+### Requirement: Actor scope key constants for tenant/org/project
+**Reason**: Business-specific scope key constants (`ScopeKeyTenantID`, `ScopeKeyOrganizationID`, `ScopeKeyProjectID`) violate the pkg despecialization principle. The generic `Scope(key)` API is sufficient.
+**Migration**: Callers define their own scope key constants and use `actor.Scope("tenant_id")` directly.

@@ -13,11 +13,11 @@
 | Phase 1 | 框架骨架 (framework-audit-skeleton) | ✅ 已完成 | `openspec/changes/archive/2026-03-20-framework-audit-skeleton/` |
 | Phase 2a | 审计 emit 接入（pkg 层） | ✅ 已完成 | `openspec/changes/archive/2026-03-22-audit-emit-integration/` |
 | Phase 2b | Audit Service + ClickHouse | ✅ 已完成 | `openspec/changes/archive/2026-03-20-audit-service-clickhouse/` |
-| Phase 3 | all-in-proto 代码生成 + pkg 去特化 | ✅ 已完成 | `openspec/changes/proto-codegen-audit-authz/` |
+| Phase 3 | all-in-proto 代码生成 + pkg 去特化 | ✅ 已完成 | `openspec/changes/archive/2026-03-23-proto-codegen-audit-authz/` |
 | Phase 4 | Keycloak 接入 | 📋 规划中 | — |
 | Phase 5 | Servora 生态扩展 | 📋 规划中 | — |
 
-**已沉淀 specs（16 个）：** `openspec/specs/` 下的 actor-v2、audit-clickhouse-storage、audit-kafka-consumer、audit-proto、audit-query-api、audit-runtime、audit-service-scaffold、authz-audit-emit、broker-abstraction、config-proto-extension、identity-header-enhancement、infra-kafka-clickhouse、logger-refactor、openfga-audit-emit、openfga-framework-api、proto-package-governance。
+**已沉淀 specs（19 个）：** `openspec/specs/` 下的 actor-v2、audit-clickhouse-storage、audit-codegen-integration、audit-kafka-consumer、audit-proto、audit-query-api、audit-runtime、audit-service-scaffold、authz-audit-emit、broker-abstraction、config-proto-extension、identity-header-enhancement、infra-kafka-clickhouse、logger-refactor、openfga-audit-emit、openfga-framework-api、pkg-despecialization、proto-package-governance、protoc-gen-servora-audit。
 
 ---
 
@@ -276,7 +276,7 @@ proto 注解 → protoc-gen-servora-audit → middleware 自动执行
 
 ### Phase 3：all-in-proto 代码生成 + pkg 去特化 ✅ 已完成
 
-> 详细设计、spec 与实现索引见 `openspec/changes/proto-codegen-audit-authz/`。
+> 详细设计、spec 与实现索引见 `openspec/changes/archive/2026-03-23-proto-codegen-audit-authz/`。
 
 | 交付物 | 关键决策 |
 |--------|---------|
