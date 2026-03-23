@@ -7,12 +7,17 @@
 package main
 
 import (
+	"context"
 	"github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/app/sayhello/service/internal/server"
 	"github.com/Servora-Kit/servora/app/sayhello/service/internal/service"
+	"github.com/Servora-Kit/servora/pkg/audit"
 	"github.com/Servora-Kit/servora/pkg/bootstrap"
+	"github.com/Servora-Kit/servora/pkg/broker"
+	"github.com/Servora-Kit/servora/pkg/broker/kafka"
 	"github.com/Servora-Kit/servora/pkg/governance/registry"
 	"github.com/Servora-Kit/servora/pkg/governance/telemetry"
+	"github.com/Servora-Kit/servora/pkg/logger"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -23,15 +28,29 @@ import (
 
 // Injectors from wire.go:
 
-func wireApp(confServer *conf.Server, confRegistry *conf.Registry, app *conf.App, trace *conf.Trace, metrics *conf.Metrics, svcIdentity bootstrap.SvcIdentity, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confRegistry *conf.Registry, data *conf.Data, app *conf.App, trace *conf.Trace, metrics *conf.Metrics, svcIdentity bootstrap.SvcIdentity, logger log.Logger) (*kratos.App, func(), error) {
 	registrar := registry.NewRegistrar(confRegistry)
 	telemetryMetrics, err := telemetry.NewMetrics(metrics, app, logger)
 	if err != nil {
 		return nil, nil, err
 	}
+	broker := newKafkaBroker(data, logger)
+	recorder := newAuditRecorder(app, broker, logger)
 	sayHelloService := service.NewSayHelloService()
-	grpcServer := server.NewGRPCServer(confServer, trace, telemetryMetrics, logger, sayHelloService)
+	grpcServer := server.NewGRPCServer(confServer, trace, telemetryMetrics, recorder, logger, sayHelloService)
 	kratosApp := newApp(svcIdentity, logger, registrar, grpcServer)
 	return kratosApp, func() {
 	}, nil
+}
+
+// wire.go:
+
+// newKafkaBroker wraps NewBrokerOptional with a background context for Wire injection.
+func newKafkaBroker(cfg *conf.Data, l logger.Logger) broker.Broker {
+	return kafka.NewBrokerOptional(context.Background(), cfg, l)
+}
+
+// newAuditRecorder creates an audit Recorder from App config and a Broker.
+func newAuditRecorder(cfg *conf.App, b broker.Broker, l logger.Logger) *audit.Recorder {
+	return audit.NewRecorderOptional(cfg, b, l)
 }

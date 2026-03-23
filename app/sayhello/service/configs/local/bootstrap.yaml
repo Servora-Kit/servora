@@ -3,8 +3,18 @@ server:
     addr: "0.0.0.0:8010"
     timeout: 10s
 
+data:
+  kafka:
+    brokers:
+      - "localhost:9092"
+    client_id: "sayhello.service"
+
 app:
   env: "dev"
+  audit:
+    enabled: true
+    emitter_type: "broker"
+    topic: "servora.audit.events"
   log:
     level: 0
     filename: "./logs/sayhello.service.log"
