@@ -82,7 +82,7 @@ func claimStringSlice(claims gojwt.MapClaims, key string) []string {
 		return nil
 	}
 	switch val := v.(type) {
-	case []interface{}:
+	case []any:
 		out := make([]string, 0, len(val))
 		for _, item := range val {
 			if s, ok := item.(string); ok {
