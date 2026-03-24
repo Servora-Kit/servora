@@ -5,6 +5,7 @@ package servora.application.service.v1;
 import "buf/validate/validate.proto";
 import "errors/errors.proto";
 import "google/protobuf/timestamp.proto";
+import "redact/v3/redact.proto";
 import "servora/authz/v1/authz.proto";
 import "servora/mapper/v1/mapper.proto";
 import "servora/pagination/v1/pagination.proto";
@@ -90,7 +91,7 @@ message CreateApplicationRequest {
 
 message CreateApplicationResponse {
   Application application = 1;
-  string client_secret = 2;
+  string client_secret = 2 [(redact.v3.value).string = ""];
 }
 
 message GetApplicationRequest {
@@ -132,5 +133,5 @@ message RegenerateClientSecretRequest {
 }
 
 message RegenerateClientSecretResponse {
-  string client_secret = 1;
+  string client_secret = 1 [(redact.v3.value).string = ""];
 }

@@ -13,3 +13,6 @@ deps:
   - name: buf.build/kratos/apis
     commit: c2de25f14fa445a79a054214f31d17a8
     digest: b5:3e4dac0d26ce9db17309aeb845f0efb38ec7db1af06ee3c6b8dce2f4f7f53f126d62233c4910410384ead7f0a0edb6448cb389e62d1e3da5e927c3a980828f0b
+  - name: buf.build/menta2k-org/redact
+    commit: 73f00ca72edd49c59516729b8d95ff99
+    digest: b5:200ed59c451e8a1169753b614f0109a1faf9e8ca0df0cf5bcc71b4ca6a7d1391672e1a08ccf50586a792375a786dbaeb835e5aae9f44c43d5f26d817c5bb8e63

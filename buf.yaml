@@ -11,6 +11,7 @@ deps:
   - buf.build/kratos/apis
   - buf.build/bufbuild/protovalidate
   - buf.build/gnostic/gnostic
+  - buf.build/menta2k-org/redact
 
 breaking:
   use:

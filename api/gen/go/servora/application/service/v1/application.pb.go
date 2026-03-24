@@ -12,6 +12,7 @@ import (
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/mapper/v1"
 	v1 "github.com/Servora-Kit/servora/api/gen/go/servora/pagination/v1"
 	_ "github.com/go-kratos/kratos/v2/errors"
+	_ "github.com/menta2k/protoc-gen-redact/v3/redact/v3"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -775,7 +776,7 @@ var File_servora_application_service_v1_application_proto protoreflect.FileDescr
 
 const file_servora_application_service_v1_application_proto_rawDesc = "" +
 	"\n" +
-	"0servora/application/service/v1/application.proto\x12\x1eservora.application.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cservora/authz/v1/authz.proto\x1a\x1eservora/mapper/v1/mapper.proto\x1a&servora/pagination/v1/pagination.proto\"\xc3\x04\n" +
+	"0servora/application/service/v1/application.proto\x12\x1eservora.application.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16redact/v3/redact.proto\x1a\x1cservora/authz/v1/authz.proto\x1a\x1eservora/mapper/v1/mapper.proto\x1a&servora/pagination/v1/pagination.proto\"\xc3\x04\n" +
 	"\vApplication\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xca\xc1\x18\x06\n" +
@@ -801,10 +802,10 @@ const file_servora_application_service_v1_application_proto_rawDesc = "" +
 	"\v_created_atB\r\n" +
 	"\v_updated_at\"[\n" +
 	"\x18CreateApplicationRequest\x12?\n" +
-	"\x04data\x18\x01 \x01(\v2+.servora.application.service.v1.ApplicationR\x04data\"\x8f\x01\n" +
+	"\x04data\x18\x01 \x01(\v2+.servora.application.service.v1.ApplicationR\x04data\"\x97\x01\n" +
 	"\x19CreateApplicationResponse\x12M\n" +
-	"\vapplication\x18\x01 \x01(\v2+.servora.application.service.v1.ApplicationR\vapplication\x12#\n" +
-	"\rclient_secret\x18\x02 \x01(\tR\fclientSecret\"1\n" +
+	"\vapplication\x18\x01 \x01(\v2+.servora.application.service.v1.ApplicationR\vapplication\x12+\n" +
+	"\rclient_secret\x18\x02 \x01(\tB\x06ڶ\x1a\x02z\x00R\fclientSecret\"1\n" +
 	"\x15GetApplicationRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"g\n" +
 	"\x16GetApplicationResponse\x12M\n" +
@@ -828,9 +829,9 @@ const file_servora_application_service_v1_application_proto_rawDesc = "" +
 	"\x19DeleteApplicationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"9\n" +
 	"\x1dRegenerateClientSecretRequest\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"E\n" +
-	"\x1eRegenerateClientSecretResponse\x12#\n" +
-	"\rclient_secret\x18\x01 \x01(\tR\fclientSecret*\xea\x01\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"M\n" +
+	"\x1eRegenerateClientSecretResponse\x12+\n" +
+	"\rclient_secret\x18\x01 \x01(\tB\x06ڶ\x1a\x02z\x00R\fclientSecret*\xea\x01\n" +
 	"\vErrorReason\x12\x1f\n" +
 	"\x15APPLICATION_NOT_FOUND\x10\x00\x1a\x04\xa8E\x94\x03\x12$\n" +
 	"\x1aAPPLICATION_ALREADY_EXISTS\x10\x01\x1a\x04\xa8E\x99\x03\x12#\n" +

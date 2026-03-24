@@ -4,6 +4,7 @@ package servora.authn.service.v1;
 
 import "buf/validate/validate.proto";
 import "errors/errors.proto";
+import "redact/v3/redact.proto";
 import "servora/authz/v1/authz.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/authn/service/v1;authnpb";
@@ -61,16 +62,16 @@ service AuthnService {
 
 message SignupByEmailRequest {
   string name = 1 [(buf.validate.field).string.min_len = 5];
-  string password = 2 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
-  string password_confirm = 3 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
+  string password = 2 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
+  string password_confirm = 3 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
   string email = 4 [(buf.validate.field).string.email = true];
-  string cap_token = 5;
+  string cap_token = 5 [(redact.v3.value).string = ""];
 }
 
 message SignupByEmailResponse {
@@ -82,30 +83,36 @@ message SignupByEmailResponse {
 
 message LoginByEmailPasswordRequest {
   string email = 1;
-  string password = 2 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
+  string password = 2 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
 }
 
 message LoginByEmailPasswordResponse {
-  string access_token = 1;
-  string refresh_token = 2;
+  string access_token = 1 [(redact.v3.value).string = ""];
+  string refresh_token = 2 [(redact.v3.value).string = ""];
   int64 expires_in = 3;
 }
 
 message RefreshTokenRequest {
-  string refresh_token = 1 [(buf.validate.field).string.min_len = 1];
+  string refresh_token = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (redact.v3.value).string = ""
+  ];
 }
 
 message RefreshTokenResponse {
-  string access_token = 1;
-  string refresh_token = 2;
+  string access_token = 1 [(redact.v3.value).string = ""];
+  string refresh_token = 2 [(redact.v3.value).string = ""];
   int64 expires_in = 3;
 }
 
 message LogoutRequest {
-  string refresh_token = 1 [(buf.validate.field).string.min_len = 1];
+  string refresh_token = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (redact.v3.value).string = ""
+  ];
 }
 
 message LogoutResponse {
@@ -113,15 +120,18 @@ message LogoutResponse {
 }
 
 message ChangePasswordRequest {
-  string current_password = 1 [(buf.validate.field).string.min_len = 1];
-  string new_password = 2 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
-  string new_password_confirm = 3 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
+  string current_password = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (redact.v3.value).string = ""
+  ];
+  string new_password = 2 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
+  string new_password_confirm = 3 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
 }
 
 message ChangePasswordResponse {
@@ -143,7 +153,10 @@ message RequestEmailVerificationResponse {
 }
 
 message VerifyEmailRequest {
-  string token = 1 [(buf.validate.field).string.min_len = 1];
+  string token = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (redact.v3.value).string = ""
+  ];
 }
 
 message VerifyEmailResponse {
@@ -159,15 +172,18 @@ message RequestPasswordResetResponse {
 }
 
 message ResetPasswordRequest {
-  string token = 1 [(buf.validate.field).string.min_len = 1];
-  string new_password = 2 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
-  string new_password_confirm = 3 [(buf.validate.field).string = {
-    min_len: 6
-    max_len: 20
-  }];
+  string token = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (redact.v3.value).string = ""
+  ];
+  string new_password = 2 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
+  string new_password_confirm = 3 [
+    (buf.validate.field).string = {min_len: 6, max_len: 20},
+    (redact.v3.value).string = ""
+  ];
 }
 
 message ResetPasswordResponse {

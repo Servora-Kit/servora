@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
 	_ "github.com/go-kratos/kratos/v2/errors"
+	_ "github.com/menta2k/protoc-gen-redact/v3/redact/v3"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1110,41 +1111,41 @@ var File_servora_authn_service_v1_authn_proto protoreflect.FileDescriptor
 
 const file_servora_authn_service_v1_authn_proto_rawDesc = "" +
 	"\n" +
-	"$servora/authn/service/v1/authn.proto\x12\x18servora.authn.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1cservora/authz/v1/authz.proto\"\xcc\x01\n" +
+	"$servora/authn/service/v1/authn.proto\x12\x18servora.authn.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x16redact/v3/redact.proto\x1a\x1cservora/authz/v1/authz.proto\"\xe0\x01\n" +
 	"\x14SignupByEmailRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x05R\x04name\x12%\n" +
-	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\bpassword\x124\n" +
-	"\x10password_confirm\x18\x03 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\x0fpasswordConfirm\x12\x1d\n" +
-	"\x05email\x18\x04 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
-	"\tcap_token\x18\x05 \x01(\tR\bcapToken\"e\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x05R\x04name\x12+\n" +
+	"\bpassword\x18\x02 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\bpassword\x12:\n" +
+	"\x10password_confirm\x18\x03 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\x0fpasswordConfirm\x12\x1d\n" +
+	"\x05email\x18\x04 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12#\n" +
+	"\tcap_token\x18\x05 \x01(\tB\x06ڶ\x1a\x02z\x00R\bcapToken\"e\n" +
 	"\x15SignupByEmailResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\tR\x04role\"Z\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\"`\n" +
 	"\x1bLoginByEmailPasswordRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\x12%\n" +
-	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\bpassword\"\x85\x01\n" +
-	"\x1cLoginByEmailPasswordResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x1d\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\x12+\n" +
+	"\bpassword\x18\x02 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\bpassword\"\x95\x01\n" +
+	"\x1cLoginByEmailPasswordResponse\x12)\n" +
+	"\faccess_token\x18\x01 \x01(\tB\x06ڶ\x1a\x02z\x00R\vaccessToken\x12+\n" +
+	"\rrefresh_token\x18\x02 \x01(\tB\x06ڶ\x1a\x02z\x00R\frefreshToken\x12\x1d\n" +
+	"\n" +
+	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"I\n" +
+	"\x13RefreshTokenRequest\x122\n" +
+	"\rrefresh_token\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01ڶ\x1a\x02z\x00R\frefreshToken\"\x8d\x01\n" +
+	"\x14RefreshTokenResponse\x12)\n" +
+	"\faccess_token\x18\x01 \x01(\tB\x06ڶ\x1a\x02z\x00R\vaccessToken\x12+\n" +
+	"\rrefresh_token\x18\x02 \x01(\tB\x06ڶ\x1a\x02z\x00R\frefreshToken\x12\x1d\n" +
 	"\n" +
 	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"C\n" +
-	"\x13RefreshTokenRequest\x12,\n" +
-	"\rrefresh_token\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\frefreshToken\"}\n" +
-	"\x14RefreshTokenResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x1d\n" +
-	"\n" +
-	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"=\n" +
-	"\rLogoutRequest\x12,\n" +
-	"\rrefresh_token\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\frefreshToken\"*\n" +
+	"\rLogoutRequest\x122\n" +
+	"\rrefresh_token\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01ڶ\x1a\x02z\x00R\frefreshToken\"*\n" +
 	"\x0eLogoutResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb6\x01\n" +
-	"\x15ChangePasswordRequest\x122\n" +
-	"\x10current_password\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0fcurrentPassword\x12,\n" +
-	"\fnew_password\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\vnewPassword\x12;\n" +
-	"\x14new_password_confirm\x18\x03 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\x12newPasswordConfirm\"2\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xc8\x01\n" +
+	"\x15ChangePasswordRequest\x128\n" +
+	"\x10current_password\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01ڶ\x1a\x02z\x00R\x0fcurrentPassword\x122\n" +
+	"\fnew_password\x18\x02 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\vnewPassword\x12A\n" +
+	"\x14new_password_confirm\x18\x03 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\x12newPasswordConfirm\"2\n" +
 	"\x16ChangePasswordResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x19\n" +
 	"\x17LogoutAllDevicesRequest\"4\n" +
@@ -1153,19 +1154,19 @@ const file_servora_authn_service_v1_authn_proto_rawDesc = "" +
 	"\x1fRequestEmailVerificationRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"<\n" +
 	" RequestEmailVerificationResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
-	"\x12VerifyEmailRequest\x12\x1d\n" +
-	"\x05token\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05token\"/\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"9\n" +
+	"\x12VerifyEmailRequest\x12#\n" +
+	"\x05token\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01ڶ\x1a\x02z\x00R\x05token\"/\n" +
 	"\x13VerifyEmailResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"<\n" +
 	"\x1bRequestPasswordResetRequest\x12\x1d\n" +
 	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\"8\n" +
 	"\x1cRequestPasswordResetResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xa0\x01\n" +
-	"\x14ResetPasswordRequest\x12\x1d\n" +
-	"\x05token\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05token\x12,\n" +
-	"\fnew_password\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\vnewPassword\x12;\n" +
-	"\x14new_password_confirm\x18\x03 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18\x14R\x12newPasswordConfirm\"1\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb2\x01\n" +
+	"\x14ResetPasswordRequest\x12#\n" +
+	"\x05token\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01ڶ\x1a\x02z\x00R\x05token\x122\n" +
+	"\fnew_password\x18\x02 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\vnewPassword\x12A\n" +
+	"\x14new_password_confirm\x18\x03 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18\x14ڶ\x1a\x02z\x00R\x12newPasswordConfirm\"1\n" +
 	"\x15ResetPasswordResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess*\xb3\x03\n" +
 	"\vErrorReason\x12\x18\n" +

@@ -12,6 +12,7 @@ import (
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/mapper/v1"
 	v1 "github.com/Servora-Kit/servora/api/gen/go/servora/pagination/v1"
 	_ "github.com/go-kratos/kratos/v2/errors"
+	_ "github.com/menta2k/protoc-gen-redact/v3/redact/v3"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -1055,7 +1056,7 @@ var File_servora_user_service_v1_user_proto protoreflect.FileDescriptor
 
 const file_servora_user_service_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\"servora/user/service/v1/user.proto\x12\x17servora.user.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cservora/authz/v1/authz.proto\x1a\x1eservora/mapper/v1/mapper.proto\x1a&servora/pagination/v1/pagination.proto\"\x81\x02\n" +
+	"\"servora/user/service/v1/user.proto\x12\x17servora.user.service.v1\x1a\x1bbuf/validate/validate.proto\x1a\x13errors/errors.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16redact/v3/redact.proto\x1a\x1cservora/authz/v1/authz.proto\x1a\x1eservora/mapper/v1/mapper.proto\x1a&servora/pagination/v1/pagination.proto\"\x81\x02\n" +
 	"\vUserProfile\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
@@ -1115,10 +1116,10 @@ const file_servora_user_service_v1_user_proto_rawDesc = "" +
 	"\x12RestoreUserRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"H\n" +
 	"\x13RestoreUserResponse\x121\n" +
-	"\x04user\x18\x01 \x01(\v2\x1d.servora.user.service.v1.UserR\x04user\"m\n" +
+	"\x04user\x18\x01 \x01(\v2\x1d.servora.user.service.v1.UserR\x04user\"s\n" +
 	"\x11CreateUserRequest\x121\n" +
-	"\x04data\x18\x01 \x01(\v2\x1d.servora.user.service.v1.UserR\x04data\x12%\n" +
-	"\bpassword\x18\x02 \x01(\tB\t\xbaH\x06r\x04\x10\x06\x18@R\bpassword\"G\n" +
+	"\x04data\x18\x01 \x01(\v2\x1d.servora.user.service.v1.UserR\x04data\x12+\n" +
+	"\bpassword\x18\x02 \x01(\tB\x0f\xbaH\x06r\x04\x10\x06\x18@ڶ\x1a\x02z\x00R\bpassword\"G\n" +
 	"\x12CreateUserResponse\x121\n" +
 	"\x04user\x18\x01 \x01(\v2\x1d.servora.user.service.v1.UserR\x04user\"V\n" +
 	"\x11UpdateUserRequest\x12\x0e\n" +

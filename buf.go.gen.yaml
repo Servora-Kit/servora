@@ -46,6 +46,13 @@ plugins:
           - paths=source_relative
           - lang=go
 
+    # generate redact code (field-level log redaction)
+    - local: protoc-gen-redact
+      out: api/gen/go
+      opt:
+          - paths=source_relative
+          - lang=go
+
     # ==================== Servora custom plugins ====================
 
     # generate authz rules from proto annotations
