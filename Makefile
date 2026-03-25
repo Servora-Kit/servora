@@ -148,7 +148,7 @@ endif
 # Push proto to BSR, auto-labeling with current Git tag if available
 buf-push:
 	@echo "$(CYAN)Pushing proto to BSR...$(RESET)"
-	@GIT_TAG=$$(git describe --tags --exact-match HEAD 2>/dev/null | grep -E '^v[0-9]'); \
+	@GIT_TAG=$$(git tag --points-at HEAD 2>/dev/null | grep -E '^v[0-9]' | head -1); \
 	if [ -n "$$GIT_TAG" ]; then \
 		echo "  Using Git tag as BSR label: $$GIT_TAG"; \
 		buf push --exclude-unnamed --label "$$GIT_TAG"; \
