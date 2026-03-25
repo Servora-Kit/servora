@@ -48,8 +48,9 @@ type(scope): description
 ### 版本管理
 
 - Go module 版本通过 Git tag 发布：`v0.1.1`、`v0.2.0` 等
-- `api/gen` 子模块独立打 tag：`api/gen/v0.1.1` 等
-- BSR 发布版本与 Git tag 保持一致
+- `api/gen` 子模块需要独立打 tag：`api/gen/v0.1.1` 等
+- **使用 `make tag VERSION=v0.x.y` 自动打双 tag**，避免遗漏
+- BSR label 与 Git tag 自动同步（通过 `make buf-push`）
 - 业务仓库通过 `go get github.com/Servora-Kit/servora@<version>` 引用
 
 ## 顶层目录
@@ -179,14 +180,24 @@ api/protos/servora/
 ## 常用命令
 
 ```bash
+# 初始化
 make init          # 安装 protoc 插件与 CLI 工具
+
+# 代码生成
 make gen           # 生成所有代码（api）
 make api           # 仅生成 proto Go 代码
+
+# 质量检查
 make lint          # Go lint
 make lint.proto    # Proto lint
 make test          # 运行测试
 make tidy          # go mod tidy + go work sync
-make buf-push      # 推送 proto 到 BSR
+
+# 发布
+make tag VERSION=v0.x.y   # 自动打双 tag（v0.x.y + api/gen/v0.x.y）
+make buf-push             # 推送 proto 到 BSR（自动使用 Git tag 作为 label）
+
+# 清理
 make clean         # 清理生成代码
 ```
 

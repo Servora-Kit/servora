@@ -124,7 +124,8 @@ make lint          # Go lint
 make lint.proto    # Proto lint
 make test          # 运行测试
 make tidy          # go mod tidy + go work sync
-make buf-push      # 推送 proto 到 BSR
+make tag VERSION=v0.x.y  # 自动打双 tag（v0.x.y + api/gen/v0.x.y）
+make buf-push      # 推送 proto 到 BSR（自动使用 Git tag 作为 label）
 make clean         # 清理生成代码
 ```
 
