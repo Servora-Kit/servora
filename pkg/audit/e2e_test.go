@@ -19,7 +19,7 @@ func TestE2E_LogEmitter_AuthzDecisionAndTupleChanged(t *testing.T) {
 	l := logger.New(nil)
 	emitter := audit.NewLogEmitter(l)
 	recorder := audit.NewRecorder(emitter, "e2e-test")
-	defer recorder.Close()
+	defer func() { _ = recorder.Close() }()
 
 	a := actor.NewUserActor(actor.UserActorParams{
 		ID:          "user-e2e-123",
@@ -80,14 +80,14 @@ func TestE2E_BrokerEmitter_KafkaRoundTrip(t *testing.T) {
 	if err := b.Connect(ctx); err != nil {
 		t.Skipf("Kafka not available, skipping: %v", err)
 	}
-	defer b.Disconnect(ctx)
+	defer func() { _ = b.Disconnect(ctx) }()
 
 	topic := "e2e-test-audit-events"
 	l := logger.New(nil)
 
 	emitter := audit.NewBrokerEmitter(b, topic, l)
 	recorder := audit.NewRecorder(emitter, "e2e-test-svc")
-	defer recorder.Close()
+	defer func() { _ = recorder.Close() }()
 
 	a := actor.NewUserActor(actor.UserActorParams{
 		ID:          "user-kafka-789",
@@ -102,7 +102,7 @@ func TestE2E_BrokerEmitter_KafkaRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to subscribe: %v", err)
 	}
-	defer sub.Unsubscribe(true)
+	defer func() { _ = sub.Unsubscribe(true) }()
 
 	time.Sleep(2 * time.Second)
 

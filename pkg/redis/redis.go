@@ -107,7 +107,7 @@ func NewClient(cfg *Config, l logger.Logger) (*Client, func(), error) {
 
 	cleanup := func() {
 		cleanupLog.Infof("closing redis connection")
-		rdb.Close()
+		_ = rdb.Close()
 	}
 
 	return &Client{

@@ -67,7 +67,7 @@ func TestEtcdBoundaryConditions(t *testing.T) {
 		t.Skipf("Skipping boundary tests: no etcd available: %v", err)
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	t.Run("EmptyServiceInstance", func(t *testing.T) {
 		reg := New(client)
@@ -226,7 +226,7 @@ func TestEtcdWatcherResilience(t *testing.T) {
 		t.Skipf("Skipping watcher resilience test: no etcd available: %v", err)
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	reg := New(client, Namespace("/watcher-test"))
 

@@ -92,7 +92,7 @@ func (r *Registry) Register(ctx context.Context, service *registry.ServiceInstan
 		return err
 	}
 	if r.lease != nil {
-		r.lease.Close()
+		_ = r.lease.Close()
 	}
 	r.lease = clientv3.NewLease(r.client)
 	leaseID, err := r.registerWithKV(ctx, key, value)
@@ -117,7 +117,7 @@ func (r *Registry) registerKey(service *registry.ServiceInstance) string {
 func (r *Registry) Deregister(ctx context.Context, service *registry.ServiceInstance) error {
 	defer func() {
 		if r.lease != nil {
-			r.lease.Close()
+			_ = r.lease.Close()
 		}
 	}()
 	// cancel heartbeat

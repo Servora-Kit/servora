@@ -88,7 +88,7 @@ func (w *watcher) getInstance() ([]*registry.ServiceInstance, error) {
 }
 
 func (w *watcher) reWatch() error {
-	w.watcher.Close()
+	_ = w.watcher.Close()
 	w.watcher = clientv3.NewWatcher(w.client)
 	w.watchChan = w.watcher.Watch(w.ctx, w.key, clientv3.WithPrefix(), clientv3.WithRev(0), clientv3.WithKeysOnly())
 	return w.watcher.RequestProgress(w.ctx)

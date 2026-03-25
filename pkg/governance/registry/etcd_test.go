@@ -31,7 +31,7 @@ func TestEtcdRegistryAndDiscovery(t *testing.T) {
 		t.Skipf("Skipping test: could not connect to etcd: %v", err)
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// 创建注册中心实例
 	reg := New(client,
@@ -189,7 +189,7 @@ func BenchmarkEtcdServiceDiscovery(b *testing.B) {
 		b.Skipf("Skipping benchmark: could not connect to etcd: %v", err)
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	reg := New(client, Namespace("/bench-servora"))
 

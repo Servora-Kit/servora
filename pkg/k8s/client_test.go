@@ -20,15 +20,14 @@ func TestNewClientset(t *testing.T) {
 
 func TestGetCurrentNamespace(t *testing.T) {
 	t.Run("returns POD_NAMESPACE if set", func(t *testing.T) {
-		os.Setenv("POD_NAMESPACE", "test-namespace")
-		defer os.Unsetenv("POD_NAMESPACE")
+		t.Setenv("POD_NAMESPACE", "test-namespace")
 
 		ns := GetCurrentNamespace()
 		assert.Equal(t, "test-namespace", ns)
 	})
 
 	t.Run("returns default when no namespace available", func(t *testing.T) {
-		os.Unsetenv("POD_NAMESPACE")
+		t.Setenv("POD_NAMESPACE", "")
 
 		ns := GetCurrentNamespace()
 		assert.Equal(t, "default", ns)
@@ -37,28 +36,14 @@ func TestGetCurrentNamespace(t *testing.T) {
 
 func TestGetPodName(t *testing.T) {
 	t.Run("returns HOSTNAME env if set", func(t *testing.T) {
-		originalHostname := os.Getenv("HOSTNAME")
-		os.Setenv("HOSTNAME", "test-pod-12345")
-		defer func() {
-			if originalHostname != "" {
-				os.Setenv("HOSTNAME", originalHostname)
-			} else {
-				os.Unsetenv("HOSTNAME")
-			}
-		}()
+		t.Setenv("HOSTNAME", "test-pod-12345")
 
 		podName := GetPodName()
 		assert.Equal(t, "test-pod-12345", podName)
 	})
 
 	t.Run("returns os.Hostname when HOSTNAME not set", func(t *testing.T) {
-		originalHostname := os.Getenv("HOSTNAME")
-		os.Unsetenv("HOSTNAME")
-		defer func() {
-			if originalHostname != "" {
-				os.Setenv("HOSTNAME", originalHostname)
-			}
-		}()
+		t.Setenv("HOSTNAME", "")
 
 		podName := GetPodName()
 		expectedHostname, _ := os.Hostname()

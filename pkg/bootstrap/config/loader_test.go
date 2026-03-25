@@ -19,7 +19,7 @@ func TestLoadBootstrap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadBootstrap() error = %v", err)
 	}
-	defer cfg.Close()
+	defer func() { _ = cfg.Close() }()
 
 	if bc == nil || bc.App == nil {
 		t.Fatalf("LoadBootstrap() returned nil bootstrap/app")
@@ -42,7 +42,7 @@ func TestLoadBootstrapFromDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadBootstrap() error = %v", err)
 	}
-	defer cfg.Close()
+	defer func() { _ = cfg.Close() }()
 
 	if bc == nil || bc.App == nil {
 		t.Fatalf("LoadBootstrap() returned nil bootstrap/app")

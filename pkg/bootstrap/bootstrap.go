@@ -106,7 +106,7 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 
 	traceCleanup, err := telemetry.InitTracerProvider(bc.Trace, identity.Name, bc.App.Env)
 	if err != nil {
-		c.Close()
+		_ = c.Close()
 		return nil, err
 	}
 

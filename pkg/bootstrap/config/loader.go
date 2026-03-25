@@ -43,7 +43,7 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 
 	var bc conf.Bootstrap
 	if err := tempConfig.Scan(&bc); err != nil {
-		tempConfig.Close()
+		_ = tempConfig.Close()
 		return nil, nil, err
 	}
 
@@ -58,7 +58,7 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 			configCenterSource = governanceConfig.NewEtcdConfigSource(v.Etcd)
 		}
 	}
-	tempConfig.Close()
+	_ = tempConfig.Close()
 
 	finalSources, err := buildFileSources(configPath)
 	if err != nil {
@@ -77,7 +77,7 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 		return nil, nil, err
 	}
 	if err := c.Scan(&bc); err != nil {
-		c.Close()
+		_ = c.Close()
 		return nil, nil, err
 	}
 

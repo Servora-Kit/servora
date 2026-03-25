@@ -218,7 +218,7 @@ func TestNewEtcdConfigSource(t *testing.T) {
 	})
 	if client != nil {
 		_, _ = client.Delete(context.Background(), "/test/config")
-		client.Close()
+		_ = client.Close()
 	}
 
 	t.Logf("loaded %d config items", len(kvs))

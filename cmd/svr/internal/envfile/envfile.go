@@ -41,7 +41,7 @@ func read(path string) ([]entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var entries []entry
 	scanner := bufio.NewScanner(f)
@@ -73,14 +73,14 @@ func write(path string, entries []entry) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := bufio.NewWriter(f)
 	for _, e := range entries {
 		if e.key != "" {
-			fmt.Fprintf(w, "%s=%s\n", e.key, e.value)
+			_, _ = fmt.Fprintf(w, "%s=%s\n", e.key, e.value)
 		} else {
-			fmt.Fprintln(w, e.raw)
+			_, _ = fmt.Fprintln(w, e.raw)
 		}
 	}
 	return w.Flush()

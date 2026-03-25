@@ -26,7 +26,7 @@ func LoadServiceConfig(serviceName string) (*ServiceConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
-	defer krCfg.Close()
+	defer func() { _ = krCfg.Close() }()
 
 	return &ServiceConfig{
 		Name:      serviceName,
