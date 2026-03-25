@@ -1,9 +1,10 @@
 # Servora
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/Servora-Kit/servora.svg)](https://pkg.go.dev/github.com/Servora-Kit/servora)
-[![GitHub tag](https://img.shields.io/github/v/tag/Servora-Kit/servora)](https://github.com/Servora-Kit/servora/tags)
+[![GitHub release](https://img.shields.io/github/v/release/Servora-Kit/servora)](https://github.com/Servora-Kit/servora/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Servora-Kit/servora)](https://goreportcard.com/report/github.com/Servora-Kit/servora)
 [![License](https://img.shields.io/github/license/Servora-Kit/servora)](./LICENSE)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Servora-Kit/servora)
 
 简体中文
 
