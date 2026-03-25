@@ -151,6 +151,17 @@ go build ./...
 - 修改 proto 后执行 `make gen`
 - 提交前通过 `make lint` 与 `make test`
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Servora-Kit/servora&type=Date)](https://star-history.com/#Servora-Kit/servora&Date)
+
+## Acknowledgements
+
+- Thanks to all users for suggestions and feedback.
+- Thanks to all contributors and supporters in the open-source community.
+
+[![Contributors](https://contrib.rocks/image?repo=Servora-Kit/servora)](https://github.com/Servora-Kit/servora/graphs/contributors)
+
 ## License
 
 MIT，详见 `LICENSE`。
