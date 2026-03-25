@@ -1,22 +1,27 @@
-# AGENTS.md - servora 项目根目录
+# AGENTS.md - servora 框架核心仓库
 
-<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-25 -->
 
 ## 项目概览
 
-`servora` 是一个基于 **Go Kratos** 的微服务脚手架框架，采用 **Go workspace + 多模块** 与 **Buf v2 workspace** 组织方式。项目同时包含框架核心（`pkg/`、`cmd/`）和服务实现（`app/`），当前已完成 IAM 服务的主要开发。
+`servora` 是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，基于 Go Kratos，提供共享基础库（`pkg/`）、自定义 protoc 插件和 CLI 工具（`cmd/`）、框架级公共 Proto 定义（`api/protos/`，发布到 [BSR](https://buf.build/servora/servora)）。
+
+本仓库**不包含业务微服务实现**。业务微服务位于独立仓库：
+- `servora-iam`：IAM 与示例微服务（含前端）
+- `servora-platform`：平台级基础服务（审计等）
 
 当前主线事实：
-- 所有开发均在 `main` 分支进行，不使用多分支策略
-- 根目录保留 `go.mod`，并通过 `go.work` 纳管 `api/gen`、`app/iam/service`、`app/sayhello/service`
-- Proto 采用多模块联合编排：`api/protos/`、`app/iam/service/api/protos/`、`app/sayhello/service/api/protos/`
-- 共享生成入口在根目录：`make gen`、`make api`、`make openapi`、`make wire`、`make ent`
+- 所有开发均在 `main` 分支进行
+- Go module 路径：`github.com/Servora-Kit/servora`
+- 生成代码 module：`github.com/Servora-Kit/servora/api/gen`
+- 公共 proto 通过 BSR 发布：`buf.build/servora/servora`
+- `go.work` 已 gitignore，仅用于本地多仓库联合开发
 
 ## 开发约束
 
 ### 提交消息格式
 
-**强制规范**：所有提交必须遵循以下格式：
+**强制规范**：所有 Servora-Kit 组织下仓库（servora、servora-iam、servora-platform）的提交必须遵循以下格式：
 
 ```
 type(scope): description
@@ -29,134 +34,176 @@ type(scope): description
 - `buf`：Buf 配置与生成链路
 - `cmd`：CLI 工具
 - `pkg`：框架核心代码
-- `manifests/scripts`：脚本与自动化任务（k6、postgres-init 等）
-- `templates`：模板资源
-- `tool-chain`：工具链与构建体系（如 `tool-chain/mk`）
-- `md`：Markdown 文档（建议使用二级域，如 `md/readme`）
-- `docs`：非 Markdown 文档或文档体系治理（建议使用二级域，如 `docs/reference`）
-- `openspec`：OpenSpec 变更管理
 - `repo`：仓库治理/元信息（如 ignore、目录约定）
-- `app`：应用服务
-- `infra`：基础设施/部署
 
 > 说明：scope 不必来自上述列表，只校验 `type(scope): description` 基本格式。
 > scope 仍建议使用小写、语义化、简短命名（可包含 `a-z`、`0-9`、`.`、`_`、`/`、`-`）。
-> 推荐优先采用"一级域/二级域"结构，例如：`tool-chain/mk`、`md/readme`、`api/proto`。
+> 推荐优先采用"一级域/二级域"结构，例如：`pkg/audit`、`cmd/svr`、`api/proto`。
 
 **提交最佳实践**：
 1. 保持提交小而专注：一个提交只做一件事
 2. 使用清晰的描述：描述"做了什么"，而不是"怎么做的"
 3. 遵循格式：保持 `type(scope): description` 格式便于历史与工具解析
 
-**规范的灵活性**：
-- 当现有建议的一级域能够表达语义时，优先在其下使用二级域（如 `md/readme`、`tool-chain/mk`）
-- 优先保持 scope 与改动边界一致，避免为了"套用已有分类"而使用不准确 scope
-- 若新增 scope 会被频繁复用，可将其补充到本节"建议的 scope"中
-- 若判断没有合适的**一级域**，必须先向用户/维护者申请新增域；在获得同意后，再同步更新本文件
+### 版本管理
+
+- Go module 版本通过 Git tag 发布：`v0.1.1`、`v0.2.0` 等
+- `api/gen` 子模块独立打 tag：`api/gen/v0.1.1` 等
+- BSR 发布版本与 Git tag 保持一致
+- 业务仓库通过 `go get github.com/Servora-Kit/servora@<version>` 引用
 
 ## 顶层目录
 
-- `api/`：共享 proto、生成产物 `api/gen/` 与相关 AGENTS
-- `app/`：服务实现；当前包含 `iam/service/`（IAM 微服务）与 `sayhello/service/`（示例服务）
-- `cmd/svr/`：中心化 CLI，当前提供 `svr gen gorm`
-- `cmd/protoc-gen-servora-authz/`：自定义 protoc 插件，用于生成 AuthZ 规则
-- `pkg/`：共享基础库，现有 `actor`（v2，含 Subject/Roles/Scopes/Attrs/ServiceActor）、`audit`（Emitter/Recorder/middleware骨架）、`bootstrap`、`broker`（消息代理抽象）、`broker/kafka`（franz-go实现）、`ent/mixin`、`governance`、`health`、`helpers`、`jwks`、`jwt`、`k8s`、`logger`（暴力重构，`New`/`For`/`Zap`）、`mapper`、`openfga`、`redis`、`transport`；`pkg/transport/server/middleware/` 提供 ChainBuilder、WhiteList、IdentityFromHeader（支持多 header+HeaderMapping+ServiceActor）、TokenFromContext 等，不含 Authn/Authz（在 IAM 内部）
-- `manifests/`：统一部署清单，K8s 在 `manifests/k8s/`；OpenFGA model 在 `manifests/openfga/`；脚本在 `manifests/scripts/`
-- `templates/`：通用部署模板，给使用框架的人作为参考
-- `docs/`：文档目录；当前包含 `design/`、`development/`、`knowledge/`、`reference/`
-- `openspec/`：OpenSpec 变更与归档
-- `web/`：前端工作区；当前包含 `web/iam/`（IAM 前端应用）、`web/pkg/`（共享请求/错误处理工具）、`web/ui/`（共享 UI 组件库）
+- `api/`：框架级公共 proto（`api/protos/`）与 Go 生成代码（`api/gen/go/`）
+- `cmd/`：CLI 工具与自定义 protoc 插件
+  - `svr/`：中心化 CLI（`svr gen gorm`、`svr openfga`）
+  - `protoc-gen-servora-authz/`：AuthZ 规则生成插件
+  - `protoc-gen-servora-audit/`：Audit 注解生成插件
+  - `protoc-gen-servora-mapper/`：对象映射生成插件
+  - `openapi-merge/`：OpenAPI 合并工具
+- `pkg/`：共享基础库
+  - `actor`（通用 principal 模型：Subject/Roles/Scopes/Attrs/ServiceActor）
+  - `authn`（可插拔认证：JWT / Header / Noop）
+  - `authz`（可插拔授权：OpenFGA / Noop）
+  - `audit`（全链路审计：Emitter/Recorder/middleware）
+  - `bootstrap`（服务启动引导，含配置重载 loader）
+  - `broker` / `broker/kafka`（消息代理抽象 + franz-go 实现）
+  - `cap`
+  - `db/ent`（Ent schema mixin 与 scope 工具）
+  - `governance`（服务治理：注册发现、配置中心）
+  - `health`（健康检查）
+  - `helpers`（通用工具函数）
+  - `jwks` / `jwt`（JWT 签发与 JWKS 验证）
+  - `k8s`（K8s 客户端工具）
+  - `logger`（日志封装：New/For/Zap）
+  - `mail`（邮件发送）
+  - `mapper`（对象映射）
+  - `openfga`（OpenFGA 客户端封装与缓存）
+  - `pagination`（分页工具）
+  - `redis`（Redis 客户端封装）
+  - `swagger`（Swagger UI 集成）
+  - `transport`（HTTP/gRPC 传输层，含 middleware chain、WhiteList、IdentityFromHeader、TokenFromContext）
 
 ## 关键文件
 
-- `Makefile`：根构建入口，负责 `api`、`openapi`、`wire`、`ent`、构建与 Compose
-- `app.mk`：服务级通用 Makefile；服务目录中的 `Makefile` 通过 `include ../../../app.mk` 复用
-- `buf.yaml`：Buf v2 workspace，声明三个 proto module 路径
-- `buf.go.gen.yaml`：根级 Go 代码生成模板，输出到 `api/gen/go`
-- `buf.typescript.gen.yaml`：根级共享 TS 生成模板，输出到 `api/gen/ts/`（`clean: true`）
-- `buf.go.gen.yaml` 同时包含 Servora 自定义插件（`protoc-gen-servora-authz`、`protoc-gen-servora-mapper`）
-- `pnpm-workspace.yaml`：pnpm monorepo，纳管 `api/ts-client`、`web/pkg` 与 `web/*`
-- `package.json`：根级 pnpm 配置（`onlyBuiltDependencies` 等共享设置）
-- `go.work` / `go.work.sum`：多模块工作区配置
-- `README.md`：项目入口说明
+- `Makefile`：框架构建入口（init / gen / api / lint / test / compose / buf-push）
+- `buf.yaml`：Buf v2 workspace，公共 proto 模块名 `buf.build/servora/servora`
+- `buf.go.gen.yaml`：Go 代码生成模板（含自定义 authz / audit / mapper 插件）
+- `go.mod`：根 Go module
+- `go.work`（gitignored）：本地多仓库联合开发用
 
-## 当前目录约定
+## 公共 Proto 开发规范
 
-### API / Proto
-- 共享 proto 放在 `api/protos/`
-- IAM 服务 proto 放在 `app/iam/service/api/protos/`（含 `authz/service/v1/authz.proto` 授权注解定义）
-- `sayhello` 服务 proto 放在 `app/sayhello/service/api/protos/`
-- Go 生成代码统一输出到 `api/gen/go/`
+### 当前目录结构
+
+```text
+api/protos/servora/
+├── audit/v1/
+│   ├── annotations.proto   # 审计注解扩展（AuditRule, MethodOptions 扩展）
+│   └── audit.proto         # 审计事件类型枚举
+├── authz/v1/
+│   └── authz.proto         # 授权注解扩展（AuthzRule, AuthzMode, MethodOptions 扩展）
+├── conf/v1/
+│   ├── conf.proto          # 共享配置结构（Bootstrap, Server, Data, Registry, Tracer...）
+│   └── config-example.yaml # 配置文件示例
+├── mapper/v1/
+│   └── mapper.proto        # 对象映射注解
+└── pagination/v1/
+    └── pagination.proto    # 分页请求/响应消息（PagePagination, CursorPagination）
+```
 
 ### Proto 命名规范
-- 新增或迁移后的 proto `package` 必须以 `servora.` 开头，并显式携带版本后缀（如 `servora.audit.v1`、`servora.authn.service.v1`）
-- `.proto` 所在目录必须与 `package` 命名空间逐段对齐，满足 Buf `PACKAGE_DIRECTORY_MATCH`
-- `service` 不是默认层级；只有当目录语义本身包含 `service/` 时，`package` 才保留 `.service.` 段
-- `go_package` 必须与 namespaced proto 目录和生成目录一致，统一落到 `api/gen/go/servora/**`
-- 本轮业务 proto 只补 `servora.` 顶层前缀，不在这次迁移中额外收敛到 `servora.iam.*`、`servora.platform.*` 等新领域层级
 
-### 服务实现
-- `app/iam/service/`：IAM 微服务（认证、授权、组织、项目），包含 `api/`、`cmd/`、`internal/`、`configs/`；认证/授权中间件（Authn、Authz）位于 `internal/server/middleware/`
-- `app/sayhello/service/`：独立示例服务，包含自己的 `api/` 与运行时目录
+1. **package 命名**：必须以 `servora.` 开头，显式携带版本后缀
+   - 正确：`package servora.audit.v1;`
+   - 错误：`package audit.v1;`（缺少 `servora.` 前缀）
 
-### 前端
-- 前端应用统一放在 `web/<service>/`（如 `web/iam/`），共用根目录 pnpm workspace
-- 所有服务的 TypeScript 生成代码统一输出到 `api/gen/ts/`（不按服务分子目录），通过 pnpm workspace 包 `@servora/api-client`（位于 `api/ts-client/`）引用
-- 前端应用通过 `import from '@servora/api-client/<namespace>/...'` 使用生成类型，无需关心物理路径
-- 共享前端工具库（请求处理、Token 管理、Kratos 错误解析等）放在 `web/pkg/`，包名 `@servora/web-pkg`；通过 `import from '@servora/web-pkg/<module>'` 使用
-- 共享 UI 组件库放在 `web/ui/`，包名 `@servora/ui`；通过包导出复用组件、`styles.css` 与 `utils/*`
-- 新增前端应用只需在 `package.json` 加 `"@servora/api-client": "workspace:*"`、`"@servora/web-pkg": "workspace:*"`，按需接入 `@servora/ui`，并在 `tsconfig.json` 加路径别名，详见 `web/iam/AGENTS.md`
+2. **目录对齐**：`.proto` 文件所在目录必须与 `package` 命名空间逐段对齐
+   - `servora.audit.v1` → `servora/audit/v1/`
+   - 必须满足 Buf lint 规则 `PACKAGE_DIRECTORY_MATCH`
 
-### 部署
-- K8s 基础设施：`manifests/k8s/base/`
-- 服务清单：`manifests/k8s/iam/`、`manifests/k8s/sayhello/`
+3. **go_package 格式**：统一落到 `api/gen/go/servora/**`，使用 `;别名` 后缀
+   - 格式：`option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/<namespace>/v1;<alias>";`
+   - 示例：`option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1;auditv1";`
+   - 别名命名：`<namespace>v1`（如 `auditv1`）或 `<namespace>pb`（如 `authzpb`、`paginationpb`）
+
+4. **import 路径**：使用相对于 proto 根（`api/protos/`）的路径
+   - 正确：`import "servora/audit/v1/audit.proto";`
+   - 错误：`import "api/protos/servora/audit/v1/audit.proto";`
+
+### 注解扩展约定
+
+框架提供三类 MethodOptions 注解扩展（编号分配参见各 proto 文件）：
+
+| 注解 | 扩展编号 | 消费者 | 用途 |
+|------|---------|--------|------|
+| `servora.audit.v1.audit_rule` | 50000 | `protoc-gen-servora-audit` | RPC 方法审计规则 |
+| `servora.authz.v1.authz_rule` | 50001 | `protoc-gen-servora-authz` | RPC 方法授权规则 |
+| `servora.mapper.v1.mapper` | 50002 | `protoc-gen-servora-mapper` | 对象映射规则 |
+
+业务 proto 通过 `import` 引入注解，并在 RPC 方法上使用 `option (servora.xxx.v1.xxx) = { ... };` 标注。
+
+### 新增公共 Proto 流程
+
+1. 在 `api/protos/servora/<namespace>/v1/` 下创建 `.proto` 文件
+2. 遵循上述命名规范设置 `package`、`go_package`
+3. 如果是新的注解扩展，分配唯一的 MethodOptions 扩展编号（50000 起）
+4. 执行 `make lint.proto` 确保通过 Buf lint
+5. 执行 `make gen` 生成 Go 代码
+6. 验证构建：`go build ./...`
+7. 提交后打 tag 并推送 BSR：`make buf-push`
+
+### Buf 配置
+
+- `buf.yaml`：声明模块名 `buf.build/servora/servora`，依赖 googleapis、kratos/apis、protovalidate、gnostic
+- `buf.go.gen.yaml`：Go 代码生成模板，包含标准 protoc 插件和三个 servora 自定义插件
+- Buf lint 规则使用 `STANDARD`，豁免 `ENUM_VALUE_PREFIX`、`ENUM_ZERO_VALUE_SUFFIX`、`RPC_REQUEST_RESPONSE_UNIQUE`
+
+### BSR 发布
+
+- 模块名：`buf.build/servora/servora`
+- 发布命令：`make buf-push`
+  - 自动检测 HEAD 上的 Git tag（`vX.Y.Z` 格式）
+  - 有 tag 时作为 BSR label 推送；无 tag 时推送但不设 label
+- BSR label 与 Git tag 自动保持一致，无需手动指定
+- 业务仓库通过 `buf.yaml` 中的 `deps: - buf.build/servora/servora` 引用，`buf dep update` 拉取
+
+### 业务仓库 Proto 规范
+
+业务仓库（如 servora-iam）中的 proto：
+- 放在各自的 `app/<service>/service/api/protos/` 下
+- `go_package` 使用**各自仓库**的 module 路径（如 `github.com/Servora-Kit/servora-iam/api/gen/go/...`）
+- 通过 `import` 引用本仓库的公共注解（BSR 自动解析）
+- 不要将业务 proto 放入框架仓库
 
 ## 常用命令
 
-### 初始化与生成
 ```bash
-make init          # 安装工具
-make gen           # 统一生成（api + openapi + wire + ent）
-make build         # 统一生成后构建所有服务
-```
-
-### 开发与测试
-```bash
-make compose.up    # 仅启动基础设施
-make compose.dev   # 启动开发环境
-make compose.stop  # 仅停止基础设施容器
-make compose.down  # 移除容器/网络，保留数据卷
-make compose.reset # 移除容器/网络/数据卷
+make init          # 安装 protoc 插件与 CLI 工具
+make gen           # 生成所有代码（api）
+make api           # 仅生成 proto Go 代码
+make lint          # Go lint
+make lint.proto    # Proto lint
 make test          # 运行测试
-make lint          # lint.go + lint.ts（不含 proto；需时 `make lint.proto`）
-make lint.go       # Go：根模块 + GO_WORKSPACE_MODULES（手写服务模块；不含 api/gen）
-make lint.ts       # TS：WEB_APPS（web/*）+ api/ts-client，见根 Makefile
-make lint.proto    # Buf proto lint
+make tidy          # go mod tidy + go work sync
+make buf-push      # 推送 proto 到 BSR
+make clean         # 清理生成代码
 ```
 
-### CLI 工具
-```bash
-svr gen gorm <service-name...>      # GORM GEN 代码生成
-svr openfga init                    # 初始化 OpenFGA store 并上传 model
-svr openfga model apply             # 更新 model 版本到运行中的 OpenFGA 实例
-```
+## 多仓库联合开发工作流
 
-### OpenFGA 运维
-```bash
-make openfga.init                   # 等同于 svr openfga init
-make openfga.model.validate         # 验证 .fga model 语法（需 fga CLI）
-make openfga.model.test             # 运行 model 测试用例（需 fga CLI）
-make openfga.model.apply            # 等同于 svr openfga model apply
-```
+1. 所有 Servora-Kit 仓库克隆到同一父目录（如 `servora-kit/`）
+2. 父目录的 `go.work` 纳管所有模块，通过 `replace` 指令实现本地引用
+3. 修改框架代码后，业务仓库立即可见，无需发版
+4. 修改公共 proto 后：
+   - 在 `servora` 目录执行 `make gen` 重新生成框架 Go 代码
+   - 在业务仓库目录执行 `make gen` 重新生成业务 Go 代码
+5. 确认稳定后，提交框架仓库并打 tag → 推送 BSR → 业务仓库更新 `go.mod` 版本号
 
 ## 维护提示
 
-- 根 `make api` 固定使用 `buf.go.gen.yaml`（含 authz + mapper 插件）；`make api-ts` 生成所有 TypeScript 客户端
-- 修改任意 proto 后优先执行根目录 `make gen`；需要重新构建服务时直接执行根目录 `make build`
-- 修改服务依赖注入后执行对应服务目录下的 `make wire`
-- 不要手改 `api/gen/go/`、`api/gen/ts/`、`wire_gen.go`、`openapi.yaml`、`authz_rules.gen.go`
-- `api/ts-client/` 是 pnpm workspace 包的锚点（仅含 `package.json`），不要在此放任何自定义代码；生成代码在 `api/gen/ts/`
-- `web/pkg/` 是前端共享工具库，放置与 proto client 配套的通用逻辑（`request.ts` 等），不放业务代码
-- 前端路径约定：`web/<service>/`（如 `web/iam/`）
-- 修改 `manifests/openfga/model/servora.fga` 后需执行 `make openfga.model.apply` 同步到运行中的 OpenFGA 实例
-- `cmd/protoc-gen-servora-authz` 是自定义 protoc 插件，修改 proto AuthZ 注解后需重新 `make api`
+- `make api` 使用 `buf.go.gen.yaml`（含自定义插件）
+- 修改 proto 后执行 `make gen`
+- 不要手改 `api/gen/go/`
+- 修改后推送 BSR 前先 `make lint.proto` 确保通过
+- 自定义 protoc 插件代码在 `cmd/protoc-gen-servora-*`，修改后需 `make plugin` 重新安装

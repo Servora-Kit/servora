@@ -133,10 +133,17 @@ buf-update:
 	@buf dep update
 	@echo "$(GREEN)✓ Buf dependencies updated$(RESET)"
 
-# Push proto to BSR
+# Push proto to BSR, auto-labeling with current Git tag if available
 buf-push:
 	@echo "$(CYAN)Pushing proto to BSR...$(RESET)"
-	@buf push --exclude-unnamed
+	@GIT_TAG=$$(git describe --tags --exact-match HEAD 2>/dev/null | grep -E '^v[0-9]'); \
+	if [ -n "$$GIT_TAG" ]; then \
+		echo "  Using Git tag as BSR label: $$GIT_TAG"; \
+		buf push --exclude-unnamed --label "$$GIT_TAG"; \
+	else \
+		echo "  $(YELLOW)No Git version tag on HEAD, pushing without label$(RESET)"; \
+		buf push --exclude-unnamed; \
+	fi
 	@echo "$(GREEN)✓ Proto pushed to BSR$(RESET)"
 
 # ============================================================================

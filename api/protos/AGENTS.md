@@ -1,54 +1,39 @@
 # AGENTS.md - api/protos/
 
-<!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
+<!-- Parent: ../../AGENTS.md -->
+<!-- Generated: 2026-03-15 | Updated: 2026-03-25 -->
 
 ## 当前定位
 
-`api/protos/` 现在是 **共享 proto 模块**，不再承载全部服务协议。当前目录真实内容：
-- `conf/`：配置结构 proto
-- `pagination/`：分页相关公共 proto
-- `template/`：`svr new api` 命令使用的 proto 模板
-
-服务专属协议已拆到：
-- `app/iam/service/api/protos/`
-- `app/sayhello/service/api/protos/`
+`api/protos/` 是 servora 框架的**共享 proto 模块**，发布到 BSR 为 `buf.build/servora/servora`。
 
 ## 当前结构
 
 ```text
 api/protos/
-├── AGENTS.md
-├── buf.yaml
+├── README.md          # BSR 展示的 README
+├── AGENTS.md          # 本文件
+├── buf.yaml           # 模块级 buf 配置
 ├── buf.lock
-├── conf/
-└── pagination/
+└── servora/
+    ├── audit/v1/      # 审计注解扩展
+    ├── authz/v1/      # 授权注解扩展
+    ├── conf/v1/       # 共享配置结构
+    ├── mapper/v1/     # 对象映射注解
+    └── pagination/v1/ # 分页公共定义
 ```
-
-## 目录说明
-
-- `conf/v1/conf.proto`：服务配置映射
-- `pagination/`：分页请求/响应的公共定义
-- `template/service/v1/`：`svr new api` 命令使用的 proto 模板（`template.proto` 与 `template_doc.proto`）
 
 ## 生成与校验
 
-在项目根目录执行：
-
 ```bash
-make gen
-```
-
-只校验共享 proto 模块时：
-
-```bash
-cd api/protos && buf lint
-cd api/protos && buf format -w
-cd api/protos && buf mod update
+# 在项目根目录
+make gen            # 生成 Go 代码
+make lint.proto     # Buf lint
+make buf-push       # 推送到 BSR（自动使用 Git tag 作为 label）
 ```
 
 ## 维护提示
 
-- 这里不再列出 `auth/`、`user/`、`servora/`、`sayhello/` 等业务目录，那些协议已不在本模块
-- 若要更新 IAM 或 sayhello 的实际接口，请改对应服务目录下的 `api/protos/`
-- `template/` 目录仅用于 `svr new api` 命令，不参与实际代码生成
+- 业务 proto 不放在这里，各服务仓库自行管理
+- `README.md` 是 BSR 展示用，保持简洁
+- 修改后先 `make lint.proto` 确保通过，再 `make gen` 重新生成
