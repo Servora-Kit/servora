@@ -57,6 +57,10 @@ tmp/
 .cursor/
 .understand-anything/
 
+# Go workspace (local development only)
+go.work
+go.work.sum
+
 # Environment files
 .env
 .env.local
