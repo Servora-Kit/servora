@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	entgo.io/ent v0.14.5
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0
-	github.com/Servora-Kit/servora/api/gen v0.1.2
+	github.com/Servora-Kit/servora/api/gen v0.1.3
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/glebarez/sqlite v1.11.0

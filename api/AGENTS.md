@@ -39,7 +39,7 @@ api/
 
 | 命令 | 模板 | 输出 | clean |
 |------|------|------|-------|
-| `make api` | `buf.go.gen.yaml`（含 authz + mapper 插件） | `api/gen/go/` | true |
+| `make api` | `buf.go.gen.yaml`（含 authz + mapper + audit 插件） | `api/gen/go/` | true |
 | `make api-ts`（共享） | `buf.typescript.gen.yaml` | `api/gen/ts/` | true（每次重建） |
 | `make api-ts`（各服务） | `app/*/service/api/buf.typescript.gen.yaml` | `api/gen/ts/` | false（追加） |
 | `make openapi` | 各服务 `api/buf.openapi.gen.yaml` | 各服务目录 | — |

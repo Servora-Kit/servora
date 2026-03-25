@@ -69,7 +69,7 @@
 │   ├── redis/                       # Redis 客户端封装
 │   └── transport/                   # HTTP/gRPC 传输层（含 middleware chain）
 ├── buf.yaml                         # Buf v2 workspace（公共 proto 发布到 buf.build/servora/servora）
-├── buf.go.gen.yaml                  # Go 代码生成模板（含自定义插件）
+├── buf.go.gen.yaml                  # Go 代码生成模板（含 authz / mapper / audit 等自定义插件）
 ├── go.mod                           # Go module: github.com/Servora-Kit/servora
 └── Makefile                         # 框架构建入口
 ```

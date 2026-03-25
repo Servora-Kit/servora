@@ -64,3 +64,8 @@ plugins:
     - local: protoc-gen-servora-mapper
       out: api/gen/go
       opt: paths=source_relative
+
+    # generate audit rules from proto annotations
+    - local: protoc-gen-servora-audit
+      out: api/gen/go
+      opt: paths=source_relative
