@@ -2,16 +2,13 @@ version: v2
 
 modules:
   - path: api/protos
-  - path: app/audit/service/api/protos
-  - path: app/iam/service/api/protos
-  - path: app/sayhello/service/api/protos
+    name: buf.build/servora/servora
 
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/kratos/apis
   - buf.build/bufbuild/protovalidate
   - buf.build/gnostic/gnostic
-  - buf.build/menta2k-org/redact
 
 breaking:
   use:

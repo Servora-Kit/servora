@@ -1,5 +1,0 @@
-# Business-specific configuration for sayhello service (docker environment).
-# Add service-unique settings here (not covered by shared Bootstrap proto).
-# Example:
-# biz:
-#   greeting_prefix: "Hello"

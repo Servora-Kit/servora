@@ -1,9 +1,0 @@
-go 1.26.1
-
-use (
-	.
-	./api/gen
-	./app/audit/service
-	./app/iam/service
-	./app/sayhello/service
-)

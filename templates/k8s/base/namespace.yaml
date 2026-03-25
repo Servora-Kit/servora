@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: servora
-  labels:
-    app.kubernetes.io/name: servora
-    app.kubernetes.io/part-of: servora
