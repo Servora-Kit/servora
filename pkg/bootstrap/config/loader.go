@@ -13,17 +13,12 @@ import (
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
 	"github.com/go-kratos/kratos/v2/config/file"
-	"github.com/go-kratos/kratos/v2/log"
 )
 
 // LoadBootstrap 加载服务启动配置，并返回可持续 watch 的 Kratos 配置实例。
 // useEnvPrefix 为 true 时根据 serviceName 推导环境变量前缀（如 iam.service → IAM_），
 // 仅读取带前缀的环境变量覆盖配置；为 false 时读取所有无前缀的环境变量。
 func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*conf.Bootstrap, kconfig.Config, error) {
-	prev := log.GetLogger()
-	log.SetLogger(log.NewFilter(prev, log.FilterLevel(log.LevelWarn)))
-	defer log.SetLogger(prev)
-
 	var envPrefix string
 	if useEnvPrefix {
 		envPrefix = strings.ToUpper(strings.TrimSuffix(serviceName, ".service")) + "_"
