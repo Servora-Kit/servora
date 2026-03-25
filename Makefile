@@ -133,6 +133,18 @@ buf-update:
 	@buf dep update
 	@echo "$(GREEN)✓ Buf dependencies updated$(RESET)"
 
+# Tag root module and api/gen sub-module with the same version.
+# Usage: make tag VERSION=v0.2.0
+tag:
+ifndef VERSION
+	$(error VERSION is required. Usage: make tag VERSION=v0.2.0)
+endif
+	@echo "$(CYAN)Tagging $(VERSION)...$(RESET)"
+	@git tag $(VERSION)
+	@git tag api/gen/$(VERSION)
+	@echo "$(GREEN)✓ Tagged: $(VERSION), api/gen/$(VERSION)$(RESET)"
+	@echo "  Run 'git push --tags' to push"
+
 # Push proto to BSR, auto-labeling with current Git tag if available
 buf-push:
 	@echo "$(CYAN)Pushing proto to BSR...$(RESET)"
