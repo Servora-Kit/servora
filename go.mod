@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	entgo.io/ent v0.14.5
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0
-	github.com/Servora-Kit/servora/api/gen v0.0.0-20260324061218-b62c5f51c37b
+	github.com/Servora-Kit/servora/api/gen v0.1.2
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/glebarez/sqlite v1.11.0
@@ -137,6 +137,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/menta2k/protoc-gen-redact/v3 v3.0.0-20260213125431-7688a38967d4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

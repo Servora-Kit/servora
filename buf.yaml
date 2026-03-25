@@ -5,10 +5,7 @@ modules:
     name: buf.build/servora/servora
 
 deps:
-  - buf.build/googleapis/googleapis
-  - buf.build/kratos/apis
   - buf.build/bufbuild/protovalidate
-  - buf.build/gnostic/gnostic
 
 breaking:
   use:

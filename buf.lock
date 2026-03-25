@@ -4,15 +4,3 @@ deps:
   - name: buf.build/bufbuild/protovalidate
     commit: 80ab13bee0bf4272b6161a72bf7034e0
     digest: b5:1aa6a965be5d02d64e1d81954fa2e78ef9d1e33a0c30f92bc2626039006a94deb3a5b05f14ed8893f5c3ffce444ac008f7e968188ad225c4c29c813aa5f2daa1
-  - name: buf.build/gnostic/gnostic
-    commit: 087bc8072ce44e339f213209e4d57bf0
-    digest: b5:c4eebcd04bc2fdd5dd0b8d695eb419682a650b600cdb56ff2ed61208a24603e0eb1b8ae0d467925c69a24bde6d322f3c4112bd2b8efdd682d8c3128384cdac9a
-  - name: buf.build/googleapis/googleapis
-    commit: 004180b77378443887d3b55cabc00384
-    digest: b5:e8f475fe3330f31f5fd86ac689093bcd274e19611a09db91f41d637cb9197881ce89882b94d13a58738e53c91c6e4bae7dc1feba85f590164c975a89e25115dc
-  - name: buf.build/kratos/apis
-    commit: c2de25f14fa445a79a054214f31d17a8
-    digest: b5:3e4dac0d26ce9db17309aeb845f0efb38ec7db1af06ee3c6b8dce2f4f7f53f126d62233c4910410384ead7f0a0edb6448cb389e62d1e3da5e927c3a980828f0b
-  - name: buf.build/menta2k-org/redact
-    commit: 73f00ca72edd49c59516729b8d95ff99
-    digest: b5:200ed59c451e8a1169753b614f0109a1faf9e8ca0df0cf5bcc71b4ca6a7d1391672e1a08ccf50586a792375a786dbaeb835e5aae9f44c43d5f26d817c5bb8e63
