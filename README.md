@@ -1,5 +1,10 @@
 # Servora
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/Servora-Kit/servora.svg)](https://pkg.go.dev/github.com/Servora-Kit/servora)
+[![GitHub release](https://img.shields.io/github/v/release/Servora-Kit/servora)](https://github.com/Servora-Kit/servora/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Servora-Kit/servora)](https://goreportcard.com/report/github.com/Servora-Kit/servora)
+[![License](https://img.shields.io/github/license/Servora-Kit/servora)](./LICENSE)
+
 简体中文
 
 `servora` 是一个基于 Go Kratos 的微服务快速开发框架，**Proto First** 开发方式，提供共享基础库（`pkg/`）、自定义 protoc 插件和 CLI 工具（`cmd/`），以及框架级公共 Proto 定义（`api/protos/`）。
