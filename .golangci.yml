@@ -1,0 +1,20 @@
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - os.Setenv
+        - os.Unsetenv
+      check-blank: false
+
+  exclusions:
+    rules:
+      - linters: [errcheck]
+        source: "\\.Close\\("
+      - linters: [errcheck]
+        source: "\\.Disconnect\\("
+      - linters: [errcheck]
+        source: "\\.Unsubscribe\\("
