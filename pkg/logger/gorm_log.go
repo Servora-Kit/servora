@@ -3,13 +3,12 @@ package logger
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/Servora-Kit/servora/pkg/helpers"
 
 	kratoslog "github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/zap"
@@ -59,7 +58,7 @@ func (l GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	// 通用字段
 	logFields := []zap.Field{
 		zap.String("sql", sql),
-		zap.String("time", helpers.MicrosecondsStr(elapsed)),
+		zap.String("time", fmt.Sprintf("%.3fms", float64(elapsed.Nanoseconds())/1e6)),
 		zap.Int64("rows", rows),
 	}
 
