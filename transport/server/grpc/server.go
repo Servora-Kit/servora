@@ -1,17 +1,17 @@
 package grpc
 
 import (
-	"net"
-	"net/url"
-	"strconv"
+	"fmt"
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/transport/server"
+	sharedendpoint "github.com/Servora-Kit/servora/transport/shared/endpoint"
 )
 
 type Registrar func(*kgrpc.Server)
@@ -65,20 +65,53 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 	}
 
 	if o.conf != nil {
-		if o.conf.Network != "" {
-			serverOpts = append(serverOpts, kgrpc.Network(o.conf.Network))
+		listen := o.conf.GetListen()
+		network := ""
+		addr := ""
+		var timeout *durationpb.Duration
+		if listen != nil {
+			if v := strings.TrimSpace(listen.GetNetwork()); v != "" {
+				network = v
+			}
+			if v := strings.TrimSpace(listen.GetAddr()); v != "" {
+				addr = v
+			}
+			if v := listen.GetTimeout(); v != nil {
+				timeout = v
+			}
 		}
-		if o.conf.Addr != "" {
-			serverOpts = append(serverOpts, kgrpc.Address(o.conf.Addr))
+		if network != "" {
+			serverOpts = append(serverOpts, kgrpc.Network(network))
 		}
-		if o.conf.Timeout != nil {
-			serverOpts = append(serverOpts, kgrpc.Timeout(o.conf.Timeout.AsDuration()))
+		if addr != "" {
+			serverOpts = append(serverOpts, kgrpc.Address(addr))
+		}
+		if timeout != nil {
+			serverOpts = append(serverOpts, kgrpc.Timeout(timeout.AsDuration()))
 		}
 		if o.conf.Tls != nil && o.conf.Tls.Enable {
 			tlsCfg := server.MustLoadTLS(o.conf.Tls)
 			serverOpts = append(serverOpts, kgrpc.TLSConfig(tlsCfg))
 		}
-		if endpoint := resolveAdvertiseEndpoint(o.conf); endpoint != nil {
+
+		registryEndpoint := ""
+		registryHost := ""
+		if reg := o.conf.GetRegistry(); reg != nil {
+			registryEndpoint = reg.GetEndpoint()
+			registryHost = reg.GetHost()
+		}
+
+		endpoint, err := sharedendpoint.ResolveRegistryEndpoint(
+			"grpc",
+			addr,
+			registryEndpoint,
+			registryHost,
+			o.conf.GetTls() != nil && o.conf.GetTls().GetEnable(),
+		)
+		if err != nil {
+			panic(fmt.Sprintf("resolve grpc registry endpoint: %v", err))
+		}
+		if endpoint != nil {
 			serverOpts = append(serverOpts, kgrpc.Endpoint(endpoint))
 		}
 	}
@@ -90,39 +123,4 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 	}
 
 	return srv
-}
-
-func resolveAdvertiseEndpoint(c *conf.Server_GRPC) *url.URL {
-	if c == nil {
-		return nil
-	}
-
-	if raw := strings.TrimSpace(c.GetAdvertiseEndpoint()); raw != "" {
-		endpoint, err := url.Parse(raw)
-		if err == nil && endpoint.Host != "" {
-			return endpoint
-		}
-	}
-
-	host := strings.TrimSpace(c.GetAdvertiseHost())
-	if host == "" {
-		return nil
-	}
-
-	_, port, err := net.SplitHostPort(strings.TrimSpace(c.GetAddr()))
-	if err != nil || port == "" {
-		return nil
-	}
-
-	isSecure := c.GetTls() != nil && c.GetTls().GetEnable()
-	scheme := "grpc"
-	if isSecure {
-		scheme = "grpcs"
-	}
-
-	return &url.URL{
-		Scheme:   scheme,
-		Host:     net.JoinHostPort(host, port),
-		RawQuery: "isSecure=" + strconv.FormatBool(isSecure),
-	}
 }

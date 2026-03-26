@@ -1,7 +1,10 @@
 server:
   http:
-    addr: "${HADDR:0.0.0.0:8000}"
-    timeout: "${HTIMEOUT:1s}"
+    listen:
+      # 可选：监听网络类型，默认 tcp
+      # network: "${HNETWORK:tcp}"
+      addr: "${HADDR:0.0.0.0:8000}"
+      timeout: "${HTIMEOUT:1s}"
     tls:
       enable: ${HTLS_ENABLE:false}
       cert_path: "${HTTPS_CERT_PATH:../../manifest/certs/server.cert}"
@@ -15,13 +18,22 @@ server:
       exposed_headers: []
       allow_credentials: "${CORS_ALLOW_CREDENTIALS:false}"
       max_age: "${CORS_MAX_AGE:86400s}"
+    registry:
+      # 可选：显式覆盖服务注册端点（优先级高于 host）
+      # endpoint: "${H_REGISTRY_ENDPOINT:http://service.example.com:8000?isSecure=false}"
+      # 可选：仅覆盖服务注册主机名，端口沿用 listen.addr
+      host: "${H_REGISTRY_HOST:}"
   grpc:
-    addr: "${GADDR:0.0.0.0:8001}"
-    timeout: "${GTIMEHOUT:1s}"
-    # 可选：显式覆盖服务注册端点（优先级高于 advertise_host）
-    # advertise_endpoint: "${G_ADVERTISE_ENDPOINT:grpc://service.example.com:8001?isSecure=false}"
-    # 可选：仅覆盖服务注册主机名，端口沿用 addr
-    advertise_host: "${G_ADVERTISE_HOST:}"
+    listen:
+      # 可选：监听网络类型，默认 tcp
+      # network: "${GNETWORK:tcp}"
+      addr: "${GADDR:0.0.0.0:8001}"
+      timeout: "${GTIMEHOUT:1s}"
+    registry:
+      # 可选：显式覆盖服务注册端点（优先级高于 host）
+      # endpoint: "${G_REGISTRY_ENDPOINT:grpc://service.example.com:8001?isSecure=false}"
+      # 可选：仅覆盖服务注册主机名，端口沿用 listen.addr
+      host: "${G_REGISTRY_HOST:}"
     tls:
       enable: ${GTLS_ENABLE:false}
       cert_path: "${GRPCS_CERT_PATH:../../manifest/certs/server.cert}"

@@ -22,9 +22,11 @@ func TestNewServer_NoOptions(t *testing.T) {
 
 func TestNewServer_WithConfig(t *testing.T) {
 	cfg := &conf.Server_HTTP{
-		Network: "tcp4",
-		Addr:    ":8080",
-		Timeout: durationpb.New(30 * time.Second),
+		Listen: &conf.Server_Listen{
+			Network: "tcp4",
+			Addr:    ":8080",
+			Timeout: durationpb.New(30 * time.Second),
+		},
 	}
 	srv := NewServer(WithConfig(cfg))
 	if srv == nil {
@@ -125,8 +127,10 @@ func TestNewServer_WithMultipleServices(t *testing.T) {
 
 func TestNewServer_FullOptions(t *testing.T) {
 	cfg := &conf.Server_HTTP{
-		Addr:    ":8080",
-		Timeout: durationpb.New(10 * time.Second),
+		Listen: &conf.Server_Listen{
+			Addr:    ":8080",
+			Timeout: durationpb.New(10 * time.Second),
+		},
 	}
 	corsConf := &conf.CORS{
 		Enable:         true,
@@ -155,5 +159,48 @@ func TestNewServer_WithNilHealthCheck(t *testing.T) {
 	srv := NewServer(WithHealthCheck(nil))
 	if srv == nil {
 		t.Fatal("expected non-nil server with nil health check")
+	}
+}
+
+func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
+	cfg := &conf.Server_HTTP{
+		Listen:   &conf.Server_Listen{Addr: "0.0.0.0:0"},
+		Registry: &conf.Server_Registry{Host: "host.docker.internal"},
+	}
+
+	srv := NewServer(WithConfig(cfg))
+	if srv == nil {
+		t.Fatal("expected non-nil server")
+	}
+
+	ep, err := srv.Endpoint()
+	if err != nil {
+		t.Fatalf("Endpoint() error = %v", err)
+	}
+	if got, want := ep.Host, "host.docker.internal:0"; got != want {
+		t.Fatalf("expected host %q, got %q", want, got)
+	}
+	if got, want := ep.Scheme, "http"; got != want {
+		t.Fatalf("expected scheme %q, got %q", want, got)
+	}
+}
+
+func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) {
+	cfg := &conf.Server_HTTP{
+		Listen:   &conf.Server_Listen{Addr: ":0"},
+		Registry: &conf.Server_Registry{Endpoint: "https://example.internal:18443?isSecure=true"},
+	}
+
+	srv := NewServer(WithConfig(cfg))
+	if srv == nil {
+		t.Fatal("expected non-nil server")
+	}
+
+	ep, err := srv.Endpoint()
+	if err != nil {
+		t.Fatalf("Endpoint() error = %v", err)
+	}
+	if got, want := ep.String(), "https://example.internal:18443?isSecure=true"; got != want {
+		t.Fatalf("expected endpoint %q, got %q", want, got)
 	}
 }

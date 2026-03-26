@@ -1,16 +1,23 @@
 package server
 
-// PluginKind 定义可插拔服务器类型。
-type PluginKind string
+import (
+	"fmt"
 
-const (
-	PluginWebSocket PluginKind = "websocket"
-	PluginMCP       PluginKind = "mcp"
-	PluginGraphQL   PluginKind = "graphql"
+	"github.com/Servora-Kit/servora/transport/runtime"
 )
 
-// ServerPlugin 定义可插拔服务器接口，用于扩展 WebSocket/MCP/GraphQL 等协议。
-type ServerPlugin interface {
-	Server
-	Kind() PluginKind
+// RegisterPlugins 批量注册 server plugin。
+func RegisterPlugins(r *runtime.Registry, plugins ...runtime.ServerPlugin) error {
+	if r == nil {
+		return fmt.Errorf("runtime registry is nil")
+	}
+	for _, p := range plugins {
+		if p == nil {
+			continue
+		}
+		if err := r.RegisterServer(p); err != nil {
+			return fmt.Errorf("register server plugin %q: %w", p.Type(), err)
+		}
+	}
+	return nil
 }

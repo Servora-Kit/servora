@@ -1,11 +1,14 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
@@ -13,6 +16,7 @@ import (
 	"github.com/Servora-Kit/servora/platform/swagger"
 	"github.com/Servora-Kit/servora/transport/server"
 	svrmw "github.com/Servora-Kit/servora/transport/server/middleware"
+	sharedendpoint "github.com/Servora-Kit/servora/transport/shared/endpoint"
 )
 
 type Registrar func(*khttp.Server)
@@ -102,18 +106,54 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 	}
 
 	if o.conf != nil {
-		if o.conf.Network != "" {
-			serverOpts = append(serverOpts, khttp.Network(o.conf.Network))
+		listen := o.conf.GetListen()
+		network := ""
+		addr := ""
+		var timeout *durationpb.Duration
+		if listen != nil {
+			if v := strings.TrimSpace(listen.GetNetwork()); v != "" {
+				network = v
+			}
+			if v := strings.TrimSpace(listen.GetAddr()); v != "" {
+				addr = v
+			}
+			if v := listen.GetTimeout(); v != nil {
+				timeout = v
+			}
 		}
-		if o.conf.Addr != "" {
-			serverOpts = append(serverOpts, khttp.Address(o.conf.Addr))
+		if network != "" {
+			serverOpts = append(serverOpts, khttp.Network(network))
 		}
-		if o.conf.Timeout != nil {
-			serverOpts = append(serverOpts, khttp.Timeout(o.conf.Timeout.AsDuration()))
+		if addr != "" {
+			serverOpts = append(serverOpts, khttp.Address(addr))
+		}
+		if timeout != nil {
+			serverOpts = append(serverOpts, khttp.Timeout(timeout.AsDuration()))
 		}
 		if o.conf.Tls != nil && o.conf.Tls.Enable {
 			tlsCfg := server.MustLoadTLS(o.conf.Tls)
 			serverOpts = append(serverOpts, khttp.TLSConfig(tlsCfg))
+		}
+
+		registryEndpoint := ""
+		registryHost := ""
+		if reg := o.conf.GetRegistry(); reg != nil {
+			registryEndpoint = reg.GetEndpoint()
+			registryHost = reg.GetHost()
+		}
+
+		endpoint, err := sharedendpoint.ResolveRegistryEndpoint(
+			"http",
+			addr,
+			registryEndpoint,
+			registryHost,
+			o.conf.GetTls() != nil && o.conf.GetTls().GetEnable(),
+		)
+		if err != nil {
+			panic(fmt.Sprintf("resolve http registry endpoint: %v", err))
+		}
+		if endpoint != nil {
+			serverOpts = append(serverOpts, khttp.Endpoint(endpoint))
 		}
 	}
 

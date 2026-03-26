@@ -3377,6 +3377,243 @@ var _ interface {
 	ErrorName() string
 } = MailFromValidationError{}
 
+// Validate checks the field values on Server_Listen with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Server_Listen) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Server_Listen with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Server_ListenMultiError, or
+// nil if none found.
+func (m *Server_Listen) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Server_Listen) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Network
+
+	// no validation rules for Addr
+
+	if all {
+		switch v := interface{}(m.GetTimeout()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Server_ListenValidationError{
+					field:  "Timeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Server_ListenValidationError{
+					field:  "Timeout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTimeout()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Server_ListenValidationError{
+				field:  "Timeout",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Server_ListenMultiError(errors)
+	}
+
+	return nil
+}
+
+// Server_ListenMultiError is an error wrapping multiple validation errors
+// returned by Server_Listen.ValidateAll() if the designated constraints
+// aren't met.
+type Server_ListenMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Server_ListenMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Server_ListenMultiError) AllErrors() []error { return m }
+
+// Server_ListenValidationError is the validation error returned by
+// Server_Listen.Validate if the designated constraints aren't met.
+type Server_ListenValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Server_ListenValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Server_ListenValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Server_ListenValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Server_ListenValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Server_ListenValidationError) ErrorName() string { return "Server_ListenValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Server_ListenValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServer_Listen.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Server_ListenValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Server_ListenValidationError{}
+
+// Validate checks the field values on Server_Registry with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Server_Registry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Server_Registry with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Server_RegistryMultiError, or nil if none found.
+func (m *Server_Registry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Server_Registry) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Endpoint
+
+	// no validation rules for Host
+
+	if len(errors) > 0 {
+		return Server_RegistryMultiError(errors)
+	}
+
+	return nil
+}
+
+// Server_RegistryMultiError is an error wrapping multiple validation errors
+// returned by Server_Registry.ValidateAll() if the designated constraints
+// aren't met.
+type Server_RegistryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Server_RegistryMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Server_RegistryMultiError) AllErrors() []error { return m }
+
+// Server_RegistryValidationError is the validation error returned by
+// Server_Registry.Validate if the designated constraints aren't met.
+type Server_RegistryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Server_RegistryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Server_RegistryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Server_RegistryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Server_RegistryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Server_RegistryValidationError) ErrorName() string { return "Server_RegistryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Server_RegistryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServer_Registry.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Server_RegistryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Server_RegistryValidationError{}
+
 // Validate checks the field values on Server_HTTP with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -3399,16 +3636,12 @@ func (m *Server_HTTP) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Network
-
-	// no validation rules for Addr
-
 	if all {
-		switch v := interface{}(m.GetTimeout()).(type) {
+		switch v := interface{}(m.GetListen()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Server_HTTPValidationError{
-					field:  "Timeout",
+					field:  "Listen",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -3416,16 +3649,16 @@ func (m *Server_HTTP) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Server_HTTPValidationError{
-					field:  "Timeout",
+					field:  "Listen",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTimeout()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetListen()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Server_HTTPValidationError{
-				field:  "Timeout",
+				field:  "Listen",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -3484,6 +3717,35 @@ func (m *Server_HTTP) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return Server_HTTPValidationError{
 				field:  "Cors",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetRegistry()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Server_HTTPValidationError{
+					field:  "Registry",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Server_HTTPValidationError{
+					field:  "Registry",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRegistry()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Server_HTTPValidationError{
+				field:  "Registry",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -3589,16 +3851,12 @@ func (m *Server_GRPC) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Network
-
-	// no validation rules for Addr
-
 	if all {
-		switch v := interface{}(m.GetTimeout()).(type) {
+		switch v := interface{}(m.GetListen()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, Server_GRPCValidationError{
-					field:  "Timeout",
+					field:  "Listen",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -3606,16 +3864,16 @@ func (m *Server_GRPC) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, Server_GRPCValidationError{
-					field:  "Timeout",
+					field:  "Listen",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetTimeout()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetListen()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return Server_GRPCValidationError{
-				field:  "Timeout",
+				field:  "Listen",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -3651,9 +3909,34 @@ func (m *Server_GRPC) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for AdvertiseEndpoint
-
-	// no validation rules for AdvertiseHost
+	if all {
+		switch v := interface{}(m.GetRegistry()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Server_GRPCValidationError{
+					field:  "Registry",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Server_GRPCValidationError{
+					field:  "Registry",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRegistry()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Server_GRPCValidationError{
+				field:  "Registry",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return Server_GRPCMultiError(errors)

@@ -336,8 +336,8 @@ func (x *MailFrom) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for Server_HTTP
-func (x *Server_HTTP) Redact() string {
+// Redact method implementation for Server_Listen
+func (x *Server_Listen) Redact() string {
 	if x == nil {
 		return ""
 	}
@@ -347,10 +347,34 @@ func (x *Server_HTTP) Redact() string {
 	// Safe field: Addr
 
 	// Safe field: Timeout
+	return x.String()
+}
+
+// Redact method implementation for Server_Registry
+func (x *Server_Registry) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Endpoint
+
+	// Safe field: Host
+	return x.String()
+}
+
+// Redact method implementation for Server_HTTP
+func (x *Server_HTTP) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Listen
 
 	// Safe field: Tls
 
 	// Safe field: Cors
+
+	// Safe field: Registry
 	return x.String()
 }
 
@@ -360,17 +384,11 @@ func (x *Server_GRPC) Redact() string {
 		return ""
 	}
 
-	// Safe field: Network
-
-	// Safe field: Addr
-
-	// Safe field: Timeout
+	// Safe field: Listen
 
 	// Safe field: Tls
 
-	// Safe field: AdvertiseEndpoint
-
-	// Safe field: AdvertiseHost
+	// Safe field: Registry
 	return x.String()
 }
 

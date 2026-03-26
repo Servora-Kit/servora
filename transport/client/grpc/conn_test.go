@@ -1,4 +1,4 @@
-package client
+package grpc
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	"github.com/go-kratos/kratos/v2/transport/grpc"
+	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -23,7 +23,7 @@ func TestBuildGRPCClientConfigIndex(t *testing.T) {
 		},
 	}
 
-	index := initGRPCClients(dataCfg)
+	index := BuildClientConfigIndex(dataCfg)
 	if len(index) != 2 {
 		t.Fatalf("expected 2 indexed services, got %d", len(index))
 	}
@@ -45,7 +45,7 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	defaultEndpoint := "discovery:///user.service"
 	defaultTimeout := 5 * time.Second
 
-	endpoint, timeout, tlsCfg, configured := resolveGRPCConnectionConfig(
+	endpoint, timeout, tlsCfg, configured := resolveConnectionConfig(
 		"user.service",
 		map[string]*conf.Data_Client_GRPC{
 			"user.service": {
@@ -74,7 +74,7 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 		t.Fatal("expected config to be marked as configured")
 	}
 
-	endpoint, timeout, tlsCfg, configured = resolveGRPCConnectionConfig(
+	endpoint, timeout, tlsCfg, configured = resolveConnectionConfig(
 		"missing.service",
 		map[string]*conf.Data_Client_GRPC{
 			"user.service": {ServiceName: "user.service"},
@@ -97,12 +97,12 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	}
 }
 
-func TestDialGRPCConnection_InvalidTLSConfig(t *testing.T) {
-	_, err := dialGRPCConnection(
+func TestDialConnection_InvalidTLSConfig(t *testing.T) {
+	_, err := dialConnection(
 		context.Background(),
-		[]grpc.ClientOption{
-			grpc.WithEndpoint("discovery:///user.service"),
-			grpc.WithTimeout(100 * time.Millisecond),
+		[]kgrpc.ClientOption{
+			kgrpc.WithEndpoint("discovery:///user.service"),
+			kgrpc.WithTimeout(100 * time.Millisecond),
 		},
 		&conf.TLSConfig{
 			Enable:   true,

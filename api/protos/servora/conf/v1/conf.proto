@@ -51,20 +51,29 @@ message CORS {
 
 // 通信服务端配置
 message Server {
+  // 监听配置（面向 net.Listen 参数）
+  message Listen {
+    string network = 1; // 可选：监听网络类型，默认 tcp（常见值：tcp/tcp4/tcp6/unix）
+    string addr = 2; // 监听地址（例如 0.0.0.0:8000）
+    google.protobuf.Duration timeout = 3; // 请求超时
+  }
+
+  // 服务注册端点覆盖配置（用于服务注册中心对外公布地址）
+  message Registry {
+    string endpoint = 1; // 可选：显式覆盖服务注册端点（完整 URL，优先级最高）
+    string host = 2; // 可选：仅覆盖服务注册主机名（端口沿用 listen.addr）
+  }
+
   message HTTP {
-    string network = 1;
-    string addr = 2;
-    google.protobuf.Duration timeout = 3;
-    TLSConfig tls = 4; // 为 HTTP 添加 TLS 配置
-    CORS cors = 5; // CORS 配置
+    Listen listen = 1; // 监听配置
+    TLSConfig tls = 2; // 为 HTTP 添加 TLS 配置
+    CORS cors = 3; // CORS 配置
+    Registry registry = 4; // 服务注册端点覆盖
   }
   message GRPC {
-    string network = 1;
-    string addr = 2;
-    google.protobuf.Duration timeout = 3;
-    TLSConfig tls = 4; // 为 gRPC 添加 TLS 配置
-    string advertise_endpoint = 5; // 可选：服务注册端点（完整 URL，例如 grpc://host:port?isSecure=false）
-    string advertise_host = 6; // 可选：服务注册主机名（端口沿用 addr）
+    Listen listen = 1; // 监听配置
+    TLSConfig tls = 2; // 为 gRPC 添加 TLS 配置
+    Registry registry = 3; // 服务注册端点覆盖
   }
   HTTP http = 1;
   GRPC grpc = 2;

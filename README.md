@@ -8,7 +8,7 @@
 
 简体中文
 
-`servora` 是一个基于 Go Kratos 的微服务快速开发框架，**Proto First** 开发方式，提供共享基础库（`pkg/`）、自定义 protoc 插件和 CLI 工具（`cmd/`），以及框架级公共 Proto 定义（`api/protos/`）。
+`servora` 是一个基于 Go Kratos 的微服务快速开发框架，采用 **Proto First** 开发方式，提供按域划分的框架能力（`core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`）、自定义 protoc 插件与 CLI 工具（`cmd/`），以及框架级公共 Proto 定义（`api/protos/`）。
 
 本仓库是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，不包含具体业务微服务。业务微服务请参考：
 
@@ -18,13 +18,73 @@
 ## 核心能力
 
 - **共享基础库**：认证、授权、审计、配置引导、消息代理、服务治理等开箱即用
+- **传输层可插拔**：`transport/runtime` 统一 client/server 插件契约，支持协议扩展
 - **Proto First**：框架级公共 proto 定义，通过 [BSR](https://buf.build/servora/servora) 发布
 - **自定义 protoc 插件**：`protoc-gen-servora-authz`、`protoc-gen-servora-audit`、`protoc-gen-servora-mapper`
 - **CLI 工具**：`svr` 命令行工具（GORM GEN 代码生成、OpenFGA 初始化与 model 管理）
-- **可插拔认证**：`pkg/authn` 接口驱动，内置 JWT 引擎与 Keycloak claims 映射
-- **细粒度授权**：`pkg/authz` 接口驱动，内置 OpenFGA 引擎
-- **全链路审计**：`pkg/audit` 经 Kafka 投递审计事件
+- **可插拔认证**：`security/authn` 接口驱动，内置 JWT 引擎与 Keycloak claims 映射
+- **细粒度授权**：`security/authz` 接口驱动，内置 OpenFGA 引擎
+- **全链路审计**：`obs/audit` 经 Kafka 投递审计事件
 - **服务治理**：注册发现、配置中心（支持重载）与基础遥测
+
+## v0.2.0 重点变更
+
+- **transport client/server 模式统一**：server 与 client 均通过 plugin 契约挂载到 `transport/runtime`。
+- **新增 server Builder DSL**：内建 gRPC/HTTP 提供 `NewBuilder()`，调用方不需要直接拼装 runtime graph。
+- **client 协议插件化**：内建 gRPC/HTTP 客户端插件，支持 `WithPlugins` / `WithRegistry` 自定义扩展。
+- **共享能力下沉**：TLS、端点与公共配置归拢到 `transport/shared`，减少重复实现。
+
+## Transport 快速示例
+
+### 构建 gRPC/HTTP Server
+
+```go
+grpcSrv := transportgrpc.NewBuilder().
+	WithConfig(c.Grpc).
+	WithLogger(logger).
+	WithMiddleware(mw...).
+	WithServices(
+		transportgrpc.Registrar(func(s *kgrpc.Server) {
+			workerpb.RegisterWorkerServiceServer(s, workerSvc)
+		}),
+	).
+	MustBuild()
+
+httpSrv := transporthttp.NewBuilder().
+	WithConfig(c.Http).
+	WithLogger(logger).
+	WithMiddleware(mw...).
+	WithServices(
+		transporthttp.Registrar(func(s *khttp.Server) {
+			masterpb.RegisterMasterServiceHTTPServer(s, masterSvc)
+		}),
+	).
+	MustBuild()
+```
+
+### 构建可插拔 Client 并发起 gRPC 调用
+
+```go
+c, err := transportclient.NewClient(dataCfg, traceCfg, discovery, logger)
+if err != nil {
+	return err
+}
+
+conn, err := transportclient.GetConnValue[gogrpc.ClientConnInterface](
+	ctx,
+	c,
+	transportclient.GRPC,
+	"worker.service",
+)
+if err != nil {
+	return err
+}
+
+_, err = workerpb.NewWorkerServiceClient(conn).Hello(ctx, req)
+if err != nil {
+	return err
+}
+```
 
 ## 技术栈
 
@@ -50,24 +110,16 @@
 │   ├── protoc-gen-servora-authz/    # AuthZ 规则生成插件
 │   ├── protoc-gen-servora-audit/    # Audit 注解生成插件
 │   └── protoc-gen-servora-mapper/   # 对象映射生成插件
-├── pkg/                             # 共享基础库
-│   ├── actor/                       # 通用 principal 模型（Subject/Roles/Scopes/Attrs/ServiceActor）
-│   ├── authn/                       # 可插拔认证（JWT / Header / Noop）
-│   ├── authz/                       # 可插拔授权（OpenFGA / Noop）
-│   ├── audit/                       # 全链路审计（Emitter/Recorder/middleware）
-│   ├── bootstrap/                   # 服务启动引导（含配置重载 loader）
-│   ├── broker/                      # 消息代理抽象
-│   ├── broker/kafka/                # Kafka 实现（franz-go）
-│   ├── db/ent/                      # Ent schema mixin 与 scope 工具
-│   ├── governance/                  # 服务治理（注册发现、配置中心）
-│   ├── health/                      # 健康检查
-│   ├── helpers/                     # 通用工具函数
-│   ├── jwt/ & jwks/                 # JWT 签发与 JWKS 验证
-│   ├── logger/                      # 日志封装（New/For/Zap）
-│   ├── mapper/                      # 对象映射
-│   ├── openfga/                     # OpenFGA 客户端封装与缓存
-│   ├── redis/                       # Redis 客户端封装
-│   └── transport/                   # HTTP/gRPC 传输层（含 middleware chain）
+├── core/                            # 领域无关核心抽象（actor/mapper/pagination）
+├── transport/
+│   ├── client/                      # 客户端协议插件（grpc/http）
+│   ├── server/                      # 服务端协议插件（grpc/http/sse）
+│   ├── runtime/                     # plugin 合约、registry、graph
+│   └── shared/                      # transport 共享能力（tls/endpoint/config）
+├── security/                        # 认证授权与 JWT/JWKS
+├── obs/                             # 审计、日志、遥测
+├── platform/                        # 启动、配置、健康、注册、swagger
+├── infra/                           # broker、db、k8s、openfga、redis
 ├── buf.yaml                         # Buf v2 workspace（公共 proto 发布到 buf.build/servora/servora）
 ├── buf.go.gen.yaml                  # Go 代码生成模板（含 authz / mapper / audit 等自定义插件）
 ├── go.mod                           # Go module: github.com/Servora-Kit/servora
