@@ -1669,13 +1669,15 @@ func (x *Server_HTTP) GetCors() *CORS {
 }
 
 type Server_GRPC struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
-	Addr          string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	Tls           *TLSConfig             `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"` // 为 gRPC 添加 TLS 配置
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Network           string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
+	Addr              string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	Timeout           *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Tls               *TLSConfig             `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"`                                                      // 为 gRPC 添加 TLS 配置
+	AdvertiseEndpoint string                 `protobuf:"bytes,5,opt,name=advertise_endpoint,json=advertiseEndpoint,proto3" json:"advertise_endpoint,omitempty"` // 可选：服务注册端点（完整 URL，例如 grpc://host:port?isSecure=false）
+	AdvertiseHost     string                 `protobuf:"bytes,6,opt,name=advertise_host,json=advertiseHost,proto3" json:"advertise_host,omitempty"`             // 可选：服务注册主机名（端口沿用 addr）
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Server_GRPC) Reset() {
@@ -1734,6 +1736,20 @@ func (x *Server_GRPC) GetTls() *TLSConfig {
 		return x.Tls
 	}
 	return nil
+}
+
+func (x *Server_GRPC) GetAdvertiseEndpoint() string {
+	if x != nil {
+		return x.AdvertiseEndpoint
+	}
+	return ""
+}
+
+func (x *Server_GRPC) GetAdvertiseHost() string {
+	if x != nil {
+		return x.AdvertiseHost
+	}
+	return ""
 }
 
 type Client_GRPC struct {
@@ -2315,6 +2331,7 @@ type Data_Client_GRPC struct {
 	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Tls           *TLSConfig             `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"` // gRPC 客户端 TLS 配置
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2366,6 +2383,13 @@ func (x *Data_Client_GRPC) GetEndpoint() string {
 func (x *Data_Client_GRPC) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
+	}
+	return nil
+}
+
+func (x *Data_Client_GRPC) GetTls() *TLSConfig {
+	if x != nil {
+		return x.Tls
 	}
 	return nil
 }
@@ -2860,7 +2884,7 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x0fallowed_headers\x18\x04 \x03(\tR\x0eallowedHeaders\x12'\n" +
 	"\x0fexposed_headers\x18\x05 \x03(\tR\x0eexposedHeaders\x12+\n" +
 	"\x11allow_credentials\x18\x06 \x01(\bR\x10allowCredentials\x122\n" +
-	"\amax_age\x18\a \x01(\v2\x19.google.protobuf.DurationR\x06maxAge\"\xcb\x03\n" +
+	"\amax_age\x18\a \x01(\v2\x19.google.protobuf.DurationR\x06maxAge\"\xa1\x04\n" +
 	"\x06Server\x120\n" +
 	"\x04http\x18\x01 \x01(\v2\x1c.servora.conf.v1.Server.HTTPR\x04http\x120\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x1c.servora.conf.v1.Server.GRPCR\x04grpc\x1a\xc2\x01\n" +
@@ -2869,12 +2893,14 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
 	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12,\n" +
 	"\x03tls\x18\x04 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x12)\n" +
-	"\x04cors\x18\x05 \x01(\v2\x15.servora.conf.v1.CORSR\x04cors\x1a\x97\x01\n" +
+	"\x04cors\x18\x05 \x01(\v2\x15.servora.conf.v1.CORSR\x04cors\x1a\xed\x01\n" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
 	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12,\n" +
-	"\x03tls\x18\x04 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\"\xe8\x01\n" +
+	"\x03tls\x18\x04 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x12-\n" +
+	"\x12advertise_endpoint\x18\x05 \x01(\tR\x11advertiseEndpoint\x12%\n" +
+	"\x0eadvertise_host\x18\x06 \x01(\tR\radvertiseHost\"\xe8\x01\n" +
 	"\x06Client\x125\n" +
 	"\x04grpc\x18\x01 \x03(\v2!.servora.conf.v1.Client.GrpcEntryR\x04grpc\x1aP\n" +
 	"\x04GRPC\x12\x1a\n" +
@@ -2882,7 +2908,7 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x03tls\x18\x02 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x1aU\n" +
 	"\tGrpcEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
-	"\x05value\x18\x02 \x01(\v2\x1c.servora.conf.v1.Client.GRPCR\x05value:\x028\x01\"\xc4\x10\n" +
+	"\x05value\x18\x02 \x01(\v2\x1c.servora.conf.v1.Client.GRPCR\x05value:\x028\x01\"\xf3\x10\n" +
 	"\x04Data\x12:\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x1e.servora.conf.v1.Data.DatabaseR\bdatabase\x121\n" +
 	"\x05redis\x18\x02 \x01(\v2\x1b.servora.conf.v1.Data.RedisR\x05redis\x124\n" +
@@ -2902,18 +2928,19 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x02db\x18\x05 \x01(\x05R\x02db\x12<\n" +
 	"\fdial_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
 	"\fread_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\xee\x02\n" +
+	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\x9d\x03\n" +
 	"\x06Client\x125\n" +
 	"\x04grpc\x18\x01 \x03(\v2!.servora.conf.v1.Data.Client.GRPCR\x04grpc\x125\n" +
 	"\x04http\x18\x02 \x03(\v2!.servora.conf.v1.Data.Client.HTTPR\x04http\x1az\n" +
 	"\x04HTTP\x12!\n" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1a\n" +
 	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1az\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a\xa8\x01\n" +
 	"\x04GRPC\x12!\n" +
 	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1a\n" +
 	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a\xd9\x04\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12,\n" +
+	"\x03tls\x18\x04 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x1a\xd9\x04\n" +
 	"\x05Kafka\x12\x18\n" +
 	"\abrokers\x18\x01 \x03(\tR\abrokers\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12%\n" +
@@ -3194,12 +3221,13 @@ var file_servora_conf_v1_conf_proto_depIdxs = []int32{
 	37, // 62: servora.conf.v1.Data.ClickHouse.conn_max_lifetime:type_name -> google.protobuf.Duration
 	37, // 63: servora.conf.v1.Data.Client.HTTP.timeout:type_name -> google.protobuf.Duration
 	37, // 64: servora.conf.v1.Data.Client.GRPC.timeout:type_name -> google.protobuf.Duration
-	37, // 65: servora.conf.v1.App.Audit.consumer_flush_interval:type_name -> google.protobuf.Duration
-	66, // [66:66] is the sub-list for method output_type
-	66, // [66:66] is the sub-list for method input_type
-	66, // [66:66] is the sub-list for extension type_name
-	66, // [66:66] is the sub-list for extension extendee
-	0,  // [0:66] is the sub-list for field type_name
+	1,  // 65: servora.conf.v1.Data.Client.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
+	37, // 66: servora.conf.v1.App.Audit.consumer_flush_interval:type_name -> google.protobuf.Duration
+	67, // [67:67] is the sub-list for method output_type
+	67, // [67:67] is the sub-list for method input_type
+	67, // [67:67] is the sub-list for extension type_name
+	67, // [67:67] is the sub-list for extension extendee
+	0,  // [0:67] is the sub-list for field type_name
 }
 
 func init() { file_servora_conf_v1_conf_proto_init() }

@@ -1,10 +1,12 @@
 package client
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -43,13 +45,16 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	defaultEndpoint := "discovery:///user.service"
 	defaultTimeout := 5 * time.Second
 
-	endpoint, timeout, configured := resolveGRPCConnectionConfig(
+	endpoint, timeout, tlsCfg, configured := resolveGRPCConnectionConfig(
 		"user.service",
 		map[string]*conf.Data_Client_GRPC{
 			"user.service": {
 				ServiceName: "user.service",
 				Endpoint:    "dns:///user.internal:9000",
 				Timeout:     durationpb.New(12 * time.Second),
+				Tls: &conf.TLSConfig{
+					Enable: true,
+				},
 			},
 		},
 		defaultEndpoint,
@@ -62,11 +67,14 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	if timeout != 12*time.Second {
 		t.Fatalf("expected configured timeout, got %s", timeout)
 	}
+	if tlsCfg == nil || !tlsCfg.GetEnable() {
+		t.Fatal("expected tls config to be returned")
+	}
 	if !configured {
 		t.Fatal("expected config to be marked as configured")
 	}
 
-	endpoint, timeout, configured = resolveGRPCConnectionConfig(
+	endpoint, timeout, tlsCfg, configured = resolveGRPCConnectionConfig(
 		"missing.service",
 		map[string]*conf.Data_Client_GRPC{
 			"user.service": {ServiceName: "user.service"},
@@ -81,7 +89,27 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	if timeout != defaultTimeout {
 		t.Fatalf("expected default timeout, got %s", timeout)
 	}
+	if tlsCfg != nil {
+		t.Fatal("expected missing service to have nil tls config")
+	}
 	if configured {
 		t.Fatal("expected missing service to use defaults")
+	}
+}
+
+func TestDialGRPCConnection_InvalidTLSConfig(t *testing.T) {
+	_, err := dialGRPCConnection(
+		context.Background(),
+		[]grpc.ClientOption{
+			grpc.WithEndpoint("discovery:///user.service"),
+			grpc.WithTimeout(100 * time.Millisecond),
+		},
+		&conf.TLSConfig{
+			Enable:   true,
+			CertPath: "/tmp/client.crt",
+		},
+	)
+	if err == nil {
+		t.Fatal("expected invalid tls config to return error")
 	}
 }

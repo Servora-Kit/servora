@@ -15,7 +15,6 @@ package clickhouse
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"strings"
 	"time"
@@ -24,6 +23,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/security/tlsutil"
 )
 
 // NewConnOptional opens a ClickHouse connection from the Data config.
@@ -73,7 +73,13 @@ func NewConnOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) (driv
 	}
 
 	if chCfg.Tls {
-		opts.TLS = &tls.Config{InsecureSkipVerify: chCfg.TlsSkipVerify} //nolint:gosec
+		tlsCfg, err := tlsutil.NewClientConfig(tlsutil.ClientConfigOptions{
+			InsecureSkipVerify: chCfg.TlsSkipVerify,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("build ClickHouse TLS config: %w", err)
+		}
+		opts.TLS = tlsCfg
 	}
 
 	applyCompression(opts, chCfg.Compress, log)

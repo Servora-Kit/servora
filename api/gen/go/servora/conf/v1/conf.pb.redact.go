@@ -367,6 +367,10 @@ func (x *Server_GRPC) Redact() string {
 	// Safe field: Timeout
 
 	// Safe field: Tls
+
+	// Safe field: AdvertiseEndpoint
+
+	// Safe field: AdvertiseHost
 	return x.String()
 }
 
@@ -517,6 +521,8 @@ func (x *Data_Client_GRPC) Redact() string {
 	// Safe field: Endpoint
 
 	// Safe field: Timeout
+
+	// Safe field: Tls
 	return x.String()
 }
 

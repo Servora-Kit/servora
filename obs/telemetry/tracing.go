@@ -2,14 +2,12 @@ package telemetry
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	"github.com/Servora-Kit/servora/security/tlsutil"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -131,7 +129,9 @@ func newTraceExporterOptions(runtimeCfg traceRuntimeConfig) ([]otlptracegrpc.Opt
 	}
 
 	if runtimeCfg.caPath != "" {
-		tlsCfg, err := loadTraceTLSConfig(runtimeCfg.caPath)
+		tlsCfg, err := tlsutil.NewClientConfig(tlsutil.ClientConfigOptions{
+			CAPath: runtimeCfg.caPath,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -139,22 +139,4 @@ func newTraceExporterOptions(runtimeCfg traceRuntimeConfig) ([]otlptracegrpc.Opt
 	}
 
 	return opts, nil
-}
-
-// loadTraceTLSConfig 从自定义 CA 文件加载追踪导出器的 TLS 根证书配置。
-func loadTraceTLSConfig(caPath string) (*tls.Config, error) {
-	caPEM, err := os.ReadFile(caPath)
-	if err != nil {
-		return nil, fmt.Errorf("read trace ca file: %w", err)
-	}
-
-	rootCAs := x509.NewCertPool()
-	if !rootCAs.AppendCertsFromPEM(caPEM) {
-		return nil, fmt.Errorf("append trace ca file: invalid pem data")
-	}
-
-	return &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		RootCAs:    rootCAs,
-	}, nil
 }

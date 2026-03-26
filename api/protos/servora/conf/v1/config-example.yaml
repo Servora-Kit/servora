@@ -18,6 +18,10 @@ server:
   grpc:
     addr: "${GADDR:0.0.0.0:8001}"
     timeout: "${GTIMEHOUT:1s}"
+    # 可选：显式覆盖服务注册端点（优先级高于 advertise_host）
+    # advertise_endpoint: "${G_ADVERTISE_ENDPOINT:grpc://service.example.com:8001?isSecure=false}"
+    # 可选：仅覆盖服务注册主机名，端口沿用 addr
+    advertise_host: "${G_ADVERTISE_HOST:}"
     tls:
       enable: ${GTLS_ENABLE:false}
       cert_path: "${GRPCS_CERT_PATH:../../manifest/certs/server.cert}"
@@ -50,6 +54,11 @@ data:
       # - service_name: hello.grpc  # nacos需要添加协议后缀
       #   endpoint: "${CLIENT_GRPC_ENDPOINT:127.0.0.1:8003}"
       #   timeout: ${CLIENT_GRPC_TIMEOUT:5s}
+      #   tls:
+      #     enable: ${CLIENT_GRPC_TLS_ENABLE:false}
+      #     ca_path: "${CLIENT_GRPC_TLS_CA_PATH:}"
+      #     cert_path: "${CLIENT_GRPC_TLS_CERT_PATH:}"
+      #     key_path: "${CLIENT_GRPC_TLS_KEY_PATH:}"
 
 app:
   name: servora

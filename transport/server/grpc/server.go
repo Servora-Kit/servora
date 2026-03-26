@@ -1,11 +1,14 @@
 package grpc
 
 import (
+	"net"
+	"net/url"
+	"strconv"
+	"strings"
+
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/transport/server"
@@ -73,8 +76,10 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		}
 		if o.conf.Tls != nil && o.conf.Tls.Enable {
 			tlsCfg := server.MustLoadTLS(o.conf.Tls)
-			creds := credentials.NewTLS(tlsCfg)
-			serverOpts = append(serverOpts, kgrpc.Options(grpc.Creds(creds)))
+			serverOpts = append(serverOpts, kgrpc.TLSConfig(tlsCfg))
+		}
+		if endpoint := resolveAdvertiseEndpoint(o.conf); endpoint != nil {
+			serverOpts = append(serverOpts, kgrpc.Endpoint(endpoint))
 		}
 	}
 
@@ -85,4 +90,39 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 	}
 
 	return srv
+}
+
+func resolveAdvertiseEndpoint(c *conf.Server_GRPC) *url.URL {
+	if c == nil {
+		return nil
+	}
+
+	if raw := strings.TrimSpace(c.GetAdvertiseEndpoint()); raw != "" {
+		endpoint, err := url.Parse(raw)
+		if err == nil && endpoint.Host != "" {
+			return endpoint
+		}
+	}
+
+	host := strings.TrimSpace(c.GetAdvertiseHost())
+	if host == "" {
+		return nil
+	}
+
+	_, port, err := net.SplitHostPort(strings.TrimSpace(c.GetAddr()))
+	if err != nil || port == "" {
+		return nil
+	}
+
+	isSecure := c.GetTls() != nil && c.GetTls().GetEnable()
+	scheme := "grpc"
+	if isSecure {
+		scheme = "grpcs"
+	}
+
+	return &url.URL{
+		Scheme:   scheme,
+		Host:     net.JoinHostPort(host, port),
+		RawQuery: "isSecure=" + strconv.FormatBool(isSecure),
+	}
 }

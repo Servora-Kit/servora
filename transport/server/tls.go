@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	"github.com/Servora-Kit/servora/security/tlsutil"
 )
 
 // MustLoadTLS 从配置加载 TLS 证书。
@@ -13,12 +14,12 @@ func MustLoadTLS(c *conf.TLSConfig) *tls.Config {
 	if c == nil || !c.Enable {
 		return nil
 	}
-	if c.CertPath == "" || c.KeyPath == "" {
-		panic("TLS enabled but cert_path or key_path is empty")
-	}
-	cert, err := tls.LoadX509KeyPair(c.CertPath, c.KeyPath)
+	tlsCfg, err := tlsutil.NewServerConfig(tlsutil.ServerConfigOptions{
+		CertPath: c.CertPath,
+		KeyPath:  c.KeyPath,
+	})
 	if err != nil {
-		panic(fmt.Sprintf("failed to load TLS certificate: %v", err))
+		panic(fmt.Sprintf("failed to load server TLS config: %v", err))
 	}
-	return &tls.Config{Certificates: []tls.Certificate{cert}}
+	return tlsCfg
 }
