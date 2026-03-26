@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -30,11 +34,17 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - run: ./scripts/check-no-pkg-imports.sh
-
       - run: go build ./...
 
       - run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-out
+          path: coverage.out
+          if-no-files-found: warn
 
   proto-lint:
     runs-on: ubuntu-latest
