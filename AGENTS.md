@@ -1,10 +1,10 @@
 # AGENTS.md - servora 框架核心仓库
 
-<!-- Updated: 2026-03-25 -->
+<!-- Updated: 2026-03-26 -->
 
 ## 项目概览
 
-`servora` 是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，基于 Go Kratos，提供共享基础库（`pkg/`）、自定义 protoc 插件和 CLI 工具（`cmd/`）、框架级公共 Proto 定义（`api/protos/`，发布到 [BSR](https://buf.build/servora/servora)）。
+`servora` 是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，基于 Go Kratos，提供按域划分的共享基础库（`core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`）、自定义 protoc 插件和 CLI 工具（`cmd/`）、框架级公共 Proto 定义（`api/protos/`，发布到 [BSR](https://buf.build/servora/servora)）。
 
 本仓库**不包含业务微服务**。业务位于：`servora-iam`（IAM + 示例）、`servora-platform`（审计等平台服务）。
 
@@ -17,12 +17,12 @@
 
 ### 提交规范
 
-格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议：`api`/`buf`/`cmd`/`pkg`/`repo`，可用"一级域/二级域"结构（如 `pkg/audit`）。
+格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议：`api`/`buf`/`cmd`/`core`/`transport`/`security`/`obs`/`platform`/`infra`/`repo`，可用"一级域/二级域"结构（如 `obs/audit`）。
 
 ### 版本管理与打 Tag 规则
 
 - **使用 `make tag TAG=v0.x.y` 自动打双 tag**（`v0.x.y` + `api/gen/v0.x.y`）
-- **何时打 tag**：修改了 `pkg/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
+- **何时打 tag**：修改了 `core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
 - **何时不打 tag**：仅修改文档、Makefile、CI 配置、基础设施配置等
 - BSR label 与 Git tag 自动同步（`make buf-push` 自动检测 HEAD 上的 tag）
 - tag 一旦推送到 remote 就不要移动
@@ -31,7 +31,12 @@
 
 - `api/`：公共 proto（`api/protos/servora/`）与 Go 生成代码（`api/gen/go/`）
 - `cmd/`：`svr/`（CLI）、`protoc-gen-servora-authz/`、`protoc-gen-servora-audit/`、`protoc-gen-servora-mapper/`、`openapi-merge/`
-- `pkg/`：`actor`、`authn`、`authz`、`audit`、`bootstrap`、`broker/kafka`、`cap`、`db/ent`、`governance`、`health`、`helpers`、`jwks`/`jwt`、`k8s`、`logger`、`mail`、`mapper`、`openfga`、`pagination`、`redis`、`swagger`、`transport`
+- `core/`：`actor`、`mapper`、`pagination`
+- `transport/`：`client/`、`server/`
+- `security/`：`authn/`、`authz/`、`jwt/`
+- `obs/`：`audit/`、`logging/`、`telemetry/`
+- `platform/`：`bootstrap/`、`config/`、`health/`、`registry/`、`swagger/`
+- `infra/`：`broker/`、`db/`、`k8s/`、`openfga/`、`redis/`
 
 ## Proto 开发规范
 

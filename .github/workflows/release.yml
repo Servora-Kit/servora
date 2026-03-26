@@ -20,6 +20,8 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - run: ./scripts/check-no-pkg-imports.sh
+
       - run: go build ./...
 
       - run: go test -race ./...

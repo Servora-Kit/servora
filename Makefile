@@ -19,6 +19,7 @@ CURRENT_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 ROOT_DIR    := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 API_DIR     := api
 PKG_DIR     := pkg
+GO_WORKSPACE_MODULES := . api/gen
 
 BUF_GO_GEN_TEMPLATE := buf.go.gen.yaml
 
@@ -85,32 +86,31 @@ cli:
 	@echo "$(GREEN)✓ CLI tools installed$(RESET)"
 
 dep:
-	@go mod download
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "  $(mod)" && (cd $(ROOT_DIR)$(mod) && go mod download) && ) true
 
 vendor:
 	@go mod vendor
 
 tidy:
 	@echo "$(CYAN)Tidying Go modules...$(RESET)"
-	@go mod tidy
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "  $(mod)" && (cd $(ROOT_DIR)$(mod) && go mod tidy) && ) true
 	@go work sync
 	@echo "$(GREEN)✓ All modules tidied and workspace synced$(RESET)"
 
 test:
-	@go test ./...
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "$(CYAN)Testing $(mod)...$(RESET)" && (cd $(ROOT_DIR)$(mod) && go test ./...) && ) true
 
 cover:
-	@go test -v ./... -coverprofile=coverage.out
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),(cd $(ROOT_DIR)$(mod) && go test -v ./... -coverprofile=coverage.out) && ) true
 
 vet:
-	@go vet ./...
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),(cd $(ROOT_DIR)$(mod) && go vet ./...) && ) true
 
 lint: lint.go
 	@echo "$(GREEN)✓ lint complete$(RESET)"
 
 lint.go:
-	@echo "$(CYAN)Linting Go (repo root module)...$(RESET)"
-	@golangci-lint run
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "$(CYAN)Linting Go ($(mod))...$(RESET)" && (cd $(ROOT_DIR)$(mod) && golangci-lint run) && ) true
 	@echo "$(GREEN)✓ Go lint complete$(RESET)"
 
 gen: api
