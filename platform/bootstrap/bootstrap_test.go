@@ -1,9 +1,13 @@
 package bootstrap
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	kconfig "github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/file"
 )
 
 func TestResolveServiceIdentity_UseConfigValues(t *testing.T) {
@@ -51,5 +55,47 @@ func TestResolveServiceIdentity_DefaultsAndMutatesApp(t *testing.T) {
 	}
 	if app.Metadata == nil {
 		t.Fatal("app.metadata should be initialized")
+	}
+}
+
+func TestScanConf(t *testing.T) {
+	configFile := filepath.Join(t.TempDir(), "bootstrap.yaml")
+	content := []byte(`
+seed:
+  admin_name: "root-admin"
+`)
+	if err := os.WriteFile(configFile, content, 0o600); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+
+	cfg := kconfig.New(
+		kconfig.WithSource(file.NewSource(configFile)),
+		kconfig.WithResolveActualTypes(true),
+	)
+	if err := cfg.Load(); err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	t.Cleanup(func() { _ = cfg.Close() })
+
+	rt := &Runtime{Config: cfg}
+
+	type Biz struct {
+		Seed struct {
+			AdminName string `json:"admin_name"`
+		} `json:"seed"`
+	}
+	biz, err := ScanConf[Biz](rt)
+	if err != nil {
+		t.Fatalf("ScanConf failed: %v", err)
+	}
+	if biz.Seed.AdminName != "root-admin" {
+		t.Fatalf("admin_name = %q, want %q", biz.Seed.AdminName, "root-admin")
+	}
+}
+
+func TestScanConf_NilRuntime(t *testing.T) {
+	type Any struct{}
+	if _, err := ScanConf[Any](nil); err == nil {
+		t.Fatal("ScanConf() error = nil, want error")
 	}
 }

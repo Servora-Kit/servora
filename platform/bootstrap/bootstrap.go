@@ -7,9 +7,9 @@ import (
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	"github.com/Servora-Kit/servora/platform/bootstrap/config"
+	logger "github.com/Servora-Kit/servora/obs/logging"
 	"github.com/Servora-Kit/servora/obs/telemetry"
-	"github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/platform/bootstrap/config"
 
 	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"
@@ -136,14 +136,18 @@ func (r *Runtime) Close() {
 	}
 }
 
-// ScanBiz 从 Runtime 的合并配置中扫描服务私有业务配置。
-// 泛型参数 B 通常为各服务 conf 包中的 Biz protobuf message 类型。
-func ScanBiz[B any](rt *Runtime) (*B, error) {
-	biz := new(B)
-	if err := rt.Config.Scan(biz); err != nil {
-		return nil, fmt.Errorf("scan biz config: %w", err)
+// ScanConf 从 Runtime 的合并配置中扫描配置。
+// 泛型参数 T 可为业务 conf protobuf message 或任意可反序列化结构体。
+func ScanConf[T any](rt *Runtime) (*T, error) {
+	if rt == nil || rt.Config == nil {
+		return nil, errors.New("runtime config is nil")
 	}
-	return biz, nil
+
+	cfg := new(T)
+	if err := rt.Config.Scan(cfg); err != nil {
+		return nil, fmt.Errorf("scan config: %w", err)
+	}
+	return cfg, nil
 }
 
 // run 执行 kratos 应用。
