@@ -12,7 +12,8 @@
 
 本仓库是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，不包含具体业务微服务。业务微服务请参考：
 
-- [servora-iam](https://github.com/Servora-Kit/servora-iam) — IAM 与示例微服务
+- [servora-example](https://github.com/Servora-Kit/servora-example) — 基础的双微服务示例
+- [servora-iam](https://github.com/Servora-Kit/servora-iam) — 简单的 IAM 服务 
 - [servora-platform](https://github.com/Servora-Kit/servora-platform) — 平台级基础服务（审计等）
 
 ## 核心能力
