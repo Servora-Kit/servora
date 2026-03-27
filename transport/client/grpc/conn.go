@@ -10,14 +10,9 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/obs/logging"
-	climw "github.com/Servora-Kit/servora/transport/client/middleware"
 	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
 	sharedtls "github.com/Servora-Kit/servora/transport/shared/tls"
 	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/middleware/circuitbreaker"
-	klogging "github.com/go-kratos/kratos/v2/middleware/logging"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/registry"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 	gogrpc "google.golang.org/grpc"
@@ -90,9 +85,9 @@ func createConnection(
 	ctx context.Context,
 	serviceName string,
 	grpcConfigs map[string]*conf.Data_Client_GRPC,
-	traceCfg *conf.Trace,
 	discovery registry.Discovery,
 	l logger.Logger,
+	mds []middleware.Middleware,
 ) (gogrpc.ClientConnInterface, error) {
 	setupLogger := logger.NewHelper(l, logger.WithField("operation", "createGrpcConnection"))
 
@@ -103,21 +98,12 @@ func createConnection(
 		setupLogger.Infof("using configured endpoint: service_name=%s endpoint=%s tls=%t", serviceName, endpoint, tlsEnabled)
 	}
 
-	mds := []middleware.Middleware{
-		recovery.Recovery(),
-		klogging.Client(l),
-		circuitbreaker.Client(),
-		climw.TokenPropagation(),
-	}
-
-	if traceCfg != nil && traceCfg.Endpoint != "" {
-		mds = append(mds, tracing.Client())
-	}
-
 	opts := []kgrpc.ClientOption{
 		kgrpc.WithEndpoint(endpoint),
 		kgrpc.WithTimeout(timeout),
-		kgrpc.WithMiddleware(mds...),
+	}
+	if len(mds) > 0 {
+		opts = append(opts, kgrpc.WithMiddleware(mds...))
 	}
 	if endpoint == defaultEndpoint && discovery != nil {
 		opts = append(opts, kgrpc.WithDiscovery(discovery))
