@@ -178,6 +178,7 @@ make init          # 安装工具
 make gen           # 生成所有代码（api）
 make api           # 仅生成 proto Go 代码
 make lint          # Go lint
+make ci.lint       # CI 对齐 lint（GOWORK=off + proto lint）
 make lint.proto    # Proto lint
 make test          # 运行测试
 make tidy          # go mod tidy + go work sync
@@ -200,7 +201,8 @@ go build ./...
 
 - 不要手动编辑生成代码：`api/gen/go/`
 - 修改 proto 后执行 `make gen`
-- 提交前通过 `make lint` 与 `make test`
+- 提交前通过 `make ci.lint`（避免本地 `go.work` 与 CI 环境不一致）
+- 推送/发版前建议额外执行 `GOWORK=off go test ./...`
 
 ## Star History
 

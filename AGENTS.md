@@ -1,6 +1,6 @@
 # AGENTS.md - servora 框架核心仓库
 
-<!-- Updated: 2026-03-26 -->
+<!-- Updated: 2026-03-28 -->
 
 ## 项目概览
 
@@ -100,6 +100,7 @@
 make init                 # 安装 protoc 插件与 CLI 工具
 make gen                  # 生成所有代码
 make lint                 # Go lint
+make ci.lint              # CI 对齐 lint（GOWORK=off + proto lint）
 make lint.proto           # Proto lint
 make test                 # 运行测试
 make tidy                 # go mod tidy + go work sync
@@ -116,4 +117,5 @@ make clean                # 清理生成代码
 
 - 不要手改 `api/gen/go/`
 - 修改 proto 后执行 `make gen`，推送前 `make lint.proto`
+- 推送前优先执行 `make ci.lint`，避免本地 `go.work` 对 CI 结果造成误判
 - `cmd/protoc-gen-servora-*` 修改后需 `make plugin` 重新安装

@@ -20,6 +20,7 @@ ROOT_DIR    := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 API_DIR     := api
 PKG_DIR     := pkg
 GO_WORKSPACE_MODULES := . api/gen
+LINT_GOWORK ?= auto
 
 BUF_GO_GEN_TEMPLATE := buf.go.gen.yaml
 
@@ -51,6 +52,7 @@ INFRA_SERVICES := consul db redis openfga otel-collector jaeger loki prometheus 
 .PHONY: help env init plugin cli dep vendor tidy test cover vet lint lint.go lint.proto buf-update
 .PHONY: api api-go gen clean
 .PHONY: compose.up compose.stop compose.down compose.reset compose.ps compose.logs
+.PHONY: ci.lint
 
 env:
 	@echo "CURRENT_DIR: $(CURRENT_DIR)"
@@ -110,8 +112,13 @@ lint: lint.go
 	@echo "$(GREEN)✓ lint complete$(RESET)"
 
 lint.go:
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "$(CYAN)Linting Go ($(mod))...$(RESET)" && (cd $(ROOT_DIR)$(mod) && golangci-lint run) && ) true
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "$(CYAN)Linting Go ($(mod), GOWORK=$(LINT_GOWORK))...$(RESET)" && (cd $(ROOT_DIR)$(mod) && GOWORK=$(LINT_GOWORK) golangci-lint run) && ) true
 	@echo "$(GREEN)✓ Go lint complete$(RESET)"
+
+# CI-equivalent lint path: reuse lint.go with GOWORK disabled, then lint proto.
+ci.lint: LINT_GOWORK=off
+ci.lint: lint.go lint.proto
+	@echo "$(GREEN)✓ CI lint checks passed$(RESET)"
 
 gen: api
 	@echo "$(GREEN)✓ All code generated$(RESET)"
