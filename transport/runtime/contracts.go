@@ -24,9 +24,16 @@ type Connection interface {
 	IsHealthy() bool
 }
 
-// ClientFactory 定义按服务名构建连接的运行时工厂。
+// ClientDialInput 定义 client 连接建立时的统一输入。
+type ClientDialInput struct {
+	Protocol    string
+	Target      string
+	ExtraValues map[string]any
+}
+
+// ClientFactory 定义按 DialInput 建立连接的运行时工厂。
 type ClientFactory interface {
-	CreateConn(ctx context.Context, serviceName string) (Connection, error)
+	Dial(ctx context.Context, in ClientDialInput) (Connection, error)
 }
 
 // ServerPlugin 定义 server 协议插件构建接口。
@@ -56,5 +63,6 @@ type ClientBuildInput struct {
 	Trace       *conf.Trace
 	Discovery   registry.Discovery
 	Logger      log.Logger
+	Middleware  []middleware.Middleware
 	ExtraValues map[string]any
 }

@@ -78,7 +78,10 @@ func (c *client) CreateConn(ctx context.Context, connType ConnType, serviceName 
 	if err != nil {
 		return nil, err
 	}
-	conn, err := factory.CreateConn(ctx, serviceName)
+	conn, err := factory.Dial(ctx, runtime.ClientDialInput{
+		Protocol: string(connType),
+		Target:   serviceName,
+	})
 	if err != nil {
 		return nil, err
 	}

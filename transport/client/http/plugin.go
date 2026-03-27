@@ -31,18 +31,33 @@ type factory struct {
 	logger      logger.Logger
 }
 
-func (f *factory) CreateConn(_ context.Context, serviceName string) (runtime.Connection, error) {
+func (f *factory) Dial(_ context.Context, in runtime.ClientDialInput) (runtime.Connection, error) {
 	defaultTimeout := 5 * time.Second
-	endpoint, timeout, configured := resolveConnectionConfig(serviceName, f.httpClients, "", defaultTimeout)
-	if !configured || endpoint == "" {
-		return nil, fmt.Errorf("http endpoint not configured for service: %s", serviceName)
+	target := strings.TrimSpace(in.Target)
+	if target == "" {
+		return nil, fmt.Errorf("http dial target is empty")
+	}
+	endpoint, timeout, configured := resolveConnectionConfig(target, f.httpClients, target, defaultTimeout)
+	if endpoint == "" {
+		return nil, fmt.Errorf("http endpoint not configured for target: %s", target)
 	}
 	if f.logger != nil {
 		helper := logger.NewHelper(f.logger)
-		helper.Infof("using configured http endpoint: service_name=%s endpoint=%s", serviceName, endpoint)
+		if configured {
+			helper.Infof("using configured http endpoint: target=%s endpoint=%s", target, endpoint)
+		} else {
+			helper.Infof("using direct http endpoint: target=%s endpoint=%s", target, endpoint)
+		}
 	}
 
 	return NewConnection(&stdhttp.Client{Timeout: timeout}, endpoint), nil
+}
+
+func (f *factory) CreateConn(ctx context.Context, serviceName string) (runtime.Connection, error) {
+	return f.Dial(ctx, runtime.ClientDialInput{
+		Protocol: Type,
+		Target:   serviceName,
+	})
 }
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。

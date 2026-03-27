@@ -28,6 +28,12 @@ func TestGraph_BuildsConfiguredPlugins(t *testing.T) {
 	if len(out.Clients) != 1 {
 		t.Fatalf("expected one client, got %d", len(out.Clients))
 	}
+	if _, err := out.Clients["grpc"].Dial(context.Background(), ClientDialInput{
+		Protocol: "grpc",
+		Target:   "worker.service",
+	}); err != nil {
+		t.Fatalf("dial client factory: %v", err)
+	}
 }
 
 func TestGraph_UnknownPluginFailsFast(t *testing.T) {

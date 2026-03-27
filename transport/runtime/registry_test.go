@@ -83,7 +83,7 @@ func (f *fakeClientPlugin) Build(context.Context, ClientBuildInput) (ClientFacto
 
 type fakeClientFactory struct{}
 
-func (fakeClientFactory) CreateConn(context.Context, string) (Connection, error) {
+func (fakeClientFactory) Dial(context.Context, ClientDialInput) (Connection, error) {
 	return fakeConn{}, nil
 }
 

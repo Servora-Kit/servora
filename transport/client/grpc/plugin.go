@@ -31,10 +31,17 @@ type factory struct {
 	logger      logger.Logger
 }
 
-func (f *factory) CreateConn(ctx context.Context, serviceName string) (runtime.Connection, error) {
-	grpcConn, err := createConnection(ctx, serviceName, f.grpcClients, f.traceCfg, f.discovery, f.logger)
+func (f *factory) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime.Connection, error) {
+	grpcConn, err := createConnection(ctx, in.Target, f.grpcClients, f.traceCfg, f.discovery, f.logger)
 	if err != nil {
 		return nil, err
 	}
 	return NewConnection(grpcConn), nil
+}
+
+func (f *factory) CreateConn(ctx context.Context, serviceName string) (runtime.Connection, error) {
+	return f.Dial(ctx, runtime.ClientDialInput{
+		Protocol: Type,
+		Target:   serviceName,
+	})
 }
