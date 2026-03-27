@@ -10,6 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -346,52 +347,6 @@ func (x *Server) GetGrpc() *Server_GRPC {
 	return nil
 }
 
-// 客户端配置
-type Client struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 使用 map 来管理所有下游 gRPC 服务的客户端配置
-	Grpc          map[string]*Client_GRPC `protobuf:"bytes,1,rep,name=grpc,proto3" json:"grpc,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Client) Reset() {
-	*x = Client{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Client) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Client) ProtoMessage() {}
-
-func (x *Client) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Client.ProtoReflect.Descriptor instead.
-func (*Client) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *Client) GetGrpc() map[string]*Client_GRPC {
-	if x != nil {
-		return x.Grpc
-	}
-	return nil
-}
-
 // 数据源配置
 type Data struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -406,7 +361,7 @@ type Data struct {
 
 func (x *Data) Reset() {
 	*x = Data{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[5]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -418,7 +373,7 @@ func (x *Data) String() string {
 func (*Data) ProtoMessage() {}
 
 func (x *Data) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[5]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -431,7 +386,7 @@ func (x *Data) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data.ProtoReflect.Descriptor instead.
 func (*Data) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Data) GetDatabase() *Data_Database {
@@ -488,7 +443,7 @@ type App struct {
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[6]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -500,7 +455,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[6]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,7 +468,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *App) GetEnv() string {
@@ -602,7 +557,7 @@ type Registry struct {
 
 func (x *Registry) Reset() {
 	*x = Registry{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[7]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -614,7 +569,7 @@ func (x *Registry) String() string {
 func (*Registry) ProtoMessage() {}
 
 func (x *Registry) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[7]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -627,7 +582,7 @@ func (x *Registry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Registry.ProtoReflect.Descriptor instead.
 func (*Registry) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{7}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Registry) GetRegistry() isRegistry_Registry {
@@ -717,7 +672,7 @@ type Discovery struct {
 
 func (x *Discovery) Reset() {
 	*x = Discovery{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[8]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +684,7 @@ func (x *Discovery) String() string {
 func (*Discovery) ProtoMessage() {}
 
 func (x *Discovery) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[8]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +697,7 @@ func (x *Discovery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Discovery.ProtoReflect.Descriptor instead.
 func (*Discovery) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{8}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Discovery) GetDiscovery() isDiscovery_Discovery {
@@ -831,7 +786,7 @@ type Config struct {
 
 func (x *Config) Reset() {
 	*x = Config{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[9]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -843,7 +798,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[9]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -856,7 +811,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{9}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Config) GetConfig() isConfig_Config {
@@ -931,7 +886,7 @@ type ConsulConfig struct {
 
 func (x *ConsulConfig) Reset() {
 	*x = ConsulConfig{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[10]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -943,7 +898,7 @@ func (x *ConsulConfig) String() string {
 func (*ConsulConfig) ProtoMessage() {}
 
 func (x *ConsulConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[10]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -956,7 +911,7 @@ func (x *ConsulConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsulConfig.ProtoReflect.Descriptor instead.
 func (*ConsulConfig) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{10}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ConsulConfig) GetAddr() string {
@@ -1023,7 +978,7 @@ type EtcdConfig struct {
 
 func (x *EtcdConfig) Reset() {
 	*x = EtcdConfig{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[11]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1035,7 +990,7 @@ func (x *EtcdConfig) String() string {
 func (*EtcdConfig) ProtoMessage() {}
 
 func (x *EtcdConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[11]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1048,7 +1003,7 @@ func (x *EtcdConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EtcdConfig.ProtoReflect.Descriptor instead.
 func (*EtcdConfig) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{11}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EtcdConfig) GetEndpoints() []string {
@@ -1110,7 +1065,7 @@ type NacosConfig struct {
 
 func (x *NacosConfig) Reset() {
 	*x = NacosConfig{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[12]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1122,7 +1077,7 @@ func (x *NacosConfig) String() string {
 func (*NacosConfig) ProtoMessage() {}
 
 func (x *NacosConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[12]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1135,7 +1090,7 @@ func (x *NacosConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NacosConfig.ProtoReflect.Descriptor instead.
 func (*NacosConfig) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{12}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *NacosConfig) GetAddr() string {
@@ -1204,7 +1159,7 @@ type KubernetesConfig struct {
 
 func (x *KubernetesConfig) Reset() {
 	*x = KubernetesConfig{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[13]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1216,7 +1171,7 @@ func (x *KubernetesConfig) String() string {
 func (*KubernetesConfig) ProtoMessage() {}
 
 func (x *KubernetesConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[13]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1229,7 +1184,7 @@ func (x *KubernetesConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesConfig.ProtoReflect.Descriptor instead.
 func (*KubernetesConfig) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{13}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *KubernetesConfig) GetEnable() bool {
@@ -1252,7 +1207,7 @@ type Trace struct {
 
 func (x *Trace) Reset() {
 	*x = Trace{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[14]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1264,7 +1219,7 @@ func (x *Trace) String() string {
 func (*Trace) ProtoMessage() {}
 
 func (x *Trace) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[14]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1277,7 +1232,7 @@ func (x *Trace) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Trace.ProtoReflect.Descriptor instead.
 func (*Trace) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{14}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Trace) GetEndpoint() string {
@@ -1319,7 +1274,7 @@ type Metrics struct {
 
 func (x *Metrics) Reset() {
 	*x = Metrics{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[15]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1331,7 +1286,7 @@ func (x *Metrics) String() string {
 func (*Metrics) ProtoMessage() {}
 
 func (x *Metrics) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[15]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1344,7 +1299,7 @@ func (x *Metrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metrics.ProtoReflect.Descriptor instead.
 func (*Metrics) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{15}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Metrics) GetEnable() bool {
@@ -1376,7 +1331,7 @@ type Mail struct {
 
 func (x *Mail) Reset() {
 	*x = Mail{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[16]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1388,7 +1343,7 @@ func (x *Mail) String() string {
 func (*Mail) ProtoMessage() {}
 
 func (x *Mail) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[16]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1401,7 +1356,7 @@ func (x *Mail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Mail.ProtoReflect.Descriptor instead.
 func (*Mail) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{16}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Mail) GetSmtp() *Smtp {
@@ -1462,7 +1417,7 @@ type Smtp struct {
 
 func (x *Smtp) Reset() {
 	*x = Smtp{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[17]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1474,7 +1429,7 @@ func (x *Smtp) String() string {
 func (*Smtp) ProtoMessage() {}
 
 func (x *Smtp) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[17]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1487,7 +1442,7 @@ func (x *Smtp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Smtp.ProtoReflect.Descriptor instead.
 func (*Smtp) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{17}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Smtp) GetHost() string {
@@ -1550,7 +1505,7 @@ type MailFrom struct {
 
 func (x *MailFrom) Reset() {
 	*x = MailFrom{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[18]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1562,7 +1517,7 @@ func (x *MailFrom) String() string {
 func (*MailFrom) ProtoMessage() {}
 
 func (x *MailFrom) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[18]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1575,7 +1530,7 @@ func (x *MailFrom) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MailFrom.ProtoReflect.Descriptor instead.
 func (*MailFrom) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{18}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *MailFrom) GetAddress() string {
@@ -1604,7 +1559,7 @@ type Server_Listen struct {
 
 func (x *Server_Listen) Reset() {
 	*x = Server_Listen{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[19]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1616,7 +1571,7 @@ func (x *Server_Listen) String() string {
 func (*Server_Listen) ProtoMessage() {}
 
 func (x *Server_Listen) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[19]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1664,7 +1619,7 @@ type Server_Registry struct {
 
 func (x *Server_Registry) Reset() {
 	*x = Server_Registry{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[20]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1676,7 +1631,7 @@ func (x *Server_Registry) String() string {
 func (*Server_Registry) ProtoMessage() {}
 
 func (x *Server_Registry) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[20]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1718,7 +1673,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[21]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1730,7 +1685,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[21]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1785,7 +1740,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[22]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1797,7 +1752,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[22]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1834,58 +1789,6 @@ func (x *Server_GRPC) GetRegistry() *Server_Registry {
 	return nil
 }
 
-type Client_GRPC struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Tls           *TLSConfig             `protobuf:"bytes,2,opt,name=tls,proto3" json:"tls,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Client_GRPC) Reset() {
-	*x = Client_GRPC{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Client_GRPC) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Client_GRPC) ProtoMessage() {}
-
-func (x *Client_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Client_GRPC.ProtoReflect.Descriptor instead.
-func (*Client_GRPC) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 0}
-}
-
-func (x *Client_GRPC) GetEndpoint() string {
-	if x != nil {
-		return x.Endpoint
-	}
-	return ""
-}
-
-func (x *Client_GRPC) GetTls() *TLSConfig {
-	if x != nil {
-		return x.Tls
-	}
-	return nil
-}
-
 type Data_Database struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Driver        string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
@@ -1896,7 +1799,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[25]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1908,7 +1811,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[25]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1921,7 +1824,7 @@ func (x *Data_Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Database.ProtoReflect.Descriptor instead.
 func (*Data_Database) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 0}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *Data_Database) GetDriver() string {
@@ -1954,7 +1857,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[26]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1966,7 +1869,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[26]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1979,7 +1882,7 @@ func (x *Data_Redis) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Redis.ProtoReflect.Descriptor instead.
 func (*Data_Redis) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 1}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 1}
 }
 
 func (x *Data_Redis) GetNetwork() string {
@@ -2040,15 +1943,14 @@ func (x *Data_Redis) GetWriteTimeout() *durationpb.Duration {
 
 type Data_Client struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Grpc          []*Data_Client_GRPC    `protobuf:"bytes,1,rep,name=grpc,proto3" json:"grpc,omitempty"`
-	Http          []*Data_Client_HTTP    `protobuf:"bytes,2,rep,name=http,proto3" json:"http,omitempty"`
+	Services      []*Data_Client_Service `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Data_Client) Reset() {
 	*x = Data_Client{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[27]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2060,7 +1962,7 @@ func (x *Data_Client) String() string {
 func (*Data_Client) ProtoMessage() {}
 
 func (x *Data_Client) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[27]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2073,19 +1975,12 @@ func (x *Data_Client) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Client.ProtoReflect.Descriptor instead.
 func (*Data_Client) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 2}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 2}
 }
 
-func (x *Data_Client) GetGrpc() []*Data_Client_GRPC {
+func (x *Data_Client) GetServices() []*Data_Client_Service {
 	if x != nil {
-		return x.Grpc
-	}
-	return nil
-}
-
-func (x *Data_Client) GetHttp() []*Data_Client_HTTP {
-	if x != nil {
-		return x.Http
+		return x.Services
 	}
 	return nil
 }
@@ -2110,7 +2005,7 @@ type Data_Kafka struct {
 
 func (x *Data_Kafka) Reset() {
 	*x = Data_Kafka{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[28]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2122,7 +2017,7 @@ func (x *Data_Kafka) String() string {
 func (*Data_Kafka) ProtoMessage() {}
 
 func (x *Data_Kafka) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[28]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2135,7 +2030,7 @@ func (x *Data_Kafka) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Kafka.ProtoReflect.Descriptor instead.
 func (*Data_Kafka) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 3}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 3}
 }
 
 func (x *Data_Kafka) GetBrokers() []string {
@@ -2236,7 +2131,7 @@ type Data_ClickHouse struct {
 
 func (x *Data_ClickHouse) Reset() {
 	*x = Data_ClickHouse{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[29]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2248,7 +2143,7 @@ func (x *Data_ClickHouse) String() string {
 func (*Data_ClickHouse) ProtoMessage() {}
 
 func (x *Data_ClickHouse) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[29]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2261,7 +2156,7 @@ func (x *Data_ClickHouse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_ClickHouse.ProtoReflect.Descriptor instead.
 func (*Data_ClickHouse) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 4}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 4}
 }
 
 func (x *Data_ClickHouse) GetAddrs() []string {
@@ -2348,30 +2243,30 @@ func (x *Data_ClickHouse) GetCompress() string {
 	return ""
 }
 
-type Data_Client_HTTP struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
-	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
+// 下游服务配置（按 service 组织，单服务可配置多协议端点）
+type Data_Client_Service struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Name          string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`           // 下游服务名（如 user.service）
+	Endpoints     []*Data_Client_Endpoint `protobuf:"bytes,2,rep,name=endpoints,proto3" json:"endpoints,omitempty"` // 协议端点集合
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Data_Client_HTTP) Reset() {
-	*x = Data_Client_HTTP{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[30]
+func (x *Data_Client_Service) Reset() {
+	*x = Data_Client_Service{}
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Data_Client_HTTP) String() string {
+func (x *Data_Client_Service) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Data_Client_HTTP) ProtoMessage() {}
+func (*Data_Client_Service) ProtoMessage() {}
 
-func (x *Data_Client_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[30]
+func (x *Data_Client_Service) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2382,57 +2277,52 @@ func (x *Data_Client_HTTP) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Data_Client_HTTP.ProtoReflect.Descriptor instead.
-func (*Data_Client_HTTP) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 2, 0}
+// Deprecated: Use Data_Client_Service.ProtoReflect.Descriptor instead.
+func (*Data_Client_Service) Descriptor() ([]byte, []int) {
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 2, 0}
 }
 
-func (x *Data_Client_HTTP) GetServiceName() string {
+func (x *Data_Client_Service) GetName() string {
 	if x != nil {
-		return x.ServiceName
+		return x.Name
 	}
 	return ""
 }
 
-func (x *Data_Client_HTTP) GetEndpoint() string {
+func (x *Data_Client_Service) GetEndpoints() []*Data_Client_Endpoint {
 	if x != nil {
-		return x.Endpoint
-	}
-	return ""
-}
-
-func (x *Data_Client_HTTP) GetTimeout() *durationpb.Duration {
-	if x != nil {
-		return x.Timeout
+		return x.Endpoints
 	}
 	return nil
 }
 
-type Data_Client_GRPC struct {
+// 通用协议端点配置
+type Data_Client_Endpoint struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
-	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	Tls           *TLSConfig             `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"` // gRPC 客户端 TLS 配置
+	Protocol      string                 `protobuf:"bytes,1,opt,name=protocol,proto3" json:"protocol,omitempty"` // 协议类型（如 grpc/http/mqtt/mcp）
+	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"` // 端点地址（留空时由各协议插件使用默认规则）
+	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`   // 超时配置
+	Tls           *TLSConfig             `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"`           // TLS 配置（插件按需消费）
+	Options       *structpb.Struct       `protobuf:"bytes,5,opt,name=options,proto3" json:"options,omitempty"`   // 插件私有扩展配置（由插件自行解析）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Data_Client_GRPC) Reset() {
-	*x = Data_Client_GRPC{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[31]
+func (x *Data_Client_Endpoint) Reset() {
+	*x = Data_Client_Endpoint{}
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Data_Client_GRPC) String() string {
+func (x *Data_Client_Endpoint) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Data_Client_GRPC) ProtoMessage() {}
+func (*Data_Client_Endpoint) ProtoMessage() {}
 
-func (x *Data_Client_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[31]
+func (x *Data_Client_Endpoint) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2443,35 +2333,42 @@ func (x *Data_Client_GRPC) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Data_Client_GRPC.ProtoReflect.Descriptor instead.
-func (*Data_Client_GRPC) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 2, 1}
+// Deprecated: Use Data_Client_Endpoint.ProtoReflect.Descriptor instead.
+func (*Data_Client_Endpoint) Descriptor() ([]byte, []int) {
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 2, 1}
 }
 
-func (x *Data_Client_GRPC) GetServiceName() string {
+func (x *Data_Client_Endpoint) GetProtocol() string {
 	if x != nil {
-		return x.ServiceName
+		return x.Protocol
 	}
 	return ""
 }
 
-func (x *Data_Client_GRPC) GetEndpoint() string {
+func (x *Data_Client_Endpoint) GetEndpoint() string {
 	if x != nil {
 		return x.Endpoint
 	}
 	return ""
 }
 
-func (x *Data_Client_GRPC) GetTimeout() *durationpb.Duration {
+func (x *Data_Client_Endpoint) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return nil
 }
 
-func (x *Data_Client_GRPC) GetTls() *TLSConfig {
+func (x *Data_Client_Endpoint) GetTls() *TLSConfig {
 	if x != nil {
 		return x.Tls
+	}
+	return nil
+}
+
+func (x *Data_Client_Endpoint) GetOptions() *structpb.Struct {
+	if x != nil {
+		return x.Options
 	}
 	return nil
 }
@@ -2488,7 +2385,7 @@ type Data_Kafka_SASL struct {
 
 func (x *Data_Kafka_SASL) Reset() {
 	*x = Data_Kafka_SASL{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2500,7 +2397,7 @@ func (x *Data_Kafka_SASL) String() string {
 func (*Data_Kafka_SASL) ProtoMessage() {}
 
 func (x *Data_Kafka_SASL) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2513,7 +2410,7 @@ func (x *Data_Kafka_SASL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Kafka_SASL.ProtoReflect.Descriptor instead.
 func (*Data_Kafka_SASL) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 3, 0}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{4, 3, 0}
 }
 
 func (x *Data_Kafka_SASL) GetMechanism() string {
@@ -2555,7 +2452,7 @@ type App_Jwt struct {
 
 func (x *App_Jwt) Reset() {
 	*x = App_Jwt{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[33]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2567,7 +2464,7 @@ func (x *App_Jwt) String() string {
 func (*App_Jwt) ProtoMessage() {}
 
 func (x *App_Jwt) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[33]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2580,7 +2477,7 @@ func (x *App_Jwt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App_Jwt.ProtoReflect.Descriptor instead.
 func (*App_Jwt) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6, 0}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 0}
 }
 
 func (x *App_Jwt) GetPrivateKeyPath() string {
@@ -2639,7 +2536,7 @@ type App_Log struct {
 
 func (x *App_Log) Reset() {
 	*x = App_Log{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[34]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2651,7 +2548,7 @@ func (x *App_Log) String() string {
 func (*App_Log) ProtoMessage() {}
 
 func (x *App_Log) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[34]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2664,7 +2561,7 @@ func (x *App_Log) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App_Log.ProtoReflect.Descriptor instead.
 func (*App_Log) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6, 1}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 1}
 }
 
 func (x *App_Log) GetLevel() int32 {
@@ -2721,7 +2618,7 @@ type App_OpenFGA struct {
 
 func (x *App_OpenFGA) Reset() {
 	*x = App_OpenFGA{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[35]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2733,7 +2630,7 @@ func (x *App_OpenFGA) String() string {
 func (*App_OpenFGA) ProtoMessage() {}
 
 func (x *App_OpenFGA) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[35]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2746,7 +2643,7 @@ func (x *App_OpenFGA) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App_OpenFGA.ProtoReflect.Descriptor instead.
 func (*App_OpenFGA) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6, 2}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 2}
 }
 
 func (x *App_OpenFGA) GetApiUrl() string {
@@ -2789,7 +2686,7 @@ type App_Oidc struct {
 
 func (x *App_Oidc) Reset() {
 	*x = App_Oidc{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[36]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2801,7 +2698,7 @@ func (x *App_Oidc) String() string {
 func (*App_Oidc) ProtoMessage() {}
 
 func (x *App_Oidc) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[36]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2814,7 +2711,7 @@ func (x *App_Oidc) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App_Oidc.ProtoReflect.Descriptor instead.
 func (*App_Oidc) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6, 3}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 3}
 }
 
 func (x *App_Oidc) GetCryptoKey() string {
@@ -2862,7 +2759,7 @@ type App_Audit struct {
 
 func (x *App_Audit) Reset() {
 	*x = App_Audit{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[37]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2874,7 +2771,7 @@ func (x *App_Audit) String() string {
 func (*App_Audit) ProtoMessage() {}
 
 func (x *App_Audit) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[37]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2887,7 +2784,7 @@ func (x *App_Audit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App_Audit.ProtoReflect.Descriptor instead.
 func (*App_Audit) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{6, 4}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 4}
 }
 
 func (x *App_Audit) GetEnabled() bool {
@@ -2943,7 +2840,7 @@ var File_servora_conf_v1_conf_proto protoreflect.FileDescriptor
 
 const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\n" +
-	"\x1aservora/conf/v1/conf.proto\x12\x0fservora.conf.v1\x1a\x1egoogle/protobuf/duration.proto\"\xbe\x03\n" +
+	"\x1aservora/conf/v1/conf.proto\x12\x0fservora.conf.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xbe\x03\n" +
 	"\tBootstrap\x12&\n" +
 	"\x03app\x18\x01 \x01(\v2\x14.servora.conf.v1.AppR\x03app\x12/\n" +
 	"\x06server\x18\x02 \x01(\v2\x17.servora.conf.v1.ServerR\x06server\x12)\n" +
@@ -2985,15 +2882,7 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x04GRPC\x126\n" +
 	"\x06listen\x18\x01 \x01(\v2\x1e.servora.conf.v1.Server.ListenR\x06listen\x12,\n" +
 	"\x03tls\x18\x02 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x12<\n" +
-	"\bregistry\x18\x03 \x01(\v2 .servora.conf.v1.Server.RegistryR\bregistry\"\xe8\x01\n" +
-	"\x06Client\x125\n" +
-	"\x04grpc\x18\x01 \x03(\v2!.servora.conf.v1.Client.GrpcEntryR\x04grpc\x1aP\n" +
-	"\x04GRPC\x12\x1a\n" +
-	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12,\n" +
-	"\x03tls\x18\x02 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x1aU\n" +
-	"\tGrpcEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
-	"\x05value\x18\x02 \x01(\v2\x1c.servora.conf.v1.Client.GRPCR\x05value:\x028\x01\"\xf3\x10\n" +
+	"\bregistry\x18\x03 \x01(\v2 .servora.conf.v1.Server.RegistryR\bregistry\"\xdf\x10\n" +
 	"\x04Data\x12:\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x1e.servora.conf.v1.Data.DatabaseR\bdatabase\x121\n" +
 	"\x05redis\x18\x02 \x01(\v2\x1b.servora.conf.v1.Data.RedisR\x05redis\x124\n" +
@@ -3013,19 +2902,18 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x02db\x18\x05 \x01(\x05R\x02db\x12<\n" +
 	"\fdial_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
 	"\fread_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\x9d\x03\n" +
-	"\x06Client\x125\n" +
-	"\x04grpc\x18\x01 \x03(\v2!.servora.conf.v1.Data.Client.GRPCR\x04grpc\x125\n" +
-	"\x04http\x18\x02 \x03(\v2!.servora.conf.v1.Data.Client.HTTPR\x04http\x1az\n" +
-	"\x04HTTP\x12!\n" +
-	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1a\n" +
-	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a\xa8\x01\n" +
-	"\x04GRPC\x12!\n" +
-	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12\x1a\n" +
+	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\x89\x03\n" +
+	"\x06Client\x12@\n" +
+	"\bservices\x18\x01 \x03(\v2$.servora.conf.v1.Data.Client.ServiceR\bservices\x1ab\n" +
+	"\aService\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12C\n" +
+	"\tendpoints\x18\x02 \x03(\v2%.servora.conf.v1.Data.Client.EndpointR\tendpoints\x1a\xd8\x01\n" +
+	"\bEndpoint\x12\x1a\n" +
+	"\bprotocol\x18\x01 \x01(\tR\bprotocol\x12\x1a\n" +
 	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
 	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12,\n" +
-	"\x03tls\x18\x04 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x1a\xd9\x04\n" +
+	"\x03tls\x18\x04 \x01(\v2\x1a.servora.conf.v1.TLSConfigR\x03tls\x121\n" +
+	"\aoptions\x18\x05 \x01(\v2\x17.google.protobuf.StructR\aoptions\x1a\xd9\x04\n" +
 	"\x05Kafka\x12\x18\n" +
 	"\abrokers\x18\x01 \x03(\tR\abrokers\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12%\n" +
@@ -3199,125 +3087,120 @@ func file_servora_conf_v1_conf_proto_rawDescGZIP() []byte {
 	return file_servora_conf_v1_conf_proto_rawDescData
 }
 
-var file_servora_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
+var file_servora_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_servora_conf_v1_conf_proto_goTypes = []any{
-	(*Bootstrap)(nil),           // 0: servora.conf.v1.Bootstrap
-	(*TLSConfig)(nil),           // 1: servora.conf.v1.TLSConfig
-	(*CORS)(nil),                // 2: servora.conf.v1.CORS
-	(*Server)(nil),              // 3: servora.conf.v1.Server
-	(*Client)(nil),              // 4: servora.conf.v1.Client
-	(*Data)(nil),                // 5: servora.conf.v1.Data
-	(*App)(nil),                 // 6: servora.conf.v1.App
-	(*Registry)(nil),            // 7: servora.conf.v1.Registry
-	(*Discovery)(nil),           // 8: servora.conf.v1.Discovery
-	(*Config)(nil),              // 9: servora.conf.v1.Config
-	(*ConsulConfig)(nil),        // 10: servora.conf.v1.ConsulConfig
-	(*EtcdConfig)(nil),          // 11: servora.conf.v1.EtcdConfig
-	(*NacosConfig)(nil),         // 12: servora.conf.v1.NacosConfig
-	(*KubernetesConfig)(nil),    // 13: servora.conf.v1.KubernetesConfig
-	(*Trace)(nil),               // 14: servora.conf.v1.Trace
-	(*Metrics)(nil),             // 15: servora.conf.v1.Metrics
-	(*Mail)(nil),                // 16: servora.conf.v1.Mail
-	(*Smtp)(nil),                // 17: servora.conf.v1.Smtp
-	(*MailFrom)(nil),            // 18: servora.conf.v1.MailFrom
-	(*Server_Listen)(nil),       // 19: servora.conf.v1.Server.Listen
-	(*Server_Registry)(nil),     // 20: servora.conf.v1.Server.Registry
-	(*Server_HTTP)(nil),         // 21: servora.conf.v1.Server.HTTP
-	(*Server_GRPC)(nil),         // 22: servora.conf.v1.Server.GRPC
-	(*Client_GRPC)(nil),         // 23: servora.conf.v1.Client.GRPC
-	nil,                         // 24: servora.conf.v1.Client.GrpcEntry
-	(*Data_Database)(nil),       // 25: servora.conf.v1.Data.Database
-	(*Data_Redis)(nil),          // 26: servora.conf.v1.Data.Redis
-	(*Data_Client)(nil),         // 27: servora.conf.v1.Data.Client
-	(*Data_Kafka)(nil),          // 28: servora.conf.v1.Data.Kafka
-	(*Data_ClickHouse)(nil),     // 29: servora.conf.v1.Data.ClickHouse
-	(*Data_Client_HTTP)(nil),    // 30: servora.conf.v1.Data.Client.HTTP
-	(*Data_Client_GRPC)(nil),    // 31: servora.conf.v1.Data.Client.GRPC
-	(*Data_Kafka_SASL)(nil),     // 32: servora.conf.v1.Data.Kafka.SASL
-	(*App_Jwt)(nil),             // 33: servora.conf.v1.App.Jwt
-	(*App_Log)(nil),             // 34: servora.conf.v1.App.Log
-	(*App_OpenFGA)(nil),         // 35: servora.conf.v1.App.OpenFGA
-	(*App_Oidc)(nil),            // 36: servora.conf.v1.App.Oidc
-	(*App_Audit)(nil),           // 37: servora.conf.v1.App.Audit
-	nil,                         // 38: servora.conf.v1.App.MetadataEntry
-	(*durationpb.Duration)(nil), // 39: google.protobuf.Duration
+	(*Bootstrap)(nil),            // 0: servora.conf.v1.Bootstrap
+	(*TLSConfig)(nil),            // 1: servora.conf.v1.TLSConfig
+	(*CORS)(nil),                 // 2: servora.conf.v1.CORS
+	(*Server)(nil),               // 3: servora.conf.v1.Server
+	(*Data)(nil),                 // 4: servora.conf.v1.Data
+	(*App)(nil),                  // 5: servora.conf.v1.App
+	(*Registry)(nil),             // 6: servora.conf.v1.Registry
+	(*Discovery)(nil),            // 7: servora.conf.v1.Discovery
+	(*Config)(nil),               // 8: servora.conf.v1.Config
+	(*ConsulConfig)(nil),         // 9: servora.conf.v1.ConsulConfig
+	(*EtcdConfig)(nil),           // 10: servora.conf.v1.EtcdConfig
+	(*NacosConfig)(nil),          // 11: servora.conf.v1.NacosConfig
+	(*KubernetesConfig)(nil),     // 12: servora.conf.v1.KubernetesConfig
+	(*Trace)(nil),                // 13: servora.conf.v1.Trace
+	(*Metrics)(nil),              // 14: servora.conf.v1.Metrics
+	(*Mail)(nil),                 // 15: servora.conf.v1.Mail
+	(*Smtp)(nil),                 // 16: servora.conf.v1.Smtp
+	(*MailFrom)(nil),             // 17: servora.conf.v1.MailFrom
+	(*Server_Listen)(nil),        // 18: servora.conf.v1.Server.Listen
+	(*Server_Registry)(nil),      // 19: servora.conf.v1.Server.Registry
+	(*Server_HTTP)(nil),          // 20: servora.conf.v1.Server.HTTP
+	(*Server_GRPC)(nil),          // 21: servora.conf.v1.Server.GRPC
+	(*Data_Database)(nil),        // 22: servora.conf.v1.Data.Database
+	(*Data_Redis)(nil),           // 23: servora.conf.v1.Data.Redis
+	(*Data_Client)(nil),          // 24: servora.conf.v1.Data.Client
+	(*Data_Kafka)(nil),           // 25: servora.conf.v1.Data.Kafka
+	(*Data_ClickHouse)(nil),      // 26: servora.conf.v1.Data.ClickHouse
+	(*Data_Client_Service)(nil),  // 27: servora.conf.v1.Data.Client.Service
+	(*Data_Client_Endpoint)(nil), // 28: servora.conf.v1.Data.Client.Endpoint
+	(*Data_Kafka_SASL)(nil),      // 29: servora.conf.v1.Data.Kafka.SASL
+	(*App_Jwt)(nil),              // 30: servora.conf.v1.App.Jwt
+	(*App_Log)(nil),              // 31: servora.conf.v1.App.Log
+	(*App_OpenFGA)(nil),          // 32: servora.conf.v1.App.OpenFGA
+	(*App_Oidc)(nil),             // 33: servora.conf.v1.App.Oidc
+	(*App_Audit)(nil),            // 34: servora.conf.v1.App.Audit
+	nil,                          // 35: servora.conf.v1.App.MetadataEntry
+	(*durationpb.Duration)(nil),  // 36: google.protobuf.Duration
+	(*structpb.Struct)(nil),      // 37: google.protobuf.Struct
 }
 var file_servora_conf_v1_conf_proto_depIdxs = []int32{
-	6,  // 0: servora.conf.v1.Bootstrap.app:type_name -> servora.conf.v1.App
+	5,  // 0: servora.conf.v1.Bootstrap.app:type_name -> servora.conf.v1.App
 	3,  // 1: servora.conf.v1.Bootstrap.server:type_name -> servora.conf.v1.Server
-	5,  // 2: servora.conf.v1.Bootstrap.data:type_name -> servora.conf.v1.Data
-	7,  // 3: servora.conf.v1.Bootstrap.registry:type_name -> servora.conf.v1.Registry
-	8,  // 4: servora.conf.v1.Bootstrap.discovery:type_name -> servora.conf.v1.Discovery
-	9,  // 5: servora.conf.v1.Bootstrap.config:type_name -> servora.conf.v1.Config
-	14, // 6: servora.conf.v1.Bootstrap.trace:type_name -> servora.conf.v1.Trace
-	15, // 7: servora.conf.v1.Bootstrap.metrics:type_name -> servora.conf.v1.Metrics
-	16, // 8: servora.conf.v1.Bootstrap.mail:type_name -> servora.conf.v1.Mail
-	39, // 9: servora.conf.v1.CORS.max_age:type_name -> google.protobuf.Duration
-	21, // 10: servora.conf.v1.Server.http:type_name -> servora.conf.v1.Server.HTTP
-	22, // 11: servora.conf.v1.Server.grpc:type_name -> servora.conf.v1.Server.GRPC
-	24, // 12: servora.conf.v1.Client.grpc:type_name -> servora.conf.v1.Client.GrpcEntry
-	25, // 13: servora.conf.v1.Data.database:type_name -> servora.conf.v1.Data.Database
-	26, // 14: servora.conf.v1.Data.redis:type_name -> servora.conf.v1.Data.Redis
-	27, // 15: servora.conf.v1.Data.client:type_name -> servora.conf.v1.Data.Client
-	28, // 16: servora.conf.v1.Data.kafka:type_name -> servora.conf.v1.Data.Kafka
-	29, // 17: servora.conf.v1.Data.clickhouse:type_name -> servora.conf.v1.Data.ClickHouse
-	33, // 18: servora.conf.v1.App.jwt:type_name -> servora.conf.v1.App.Jwt
-	34, // 19: servora.conf.v1.App.log:type_name -> servora.conf.v1.App.Log
-	38, // 20: servora.conf.v1.App.metadata:type_name -> servora.conf.v1.App.MetadataEntry
-	35, // 21: servora.conf.v1.App.openfga:type_name -> servora.conf.v1.App.OpenFGA
-	36, // 22: servora.conf.v1.App.oidc:type_name -> servora.conf.v1.App.Oidc
-	37, // 23: servora.conf.v1.App.audit:type_name -> servora.conf.v1.App.Audit
-	10, // 24: servora.conf.v1.Registry.consul:type_name -> servora.conf.v1.ConsulConfig
-	11, // 25: servora.conf.v1.Registry.etcd:type_name -> servora.conf.v1.EtcdConfig
-	12, // 26: servora.conf.v1.Registry.nacos:type_name -> servora.conf.v1.NacosConfig
-	13, // 27: servora.conf.v1.Registry.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
-	10, // 28: servora.conf.v1.Discovery.consul:type_name -> servora.conf.v1.ConsulConfig
-	11, // 29: servora.conf.v1.Discovery.etcd:type_name -> servora.conf.v1.EtcdConfig
-	12, // 30: servora.conf.v1.Discovery.nacos:type_name -> servora.conf.v1.NacosConfig
-	13, // 31: servora.conf.v1.Discovery.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
-	10, // 32: servora.conf.v1.Config.consul:type_name -> servora.conf.v1.ConsulConfig
-	11, // 33: servora.conf.v1.Config.etcd:type_name -> servora.conf.v1.EtcdConfig
-	12, // 34: servora.conf.v1.Config.nacos:type_name -> servora.conf.v1.NacosConfig
-	39, // 35: servora.conf.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
-	39, // 36: servora.conf.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
-	39, // 37: servora.conf.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
-	17, // 38: servora.conf.v1.Mail.smtp:type_name -> servora.conf.v1.Smtp
-	18, // 39: servora.conf.v1.Mail.from:type_name -> servora.conf.v1.MailFrom
-	39, // 40: servora.conf.v1.Mail.verify_email_ttl:type_name -> google.protobuf.Duration
-	39, // 41: servora.conf.v1.Mail.reset_password_ttl:type_name -> google.protobuf.Duration
-	39, // 42: servora.conf.v1.Smtp.send_timeout:type_name -> google.protobuf.Duration
-	39, // 43: servora.conf.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
-	19, // 44: servora.conf.v1.Server.HTTP.listen:type_name -> servora.conf.v1.Server.Listen
-	1,  // 45: servora.conf.v1.Server.HTTP.tls:type_name -> servora.conf.v1.TLSConfig
-	2,  // 46: servora.conf.v1.Server.HTTP.cors:type_name -> servora.conf.v1.CORS
-	20, // 47: servora.conf.v1.Server.HTTP.registry:type_name -> servora.conf.v1.Server.Registry
-	19, // 48: servora.conf.v1.Server.GRPC.listen:type_name -> servora.conf.v1.Server.Listen
-	1,  // 49: servora.conf.v1.Server.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
-	20, // 50: servora.conf.v1.Server.GRPC.registry:type_name -> servora.conf.v1.Server.Registry
-	1,  // 51: servora.conf.v1.Client.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
-	23, // 52: servora.conf.v1.Client.GrpcEntry.value:type_name -> servora.conf.v1.Client.GRPC
-	39, // 53: servora.conf.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
-	39, // 54: servora.conf.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	39, // 55: servora.conf.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	31, // 56: servora.conf.v1.Data.Client.grpc:type_name -> servora.conf.v1.Data.Client.GRPC
-	30, // 57: servora.conf.v1.Data.Client.http:type_name -> servora.conf.v1.Data.Client.HTTP
-	39, // 58: servora.conf.v1.Data.Kafka.retry_backoff:type_name -> google.protobuf.Duration
-	39, // 59: servora.conf.v1.Data.Kafka.dial_timeout:type_name -> google.protobuf.Duration
-	39, // 60: servora.conf.v1.Data.Kafka.read_timeout:type_name -> google.protobuf.Duration
-	39, // 61: servora.conf.v1.Data.Kafka.write_timeout:type_name -> google.protobuf.Duration
-	32, // 62: servora.conf.v1.Data.Kafka.sasl:type_name -> servora.conf.v1.Data.Kafka.SASL
-	39, // 63: servora.conf.v1.Data.ClickHouse.dial_timeout:type_name -> google.protobuf.Duration
-	39, // 64: servora.conf.v1.Data.ClickHouse.read_timeout:type_name -> google.protobuf.Duration
-	39, // 65: servora.conf.v1.Data.ClickHouse.conn_max_lifetime:type_name -> google.protobuf.Duration
-	39, // 66: servora.conf.v1.Data.Client.HTTP.timeout:type_name -> google.protobuf.Duration
-	39, // 67: servora.conf.v1.Data.Client.GRPC.timeout:type_name -> google.protobuf.Duration
-	1,  // 68: servora.conf.v1.Data.Client.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
-	39, // 69: servora.conf.v1.App.Audit.consumer_flush_interval:type_name -> google.protobuf.Duration
-	70, // [70:70] is the sub-list for method output_type
-	70, // [70:70] is the sub-list for method input_type
-	70, // [70:70] is the sub-list for extension type_name
-	70, // [70:70] is the sub-list for extension extendee
-	0,  // [0:70] is the sub-list for field type_name
+	4,  // 2: servora.conf.v1.Bootstrap.data:type_name -> servora.conf.v1.Data
+	6,  // 3: servora.conf.v1.Bootstrap.registry:type_name -> servora.conf.v1.Registry
+	7,  // 4: servora.conf.v1.Bootstrap.discovery:type_name -> servora.conf.v1.Discovery
+	8,  // 5: servora.conf.v1.Bootstrap.config:type_name -> servora.conf.v1.Config
+	13, // 6: servora.conf.v1.Bootstrap.trace:type_name -> servora.conf.v1.Trace
+	14, // 7: servora.conf.v1.Bootstrap.metrics:type_name -> servora.conf.v1.Metrics
+	15, // 8: servora.conf.v1.Bootstrap.mail:type_name -> servora.conf.v1.Mail
+	36, // 9: servora.conf.v1.CORS.max_age:type_name -> google.protobuf.Duration
+	20, // 10: servora.conf.v1.Server.http:type_name -> servora.conf.v1.Server.HTTP
+	21, // 11: servora.conf.v1.Server.grpc:type_name -> servora.conf.v1.Server.GRPC
+	22, // 12: servora.conf.v1.Data.database:type_name -> servora.conf.v1.Data.Database
+	23, // 13: servora.conf.v1.Data.redis:type_name -> servora.conf.v1.Data.Redis
+	24, // 14: servora.conf.v1.Data.client:type_name -> servora.conf.v1.Data.Client
+	25, // 15: servora.conf.v1.Data.kafka:type_name -> servora.conf.v1.Data.Kafka
+	26, // 16: servora.conf.v1.Data.clickhouse:type_name -> servora.conf.v1.Data.ClickHouse
+	30, // 17: servora.conf.v1.App.jwt:type_name -> servora.conf.v1.App.Jwt
+	31, // 18: servora.conf.v1.App.log:type_name -> servora.conf.v1.App.Log
+	35, // 19: servora.conf.v1.App.metadata:type_name -> servora.conf.v1.App.MetadataEntry
+	32, // 20: servora.conf.v1.App.openfga:type_name -> servora.conf.v1.App.OpenFGA
+	33, // 21: servora.conf.v1.App.oidc:type_name -> servora.conf.v1.App.Oidc
+	34, // 22: servora.conf.v1.App.audit:type_name -> servora.conf.v1.App.Audit
+	9,  // 23: servora.conf.v1.Registry.consul:type_name -> servora.conf.v1.ConsulConfig
+	10, // 24: servora.conf.v1.Registry.etcd:type_name -> servora.conf.v1.EtcdConfig
+	11, // 25: servora.conf.v1.Registry.nacos:type_name -> servora.conf.v1.NacosConfig
+	12, // 26: servora.conf.v1.Registry.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
+	9,  // 27: servora.conf.v1.Discovery.consul:type_name -> servora.conf.v1.ConsulConfig
+	10, // 28: servora.conf.v1.Discovery.etcd:type_name -> servora.conf.v1.EtcdConfig
+	11, // 29: servora.conf.v1.Discovery.nacos:type_name -> servora.conf.v1.NacosConfig
+	12, // 30: servora.conf.v1.Discovery.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
+	9,  // 31: servora.conf.v1.Config.consul:type_name -> servora.conf.v1.ConsulConfig
+	10, // 32: servora.conf.v1.Config.etcd:type_name -> servora.conf.v1.EtcdConfig
+	11, // 33: servora.conf.v1.Config.nacos:type_name -> servora.conf.v1.NacosConfig
+	36, // 34: servora.conf.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
+	36, // 35: servora.conf.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
+	36, // 36: servora.conf.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
+	16, // 37: servora.conf.v1.Mail.smtp:type_name -> servora.conf.v1.Smtp
+	17, // 38: servora.conf.v1.Mail.from:type_name -> servora.conf.v1.MailFrom
+	36, // 39: servora.conf.v1.Mail.verify_email_ttl:type_name -> google.protobuf.Duration
+	36, // 40: servora.conf.v1.Mail.reset_password_ttl:type_name -> google.protobuf.Duration
+	36, // 41: servora.conf.v1.Smtp.send_timeout:type_name -> google.protobuf.Duration
+	36, // 42: servora.conf.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
+	18, // 43: servora.conf.v1.Server.HTTP.listen:type_name -> servora.conf.v1.Server.Listen
+	1,  // 44: servora.conf.v1.Server.HTTP.tls:type_name -> servora.conf.v1.TLSConfig
+	2,  // 45: servora.conf.v1.Server.HTTP.cors:type_name -> servora.conf.v1.CORS
+	19, // 46: servora.conf.v1.Server.HTTP.registry:type_name -> servora.conf.v1.Server.Registry
+	18, // 47: servora.conf.v1.Server.GRPC.listen:type_name -> servora.conf.v1.Server.Listen
+	1,  // 48: servora.conf.v1.Server.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
+	19, // 49: servora.conf.v1.Server.GRPC.registry:type_name -> servora.conf.v1.Server.Registry
+	36, // 50: servora.conf.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
+	36, // 51: servora.conf.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	36, // 52: servora.conf.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	27, // 53: servora.conf.v1.Data.Client.services:type_name -> servora.conf.v1.Data.Client.Service
+	36, // 54: servora.conf.v1.Data.Kafka.retry_backoff:type_name -> google.protobuf.Duration
+	36, // 55: servora.conf.v1.Data.Kafka.dial_timeout:type_name -> google.protobuf.Duration
+	36, // 56: servora.conf.v1.Data.Kafka.read_timeout:type_name -> google.protobuf.Duration
+	36, // 57: servora.conf.v1.Data.Kafka.write_timeout:type_name -> google.protobuf.Duration
+	29, // 58: servora.conf.v1.Data.Kafka.sasl:type_name -> servora.conf.v1.Data.Kafka.SASL
+	36, // 59: servora.conf.v1.Data.ClickHouse.dial_timeout:type_name -> google.protobuf.Duration
+	36, // 60: servora.conf.v1.Data.ClickHouse.read_timeout:type_name -> google.protobuf.Duration
+	36, // 61: servora.conf.v1.Data.ClickHouse.conn_max_lifetime:type_name -> google.protobuf.Duration
+	28, // 62: servora.conf.v1.Data.Client.Service.endpoints:type_name -> servora.conf.v1.Data.Client.Endpoint
+	36, // 63: servora.conf.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
+	1,  // 64: servora.conf.v1.Data.Client.Endpoint.tls:type_name -> servora.conf.v1.TLSConfig
+	37, // 65: servora.conf.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
+	36, // 66: servora.conf.v1.App.Audit.consumer_flush_interval:type_name -> google.protobuf.Duration
+	67, // [67:67] is the sub-list for method output_type
+	67, // [67:67] is the sub-list for method input_type
+	67, // [67:67] is the sub-list for extension type_name
+	67, // [67:67] is the sub-list for extension extendee
+	0,  // [0:67] is the sub-list for field type_name
 }
 
 func init() { file_servora_conf_v1_conf_proto_init() }
@@ -3325,19 +3208,19 @@ func file_servora_conf_v1_conf_proto_init() {
 	if File_servora_conf_v1_conf_proto != nil {
 		return
 	}
-	file_servora_conf_v1_conf_proto_msgTypes[7].OneofWrappers = []any{
+	file_servora_conf_v1_conf_proto_msgTypes[6].OneofWrappers = []any{
 		(*Registry_Consul)(nil),
 		(*Registry_Etcd)(nil),
 		(*Registry_Nacos)(nil),
 		(*Registry_Kubernetes)(nil),
 	}
-	file_servora_conf_v1_conf_proto_msgTypes[8].OneofWrappers = []any{
+	file_servora_conf_v1_conf_proto_msgTypes[7].OneofWrappers = []any{
 		(*Discovery_Consul)(nil),
 		(*Discovery_Etcd)(nil),
 		(*Discovery_Nacos)(nil),
 		(*Discovery_Kubernetes)(nil),
 	}
-	file_servora_conf_v1_conf_proto_msgTypes[9].OneofWrappers = []any{
+	file_servora_conf_v1_conf_proto_msgTypes[8].OneofWrappers = []any{
 		(*Config_Consul)(nil),
 		(*Config_Etcd)(nil),
 		(*Config_Nacos)(nil),
@@ -3348,7 +3231,7 @@ func file_servora_conf_v1_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_conf_v1_conf_proto_rawDesc), len(file_servora_conf_v1_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   39,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

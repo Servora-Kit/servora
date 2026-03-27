@@ -19,8 +19,12 @@ const Type = "grpc"
 func (p *Plugin) Type() string { return Type }
 
 func (p *Plugin) Build(_ context.Context, in runtime.ClientBuildInput) (runtime.ClientFactory, error) {
+	grpcClients, err := BuildClientConfigIndex(in.Data)
+	if err != nil {
+		return nil, fmt.Errorf("build grpc client config index: %w", err)
+	}
 	return &factory{
-		grpcClients: BuildClientConfigIndex(in.Data),
+		grpcClients: grpcClients,
 		discovery:   in.Discovery,
 		logger:      in.Logger,
 		middleware:  in.Middleware,
@@ -28,7 +32,7 @@ func (p *Plugin) Build(_ context.Context, in runtime.ClientBuildInput) (runtime.
 }
 
 type factory struct {
-	grpcClients map[string]*conf.Data_Client_GRPC
+	grpcClients map[string]*conf.Data_Client_Endpoint
 	discovery   registry.Discovery
 	logger      logger.Logger
 	middleware  []middleware.Middleware

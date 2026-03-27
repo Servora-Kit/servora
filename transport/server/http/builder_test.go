@@ -36,12 +36,3 @@ func TestBuilder_MustBuild(t *testing.T) {
 		t.Fatal("expected non-nil server")
 	}
 }
-
-func TestBuilder_BuildWithInvalidExtraValue(t *testing.T) {
-	_, err := NewBuilder().
-		WithExtraValue(ExtraKeyMetrics, "invalid").
-		Build(context.Background())
-	if err == nil {
-		t.Fatal("expected error")
-	}
-}

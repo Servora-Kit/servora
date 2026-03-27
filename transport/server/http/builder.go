@@ -25,7 +25,6 @@ type Builder struct {
 	swaggerSpec   []byte
 	swaggerOpts   []swagger.Option
 	registrars    []Registrar
-	extraValues   map[string]any
 }
 
 func NewBuilder() *Builder {
@@ -73,29 +72,6 @@ func (b *Builder) WithServices(registrars ...Registrar) *Builder {
 	return b
 }
 
-// WithExtraValue 允许注入额外 plugin 参数，便于未来协议扩展。
-func (b *Builder) WithExtraValue(key string, value any) *Builder {
-	if b.extraValues == nil {
-		b.extraValues = make(map[string]any)
-	}
-	b.extraValues[key] = value
-	return b
-}
-
-// WithExtraValues 批量注入额外 plugin 参数，后写入值覆盖先前同名键。
-func (b *Builder) WithExtraValues(values map[string]any) *Builder {
-	if len(values) == 0 {
-		return b
-	}
-	if b.extraValues == nil {
-		b.extraValues = make(map[string]any, len(values))
-	}
-	for k, v := range values {
-		b.extraValues[k] = v
-	}
-	return b
-}
-
 func (b *Builder) Build(ctx context.Context) (*khttp.Server, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -139,10 +115,7 @@ func (b *Builder) MustBuild() *khttp.Server {
 }
 
 func (b *Builder) buildExtraValues() map[string]any {
-	extra := make(map[string]any, len(b.extraValues)+5)
-	for k, v := range b.extraValues {
-		extra[k] = v
-	}
+	extra := make(map[string]any, 4)
 
 	if b.cors != nil {
 		extra[ExtraKeyCORS] = b.cors

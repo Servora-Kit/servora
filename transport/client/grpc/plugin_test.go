@@ -27,3 +27,24 @@ func TestPlugin_BuildFactory(t *testing.T) {
 		t.Fatal("expected non-nil factory")
 	}
 }
+
+func TestPlugin_BuildFactory_DuplicateServiceProtocol(t *testing.T) {
+	_, err := (&Plugin{}).Build(context.Background(), runtime.ClientBuildInput{
+		Data: &conf.Data{
+			Client: &conf.Data_Client{
+				Services: []*conf.Data_Client_Service{
+					{
+						Name: "user",
+						Endpoints: []*conf.Data_Client_Endpoint{
+							{Protocol: "grpc", Endpoint: "grpc://a"},
+							{Protocol: "grpc", Endpoint: "grpc://b"},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected duplicate config error")
+	}
+}

@@ -24,9 +24,6 @@ func TestNewClient_WithCustomPlugin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial conn: %v", err)
 	}
-	if got, want := conn.GetProtocol(), "fake"; got != want {
-		t.Fatalf("conn protocol = %q, want %q", got, want)
-	}
 	if got, ok := conn.Value().(string); !ok || got != "fake:fake.service" {
 		t.Fatalf("conn value = %#v, want %q", conn.Value(), "fake:fake.service")
 	}

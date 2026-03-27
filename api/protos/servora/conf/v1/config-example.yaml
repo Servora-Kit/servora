@@ -60,17 +60,24 @@ data:
     read_timeout: "${RREAD_TIMEOUT:0.2s}"
     write_timeout: "${RWRITE_TIMEOUT:0.2s}"
   client:
-    # 这里可以配置第三方服务的客户端
-    # 默认不用配置，而是在代码中直接服务发现
-    grpc:
-      # - service_name: hello.grpc  # nacos需要添加协议后缀
-      #   endpoint: "${CLIENT_GRPC_ENDPOINT:127.0.0.1:8003}"
-      #   timeout: ${CLIENT_GRPC_TIMEOUT:5s}
-      #   tls:
-      #     enable: ${CLIENT_GRPC_TLS_ENABLE:false}
-      #     ca_path: "${CLIENT_GRPC_TLS_CA_PATH:}"
-      #     cert_path: "${CLIENT_GRPC_TLS_CERT_PATH:}"
-      #     key_path: "${CLIENT_GRPC_TLS_KEY_PATH:}"
+    # 这里可以配置下游服务客户端
+    # 新模型按“服务 -> 协议端点”组织，支持同一服务多协议（grpc/http/其他插件协议）
+    services:
+      # - name: hello.service  # nacos 场景可按约定加协议后缀，如 hello.grpc
+      #   endpoints:
+      #     - protocol: grpc
+      #       endpoint: "${CLIENT_GRPC_ENDPOINT:discovery:///hello.service}"
+      #       timeout: "${CLIENT_GRPC_TIMEOUT:5s}"
+      #       tls:
+      #         enable: ${CLIENT_GRPC_TLS_ENABLE:false}
+      #         ca_path: "${CLIENT_GRPC_TLS_CA_PATH:}"
+      #         cert_path: "${CLIENT_GRPC_TLS_CERT_PATH:}"
+      #         key_path: "${CLIENT_GRPC_TLS_KEY_PATH:}"
+      #       options:
+      #         lb_policy: "round_robin" # 插件私有扩展配置（Struct）
+      #     - protocol: http
+      #       endpoint: "${CLIENT_HTTP_ENDPOINT:http://127.0.0.1:8003}"
+      #       timeout: "${CLIENT_HTTP_TIMEOUT:3s}"
 
 app:
   name: servora

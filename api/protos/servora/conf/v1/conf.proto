@@ -2,6 +2,7 @@ syntax = "proto3";
 package servora.conf.v1;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1;conf";
 
@@ -79,16 +80,6 @@ message Server {
   GRPC grpc = 2;
 }
 
-// 客户端配置
-message Client {
-  message GRPC {
-    string endpoint = 1;
-    TLSConfig tls = 2;
-  }
-  // 使用 map 来管理所有下游 gRPC 服务的客户端配置
-  map<string, GRPC> grpc = 1;
-}
-
 // =============================================================================
 // 数据存储配置
 // =============================================================================
@@ -110,36 +101,37 @@ message Data {
     google.protobuf.Duration write_timeout = 8;
   }
   message Client {
-    message HTTP {
-      string service_name = 1;
-      string endpoint = 2;
-      google.protobuf.Duration timeout = 3;
+    // 下游服务配置（按 service 组织，单服务可配置多协议端点）
+    message Service {
+      string name = 1; // 下游服务名（如 user.service）
+      repeated Endpoint endpoints = 2; // 协议端点集合
     }
-    message GRPC {
-      string service_name = 1;
-      string endpoint = 2;
-      google.protobuf.Duration timeout = 3;
-      TLSConfig tls = 4; // gRPC 客户端 TLS 配置
+    // 通用协议端点配置
+    message Endpoint {
+      string protocol = 1; // 协议类型（如 grpc/http/mqtt/mcp）
+      string endpoint = 2; // 端点地址（留空时由各协议插件使用默认规则）
+      google.protobuf.Duration timeout = 3; // 超时配置
+      TLSConfig tls = 4; // TLS 配置（插件按需消费）
+      google.protobuf.Struct options = 5; // 插件私有扩展配置（由插件自行解析）
     }
-    repeated GRPC grpc = 1;
-    repeated HTTP http = 2;
+    repeated Service services = 1;
   }
   // Kafka 配置（消息代理，用于审计事件等异步管线）
   message Kafka {
-    repeated string brokers = 1;                   // Broker 地址列表（如 ["kafka:9092"]）
-    string client_id = 2;                          // 客户端标识
-    string consumer_group = 3;                     // 消费者组 ID
-    int32 required_acks = 4;                       // 0=none, 1=leader, -1=all
-    int32 retry_max = 5;                           // 最大重试次数
-    google.protobuf.Duration retry_backoff = 6;    // 重试退避间隔
-    google.protobuf.Duration dial_timeout = 7;     // 连接超时
-    google.protobuf.Duration read_timeout = 8;     // 读超时
-    google.protobuf.Duration write_timeout = 9;    // 写超时
-    string compression = 10;                       // 压缩算法（none/gzip/snappy/lz4/zstd）
+    repeated string brokers = 1; // Broker 地址列表（如 ["kafka:9092"]）
+    string client_id = 2; // 客户端标识
+    string consumer_group = 3; // 消费者组 ID
+    int32 required_acks = 4; // 0=none, 1=leader, -1=all
+    int32 retry_max = 5; // 最大重试次数
+    google.protobuf.Duration retry_backoff = 6; // 重试退避间隔
+    google.protobuf.Duration dial_timeout = 7; // 连接超时
+    google.protobuf.Duration read_timeout = 8; // 读超时
+    google.protobuf.Duration write_timeout = 9; // 写超时
+    string compression = 10; // 压缩算法（none/gzip/snappy/lz4/zstd）
 
     // SASL 认证配置（可选）
     message SASL {
-      string mechanism = 1;  // PLAIN | SCRAM-SHA-256 | SCRAM-SHA-512
+      string mechanism = 1; // PLAIN | SCRAM-SHA-256 | SCRAM-SHA-512
       string username = 2;
       string password = 3;
     }
@@ -148,7 +140,7 @@ message Data {
 
   // ClickHouse 配置（审计事件存储，由 app/audit/service 使用）
   message ClickHouse {
-    repeated string addrs = 1;                       // ClickHouse 地址列表（如 ["clickhouse:9000"]）
+    repeated string addrs = 1; // ClickHouse 地址列表（如 ["clickhouse:9000"]）
     string database = 2;
     string username = 3;
     string password = 4;
@@ -157,9 +149,9 @@ message Data {
     int32 max_open_conns = 7;
     int32 max_idle_conns = 8;
     google.protobuf.Duration conn_max_lifetime = 9;
-    bool tls = 10;                                   // 是否启用 TLS（默认 false）
-    bool tls_skip_verify = 11;                       // 跳过 TLS 证书校验（仅用于开发，默认 false）
-    string compress = 12;                            // 压缩算法："lz4" | "zstd" | ""（默认，不压缩）
+    bool tls = 10; // 是否启用 TLS（默认 false）
+    bool tls_skip_verify = 11; // 跳过 TLS 证书校验（仅用于开发，默认 false）
+    string compress = 12; // 压缩算法："lz4" | "zstd" | ""（默认，不压缩）
   }
 
   Database database = 1;
@@ -181,11 +173,11 @@ message App {
   // 消费端通过服务发现定位 IAM 并自动获取 JWKS，不再需要静态 URL 配置。
   message Jwt {
     string private_key_path = 1; // RSA 私钥文件路径（PEM 格式）
-    string private_key_pem = 2;  // RSA 私钥内联 PEM（用于 K8s Secret 等场景）
-    int32 access_expire = 3;     // Access Token 过期时间（秒）
-    int32 refresh_expire = 4;    // Refresh Token 过期时间（秒）
-    string issuer = 5;           // JWT 签发者（iss claim）
-    string audience = 6;         // JWT 受众（aud claim）
+    string private_key_pem = 2; // RSA 私钥内联 PEM（用于 K8s Secret 等场景）
+    int32 access_expire = 3; // Access Token 过期时间（秒）
+    int32 refresh_expire = 4; // Refresh Token 过期时间（秒）
+    string issuer = 5; // JWT 签发者（iss claim）
+    string audience = 6; // JWT 受众（aud claim）
   }
   message Log {
     int32 level = 1; // debug:0, info:1, warn:2, error:3, fatal:4
@@ -196,27 +188,27 @@ message App {
     bool compress = 6; // 是否压缩日志文件
   }
   message OpenFGA {
-    string api_url = 1;   // OpenFGA HTTP API 地址
-    string store_id = 2;  // Store ID
-    string model_id = 3;  // Authorization Model ID
+    string api_url = 1; // OpenFGA HTTP API 地址
+    string store_id = 2; // Store ID
+    string model_id = 3; // Authorization Model ID
     string api_token = 4; // API Token（可选，生产环境使用）
   }
   message Oidc {
-    string crypto_key = 1;                // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
-    bool grant_type_refresh_token = 2;    // 是否启用 refresh_token grant type
+    string crypto_key = 1; // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
+    bool grant_type_refresh_token = 2; // 是否启用 refresh_token grant type
     string default_logout_redirect_uri = 3; // 默认登出重定向 URI
-    string login_base_url = 4;            // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
+    string login_base_url = 4; // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
   }
   // 审计配置（控制 pkg/audit 的 Emitter 类型与目标）
   message Audit {
-    bool enabled = 1;                // 是否启用审计事件采集
-    string emitter_type = 2;         // "broker"（→ Kafka）| "log"（→ 日志）| "noop"（丢弃）
-    string topic = 3;                // Kafka topic（默认 "servora.audit.events"）
-    string service_name = 4;         // 服务名称（覆盖 App.name，用于多实例场景）
+    bool enabled = 1; // 是否启用审计事件采集
+    string emitter_type = 2; // "broker"（→ Kafka）| "log"（→ 日志）| "noop"（丢弃）
+    string topic = 3; // Kafka topic（默认 "servora.audit.events"）
+    string service_name = 4; // 服务名称（覆盖 App.name，用于多实例场景）
     // consumer 侧配置（由 app/audit/service 消费）
-    int32 consumer_batch_size = 5;                          // 批量写入大小（默认 100）
-    google.protobuf.Duration consumer_flush_interval = 6;   // 批量刷新间隔（默认 1s）
-    int32 retention_days = 7;                               // ClickHouse 数据保留天数（默认 90）
+    int32 consumer_batch_size = 5; // 批量写入大小（默认 100）
+    google.protobuf.Duration consumer_flush_interval = 6; // 批量刷新间隔（默认 1s）
+    int32 retention_days = 7; // ClickHouse 数据保留天数（默认 90）
   }
 
   string env = 1; // dev test prod

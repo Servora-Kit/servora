@@ -31,23 +31,36 @@ func TestPlugin_BuildFactory(t *testing.T) {
 func TestBuildHTTPClientConfigIndex(t *testing.T) {
 	dataCfg := &conf.Data{
 		Client: &conf.Data_Client{
-			Http: []*conf.Data_Client_HTTP{
+			Services: []*conf.Data_Client_Service{
 				nil,
-				{ServiceName: ""},
-				{ServiceName: " master ", Endpoint: "http://first"},
-				{ServiceName: "master", Endpoint: "http://second"},
-				{ServiceName: "worker", Endpoint: "http://worker"},
+				{
+					Name: " master ",
+					Endpoints: []*conf.Data_Client_Endpoint{
+						nil,
+						{Protocol: "http", Endpoint: "http://first"},
+						{Protocol: "grpc", Endpoint: "grpc://master"},
+					},
+				},
+				{
+					Name: "worker",
+					Endpoints: []*conf.Data_Client_Endpoint{
+						{Protocol: "http", Endpoint: "http://worker"},
+					},
+				},
 			},
 		},
 	}
 
-	index := BuildClientConfigIndex(dataCfg)
+	index, err := BuildClientConfigIndex(dataCfg)
+	if err != nil {
+		t.Fatalf("build index failed: %v", err)
+	}
 	if len(index) != 2 {
 		t.Fatalf("expected 2 indexed services, got %d", len(index))
 	}
 
-	if got := index["master"]; got == nil || got.GetEndpoint() != "http://second" {
-		t.Fatalf("expected latest master config to win, got %#v", got)
+	if got := index["master"]; got == nil || got.GetEndpoint() != "http://first" {
+		t.Fatalf("expected master http config to be indexed, got %#v", got)
 	}
 
 	if got := index["worker"]; got == nil || got.GetEndpoint() != "http://worker" {
@@ -74,5 +87,58 @@ func TestPlugin_DialWithDirectTarget(t *testing.T) {
 	}
 	if conn == nil || !conn.IsHealthy() {
 		t.Fatal("expected healthy connection")
+	}
+}
+
+func TestResolveDefaultHTTPEndpoint(t *testing.T) {
+	cases := []struct {
+		name   string
+		target string
+		want   string
+	}{
+		{
+			name:   "direct http url",
+			target: "http://127.0.0.1:8080",
+			want:   "http://127.0.0.1:8080",
+		},
+		{
+			name:   "direct https url",
+			target: "https://api.example.com",
+			want:   "https://api.example.com",
+		},
+		{
+			name:   "service name falls back to discovery",
+			target: "worker.service",
+			want:   "discovery:///worker.service",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := resolveDefaultHTTPEndpoint(tc.target); got != tc.want {
+				t.Fatalf("resolveDefaultHTTPEndpoint(%q) = %q, want %q", tc.target, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPlugin_BuildFactory_DuplicateServiceProtocol(t *testing.T) {
+	_, err := (&Plugin{}).Build(context.Background(), runtime.ClientBuildInput{
+		Data: &conf.Data{
+			Client: &conf.Data_Client{
+				Services: []*conf.Data_Client_Service{
+					{
+						Name: "master",
+						Endpoints: []*conf.Data_Client_Endpoint{
+							{Protocol: "http", Endpoint: "http://a"},
+							{Protocol: "http", Endpoint: "http://b"},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("expected duplicate config error")
 	}
 }

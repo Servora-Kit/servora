@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -22,8 +23,12 @@ const Type = "http"
 func (p *Plugin) Type() string { return Type }
 
 func (p *Plugin) Build(_ context.Context, in runtime.ClientBuildInput) (runtime.ClientFactory, error) {
+	httpClients, err := BuildClientConfigIndex(in.Data)
+	if err != nil {
+		return nil, fmt.Errorf("build http client config index: %w", err)
+	}
 	return &factory{
-		httpClients: BuildClientConfigIndex(in.Data),
+		httpClients: httpClients,
 		discovery:   in.Discovery,
 		middleware:  in.Middleware,
 		logger:      in.Logger,
@@ -31,7 +36,7 @@ func (p *Plugin) Build(_ context.Context, in runtime.ClientBuildInput) (runtime.
 }
 
 type factory struct {
-	httpClients map[string]*conf.Data_Client_HTTP
+	httpClients map[string]*conf.Data_Client_Endpoint
 	discovery   registry.Discovery
 	middleware  []middleware.Middleware
 	logger      logger.Logger
@@ -46,7 +51,8 @@ func (f *factory) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime
 	if target == "" {
 		return nil, fmt.Errorf("http dial target is empty")
 	}
-	endpoint, timeout, configured := resolveConnectionConfig(target, f.httpClients, target, defaultTimeout)
+	defaultEndpoint := resolveDefaultHTTPEndpoint(target)
+	endpoint, timeout, configured := resolveConnectionConfig(target, f.httpClients, defaultEndpoint, defaultTimeout)
 	if endpoint == "" {
 		return nil, fmt.Errorf("http endpoint not configured for target: %s", target)
 	}
@@ -74,40 +80,17 @@ func (f *factory) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime
 	if err != nil {
 		return nil, fmt.Errorf("build http client for target %s: %w", target, err)
 	}
-	return NewSession(client, endpoint), nil
+	return NewConnection(client, endpoint), nil
 }
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。
-func BuildClientConfigIndex(dataCfg *conf.Data) map[string]*conf.Data_Client_HTTP {
-	if dataCfg == nil || dataCfg.Client == nil {
-		return nil
-	}
-
-	httpConfigs := dataCfg.Client.GetHttp()
-	if len(httpConfigs) == 0 {
-		return nil
-	}
-
-	index := make(map[string]*conf.Data_Client_HTTP, len(httpConfigs))
-	for _, httpCfg := range httpConfigs {
-		if httpCfg == nil {
-			continue
-		}
-		serviceName := strings.TrimSpace(httpCfg.GetServiceName())
-		if serviceName == "" {
-			continue
-		}
-		index[serviceName] = httpCfg
-	}
-	if len(index) == 0 {
-		return nil
-	}
-	return index
+func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
+	return sharedconfig.BuildClientEndpointIndex(dataCfg, Type)
 }
 
 func resolveConnectionConfig(
 	serviceName string,
-	httpConfigs map[string]*conf.Data_Client_HTTP,
+	httpConfigs map[string]*conf.Data_Client_Endpoint,
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
 ) (string, time.Duration, bool) {
@@ -123,4 +106,14 @@ func resolveConnectionConfig(
 	endpoint = sharedconfig.NormalizeEndpoint(httpCfg.GetEndpoint(), endpoint)
 
 	return endpoint, timeout, true
+}
+
+func resolveDefaultHTTPEndpoint(target string) string {
+	if target == "" {
+		return ""
+	}
+	if _, err := url.ParseRequestURI(target); err == nil && strings.Contains(target, "://") {
+		return target
+	}
+	return "discovery:///" + target
 }

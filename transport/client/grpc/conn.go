@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -50,41 +49,14 @@ func (g *Connection) IsHealthy() bool {
 }
 
 // BuildClientConfigIndex 预构建 gRPC 客户端配置索引，避免热路径重复遍历配置列表。
-func BuildClientConfigIndex(dataCfg *conf.Data) map[string]*conf.Data_Client_GRPC {
-	if dataCfg == nil || dataCfg.Client == nil {
-		return nil
-	}
-
-	grpcConfigs := dataCfg.Client.GetGrpc()
-	if len(grpcConfigs) == 0 {
-		return nil
-	}
-
-	index := make(map[string]*conf.Data_Client_GRPC, len(grpcConfigs))
-	for _, grpcCfg := range grpcConfigs {
-		if grpcCfg == nil {
-			continue
-		}
-
-		serviceName := strings.TrimSpace(grpcCfg.GetServiceName())
-		if serviceName == "" {
-			continue
-		}
-
-		index[serviceName] = grpcCfg
-	}
-
-	if len(index) == 0 {
-		return nil
-	}
-
-	return index
+func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
+	return sharedconfig.BuildClientEndpointIndex(dataCfg, Type)
 }
 
 func createConnection(
 	ctx context.Context,
 	serviceName string,
-	grpcConfigs map[string]*conf.Data_Client_GRPC,
+	grpcConfigs map[string]*conf.Data_Client_Endpoint,
 	discovery registry.Discovery,
 	l logger.Logger,
 	mds []middleware.Middleware,
@@ -136,7 +108,7 @@ func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf
 // resolveConnectionConfig 根据服务名解析连接配置，并在缺省时回落到默认端点与超时。
 func resolveConnectionConfig(
 	serviceName string,
-	grpcConfigs map[string]*conf.Data_Client_GRPC,
+	grpcConfigs map[string]*conf.Data_Client_Endpoint,
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
 ) (string, time.Duration, *conf.TLSConfig, bool) {

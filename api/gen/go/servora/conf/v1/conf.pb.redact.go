@@ -10,6 +10,7 @@ import (
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,6 +21,7 @@ var (
 	_ codes.Code
 	_ status.Status
 	_ durationpb.Duration
+	_ structpb.Struct
 )
 
 // Redact method implementation for Bootstrap
@@ -93,16 +95,6 @@ func (x *Server) Redact() string {
 	}
 
 	// Safe field: Http
-
-	// Safe field: Grpc
-	return x.String()
-}
-
-// Redact method implementation for Client
-func (x *Client) Redact() string {
-	if x == nil {
-		return ""
-	}
 
 	// Safe field: Grpc
 	return x.String()
@@ -392,18 +384,6 @@ func (x *Server_GRPC) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for Client_GRPC
-func (x *Client_GRPC) Redact() string {
-	if x == nil {
-		return ""
-	}
-
-	// Safe field: Endpoint
-
-	// Safe field: Tls
-	return x.String()
-}
-
 // Redact method implementation for Data_Database
 func (x *Data_Database) Redact() string {
 	if x == nil {
@@ -446,9 +426,7 @@ func (x *Data_Client) Redact() string {
 		return ""
 	}
 
-	// Safe field: Grpc
-
-	// Safe field: Http
+	// Safe field: Services
 	return x.String()
 }
 
@@ -514,33 +492,33 @@ func (x *Data_ClickHouse) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for Data_Client_HTTP
-func (x *Data_Client_HTTP) Redact() string {
+// Redact method implementation for Data_Client_Service
+func (x *Data_Client_Service) Redact() string {
 	if x == nil {
 		return ""
 	}
 
-	// Safe field: ServiceName
+	// Safe field: Name
 
-	// Safe field: Endpoint
-
-	// Safe field: Timeout
+	// Safe field: Endpoints
 	return x.String()
 }
 
-// Redact method implementation for Data_Client_GRPC
-func (x *Data_Client_GRPC) Redact() string {
+// Redact method implementation for Data_Client_Endpoint
+func (x *Data_Client_Endpoint) Redact() string {
 	if x == nil {
 		return ""
 	}
 
-	// Safe field: ServiceName
+	// Safe field: Protocol
 
 	// Safe field: Endpoint
 
 	// Safe field: Timeout
 
 	// Safe field: Tls
+
+	// Safe field: Options
 	return x.String()
 }
 

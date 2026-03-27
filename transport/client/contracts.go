@@ -12,15 +12,7 @@ var ProviderSet = wire.NewSet(
 	NewDefaultClient,
 )
 
-// Session 顶层会话接口。
-type Session interface {
-	Value() any
-	Close() error
-	IsHealthy() bool
-	GetProtocol() string
-}
-
 // Client 客户端接口。
 type Client interface {
-	Dial(ctx context.Context, in runtime.ClientDialInput) (Session, error)
+	Dial(ctx context.Context, in runtime.ClientDialInput) (runtime.Connection, error)
 }

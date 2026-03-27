@@ -789,150 +789,6 @@ var _ interface {
 	ErrorName() string
 } = ServerValidationError{}
 
-// Validate checks the field values on Client with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Client) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Client with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in ClientMultiError, or nil if none found.
-func (m *Client) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Client) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	{
-		sorted_keys := make([]string, len(m.GetGrpc()))
-		i := 0
-		for key := range m.GetGrpc() {
-			sorted_keys[i] = key
-			i++
-		}
-		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
-		for _, key := range sorted_keys {
-			val := m.GetGrpc()[key]
-			_ = val
-
-			// no validation rules for Grpc[key]
-
-			if all {
-				switch v := interface{}(val).(type) {
-				case interface{ ValidateAll() error }:
-					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, ClientValidationError{
-							field:  fmt.Sprintf("Grpc[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				case interface{ Validate() error }:
-					if err := v.Validate(); err != nil {
-						errors = append(errors, ClientValidationError{
-							field:  fmt.Sprintf("Grpc[%v]", key),
-							reason: "embedded message failed validation",
-							cause:  err,
-						})
-					}
-				}
-			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-				if err := v.Validate(); err != nil {
-					return ClientValidationError{
-						field:  fmt.Sprintf("Grpc[%v]", key),
-						reason: "embedded message failed validation",
-						cause:  err,
-					}
-				}
-			}
-
-		}
-	}
-
-	if len(errors) > 0 {
-		return ClientMultiError(errors)
-	}
-
-	return nil
-}
-
-// ClientMultiError is an error wrapping multiple validation errors returned by
-// Client.ValidateAll() if the designated constraints aren't met.
-type ClientMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ClientMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ClientMultiError) AllErrors() []error { return m }
-
-// ClientValidationError is the validation error returned by Client.Validate if
-// the designated constraints aren't met.
-type ClientValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ClientValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ClientValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ClientValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ClientValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ClientValidationError) ErrorName() string { return "ClientValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ClientValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sClient.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ClientValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ClientValidationError{}
-
 // Validate checks the field values on Data with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -4015,136 +3871,6 @@ var _ interface {
 	ErrorName() string
 } = Server_GRPCValidationError{}
 
-// Validate checks the field values on Client_GRPC with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Client_GRPC) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on Client_GRPC with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in Client_GRPCMultiError, or
-// nil if none found.
-func (m *Client_GRPC) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *Client_GRPC) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Endpoint
-
-	if all {
-		switch v := interface{}(m.GetTls()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Client_GRPCValidationError{
-					field:  "Tls",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Client_GRPCValidationError{
-					field:  "Tls",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetTls()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Client_GRPCValidationError{
-				field:  "Tls",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		return Client_GRPCMultiError(errors)
-	}
-
-	return nil
-}
-
-// Client_GRPCMultiError is an error wrapping multiple validation errors
-// returned by Client_GRPC.ValidateAll() if the designated constraints aren't met.
-type Client_GRPCMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m Client_GRPCMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m Client_GRPCMultiError) AllErrors() []error { return m }
-
-// Client_GRPCValidationError is the validation error returned by
-// Client_GRPC.Validate if the designated constraints aren't met.
-type Client_GRPCValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e Client_GRPCValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e Client_GRPCValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e Client_GRPCValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e Client_GRPCValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e Client_GRPCValidationError) ErrorName() string { return "Client_GRPCValidationError" }
-
-// Error satisfies the builtin error interface
-func (e Client_GRPCValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sClient_GRPC.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = Client_GRPCValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = Client_GRPCValidationError{}
-
 // Validate checks the field values on Data_Database with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -4467,7 +4193,7 @@ func (m *Data_Client) validate(all bool) error {
 
 	var errors []error
 
-	for idx, item := range m.GetGrpc() {
+	for idx, item := range m.GetServices() {
 		_, _ = idx, item
 
 		if all {
@@ -4475,7 +4201,7 @@ func (m *Data_Client) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, Data_ClientValidationError{
-						field:  fmt.Sprintf("Grpc[%v]", idx),
+						field:  fmt.Sprintf("Services[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -4483,7 +4209,7 @@ func (m *Data_Client) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, Data_ClientValidationError{
-						field:  fmt.Sprintf("Grpc[%v]", idx),
+						field:  fmt.Sprintf("Services[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -4492,41 +4218,7 @@ func (m *Data_Client) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return Data_ClientValidationError{
-					field:  fmt.Sprintf("Grpc[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetHttp() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Data_ClientValidationError{
-						field:  fmt.Sprintf("Http[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, Data_ClientValidationError{
-						field:  fmt.Sprintf("Http[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return Data_ClientValidationError{
-					field:  fmt.Sprintf("Http[%v]", idx),
+					field:  fmt.Sprintf("Services[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -5069,75 +4761,78 @@ var _ interface {
 	ErrorName() string
 } = Data_ClickHouseValidationError{}
 
-// Validate checks the field values on Data_Client_HTTP with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Data_Client_HTTP) Validate() error {
+// Validate checks the field values on Data_Client_Service with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Data_Client_Service) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Data_Client_HTTP with the rules
+// ValidateAll checks the field values on Data_Client_Service with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Data_Client_HTTPMultiError, or nil if none found.
-func (m *Data_Client_HTTP) ValidateAll() error {
+// Data_Client_ServiceMultiError, or nil if none found.
+func (m *Data_Client_Service) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Data_Client_HTTP) validate(all bool) error {
+func (m *Data_Client_Service) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for ServiceName
+	// no validation rules for Name
 
-	// no validation rules for Endpoint
+	for idx, item := range m.GetEndpoints() {
+		_, _ = idx, item
 
-	if all {
-		switch v := interface{}(m.GetTimeout()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Data_Client_HTTPValidationError{
-					field:  "Timeout",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Data_Client_ServiceValidationError{
+						field:  fmt.Sprintf("Endpoints[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Data_Client_ServiceValidationError{
+						field:  fmt.Sprintf("Endpoints[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Data_Client_HTTPValidationError{
-					field:  "Timeout",
+				return Data_Client_ServiceValidationError{
+					field:  fmt.Sprintf("Endpoints[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetTimeout()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Data_Client_HTTPValidationError{
-				field:  "Timeout",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {
-		return Data_Client_HTTPMultiError(errors)
+		return Data_Client_ServiceMultiError(errors)
 	}
 
 	return nil
 }
 
-// Data_Client_HTTPMultiError is an error wrapping multiple validation errors
-// returned by Data_Client_HTTP.ValidateAll() if the designated constraints
-// aren't met.
-type Data_Client_HTTPMultiError []error
+// Data_Client_ServiceMultiError is an error wrapping multiple validation
+// errors returned by Data_Client_Service.ValidateAll() if the designated
+// constraints aren't met.
+type Data_Client_ServiceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Data_Client_HTTPMultiError) Error() string {
+func (m Data_Client_ServiceMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -5146,11 +4841,11 @@ func (m Data_Client_HTTPMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Data_Client_HTTPMultiError) AllErrors() []error { return m }
+func (m Data_Client_ServiceMultiError) AllErrors() []error { return m }
 
-// Data_Client_HTTPValidationError is the validation error returned by
-// Data_Client_HTTP.Validate if the designated constraints aren't met.
-type Data_Client_HTTPValidationError struct {
+// Data_Client_ServiceValidationError is the validation error returned by
+// Data_Client_Service.Validate if the designated constraints aren't met.
+type Data_Client_ServiceValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -5158,22 +4853,24 @@ type Data_Client_HTTPValidationError struct {
 }
 
 // Field function returns field value.
-func (e Data_Client_HTTPValidationError) Field() string { return e.field }
+func (e Data_Client_ServiceValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Data_Client_HTTPValidationError) Reason() string { return e.reason }
+func (e Data_Client_ServiceValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Data_Client_HTTPValidationError) Cause() error { return e.cause }
+func (e Data_Client_ServiceValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Data_Client_HTTPValidationError) Key() bool { return e.key }
+func (e Data_Client_ServiceValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Data_Client_HTTPValidationError) ErrorName() string { return "Data_Client_HTTPValidationError" }
+func (e Data_Client_ServiceValidationError) ErrorName() string {
+	return "Data_Client_ServiceValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Data_Client_HTTPValidationError) Error() string {
+func (e Data_Client_ServiceValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -5185,14 +4882,14 @@ func (e Data_Client_HTTPValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sData_Client_HTTP.%s: %s%s",
+		"invalid %sData_Client_Service.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Data_Client_HTTPValidationError{}
+var _ error = Data_Client_ServiceValidationError{}
 
 var _ interface {
 	Field() string
@@ -5200,31 +4897,31 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Data_Client_HTTPValidationError{}
+} = Data_Client_ServiceValidationError{}
 
-// Validate checks the field values on Data_Client_GRPC with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Data_Client_GRPC) Validate() error {
+// Validate checks the field values on Data_Client_Endpoint with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Data_Client_Endpoint) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Data_Client_GRPC with the rules
+// ValidateAll checks the field values on Data_Client_Endpoint with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Data_Client_GRPCMultiError, or nil if none found.
-func (m *Data_Client_GRPC) ValidateAll() error {
+// Data_Client_EndpointMultiError, or nil if none found.
+func (m *Data_Client_Endpoint) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Data_Client_GRPC) validate(all bool) error {
+func (m *Data_Client_Endpoint) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for ServiceName
+	// no validation rules for Protocol
 
 	// no validation rules for Endpoint
 
@@ -5232,7 +4929,7 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 		switch v := interface{}(m.GetTimeout()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Data_Client_GRPCValidationError{
+				errors = append(errors, Data_Client_EndpointValidationError{
 					field:  "Timeout",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -5240,7 +4937,7 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Data_Client_GRPCValidationError{
+				errors = append(errors, Data_Client_EndpointValidationError{
 					field:  "Timeout",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -5249,7 +4946,7 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetTimeout()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Data_Client_GRPCValidationError{
+			return Data_Client_EndpointValidationError{
 				field:  "Timeout",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -5261,7 +4958,7 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 		switch v := interface{}(m.GetTls()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Data_Client_GRPCValidationError{
+				errors = append(errors, Data_Client_EndpointValidationError{
 					field:  "Tls",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -5269,7 +4966,7 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Data_Client_GRPCValidationError{
+				errors = append(errors, Data_Client_EndpointValidationError{
 					field:  "Tls",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -5278,7 +4975,7 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetTls()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Data_Client_GRPCValidationError{
+			return Data_Client_EndpointValidationError{
 				field:  "Tls",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -5286,20 +4983,49 @@ func (m *Data_Client_GRPC) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetOptions()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Data_Client_EndpointValidationError{
+					field:  "Options",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Data_Client_EndpointValidationError{
+					field:  "Options",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOptions()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Data_Client_EndpointValidationError{
+				field:  "Options",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
-		return Data_Client_GRPCMultiError(errors)
+		return Data_Client_EndpointMultiError(errors)
 	}
 
 	return nil
 }
 
-// Data_Client_GRPCMultiError is an error wrapping multiple validation errors
-// returned by Data_Client_GRPC.ValidateAll() if the designated constraints
-// aren't met.
-type Data_Client_GRPCMultiError []error
+// Data_Client_EndpointMultiError is an error wrapping multiple validation
+// errors returned by Data_Client_Endpoint.ValidateAll() if the designated
+// constraints aren't met.
+type Data_Client_EndpointMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Data_Client_GRPCMultiError) Error() string {
+func (m Data_Client_EndpointMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -5308,11 +5034,11 @@ func (m Data_Client_GRPCMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Data_Client_GRPCMultiError) AllErrors() []error { return m }
+func (m Data_Client_EndpointMultiError) AllErrors() []error { return m }
 
-// Data_Client_GRPCValidationError is the validation error returned by
-// Data_Client_GRPC.Validate if the designated constraints aren't met.
-type Data_Client_GRPCValidationError struct {
+// Data_Client_EndpointValidationError is the validation error returned by
+// Data_Client_Endpoint.Validate if the designated constraints aren't met.
+type Data_Client_EndpointValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -5320,22 +5046,24 @@ type Data_Client_GRPCValidationError struct {
 }
 
 // Field function returns field value.
-func (e Data_Client_GRPCValidationError) Field() string { return e.field }
+func (e Data_Client_EndpointValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Data_Client_GRPCValidationError) Reason() string { return e.reason }
+func (e Data_Client_EndpointValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Data_Client_GRPCValidationError) Cause() error { return e.cause }
+func (e Data_Client_EndpointValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Data_Client_GRPCValidationError) Key() bool { return e.key }
+func (e Data_Client_EndpointValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Data_Client_GRPCValidationError) ErrorName() string { return "Data_Client_GRPCValidationError" }
+func (e Data_Client_EndpointValidationError) ErrorName() string {
+	return "Data_Client_EndpointValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Data_Client_GRPCValidationError) Error() string {
+func (e Data_Client_EndpointValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -5347,14 +5075,14 @@ func (e Data_Client_GRPCValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sData_Client_GRPC.%s: %s%s",
+		"invalid %sData_Client_Endpoint.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Data_Client_GRPCValidationError{}
+var _ error = Data_Client_EndpointValidationError{}
 
 var _ interface {
 	Field() string
@@ -5362,7 +5090,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Data_Client_GRPCValidationError{}
+} = Data_Client_EndpointValidationError{}
 
 // Validate checks the field values on Data_Kafka_SASL with the rules defined
 // in the proto definition for this message. If any rules are violated, the

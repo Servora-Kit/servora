@@ -13,23 +13,36 @@ import (
 func TestBuildGRPCClientConfigIndex(t *testing.T) {
 	dataCfg := &conf.Data{
 		Client: &conf.Data_Client{
-			Grpc: []*conf.Data_Client_GRPC{
+			Services: []*conf.Data_Client_Service{
 				nil,
-				{ServiceName: ""},
-				{ServiceName: " user ", Endpoint: "grpc://first"},
-				{ServiceName: "user", Endpoint: "grpc://second"},
-				{ServiceName: "auth", Endpoint: "grpc://auth"},
+				{
+					Name: " user ",
+					Endpoints: []*conf.Data_Client_Endpoint{
+						nil,
+						{Protocol: "grpc", Endpoint: "grpc://first"},
+						{Protocol: "http", Endpoint: "http://user"},
+					},
+				},
+				{
+					Name: "auth",
+					Endpoints: []*conf.Data_Client_Endpoint{
+						{Protocol: "grpc", Endpoint: "grpc://auth"},
+					},
+				},
 			},
 		},
 	}
 
-	index := BuildClientConfigIndex(dataCfg)
+	index, err := BuildClientConfigIndex(dataCfg)
+	if err != nil {
+		t.Fatalf("build index: %v", err)
+	}
 	if len(index) != 2 {
 		t.Fatalf("expected 2 indexed services, got %d", len(index))
 	}
 
-	if got := index["user"]; got == nil || got.GetEndpoint() != "grpc://second" {
-		t.Fatalf("expected latest user config to win, got %#v", got)
+	if got := index["user"]; got == nil || got.GetEndpoint() != "grpc://first" {
+		t.Fatalf("expected user grpc config to be indexed, got %#v", got)
 	}
 
 	if got := index["auth"]; got == nil || got.GetEndpoint() != "grpc://auth" {
@@ -47,11 +60,11 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 
 	endpoint, timeout, tlsCfg, configured := resolveConnectionConfig(
 		"user.service",
-		map[string]*conf.Data_Client_GRPC{
+		map[string]*conf.Data_Client_Endpoint{
 			"user.service": {
-				ServiceName: "user.service",
-				Endpoint:    "dns:///user.internal:9000",
-				Timeout:     durationpb.New(12 * time.Second),
+				Protocol: "grpc",
+				Endpoint: "dns:///user.internal:9000",
+				Timeout:  durationpb.New(12 * time.Second),
 				Tls: &conf.TLSConfig{
 					Enable: true,
 				},
@@ -76,8 +89,8 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 
 	endpoint, timeout, tlsCfg, configured = resolveConnectionConfig(
 		"missing.service",
-		map[string]*conf.Data_Client_GRPC{
-			"user.service": {ServiceName: "user.service"},
+		map[string]*conf.Data_Client_Endpoint{
+			"user.service": {Protocol: "grpc"},
 		},
 		defaultEndpoint,
 		defaultTimeout,

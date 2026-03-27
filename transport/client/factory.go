@@ -87,7 +87,7 @@ func NewClient(
 	}, nil
 }
 
-func (c *client) Dial(ctx context.Context, in runtime.ClientDialInput) (Session, error) {
+func (c *client) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime.Connection, error) {
 	factory, err := c.resolveFactory(in.Protocol)
 	if err != nil {
 		return nil, err
@@ -96,10 +96,7 @@ func (c *client) Dial(ctx context.Context, in runtime.ClientDialInput) (Session,
 	if err != nil {
 		return nil, err
 	}
-	return runtimeSessionAdapter{
-		conn:     conn,
-		protocol: in.Protocol,
-	}, nil
+	return conn, nil
 }
 
 func (c *client) resolveFactory(protocol string) (runtime.ClientFactory, error) {
@@ -126,16 +123,4 @@ func (c *client) resolveFactory(protocol string) (runtime.ClientFactory, error) 
 	}
 	c.factories[protocol] = factory
 	return factory, nil
-}
-
-type runtimeSessionAdapter struct {
-	conn     runtime.Connection
-	protocol string
-}
-
-func (a runtimeSessionAdapter) Value() any      { return a.conn.Value() }
-func (a runtimeSessionAdapter) Close() error    { return a.conn.Close() }
-func (a runtimeSessionAdapter) IsHealthy() bool { return a.conn.IsHealthy() }
-func (a runtimeSessionAdapter) GetProtocol() string {
-	return a.protocol
 }
