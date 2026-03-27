@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"fmt"
-	stdhttp "net/http"
 	"strings"
 	"time"
 
@@ -11,6 +10,9 @@ import (
 	"github.com/Servora-Kit/servora/obs/logging"
 	"github.com/Servora-Kit/servora/transport/runtime"
 	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
+	"github.com/go-kratos/kratos/v2/middleware"
+	"github.com/go-kratos/kratos/v2/registry"
+	khttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
 type Plugin struct{}
@@ -22,16 +24,23 @@ func (p *Plugin) Type() string { return Type }
 func (p *Plugin) Build(_ context.Context, in runtime.ClientBuildInput) (runtime.ClientFactory, error) {
 	return &factory{
 		httpClients: BuildClientConfigIndex(in.Data),
+		discovery:   in.Discovery,
+		middleware:  in.Middleware,
 		logger:      in.Logger,
 	}, nil
 }
 
 type factory struct {
 	httpClients map[string]*conf.Data_Client_HTTP
+	discovery   registry.Discovery
+	middleware  []middleware.Middleware
 	logger      logger.Logger
 }
 
-func (f *factory) Dial(_ context.Context, in runtime.ClientDialInput) (runtime.Connection, error) {
+func (f *factory) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime.Connection, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	defaultTimeout := 5 * time.Second
 	target := strings.TrimSpace(in.Target)
 	if target == "" {
@@ -50,14 +59,22 @@ func (f *factory) Dial(_ context.Context, in runtime.ClientDialInput) (runtime.C
 		}
 	}
 
-	return NewConnection(&stdhttp.Client{Timeout: timeout}, endpoint), nil
-}
+	opts := []khttp.ClientOption{
+		khttp.WithEndpoint(endpoint),
+		khttp.WithTimeout(timeout),
+	}
+	if len(f.middleware) > 0 {
+		opts = append(opts, khttp.WithMiddleware(f.middleware...))
+	}
+	if strings.HasPrefix(endpoint, "discovery:///") && f.discovery != nil {
+		opts = append(opts, khttp.WithDiscovery(f.discovery))
+	}
 
-func (f *factory) CreateConn(ctx context.Context, serviceName string) (runtime.Connection, error) {
-	return f.Dial(ctx, runtime.ClientDialInput{
-		Protocol: Type,
-		Target:   serviceName,
-	})
+	client, err := khttp.NewClient(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("build http client for target %s: %w", target, err)
+	}
+	return NewSession(client, endpoint), nil
 }
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。
