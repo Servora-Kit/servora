@@ -1,4 +1,4 @@
-package builtin
+package defaults
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	httpserver "github.com/Servora-Kit/servora/transport/server/http"
 )
 
-// NewRegistry 创建包含内建协议插件的 runtime registry。
+// NewRegistry 创建包含默认协议插件的 runtime registry。
 func NewRegistry() (*runtime.Registry, error) {
 	r := runtime.NewRegistry()
 	if err := RegisterAll(r); err != nil {
@@ -21,7 +21,7 @@ func NewRegistry() (*runtime.Registry, error) {
 	return r, nil
 }
 
-// RegisterAll 注册框架内建 transport plugins。
+// RegisterAll 注册框架默认 transport plugins。
 func RegisterAll(r *runtime.Registry) error {
 	if r == nil {
 		return fmt.Errorf("runtime registry is nil")
@@ -31,14 +31,14 @@ func RegisterAll(r *runtime.Registry) error {
 		&grpcserver.Plugin{},
 		&httpserver.Plugin{},
 	); err != nil {
-		return fmt.Errorf("register builtin server plugins: %w", err)
+		return fmt.Errorf("register default server plugins: %w", err)
 	}
 
 	if err := client.RegisterPlugins(r,
 		&clientgrpc.Plugin{},
 		&clienthttp.Plugin{},
 	); err != nil {
-		return fmt.Errorf("register builtin client plugins: %w", err)
+		return fmt.Errorf("register default client plugins: %w", err)
 	}
 
 	return nil

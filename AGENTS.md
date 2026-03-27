@@ -45,7 +45,7 @@
 
 - 插件契约统一定义在 `transport/runtime/contracts.go`：`ServerPlugin`、`ClientPlugin`、`ServerBuildInput`、`ClientBuildInput`
 - 插件注册通过 `transport/runtime/registry.go`，错误语义以 `transport/runtime/errors.go` 为准
-- 内建 graph 入口在 `transport/runtime/builtin`，用于需要显式编排的场景
+- 内建 graph 入口在 `transport/runtime/defaults`，用于需要显式编排的场景
 
 ### 内建插件与 DSL
 

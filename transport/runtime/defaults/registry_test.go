@@ -1,8 +1,8 @@
-package builtin
+package defaults
 
 import "testing"
 
-func TestNewRegistry_ContainsBuiltinPlugins(t *testing.T) {
+func TestNewRegistry_ContainsDefaultPlugins(t *testing.T) {
 	r, err := NewRegistry()
 	if err != nil {
 		t.Fatalf("new registry: %v", err)
