@@ -71,12 +71,10 @@ if err != nil {
 	return err
 }
 
-conn, err := transportclient.GetConnValue[gogrpc.ClientConnInterface](
-	ctx,
-	c,
-	transportclient.GRPC,
-	"worker.service",
-)
+conn, err := transportclient.GetValue[gogrpc.ClientConnInterface](ctx, c, runtime.ClientDialInput{
+	Protocol: "grpc",
+	Target:   "worker.service",
+})
 if err != nil {
 	return err
 }

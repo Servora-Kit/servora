@@ -12,12 +12,16 @@
 ```text
 transport/
 ├── client/
+├── runtime/
+├── shared/
 └── server/
 ```
 
 ## 当前实现事实
 
-- `client/` 目录承载 `client.go`、`connection.go`、`factory.go`、`grpc_conn.go` 与客户端 middleware
+- `client/` 目录承载 `contracts.go`、`factory.go`、`dial_value.go`、`grpc/`、`http/` 与客户端 middleware
+- `runtime/` 目录承载插件契约、registry、graph 及默认插件注册（`runtime/defaults`）
+- `shared/` 目录承载 tls/endpoint/config 等跨协议复用能力
 - `server/` 目录承载 `grpc/`、`http/`、`middleware/`、`plugin.go`、`server.go`、`tls.go`
 - `server/middleware/whitelist.go` 的白名单语义是 **operation 白名单**，不是 IP 白名单
 - 本级目录表达的是 transport 共性能力，不直接承载认证/授权业务本身
