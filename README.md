@@ -114,7 +114,7 @@ if err != nil {
 ├── core/                            # 领域无关核心抽象（actor/mapper/pagination）
 ├── transport/
 │   ├── client/                      # 客户端协议插件（grpc/http）
-│   ├── server/                      # 服务端协议插件（grpc/http/sse）
+│   ├── server/                      # 服务端协议插件（grpc/http）
 │   ├── runtime/                     # plugin 合约、registry、graph
 │   └── shared/                      # transport 共享能力（tls/endpoint/config）
 ├── security/                        # 认证授权与 JWT/JWKS

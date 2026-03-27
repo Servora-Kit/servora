@@ -49,7 +49,7 @@
 
 ### 内建插件与 DSL
 
-- Server 内建协议：`transport/server/grpc`、`transport/server/http`、`transport/server/sse`
+- Server 内建协议：`transport/server/grpc`、`transport/server/http`
 - Client 内建协议：`transport/client/grpc`、`transport/client/http`
 - gRPC/HTTP server 默认优先走 `NewBuilder()` DSL（`Build`/`MustBuild`），避免业务层直接拼 `runtime.GraphInput`
 - 插件开发者不强制提供 Builder，但必须实现 runtime plugin 契约
@@ -58,7 +58,6 @@
 
 - 协议类型请暴露为统一常量：`const Type = "grpc"`（或对应协议字符串）
 - TLS、端点与公共配置逻辑放在 `transport/shared/{tls,endpoint,config}`，避免 client/server 各自重复实现
-- 非监听型协议（如 SSE）通过 no-op server 进行注册桥接，保留扩展点并维持 graph 拓扑一致性
 
 ## Proto 开发规范
 

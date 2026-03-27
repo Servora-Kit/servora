@@ -5,7 +5,7 @@
 
 ## 模块目的
 
-提供服务间 transport 工具箱，覆盖 client / server 装配、连接管理、TLS、SSE 与通用 middleware 支撑。
+提供服务间 transport 工具箱，覆盖 client / server 装配、连接管理、TLS 与通用 middleware 支撑。
 
 ## 当前结构
 
@@ -18,7 +18,7 @@ transport/
 ## 当前实现事实
 
 - `client/` 目录承载 `client.go`、`connection.go`、`factory.go`、`grpc_conn.go` 与客户端 middleware
-- `server/` 目录承载 `grpc/`、`http/`、`middleware/`、`sse/`、`plugin.go`、`server.go`、`tls.go`
+- `server/` 目录承载 `grpc/`、`http/`、`middleware/`、`plugin.go`、`server.go`、`tls.go`
 - `server/middleware/whitelist.go` 的白名单语义是 **operation 白名单**，不是 IP 白名单
 - 本级目录表达的是 transport 共性能力，不直接承载认证/授权业务本身
 

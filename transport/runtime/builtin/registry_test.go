@@ -14,9 +14,6 @@ func TestNewRegistry_ContainsBuiltinPlugins(t *testing.T) {
 	if _, ok := r.Server("http"); !ok {
 		t.Fatal("missing http server plugin")
 	}
-	if _, ok := r.Server("sse"); !ok {
-		t.Fatal("missing sse server plugin")
-	}
 	if _, ok := r.Client("grpc"); !ok {
 		t.Fatal("missing grpc client plugin")
 	}

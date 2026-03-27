@@ -10,7 +10,6 @@ import (
 	"github.com/Servora-Kit/servora/transport/server"
 	grpcserver "github.com/Servora-Kit/servora/transport/server/grpc"
 	httpserver "github.com/Servora-Kit/servora/transport/server/http"
-	sseserver "github.com/Servora-Kit/servora/transport/server/sse"
 )
 
 // NewRegistry 创建包含内建协议插件的 runtime registry。
@@ -31,7 +30,6 @@ func RegisterAll(r *runtime.Registry) error {
 	if err := server.RegisterPlugins(r,
 		&grpcserver.Plugin{},
 		&httpserver.Plugin{},
-		&sseserver.Plugin{},
 	); err != nil {
 		return fmt.Errorf("register builtin server plugins: %w", err)
 	}
