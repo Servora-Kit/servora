@@ -9,7 +9,9 @@ import (
 	"github.com/Servora-Kit/servora/obs/logging"
 	grpcclient "github.com/Servora-Kit/servora/transport/client/grpc"
 	httpclient "github.com/Servora-Kit/servora/transport/client/http"
+	clientmw "github.com/Servora-Kit/servora/transport/client/middleware"
 	"github.com/Servora-Kit/servora/transport/runtime"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/registry"
 )
 
@@ -59,11 +61,23 @@ func NewClient(
 		}
 	}
 
+	clientLogger := logger.With(l, "client/transport")
+	if clientLogger == nil {
+		clientLogger = klog.DefaultLogger
+	}
+	mw := o.middleware
+	if len(mw) == 0 {
+		mw = clientmw.NewChainBuilder(clientLogger).
+			WithTrace(traceCfg).
+			Build()
+	}
+
 	buildIn := runtime.ClientBuildInput{
-		Data:      dataCfg,
-		Trace:     traceCfg,
-		Discovery: discovery,
-		Logger:    logger.With(l, "client/transport"),
+		Data:       dataCfg,
+		Trace:      traceCfg,
+		Discovery:  discovery,
+		Logger:     clientLogger,
+		Middleware: mw,
 	}
 
 	return &client{
