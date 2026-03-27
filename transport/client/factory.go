@@ -17,7 +17,7 @@ type client struct {
 	mu        sync.RWMutex
 	registry  *runtime.Registry
 	buildIn   runtime.ClientBuildInput
-	factories map[ConnType]runtime.ClientFactory
+	factories map[string]runtime.ClientFactory
 }
 
 // NewDefaultClient 使用内建插件和默认配置构建 Client，便于依赖注入场景直接使用。
@@ -69,31 +69,28 @@ func NewClient(
 	return &client{
 		registry:  r,
 		buildIn:   buildIn,
-		factories: make(map[ConnType]runtime.ClientFactory, 2),
+		factories: make(map[string]runtime.ClientFactory, 2),
 	}, nil
 }
 
-func (c *client) CreateConn(ctx context.Context, connType ConnType, serviceName string) (Connection, error) {
-	factory, err := c.resolveFactory(connType)
+func (c *client) Dial(ctx context.Context, in runtime.ClientDialInput) (Session, error) {
+	factory, err := c.resolveFactory(in.Protocol)
 	if err != nil {
 		return nil, err
 	}
-	conn, err := factory.Dial(ctx, runtime.ClientDialInput{
-		Protocol: string(connType),
-		Target:   serviceName,
-	})
+	conn, err := factory.Dial(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	return runtimeConnAdapter{
+	return runtimeSessionAdapter{
 		conn:     conn,
-		connType: connType,
+		protocol: in.Protocol,
 	}, nil
 }
 
-func (c *client) resolveFactory(connType ConnType) (runtime.ClientFactory, error) {
+func (c *client) resolveFactory(protocol string) (runtime.ClientFactory, error) {
 	c.mu.RLock()
-	f, ok := c.factories[connType]
+	f, ok := c.factories[protocol]
 	c.mu.RUnlock()
 	if ok {
 		return f, nil
@@ -101,30 +98,30 @@ func (c *client) resolveFactory(connType ConnType) (runtime.ClientFactory, error
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if f, ok = c.factories[connType]; ok {
+	if f, ok = c.factories[protocol]; ok {
 		return f, nil
 	}
 
-	p, ok := c.registry.Client(string(connType))
+	p, ok := c.registry.Client(protocol)
 	if !ok {
-		return nil, fmt.Errorf("%w: client type=%s", runtime.ErrPluginNotFound, connType)
+		return nil, fmt.Errorf("%w: client type=%s", runtime.ErrPluginNotFound, protocol)
 	}
 	factory, err := p.Build(context.Background(), c.buildIn)
 	if err != nil {
-		return nil, fmt.Errorf("build client plugin %q: %w", connType, err)
+		return nil, fmt.Errorf("build client plugin %q: %w", protocol, err)
 	}
-	c.factories[connType] = factory
+	c.factories[protocol] = factory
 	return factory, nil
 }
 
-type runtimeConnAdapter struct {
+type runtimeSessionAdapter struct {
 	conn     runtime.Connection
-	connType ConnType
+	protocol string
 }
 
-func (a runtimeConnAdapter) Value() any      { return a.conn.Value() }
-func (a runtimeConnAdapter) Close() error    { return a.conn.Close() }
-func (a runtimeConnAdapter) IsHealthy() bool { return a.conn.IsHealthy() }
-func (a runtimeConnAdapter) GetType() ConnType {
-	return a.connType
+func (a runtimeSessionAdapter) Value() any      { return a.conn.Value() }
+func (a runtimeSessionAdapter) Close() error    { return a.conn.Close() }
+func (a runtimeSessionAdapter) IsHealthy() bool { return a.conn.IsHealthy() }
+func (a runtimeSessionAdapter) GetProtocol() string {
+	return a.protocol
 }
