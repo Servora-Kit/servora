@@ -167,11 +167,11 @@ buf-push:
 	@echo "$(CYAN)Pushing proto to BSR...$(RESET)"
 	@GIT_TAG=$$(git tag --points-at HEAD 2>/dev/null | grep -E '^v[0-9]' | head -1); \
 	if [ -n "$$GIT_TAG" ]; then \
-		echo "  Using Git tag as BSR label: $$GIT_TAG"; \
-		buf push --exclude-unnamed --label "$$GIT_TAG"; \
+		echo "  Using BSR labels: $$GIT_TAG, main"; \
+		buf push --exclude-unnamed --label "$$GIT_TAG" --label main; \
 	else \
-		echo "  $(YELLOW)No Git version tag on HEAD, pushing without label$(RESET)"; \
-		buf push --exclude-unnamed; \
+		echo "  $(YELLOW)No Git version tag on HEAD, using BSR label: main$(RESET)"; \
+		buf push --exclude-unnamed --label main; \
 	fi
 	@echo "$(GREEN)✓ Proto pushed to BSR$(RESET)"
 
