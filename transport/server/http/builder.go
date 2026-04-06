@@ -77,8 +77,20 @@ func (b *Builder) Build(ctx context.Context) (*khttp.Server, error) {
 		ctx = context.Background()
 	}
 
+	cors := b.cors
+	if cors == nil && b.config != nil {
+		cors = b.config.Cors
+	}
+
 	in := runtime.ServerBuildInput{
-		Config:     b.config,
+		Config: &ServerConfig{
+			HTTP:           b.config,
+			CORS:           cors,
+			Metrics:        b.metrics,
+			HealthHandler:  b.healthHandler,
+			SwaggerSpec:    b.swaggerSpec,
+			SwaggerOptions: b.swaggerOpts,
+		},
 		Logger:     b.logger,
 		Middleware: b.middleware,
 	}
@@ -91,7 +103,6 @@ func (b *Builder) Build(ctx context.Context) (*khttp.Server, error) {
 			in.Registrars = append(in.Registrars, reg)
 		}
 	}
-	in.ExtraValues = b.buildExtraValues()
 
 	raw, err := (&Plugin{}).Build(ctx, in)
 	if err != nil {
@@ -112,32 +123,4 @@ func (b *Builder) MustBuild() *khttp.Server {
 		panic(err)
 	}
 	return srv
-}
-
-func (b *Builder) buildExtraValues() map[string]any {
-	extra := make(map[string]any, 4)
-
-	if b.cors != nil {
-		extra[ExtraKeyCORS] = b.cors
-	} else if b.config != nil && b.config.Cors != nil {
-		extra[ExtraKeyCORS] = b.config.Cors
-	}
-
-	if b.metrics != nil {
-		extra[ExtraKeyMetrics] = b.metrics
-	}
-	if b.healthHandler != nil {
-		extra[ExtraKeyHealthHandler] = b.healthHandler
-	}
-	if len(b.swaggerSpec) > 0 {
-		extra[ExtraKeySwaggerSpec] = b.swaggerSpec
-		if len(b.swaggerOpts) > 0 {
-			extra[ExtraKeySwaggerOptions] = b.swaggerOpts
-		}
-	}
-
-	if len(extra) == 0 {
-		return nil
-	}
-	return extra
 }

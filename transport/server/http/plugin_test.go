@@ -17,10 +17,33 @@ func TestHTTPPlugin_Type(t *testing.T) {
 func TestHTTPPlugin_BuildReturnsServer(t *testing.T) {
 	p := &Plugin{}
 	srv, err := p.Build(context.Background(), runtime.ServerBuildInput{
-		Config: &conf.Server_HTTP{Listen: &conf.Server_Listen{Addr: ":0"}},
+		Config: &ServerConfig{
+			HTTP: &conf.Server_HTTP{Listen: &conf.Server_Listen{Addr: ":0"}},
+		},
 	})
 	if err != nil {
 		t.Fatalf("build failed: %v", err)
+	}
+	if srv == nil {
+		t.Fatal("expected non-nil server")
+	}
+}
+
+func TestHTTPPlugin_Build_WrongConfigType(t *testing.T) {
+	p := &Plugin{}
+	_, err := p.Build(context.Background(), runtime.ServerBuildInput{
+		Config: &conf.Server_HTTP{},
+	})
+	if err == nil {
+		t.Fatal("expected error for wrong config type")
+	}
+}
+
+func TestHTTPPlugin_Build_NilConfig(t *testing.T) {
+	p := &Plugin{}
+	srv, err := p.Build(context.Background(), runtime.ServerBuildInput{})
+	if err != nil {
+		t.Fatalf("nil config should be allowed: %v", err)
 	}
 	if srv == nil {
 		t.Fatal("expected non-nil server")

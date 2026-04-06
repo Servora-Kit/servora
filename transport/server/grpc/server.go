@@ -2,12 +2,13 @@ package grpc
 
 import (
 	"fmt"
-	"strings"
+	"net/url"
+	"strconv"
 
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
-	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/Servora-Kit/servora/transport/server"
+	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
 	sharedendpoint "github.com/Servora-Kit/servora/transport/shared/endpoint"
 )
 
@@ -27,29 +28,15 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 	}
 
 	if o.conf != nil {
-		listen := o.conf.GetListen()
-		network := ""
-		addr := ""
-		var timeout *durationpb.Duration
-		if listen != nil {
-			if v := strings.TrimSpace(listen.GetNetwork()); v != "" {
-				network = v
-			}
-			if v := strings.TrimSpace(listen.GetAddr()); v != "" {
-				addr = v
-			}
-			if v := listen.GetTimeout(); v != nil {
-				timeout = v
-			}
+		lc := sharedconfig.ParseListenConfig(o.conf.GetListen())
+		if lc.Network != "" {
+			serverOpts = append(serverOpts, kgrpc.Network(lc.Network))
 		}
-		if network != "" {
-			serverOpts = append(serverOpts, kgrpc.Network(network))
+		if lc.Addr != "" {
+			serverOpts = append(serverOpts, kgrpc.Address(lc.Addr))
 		}
-		if addr != "" {
-			serverOpts = append(serverOpts, kgrpc.Address(addr))
-		}
-		if timeout != nil {
-			serverOpts = append(serverOpts, kgrpc.Timeout(timeout.AsDuration()))
+		if lc.Timeout != nil {
+			serverOpts = append(serverOpts, kgrpc.Timeout(lc.Timeout.AsDuration()))
 		}
 		if o.conf.Tls != nil && o.conf.Tls.Enable {
 			tlsCfg := server.MustLoadTLS(o.conf.Tls)
@@ -63,12 +50,20 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 			registryHost = reg.GetHost()
 		}
 
+		secure := o.conf.GetTls() != nil && o.conf.GetTls().GetEnable()
+		scheme := "grpc"
+		if secure {
+			scheme = "grpcs"
+		}
+		q := url.Values{}
+		q.Set("isSecure", strconv.FormatBool(secure))
+
 		endpoint, err := sharedendpoint.ResolveRegistryEndpoint(
-			"grpc",
-			addr,
+			scheme,
+			lc.Addr,
 			registryEndpoint,
 			registryHost,
-			o.conf.GetTls() != nil && o.conf.GetTls().GetEnable(),
+			q,
 		)
 		if err != nil {
 			panic(fmt.Sprintf("resolve grpc registry endpoint: %v", err))

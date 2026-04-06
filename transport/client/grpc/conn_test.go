@@ -110,6 +110,34 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	}
 }
 
+func TestConnection_CloseActuallyClosesConn(t *testing.T) {
+	// 建立一个真实的 insecure 连接（本地不需要服务监听，Dial 是懒连接）。
+	conn, err := dialConnection(
+		context.Background(),
+		[]kgrpc.ClientOption{
+			kgrpc.WithEndpoint("localhost:19999"),
+			kgrpc.WithTimeout(100 * time.Millisecond),
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("dial insecure: %v", err)
+	}
+
+	c := NewConnection(conn)
+
+	if !c.IsHealthy() {
+		t.Fatal("expected connection to be healthy before close")
+	}
+	if c.Value() == nil {
+		t.Fatal("expected Value() to be non-nil before close")
+	}
+
+	if err := c.Close(); err != nil {
+		t.Fatalf("Close() returned unexpected error: %v", err)
+	}
+}
+
 func TestDialConnection_InvalidTLSConfig(t *testing.T) {
 	_, err := dialConnection(
 		context.Background(),

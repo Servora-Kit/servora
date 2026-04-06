@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"strconv"
 	"strings"
 )
 
-// ResolveRegistryEndpoint 统一解析服务注册端点，优先 endpoint，其次 host+bindAddr 组装。
-func ResolveRegistryEndpoint(scheme, bindAddr, endpoint, host string, secure bool) (*url.URL, error) {
+// ResolveRegistryEndpoint 组装服务注册端点 URL。
+//
+// scheme 由调用方负责完整提供（含 TLS 升级，如 "grpcs"、"https"）。
+// query 会合并到结果 URL 的查询参数中，传 nil 表示无额外参数。
+// host 为空时返回 nil（不向注册中心注册端点）。
+func ResolveRegistryEndpoint(scheme, bindAddr, endpoint, host string, query url.Values) (*url.URL, error) {
 	if raw := strings.TrimSpace(endpoint); raw != "" {
 		ep, err := url.Parse(raw)
 		if err != nil {
@@ -31,34 +34,9 @@ func ResolveRegistryEndpoint(scheme, bindAddr, endpoint, host string, secure boo
 		return nil, fmt.Errorf("parse registry bind addr: %w", err)
 	}
 
-	scheme = normalizeScheme(scheme, secure)
-	q := url.Values{}
-	q.Set("isSecure", strconv.FormatBool(secure))
-
 	return &url.URL{
-		Scheme:   scheme,
+		Scheme:   strings.TrimSpace(scheme),
 		Host:     net.JoinHostPort(host, port),
-		RawQuery: q.Encode(),
+		RawQuery: query.Encode(),
 	}, nil
-}
-
-func normalizeScheme(scheme string, secure bool) string {
-	scheme = strings.TrimSpace(strings.ToLower(scheme))
-	if scheme == "" {
-		if secure {
-			return "https"
-		}
-		return "http"
-	}
-	if !secure {
-		return scheme
-	}
-	switch scheme {
-	case "grpc":
-		return "grpcs"
-	case "http":
-		return "https"
-	default:
-		return scheme
-	}
 }

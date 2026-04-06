@@ -26,9 +26,8 @@ type Connection interface {
 
 // ClientDialInput 定义 client 连接建立时的统一输入。
 type ClientDialInput struct {
-	Protocol    string
-	Target      string
-	ExtraValues map[string]any
+	Protocol string
+	Target   string
 }
 
 // ClientFactory 定义按 DialInput 建立连接的运行时工厂。
@@ -59,10 +58,9 @@ type ServerBuildInput struct {
 
 // ClientBuildInput 为 client 插件提供标准输入。
 type ClientBuildInput struct {
-	Data        *conf.Data
-	Trace       *conf.Trace
-	Discovery   registry.Discovery
-	Logger      log.Logger
-	Middleware  []middleware.Middleware
-	ExtraValues map[string]any
+	Data      *conf.Data
+	Trace     *conf.Trace
+	Discovery registry.Discovery
+	Logger    log.Logger
+	Middleware []middleware.Middleware
 }

@@ -3,8 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
@@ -18,34 +16,21 @@ import (
 )
 
 // Connection gRPC 连接封装，实现 runtime.Connection。
+// conn 在构造后不可变，无需互斥锁保护。
 type Connection struct {
-	conn gogrpc.ClientConnInterface
-	ref  int32
-	mu   sync.RWMutex
+	conn *gogrpc.ClientConn
 }
 
-func NewConnection(conn gogrpc.ClientConnInterface) *Connection {
+func NewConnection(conn *gogrpc.ClientConn) *Connection {
 	return &Connection{conn: conn}
 }
 
-func (g *Connection) Value() any {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.conn
-}
+func (g *Connection) Value() any    { return g.conn }
+func (g *Connection) IsHealthy() bool { return g.conn != nil }
 
+// Close 关闭底层 gRPC 连接并释放所有资源。
 func (g *Connection) Close() error {
-	newRef := atomic.AddInt32(&g.ref, -1)
-	if newRef < 0 {
-		panic(fmt.Sprintf("negative ref: %d", newRef))
-	}
-	return nil
-}
-
-func (g *Connection) IsHealthy() bool {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.conn != nil
+	return g.conn.Close()
 }
 
 // BuildClientConfigIndex 预构建 gRPC 客户端配置索引，避免热路径重复遍历配置列表。
@@ -60,7 +45,7 @@ func createConnection(
 	discovery registry.Discovery,
 	l logger.Logger,
 	mds []middleware.Middleware,
-) (gogrpc.ClientConnInterface, error) {
+) (*gogrpc.ClientConn, error) {
 	setupLogger := logger.NewHelper(l, logger.WithField("operation", "createGrpcConnection"))
 
 	defaultEndpoint := fmt.Sprintf("discovery:///%s", serviceName)
@@ -91,7 +76,7 @@ func createConnection(
 	return conn, nil
 }
 
-func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf.TLSConfig) (gogrpc.ClientConnInterface, error) {
+func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf.TLSConfig) (*gogrpc.ClientConn, error) {
 	if tlsCfg == nil || !tlsCfg.GetEnable() {
 		return kgrpc.DialInsecure(ctx, opts...)
 	}
