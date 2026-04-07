@@ -22,7 +22,7 @@
 
 ### 版本管理与打 Tag 规则
 
-- **使用 `make tag TAG=v0.x.y` 自动打双 tag**（`v0.x.y` + `api/gen/v0.x.y`）
+- **`make tag TAG=v0.x.y`** 仅打主模块 tag（`v0.x.y`）；proto/gen 有变更时额外执行 **`make tag.api TAG=v0.x.y`** 打 `api/gen/v0.x.y`
 - **何时打 tag**：修改了 `core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
 - **何时不打 tag**：仅修改文档、Makefile、CI 配置、基础设施配置等
 - BSR label 与 Git tag 自动同步（`make buf-push` 自动检测 HEAD 上的 tag）
@@ -104,7 +104,7 @@ make ci.lint              # CI 对齐 lint（GOWORK=off + proto lint）
 make lint.proto           # Proto lint
 make test                 # 运行测试
 make tidy                 # go mod tidy + go work sync
-make tag TAG=v0.x.y       # 自动打双 tag
+make tag TAG=v0.x.y       # 打主模块 tag；proto 有变更时再 make tag.api TAG=v0.x.y
 make buf-push             # 推送 proto 到 BSR
 make clean                # 清理生成代码
 ```
