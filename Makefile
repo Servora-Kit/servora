@@ -50,7 +50,7 @@ INFRA_SERVICES := consul db redis openfga otel-collector jaeger loki prometheus 
 # ============================================================================
 
 .PHONY: help env init plugin cli dep vendor tidy test cover vet lint lint.go lint.proto buf-update
-.PHONY: api api-go gen clean
+.PHONY: api api-go gen gen.fresh clean
 .PHONY: compose.up compose.stop compose.down compose.reset compose.ps compose.logs
 .PHONY: ci.lint
 
@@ -122,6 +122,13 @@ ci.lint: lint.go lint.proto
 
 gen: api
 	@echo "$(GREEN)✓ All code generated$(RESET)"
+
+# Fresh regeneration: wipe api/gen/go first, then regenerate.
+# Use this when proto files/messages are deleted or renamed, when go_package
+# changes, or when a plugin is removed — otherwise stale generated files will
+# linger. For day-to-day edits that only add/modify fields, use `make gen`.
+gen.fresh: clean api
+	@echo "$(GREEN)✓ Fresh code generation complete$(RESET)"
 
 api: api-go
 	@echo "$(GREEN)✓ Protobuf code generated$(RESET)"

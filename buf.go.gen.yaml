@@ -1,22 +1,24 @@
 version: v2
 
-clean: true
+# 不在此处启用 clean，避免每次 make gen 都重写整个 api/gen/go。
+# 日常增量生成使用 `make gen`；当删除/重命名 proto 或移除 plugin 时，
+# 使用 `make gen.fresh` 显式触发 clean + regenerate。
 
 managed:
     enabled: true
 
     disable:
+        # --- 第三方模块：完全不托管，保留上游 go_package ---
         - module: buf.build/googleapis/googleapis
         - module: buf.build/bufbuild/protovalidate
         - module: buf.build/kratos/apis
         - module: buf.build/gnostic/gnostic
         - module: buf.build/gogo/protobuf
         - module: buf.build/menta2k-org/redact
-        # 保留 conf proto 的原始 go_package 设置
+
+        # --- 本仓库 go_package 例外：保留 proto 里手写的自定义别名 ---
         - file_option: go_package
           path: servora/conf/v1/conf.proto
-        - file_option: go_package
-          path: servora/iam/conf/v1/config.proto
 
 plugins:
     # generate go struct code
