@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 
-	"github.com/Servora-Kit/servora/transport/server"
-	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
 	sharedendpoint "github.com/Servora-Kit/servora/transport/shared/endpoint"
+	sharedtls "github.com/Servora-Kit/servora/transport/shared/tls"
 )
 
 func NewServer(opts ...ServerOption) *kgrpc.Server {
@@ -28,18 +28,18 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 	}
 
 	if o.conf != nil {
-		lc := sharedconfig.ParseListenConfig(o.conf.GetListen())
-		if lc.Network != "" {
-			serverOpts = append(serverOpts, kgrpc.Network(lc.Network))
+		listen := o.conf.GetListen()
+		if network := strings.TrimSpace(listen.GetNetwork()); network != "" {
+			serverOpts = append(serverOpts, kgrpc.Network(network))
 		}
-		if lc.Addr != "" {
-			serverOpts = append(serverOpts, kgrpc.Address(lc.Addr))
+		bindAddr := strings.TrimSpace(listen.GetAddr())
+		if bindAddr != "" {
+			serverOpts = append(serverOpts, kgrpc.Address(bindAddr))
 		}
-		if lc.Timeout != nil {
-			serverOpts = append(serverOpts, kgrpc.Timeout(lc.Timeout.AsDuration()))
+		if timeout := listen.GetTimeout(); timeout != nil {
+			serverOpts = append(serverOpts, kgrpc.Timeout(timeout.AsDuration()))
 		}
-		if o.conf.Tls != nil && o.conf.Tls.Enable {
-			tlsCfg := server.MustLoadTLS(o.conf.Tls)
+		if tlsCfg := sharedtls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
 			serverOpts = append(serverOpts, kgrpc.TLSConfig(tlsCfg))
 		}
 
@@ -58,13 +58,13 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		q := url.Values{}
 		q.Set("isSecure", strconv.FormatBool(secure))
 
-		endpoint, err := sharedendpoint.ResolveRegistryEndpoint(
-			scheme,
-			lc.Addr,
-			registryEndpoint,
-			registryHost,
-			q,
-		)
+		endpoint, err := sharedendpoint.ResolveRegistryEndpoint(sharedendpoint.RegistryEndpointInput{
+			Scheme:   scheme,
+			BindAddr: bindAddr,
+			Endpoint: registryEndpoint,
+			Host:     registryHost,
+			Query:    q,
+		})
 		if err != nil {
 			panic(fmt.Sprintf("resolve grpc registry endpoint: %v", err))
 		}

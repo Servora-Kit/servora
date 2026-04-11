@@ -11,6 +11,7 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/platform/health"
+	"github.com/Servora-Kit/servora/transport/transporttest"
 )
 
 func TestNewServer_NoOptions(t *testing.T) {
@@ -203,4 +204,11 @@ func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) 
 	if got, want := ep.String(), "https://example.internal:18443?isSecure=true"; got != want {
 		t.Fatalf("expected endpoint %q, got %q", want, got)
 	}
+}
+
+func TestNewServer_RoundTripContract(t *testing.T) {
+	srv := NewServer(WithConfig(&conf.Server_HTTP{
+		Listen: &conf.Server_Listen{Addr: ":0"},
+	}))
+	transporttest.RoundTrip(t, srv)
 }

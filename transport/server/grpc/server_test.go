@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	"github.com/Servora-Kit/servora/transport/transporttest"
 )
 
 func TestNewServer_NoOptions(t *testing.T) {
@@ -195,6 +196,13 @@ func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) 
 	if got, want := ep.String(), "grpc://example.internal:18011?isSecure=false"; got != want {
 		t.Fatalf("expected endpoint %q, got %q", want, got)
 	}
+}
+
+func TestNewServer_RoundTripContract(t *testing.T) {
+	srv := NewServer(WithConfig(&conf.Server_GRPC{
+		Listen: &conf.Server_Listen{Addr: ":0"},
+	}))
+	transporttest.RoundTrip(t, srv)
 }
 
 func writeSelfSignedPair(t *testing.T, dir string) (string, string) {

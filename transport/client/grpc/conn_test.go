@@ -1,12 +1,10 @@
 package grpc
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -110,47 +108,31 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 	}
 }
 
-func TestConnection_CloseActuallyClosesConn(t *testing.T) {
-	// 建立一个真实的 insecure 连接（本地不需要服务监听，Dial 是懒连接）。
-	conn, err := dialConnection(
-		context.Background(),
-		[]kgrpc.ClientOption{
-			kgrpc.WithEndpoint("localhost:19999"),
-			kgrpc.WithTimeout(100 * time.Millisecond),
-		},
-		nil,
-	)
+func TestDialer_DialCreatesIndependentConnections(t *testing.T) {
+	dialer := NewDialer()
+	conn1, err := dialer.Dial(t.Context(), "localhost:19999")
 	if err != nil {
-		t.Fatalf("dial insecure: %v", err)
+		t.Fatalf("dial first conn: %v", err)
 	}
-
-	c := NewConnection(conn)
-
-	if !c.IsHealthy() {
-		t.Fatal("expected connection to be healthy before close")
+	conn2, err := dialer.Dial(t.Context(), "localhost:19999")
+	if err != nil {
+		_ = conn1.Close()
+		t.Fatalf("dial second conn: %v", err)
 	}
-	if c.Value() == nil {
-		t.Fatal("expected Value() to be non-nil before close")
+	if conn1 == nil || conn2 == nil {
+		t.Fatal("expected non-nil connections")
 	}
-
-	if err := c.Close(); err != nil {
-		t.Fatalf("Close() returned unexpected error: %v", err)
+	if conn1 == conn2 {
+		t.Fatal("expected independent grpc connections")
 	}
+	_ = conn1.Close()
+	_ = conn2.Close()
 }
 
-func TestDialConnection_InvalidTLSConfig(t *testing.T) {
-	_, err := dialConnection(
-		context.Background(),
-		[]kgrpc.ClientOption{
-			kgrpc.WithEndpoint("discovery:///user.service"),
-			kgrpc.WithTimeout(100 * time.Millisecond),
-		},
-		&conf.TLSConfig{
-			Enable:   true,
-			CertPath: "/tmp/client.crt",
-		},
-	)
+func TestDialer_DialWithEmptyTarget(t *testing.T) {
+	dialer := NewDialer()
+	_, err := dialer.Dial(t.Context(), "  ")
 	if err == nil {
-		t.Fatal("expected invalid tls config to return error")
+		t.Fatal("expected empty target error")
 	}
 }

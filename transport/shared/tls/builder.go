@@ -2,6 +2,7 @@ package tls
 
 import (
 	"crypto/tls"
+	"fmt"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/security/tlsutil"
@@ -26,4 +27,13 @@ func BuildClientTLS(c *conf.TLSConfig) (*tls.Config, error) {
 		CertPath: c.GetCertPath(),
 		KeyPath:  c.GetKeyPath(),
 	})
+}
+
+// MustBuildServerTLS wraps BuildServerTLS and panics when TLS configuration is invalid.
+func MustBuildServerTLS(c *conf.TLSConfig) *tls.Config {
+	tlsCfg, err := BuildServerTLS(c)
+	if err != nil {
+		panic(fmt.Sprintf("build server TLS config: %v", err))
+	}
+	return tlsCfg
 }

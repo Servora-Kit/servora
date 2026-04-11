@@ -8,56 +8,93 @@ import (
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	"github.com/Servora-Kit/servora/obs/logging"
-	"github.com/Servora-Kit/servora/transport/runtime"
+	logger "github.com/Servora-Kit/servora/obs/logging"
 	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/registry"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
-type Plugin struct{}
-
 const Type = "http"
 
-func (p *Plugin) Type() string { return Type }
+type Option func(*dialerOptions)
 
-func (p *Plugin) Build(_ context.Context, in runtime.ClientBuildInput) (runtime.ClientFactory, error) {
-	httpClients, err := BuildClientConfigIndex(in.Data)
-	if err != nil {
-		return nil, fmt.Errorf("build http client config index: %w", err)
-	}
-	return &factory{
-		httpClients: httpClients,
-		discovery:   in.Discovery,
-		middleware:  in.Middleware,
-		logger:      in.Logger,
-	}, nil
+type dialerOptions struct {
+	data       *conf.Data
+	discovery  registry.Discovery
+	middleware []middleware.Middleware
+	logger     logger.Logger
 }
 
-type factory struct {
+func WithData(data *conf.Data) Option {
+	return func(o *dialerOptions) {
+		o.data = data
+	}
+}
+
+func WithDiscovery(discovery registry.Discovery) Option {
+	return func(o *dialerOptions) {
+		o.discovery = discovery
+	}
+}
+
+func WithMiddleware(mw ...middleware.Middleware) Option {
+	return func(o *dialerOptions) {
+		o.middleware = append([]middleware.Middleware(nil), mw...)
+	}
+}
+
+func WithLogger(l logger.Logger) Option {
+	return func(o *dialerOptions) {
+		o.logger = l
+	}
+}
+
+type Dialer struct {
 	httpClients map[string]*conf.Data_Client_Endpoint
 	discovery   registry.Discovery
 	middleware  []middleware.Middleware
 	logger      logger.Logger
 }
 
-func (f *factory) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime.Connection, error) {
+func NewDialer(opts ...Option) *Dialer {
+	o := dialerOptions{}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&o)
+		}
+	}
+
+	httpClients, err := BuildClientConfigIndex(o.data)
+	if err != nil {
+		panic(fmt.Sprintf("build http client config index: %v", err))
+	}
+
+	return &Dialer{
+		httpClients: httpClients,
+		discovery:   o.discovery,
+		middleware:  o.middleware,
+		logger:      o.logger,
+	}
+}
+
+func (d *Dialer) Dial(ctx context.Context, target string) (*khttp.Client, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	defaultTimeout := 5 * time.Second
-	target := strings.TrimSpace(in.Target)
+	target = strings.TrimSpace(target)
 	if target == "" {
 		return nil, fmt.Errorf("http dial target is empty")
 	}
+
 	defaultEndpoint := resolveDefaultHTTPEndpoint(target)
-	endpoint, timeout, configured := resolveConnectionConfig(target, f.httpClients, defaultEndpoint, defaultTimeout)
+	endpoint, timeout, configured := resolveConnectionConfig(target, d.httpClients, defaultEndpoint, defaultTimeout)
 	if endpoint == "" {
 		return nil, fmt.Errorf("http endpoint not configured for target: %s", target)
 	}
-	if f.logger != nil {
-		helper := logger.NewHelper(f.logger)
+	if d.logger != nil {
+		helper := logger.NewHelper(d.logger)
 		if configured {
 			helper.Infof("using configured http endpoint: target=%s endpoint=%s", target, endpoint)
 		} else {
@@ -69,18 +106,18 @@ func (f *factory) Dial(ctx context.Context, in runtime.ClientDialInput) (runtime
 		khttp.WithEndpoint(endpoint),
 		khttp.WithTimeout(timeout),
 	}
-	if len(f.middleware) > 0 {
-		opts = append(opts, khttp.WithMiddleware(f.middleware...))
+	if len(d.middleware) > 0 {
+		opts = append(opts, khttp.WithMiddleware(d.middleware...))
 	}
-	if strings.HasPrefix(endpoint, "discovery:///") && f.discovery != nil {
-		opts = append(opts, khttp.WithDiscovery(f.discovery))
+	if strings.HasPrefix(endpoint, "discovery:///") && d.discovery != nil {
+		opts = append(opts, khttp.WithDiscovery(d.discovery))
 	}
 
 	client, err := khttp.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("build http client for target %s: %w", target, err)
 	}
-	return NewConnection(client, endpoint), nil
+	return client, nil
 }
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。
@@ -102,8 +139,8 @@ func resolveConnectionConfig(
 		return endpoint, timeout, false
 	}
 
-	timeout = sharedconfig.NormalizeDuration(httpCfg.GetTimeout(), timeout)
-	endpoint = sharedconfig.NormalizeEndpoint(httpCfg.GetEndpoint(), endpoint)
+	timeout = sharedconfig.NormalizeDuration(httpCfg.GetTimeout(), defaultTimeout)
+	endpoint = sharedconfig.NormalizeEndpoint(httpCfg.GetEndpoint(), defaultEndpoint)
 
 	return endpoint, timeout, true
 }

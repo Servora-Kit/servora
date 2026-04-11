@@ -43,6 +43,29 @@ func TestBuildClientTLS_LoadsCA(t *testing.T) {
 	}
 }
 
+func TestMustBuildServerTLS_DisabledReturnsNil(t *testing.T) {
+	cfg := MustBuildServerTLS(nil)
+	if cfg != nil {
+		t.Fatalf("expected nil tls config, got %v", cfg)
+	}
+}
+
+func TestMustBuildServerTLS_PanicsOnInvalidConfig(t *testing.T) {
+	t.Run("panic on missing cert files", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Fatalf("expected panic, got nil")
+			}
+		}()
+
+		_ = MustBuildServerTLS(&conf.TLSConfig{
+			Enable:   true,
+			CertPath: "/missing-cert.pem",
+			KeyPath:  "/missing-key.pem",
+		})
+	})
+}
+
 func writeCACert(t *testing.T, dir string) string {
 	t.Helper()
 
