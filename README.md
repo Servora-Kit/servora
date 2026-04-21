@@ -19,7 +19,7 @@
 ## 核心能力
 
 - **共享基础库**：认证、授权、审计、配置引导、消息代理、服务治理等开箱即用
-- **传输层可插拔**：`transport/runtime` 统一 client/server 插件契约，支持协议扩展
+- **传输层简洁直接**：`transport/server` 和 `transport/client` 分别提供函数式选项构造，TLS/端点/配置共享到 `transport/shared`
 - **Proto First**：框架级公共 proto 定义，通过 [BSR](https://buf.build/servora/servora) 发布
 - **自定义 protoc 插件**：`protoc-gen-servora-authz`、`protoc-gen-servora-audit`、`protoc-gen-servora-mapper`
 - **CLI 工具**：`svr` 命令行工具（GORM GEN 代码生成、OpenFGA 初始化与 model 管理）
@@ -28,11 +28,11 @@
 - **全链路审计**：`obs/audit` 经 Kafka 投递审计事件
 - **服务治理**：注册发现、配置中心（支持重载）与基础遥测
 
-## v0.2.0 重点变更
+## v0.3.0 重点变更
 
-- **transport client/server 模式统一**：server 与 client 均通过 plugin 契约挂载到 `transport/runtime`。
-- **新增 server Builder DSL**：内建 gRPC/HTTP 提供 `NewBuilder()`，调用方不需要直接拼装 runtime graph。
-- **client 协议插件化**：内建 gRPC/HTTP 客户端插件，支持 `WithPlugins` / `WithRegistry` 自定义扩展。
+- **transport 架构简化**：移除 plugin/runtime/factory 中间层，server 与 client 均采用直接构造模式。
+- **Server 函数式选项**：内建 gRPC/HTTP 提供 `NewServer(opts...)`，通过 `WithConfig`/`WithLogger`/`WithMiddleware`/`WithServices` 等选项组装。
+- **Client Dialer 模式**：按协议分别实例化 `grpc.Dialer` / `http.Dialer`，调用 `Dial(ctx, target)` 获取连接。
 - **共享能力下沉**：TLS、端点与公共配置归拢到 `transport/shared`，减少重复实现。
 
 ## Transport 快速示例
@@ -40,48 +40,62 @@
 ### 构建 gRPC/HTTP Server
 
 ```go
-grpcSrv := transportgrpc.NewBuilder().
-	WithConfig(c.Grpc).
-	WithLogger(logger).
-	WithMiddleware(mw...).
-	WithServices(
-		transportgrpc.Registrar(func(s *kgrpc.Server) {
-			workerpb.RegisterWorkerServiceServer(s, workerSvc)
-		}),
-	).
-	MustBuild()
+grpcSrv := transportgrpc.NewServer(
+    transportgrpc.WithConfig(c.Grpc),
+    transportgrpc.WithLogger(logger),
+    transportgrpc.WithMiddleware(mw...),
+    transportgrpc.WithServices(
+        transportgrpc.Registrar(func(s *kgrpc.Server) {
+            workerpb.RegisterWorkerServiceServer(s, workerSvc)
+        }),
+    ),
+)
 
-httpSrv := transporthttp.NewBuilder().
-	WithConfig(c.Http).
-	WithLogger(logger).
-	WithMiddleware(mw...).
-	WithServices(
-		transporthttp.Registrar(func(s *khttp.Server) {
-			masterpb.RegisterMasterServiceHTTPServer(s, masterSvc)
-		}),
-	).
-	MustBuild()
+httpSrv := transporthttp.NewServer(
+    transporthttp.WithConfig(c.Http),
+    transporthttp.WithLogger(logger),
+    transporthttp.WithMiddleware(mw...),
+    transporthttp.WithServices(
+        transporthttp.Registrar(func(s *khttp.Server) {
+            masterpb.RegisterMasterServiceHTTPServer(s, masterSvc)
+        }),
+    ),
+)
 ```
 
-### 构建可插拔 Client 并发起 gRPC 调用
+### 构建 Client 并发起 gRPC 调用
 
 ```go
-c, err := transportclient.NewClient(dataCfg, traceCfg, discovery, logger)
-if err != nil {
-	return err
-}
+dialer := transportgrpc.NewDialer(
+    transportgrpc.WithData(dataCfg),
+    transportgrpc.WithDiscovery(discovery),
+    transportgrpc.WithLogger(logger),
+    transportgrpc.WithMiddleware(mw...),
+)
 
-conn, err := transportclient.GetValue[gogrpc.ClientConnInterface](ctx, c, runtime.ClientDialInput{
-	Protocol: "grpc",
-	Target:   "worker.service",
-})
+conn, err := dialer.Dial(ctx, "worker.service")
 if err != nil {
-	return err
+    return err
 }
 
 _, err = workerpb.NewWorkerServiceClient(conn).Hello(ctx, req)
 if err != nil {
-	return err
+    return err
+}
+```
+
+### 构建 HTTP Client
+
+```go
+dialer := transporthttp.NewDialer(
+    transporthttp.WithData(dataCfg),
+    transporthttp.WithDiscovery(discovery),
+    transporthttp.WithLogger(logger),
+)
+
+client, err := dialer.Dial(ctx, "master.service")
+if err != nil {
+    return err
 }
 ```
 
@@ -111,9 +125,8 @@ if err != nil {
 │   └── protoc-gen-servora-mapper/   # 对象映射生成插件
 ├── core/                            # 领域无关核心抽象（actor/mapper/pagination）
 ├── transport/
-│   ├── client/                      # 客户端协议插件（grpc/http）
-│   ├── server/                      # 服务端协议插件（grpc/http）
-│   ├── runtime/                     # plugin 合约、registry、graph
+│   ├── client/                      # 客户端 Dialer（grpc/http/middleware）
+│   ├── server/                      # 服务端 NewServer（grpc/http/middleware）
 │   └── shared/                      # transport 共享能力（tls/endpoint/config）
 ├── security/                        # 认证授权与 JWT/JWKS
 ├── obs/                             # 审计、日志、遥测
@@ -160,7 +173,7 @@ deps:
 
 ### 前置要求
 
-- Go 1.26+
+- Go 1.26.1+
 - Make
 - Buf CLI
 
