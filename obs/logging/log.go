@@ -198,12 +198,26 @@ func With(l Logger, args ...any) Logger {
 //
 //	Before: logger.NewHelper(l, logger.WithModule("user/biz/iam-service"))
 //	After:  logger.For(l, "user/biz/iam")
+//
+// IMPORTANT: The returned helper is NOT bound to any context. Kratos Valuers
+// (such as the trace_id / span_id valuers registered by bootstrap) are only
+// invoked with the ctx attached to the helper at log-emit time. To make
+// them resolve, callers MUST chain .WithContext(ctx) per call:
+//
+//	r.log.WithContext(ctx).Warnf("query failed: %v", err)
+//
+// Calling helper methods directly (r.log.Warnf(...)) without .WithContext
+// leaves context-derived fields blank. See ExampleHelper_WithContext.
 func For(l Logger, module string) *Helper {
 	return log.NewHelper(log.With(l, "module", module))
 }
 
 // NewHelper creates a *Helper with optional Option fields applied.
 // Prefer For() when only a module label is needed.
+//
+// IMPORTANT: As with For(), callers must chain .WithContext(ctx) at each
+// call site to activate context-aware valuers (trace_id, span_id, etc).
+// See ExampleHelper_WithContext for the canonical pattern.
 func NewHelper(l Logger, opts ...Option) *Helper {
 	if len(opts) > 0 {
 		kv := make([]any, 0, len(opts)*2)
