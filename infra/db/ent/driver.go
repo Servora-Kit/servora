@@ -7,6 +7,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	"go.uber.org/zap"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 )
@@ -41,4 +42,16 @@ func NewDriver(cfg *conf.Data) (*entsql.Driver, error) {
 	}
 
 	return entsql.OpenDB(entDialect, db), nil
+}
+
+// NewDriverWithTracing creates a driver via NewDriver and wraps it with the
+// tracing decorator. Pass the zap logger from your obs/logging.ZapLogger:
+//
+//	drv, err := ent.NewDriverWithTracing(cfg, zapLogger.Zap())
+func NewDriverWithTracing(cfg *conf.Data, log *zap.Logger) (dialect.Driver, error) {
+	inner, err := NewDriver(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return WrapWithTracing(inner, log), nil
 }

@@ -20,6 +20,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/consul/api v1.33.4
 	github.com/jinzhu/copier v0.4.0
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/nacos-group/nacos-sdk-go v1.1.6
 	github.com/openfga/go-sdk v0.7.5
 	github.com/openfga/language/pkg/go v0.2.0-beta.2
