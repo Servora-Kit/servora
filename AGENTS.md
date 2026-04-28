@@ -94,6 +94,28 @@
 - `go_package` 使用各自仓库 module 路径
 - 不要将业务 proto 放入框架仓库
 
+## Ent Tracing 集成
+
+业务仓库使用 Ent 时，**必须** 通过 `infra/db/ent.NewDriverWithTracing` 创建 driver，让所有 SQL 调用日志自动带上当前 OTel trace_id/span_id：
+
+```go
+import (
+    servoraent "github.com/Servora-Kit/servora/infra/db/ent"
+    "github.com/Servora-Kit/servora/obs/logging"
+)
+
+func NewEntClient(cfg *conf.Data, l logging.Logger) (*ent.Client, error) {
+    zapLogger, _ := l.(*logging.ZapLogger)
+    drv, err := servoraent.NewDriverWithTracing(cfg, zapLogger.Zap())
+    if err != nil {
+        return nil, err
+    }
+    return ent.NewClient(ent.Driver(drv)), nil
+}
+```
+
+每条 SQL 调用会输出 `ent.query` / `ent.exec` / `ent.tx.{begin,query,exec,commit,rollback}` 日志，含 `trace_id` / `span_id` / `sql` / `elapsed` / `error` 字段。失败为 ERROR 级，成功为 DEBUG 级。
+
 ## 常用命令
 
 ```bash

@@ -24,8 +24,9 @@
 | `servora/infra/db/ent/tracing_test.go` | Create | 单元测试（fake driver + 注入 span） |
 | `servora/infra/db/ent/tracing_integration_test.go` | Create | 集成测试（sqlite3 in-memory + 真实 ent client） |
 | `servora/infra/db/ent/driver.go` | Modify | 新增 `NewDriverWithTracing` 便利 constructor |
-| `servora/obs/logging/ent_log.go` | Modify | 在 `EntLogFuncFrom` 上加 `Deprecated:` godoc，引导用 driver wrapper |
+| `servora/obs/logging/ent_log.go` | Delete | 整文件删除（`EntLogFuncFrom` 签名不带 ctx 无法 trace 关联，workspace 内零调用方，直接破坏性变更） |
 | `servora/AGENTS.md` | Modify | 在「常用命令」之前加 "Ent Tracing 集成" 小节，举例正确用法 |
+| `servora/go.mod` | Modify | `github.com/mattn/go-sqlite3` 由 indirect 提升为 direct（被测试代码直接 blank-import） |
 
 ---
 
@@ -553,7 +554,8 @@ func TestIntegration_SqliteExecWithTrace(t *testing.T) {
 		TraceID: traceID, SpanID: spanID, TraceFlags: trace.FlagsSampled,
 	}))
 
-	if err := wrapped.Exec(ctx, "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)", nil, nil); err != nil {
+	// 注意：entsql.Driver.Exec 不接受 args=nil，会返回 `dialect/sql: invalid type <nil>`，必须传 []any{}
+	if err := wrapped.Exec(ctx, "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)", []any{}, nil); err != nil {
 		t.Fatalf("Exec CREATE: %v", err)
 	}
 	if err := wrapped.Exec(ctx, "INSERT INTO users(name) VALUES(?)", []any{"alice"}, nil); err != nil {
@@ -596,9 +598,11 @@ git commit -m "test(infra/db/ent): integration test for tracing wrapper with sql
 
 - [ ] **Step 1: 写失败测试 — NewDriverWithTracing 返回的 driver 自带日志**
 
-在 `tracing_test.go` import 块追加：
+在 `tracing_test.go` import 块追加（**注意**：单测无 build tag，sqlite3 driver 不会被 integration 文件注册，必须在此 blank-import）：
 
 ```go
+_ "github.com/mattn/go-sqlite3"
+
 conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 ```
 
@@ -615,9 +619,10 @@ func TestNewDriverWithTracing_WrapsTransparently(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewDriverWithTracing: %v", err)
 	}
-	defer drv.Close()
+	defer func() { _ = drv.Close() }() // errcheck 要求显式忽略
 
-	if err := drv.Exec(context.Background(), "CREATE TABLE t (id INT)", nil, nil); err != nil {
+	// args=nil 会被 entsql.Driver.Exec 拒绝，须传 []any{}
+	if err := drv.Exec(context.Background(), "CREATE TABLE t (id INT)", []any{}, nil); err != nil {
 		t.Fatalf("Exec: %v", err)
 	}
 	if got := len(recorded.All()); got == 0 {
@@ -670,36 +675,37 @@ git commit -m "feat(infra/db/ent): add NewDriverWithTracing convenience construc
 
 ---
 
-## Task 7: 在旧 ent_log.go 加 Deprecated 注释
+## Task 7: 破坏性删除旧 ent_log.go
 
 **Files:**
-- Modify: `servora/obs/logging/ent_log.go`
+- Delete: `servora/obs/logging/ent_log.go`
 
-- [ ] **Step 1: 修改 godoc 引导用 driver wrapper**
+**前置确认：** 在删除前必须 grep 整个 servora-kit workspace 验证 `EntLogFuncFrom` 无业务调用方：
 
-替换 `EntLogFuncFrom` 函数上方的注释（替换 `func EntLogFuncFrom` 之前的所有注释行）：
-
-```go
-// EntLogFuncFrom returns a logger function compatible with ent.Log() option.
-//
-// Deprecated: This adapter cannot propagate OpenTelemetry trace context because
-// ent.Log()'s signature is `func(...any)` with no context parameter. For
-// trace-correlated SQL logs, use ent.NewDriverWithTracing in
-// `servora/infra/db/ent` instead — it wraps the dialect.Driver and emits
-// structured logs with trace_id/span_id extracted from each call's ctx.
-func EntLogFuncFrom(logger kratoslog.Logger, module string) func(...any) {
+```bash
+cd /Users/horonlee/projects/go/servora-kit && grep -rn "EntLogFuncFrom" --include="*.go" --exclude-dir=.cache --exclude-dir=.git
 ```
+
+预期仅命中 `servora/obs/logging/ent_log.go` 自身定义；如出现任一业务仓库调用方则停下，回到原 Deprecated 路线。
+
+- [ ] **Step 1: 删除整个文件**
+
+```bash
+rm /Users/horonlee/projects/go/servora-kit/servora/obs/logging/ent_log.go
+```
+
+文件原本仅 export `EntLogFuncFrom` 一个符号 + 同包 import，删整文件即可，无其他符号需保留。
 
 - [ ] **Step 2: 验证 go build 不破坏**
 
 Run: `cd /Users/horonlee/projects/go/servora-kit/servora && go build ./...`
-Expected: 无错误
+Expected: 无错误（确认无 internal 调用方）。
 
-- [ ] **Step 3: 提交**
+- [ ] **Step 3: 提交（如本 plan 选择 per-task commit 模式）**
 
 ```bash
 git add obs/logging/ent_log.go
-git commit -m "docs(obs/logging): deprecate EntLogFuncFrom in favor of driver wrapper"
+git commit -m "refactor(obs/logging): 移除 EntLogFuncFrom，由 ent driver wrapper 取代"
 ```
 
 ---
@@ -735,8 +741,6 @@ func NewEntClient(cfg *conf.Data, l logging.Logger) (*ent.Client, error) {
 ```
 
 每条 SQL 调用会输出 `ent.query` / `ent.exec` / `ent.tx.{begin,query,exec,commit,rollback}` 日志，含 `trace_id` / `span_id` / `sql` / `elapsed` / `error` 字段。失败为 ERROR 级，成功为 DEBUG 级。
-
-> 旧的 `obs/logging.EntLogFuncFrom` 已弃用——其接口签名不带 ctx，无法做 trace 关联。
 ````
 
 - [ ] **Step 2: 验证 markdown 中字符串确实写入**
@@ -820,6 +824,5 @@ make tag TAG=v0.x.y  # 替换为下一个版本号
 ## Out of Scope
 
 - GORM 慢查询日志的 trace 关联（属 P2-1c，单独 plan）
-- `obs/logging.EntLogFuncFrom` 的实际删除（先 Deprecated 一两个版本再删）
 - DB 慢查询阈值告警（业务侧自行配置 SlowThreshold，与本 plan 无关）
 - 业务侧 `r.log.Warnf` 的 ctx 绑定（属 P2-1b，单独 plan）

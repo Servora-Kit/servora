@@ -69,12 +69,6 @@
 
 经实证（curl + 日志对照）：Kratos `tracing.Server()` + `logging.Server()` 链路已让 **access log** 自动带 trace_id；缺口集中在 **业务 helper 手记日志** 与 **DB 层日志**。原合并条目按修复路径拆为 4 条独立子任务。
 
-#### [P2-1a] Ent driver 加 trace_id / span_id
-
-- **现状**：`obs/logging/ent_log.go` 的 `EntLogFuncFrom` 返回 `func(...any)` 无 ctx 入口；`infra/db/ent/driver.go` 也未做 dialect.Driver wrapper。所有 Ent SQL 调用日志 trace_id 必空。
-- **方案**：新增 `tracingDriver` 实现 `dialect.Driver` 接口，每次 Query/Exec/Tx 抽 ctx 里的 SpanContext 写结构化日志；通过 `NewDriverWithTracing` 显式启用，零破坏。
-- **Plan**：[`superpowers/plans/2026-04-25-ent-trace-correlation.md`](superpowers/plans/2026-04-25-ent-trace-correlation.md) — 9 个 Task
-
 #### [P2-1b] 业务侧日志 ctx 绑定规范
 
 - **现状**：servora-platform/audit data 层 10 处 `r.log.Warnf(...)` 全部裸调用，trace_id 必空。框架 godoc 也没说清 `*log.Helper.WithContext(ctx)` 是激活 valuer 的唯一姿势。
@@ -130,7 +124,9 @@
 
 ## 已完成
 
-（暂无）
+### [P2-1a] Ent driver 加 trace_id / span_id ✅ 2026-04-28
+
+通过 `infra/db/ent.NewDriverWithTracing` 包装 dialect.Driver，每次 Query/Exec/Tx 自动写出含 `trace_id` / `span_id` / `sql` / `elapsed` / `error` 的 zap 结构化日志（成功 Debug 级、失败 Error 级），事务内 Query/Exec/Commit/Rollback 同样覆盖。同时**破坏性删除** `obs/logging/ent_log.go`（`EntLogFuncFrom` 已无业务调用方，签名不带 ctx 无法 trace 关联）。详见 [`superpowers/plans/2026-04-25-ent-trace-correlation.md`](superpowers/plans/2026-04-25-ent-trace-correlation.md)。
 
 ---
 
