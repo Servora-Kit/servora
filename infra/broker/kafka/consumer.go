@@ -67,11 +67,21 @@ func (s *kafkaSubscriber) poll(ctx context.Context) {
 }
 
 // dispatch hands a single fetched record to the user handler.
-// Pure refactor: identical behavior to the previous inline closure.
-// A subsequent task replaces the loop ctx with the record-bound ctx.
+//
+// The kotel OnFetchRecordBuffered hook (wired in broker.go) extracts the
+// upstream producer's span context from Kafka headers and stores it on
+// r.Context. Passing r.Context to the handler keeps distributed trace
+// linkage intact across producer → consumer boundaries.
+//
+// loopCtx is the long-lived poll-loop ctx and is used only when r.Context
+// is nil (e.g. when kotel hooks are disabled).
 func (s *kafkaSubscriber) dispatch(loopCtx context.Context, r *kgo.Record) {
 	event := recordToEvent(r, s.client)
-	if err := s.handler(loopCtx, event); err != nil {
+	msgCtx := r.Context
+	if msgCtx == nil {
+		msgCtx = loopCtx
+	}
+	if err := s.handler(msgCtx, event); err != nil {
 		if s.zap != nil {
 			s.zap.Warn("kafka handler error", zap.String("topic", r.Topic), zap.Error(err))
 		}
