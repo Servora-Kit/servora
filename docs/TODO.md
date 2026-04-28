@@ -39,6 +39,12 @@
 - **影响**：使用者没有可参考的最小可运行样例，复制粘贴成本高。
 - **建议**：在 `api/protos/` 新增 `example/v1/greeting.proto`，标注 audit + authz 注解，作为 lighthouse example。`buf generate` 后应产出对应 `.gen.go`。
 
+### [P0-5] Kafka broker 丢弃 record ctx，分布式 trace 在消费侧整段断开 ✅ 2026-04-28
+
+- **现状（已修）**：`infra/broker/kafka/consumer.go:63-75` 的 `fetches.EachRecord` 把 `kotel.OnFetchRecordBuffered` 写入 `r.Context` 的上游 span context 直接丢弃，传 poll-loop 的服务器生命期 ctx 给业务 handler。
+- **影响（已恢复）**：上游 producer 与下游 consumer 的 span 在 trace 上不连通；audit / 任何 Kafka 消费者的处理路径日志、metrics、子 span 全部看不到上游 trace_id。
+- **修复**：抽出 `dispatch(loopCtx, r)` 方法，handler 收到 `r.Context ?? loopCtx`。回归测试见 `infra/broker/kafka/consumer_dispatch_test.go`。详见 [`superpowers/plans/2026-04-28-broker-trace-propagation.md`](superpowers/plans/2026-04-28-broker-trace-propagation.md)。
+
 ---
 
 ## P1 — 安全与契约规范化
@@ -68,12 +74,6 @@
 ### [P2-1] Log/Trace 一体化
 
 经实证（curl + 日志对照）：Kratos `tracing.Server()` + `logging.Server()` 链路已让 **access log** 自动带 trace_id；缺口集中在 **业务 helper 手记日志** 与 **DB 层日志**。原合并条目按修复路径拆为 4 条独立子任务。
-
-#### [P2-1b] 业务侧日志 ctx 绑定规范
-
-- **现状**：servora-platform/audit data 层 10 处 `r.log.Warnf(...)` 全部裸调用，trace_id 必空。框架 godoc 也没说清 `*log.Helper.WithContext(ctx)` 是激活 valuer 的唯一姿势。
-- **方案**：framework 侧加 `ExampleHelper_WithContext` 示例 + 修订 godoc + `AGENTS.md` 增设「日志规范」章节；业务侧迁移 audit/data 层 10 处调用 + 清理 servora-example 实验残留。
-- **Plan**：[`superpowers/plans/2026-04-25-business-log-ctx-binding.md`](superpowers/plans/2026-04-25-business-log-ctx-binding.md) — 8 个 Task
 
 #### [P2-1c] GormLogger 加 trace_id / span_id（辅助跟随，未写 plan）
 
@@ -127,6 +127,14 @@
 ### [P2-1a] Ent driver 加 trace_id / span_id ✅ 2026-04-28
 
 通过 `infra/db/ent.NewDriverWithTracing` 包装 dialect.Driver，每次 Query/Exec/Tx 自动写出含 `trace_id` / `span_id` / `sql` / `elapsed` / `error` 的 zap 结构化日志（成功 Debug 级、失败 Error 级），事务内 Query/Exec/Commit/Rollback 同样覆盖。同时**破坏性删除** `obs/logging/ent_log.go`（`EntLogFuncFrom` 已无业务调用方，签名不带 ctx 无法 trace 关联）。详见 [`superpowers/plans/2026-04-25-ent-trace-correlation.md`](superpowers/plans/2026-04-25-ent-trace-correlation.md)。
+
+### [P0-5] Kafka broker record ctx 丢失修复 ✅ 2026-04-28
+
+抽出 `(s *kafkaSubscriber) dispatch` 方法，handler 收到 `r.Context ?? loopCtx`，让 kotel hook 已经填好的上游 span context 真正传到业务 handler。回归测试覆盖优先级 + nil 回落两种场景。详见 [`superpowers/plans/2026-04-28-broker-trace-propagation.md`](superpowers/plans/2026-04-28-broker-trace-propagation.md)。
+
+### [P2-1b] Logger Helper Ctx 规范 ✅ 2026-04-28
+
+`obs/logging/example_test.go` + `For/NewHelper` godoc 修订。业务侧 audit data 层 5 处真实关联缺口已迁移；架构上不该带 trace_id 的位置不动。详见 [`superpowers/plans/2026-04-28-broker-trace-propagation.md`](superpowers/plans/2026-04-28-broker-trace-propagation.md)。
 
 ---
 
