@@ -61,18 +61,25 @@ func (s *kafkaSubscriber) poll(ctx context.Context) {
 		}
 
 		fetches.EachRecord(func(r *kgo.Record) {
-			event := recordToEvent(r, s.client)
-			if err := s.handler(ctx, event); err != nil {
-				if s.zap != nil {
-					s.zap.Warn("kafka handler error", zap.String("topic", r.Topic), zap.Error(err))
-				}
-				_ = event.Nack()
-				return
-			}
-			if s.sopts.AutoAck {
-				_ = event.Ack()
-			}
+			s.dispatch(ctx, r)
 		})
+	}
+}
+
+// dispatch hands a single fetched record to the user handler.
+// Pure refactor: identical behavior to the previous inline closure.
+// A subsequent task replaces the loop ctx with the record-bound ctx.
+func (s *kafkaSubscriber) dispatch(loopCtx context.Context, r *kgo.Record) {
+	event := recordToEvent(r, s.client)
+	if err := s.handler(loopCtx, event); err != nil {
+		if s.zap != nil {
+			s.zap.Warn("kafka handler error", zap.String("topic", r.Topic), zap.Error(err))
+		}
+		_ = event.Nack()
+		return
+	}
+	if s.sopts.AutoAck {
+		_ = event.Ack()
 	}
 }
 
