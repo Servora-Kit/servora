@@ -136,16 +136,14 @@ func WithRulesFuncs(fns ...func() map[string]AuthzRule) Option {
 // MergeRules merges multiple AuthzRule maps into one new map.
 // Later maps take precedence on key conflicts (which should not occur in practice).
 // Useful when a server registers services from multiple generated packages.
-func MergeRules(maps ...map[string]AuthzRule) map[string]AuthzRule {
+func MergeRules(ms ...map[string]AuthzRule) map[string]AuthzRule {
 	total := 0
-	for _, m := range maps {
+	for _, m := range ms {
 		total += len(m)
 	}
 	merged := make(map[string]AuthzRule, total)
-	for _, m := range maps {
-		for k, v := range m {
-			merged[k] = v
-		}
+	for _, m := range ms {
+		maps.Copy(merged, m)
 	}
 	return merged
 }
