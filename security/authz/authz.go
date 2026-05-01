@@ -29,11 +29,41 @@ import (
 	"github.com/Servora-Kit/servora/core/actor"
 )
 
-// Authorizer is the interface for checking authorization.
-// Implementations are responsible for performing the actual permission check,
-// including any caching or backend communication.
+// CheckRequest is one item in a BatchCheck call.
+type CheckRequest struct {
+	Subject    string
+	Relation   string
+	ObjectType string
+	ObjectID   string
+}
+
+// CheckResult is the per-item outcome of BatchCheck.
+// Order matches the input []CheckRequest index.
+type CheckResult struct {
+	Allowed bool
+	Err     error
+}
+
+// Authorizer is the interface for relationship-based authorization decisions.
+// All three methods are required: implementations targeting non-ReBAC backends
+// (e.g. pure Cedar/Rego) would need a different abstraction entirely, so we
+// commit to the ReBAC shape rather than a sub-interface fan-out.
+//
+// Method names match OpenFGA SDK semantics for direct mapping; SpiceDB
+// (LookupResources / BulkCheck) maps cleanly as well.
 type Authorizer interface {
-	IsAuthorized(ctx context.Context, subject, relation, objectType, objectID string) (allowed bool, err error)
+	// Check returns whether subject has relation on objectType:objectID.
+	Check(ctx context.Context, subject, relation, objectType, objectID string) (allowed bool, err error)
+
+	// BatchCheck runs N checks in one round-trip; output order matches input.
+	// Implementations may internally chunk if the backend has per-call limits
+	// (OpenFGA caps at 50 per request).
+	BatchCheck(ctx context.Context, reqs []CheckRequest) ([]CheckResult, error)
+
+	// ListAllowed returns IDs of objects (of objectType) the subject has the
+	// given relation to. The returned strings are bare IDs without "type:" prefix.
+	// Useful for "list" endpoints — caller fetches by `WHERE id IN (...)`.
+	ListAllowed(ctx context.Context, subject, relation, objectType string) ([]string, error)
 }
 
 // AuthzRule describes the authorization requirement for a single RPC operation.
@@ -187,7 +217,7 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 			principal := string(a.Type()) + ":" + a.ID()
 			relation := rule.Relation
 
-			allowed, err := authorizer.IsAuthorized(ctx, principal, relation, objectType, objectID)
+			allowed, err := authorizer.Check(ctx, principal, relation, objectType, objectID)
 			detail := DecisionDetail{
 				Operation:  operation,
 				Subject:    principal,

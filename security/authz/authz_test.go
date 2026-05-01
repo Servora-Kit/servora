@@ -43,12 +43,31 @@ const testOp = "/test.service.v1.TestService/TestMethod"
 
 // fakeAuthorizer is a minimal Authorizer for unit tests.
 type fakeAuthorizer struct {
-	allowed bool
-	err     error
+	allowed        bool
+	err            error
+	listAllowedIDs []string
 }
 
-func (f *fakeAuthorizer) IsAuthorized(_ context.Context, _, _, _, _ string) (bool, error) {
+func (f *fakeAuthorizer) Check(_ context.Context, _, _, _, _ string) (bool, error) {
 	return f.allowed, f.err
+}
+
+func (f *fakeAuthorizer) BatchCheck(_ context.Context, reqs []CheckRequest) ([]CheckResult, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	out := make([]CheckResult, len(reqs))
+	for i := range reqs {
+		out[i] = CheckResult{Allowed: f.allowed}
+	}
+	return out, nil
+}
+
+func (f *fakeAuthorizer) ListAllowed(_ context.Context, _, _, _ string) ([]string, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.listAllowedIDs, nil
 }
 
 // TestServer_NoRule_Forbidden checks that operations with no rule are rejected (fail-closed).
@@ -334,3 +353,33 @@ func (a *anonymousActor) Roles() []string          { return []string{} }
 func (a *anonymousActor) Scopes() []string         { return []string{} }
 func (a *anonymousActor) Attrs() map[string]string { return map[string]string{} }
 func (a *anonymousActor) Scope(_ string) string    { return "" }
+
+// TestFakeAuthorizer_ImplementsBatchCheck ensures the test fake covers BatchCheck.
+func TestFakeAuthorizer_ImplementsBatchCheck(t *testing.T) {
+	a := &fakeAuthorizer{allowed: true}
+	results, err := a.BatchCheck(context.Background(), []CheckRequest{
+		{Subject: "user:alice", Relation: "viewer", ObjectType: "doc", ObjectID: "1"},
+		{Subject: "user:alice", Relation: "viewer", ObjectType: "doc", ObjectID: "2"},
+	})
+	if err != nil {
+		t.Fatalf("BatchCheck err = %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("len(results) = %d, want 2", len(results))
+	}
+	if !results[0].Allowed || !results[1].Allowed {
+		t.Errorf("results = %+v, want all allowed", results)
+	}
+}
+
+// TestFakeAuthorizer_ImplementsListAllowed ensures the test fake covers ListAllowed.
+func TestFakeAuthorizer_ImplementsListAllowed(t *testing.T) {
+	a := &fakeAuthorizer{listAllowedIDs: []string{"doc:1", "doc:5"}}
+	ids, err := a.ListAllowed(context.Background(), "user:alice", "viewer", "doc")
+	if err != nil {
+		t.Fatalf("ListAllowed err = %v", err)
+	}
+	if len(ids) != 2 {
+		t.Fatalf("len(ids) = %d, want 2", len(ids))
+	}
+}

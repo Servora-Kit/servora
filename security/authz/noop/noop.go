@@ -15,11 +15,24 @@ var _ authz.Authorizer = (*Authorizer)(nil)
 type Authorizer struct{}
 
 // New returns a NoopAuthorizer that always permits requests.
-func New() authz.Authorizer {
-	return &Authorizer{}
+func New() authz.Authorizer { return &Authorizer{} }
+
+// Check always returns (true, nil).
+func (a *Authorizer) Check(_ context.Context, _, _, _, _ string) (bool, error) {
+	return true, nil
 }
 
-// IsAuthorized always returns (true, nil).
-func (a *Authorizer) IsAuthorized(_ context.Context, _, _, _, _ string) (bool, error) {
-	return true, nil
+// BatchCheck returns all-allowed results matching the input length.
+func (a *Authorizer) BatchCheck(_ context.Context, reqs []authz.CheckRequest) ([]authz.CheckResult, error) {
+	out := make([]authz.CheckResult, len(reqs))
+	for i := range reqs {
+		out[i] = authz.CheckResult{Allowed: true}
+	}
+	return out, nil
+}
+
+// ListAllowed returns nil — the noop authorizer has no resource model.
+// Callers needing real listing must use a real backend.
+func (a *Authorizer) ListAllowed(_ context.Context, _, _, _ string) ([]string, error) {
+	return nil, nil
 }
