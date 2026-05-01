@@ -15,9 +15,9 @@
 package authz
 
 import (
-	"maps"
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"

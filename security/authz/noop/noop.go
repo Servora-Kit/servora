@@ -23,7 +23,11 @@ func (a *Authorizer) Check(_ context.Context, _, _, _, _ string) (bool, error) {
 }
 
 // BatchCheck returns all-allowed results matching the input length.
+// Empty input returns (nil, nil), consistent with infra/openfga.Client.BatchCheck.
 func (a *Authorizer) BatchCheck(_ context.Context, reqs []authz.CheckRequest) ([]authz.CheckResult, error) {
+	if len(reqs) == 0 {
+		return nil, nil
+	}
 	out := make([]authz.CheckResult, len(reqs))
 	for i := range reqs {
 		out[i] = authz.CheckResult{Allowed: true}
