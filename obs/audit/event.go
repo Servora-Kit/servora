@@ -74,12 +74,13 @@ type AuthnDetail struct {
 }
 
 // AuthzDetail carries authorization-decision detail.
+// Cache-hit metrics live in infra/openfga (engine-internal optimization),
+// not in audit semantics.
 type AuthzDetail struct {
 	Relation    string
 	ObjectType  string
 	ObjectID    string
 	Decision    AuthzDecision
-	CacheHit    bool
 	ErrorReason string
 }
 

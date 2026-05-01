@@ -32,7 +32,6 @@ func TestE2E_LogEmitter_AuthzDecisionAndTupleChanged(t *testing.T) {
 		ObjectType: "project",
 		ObjectID:   "proj-1",
 		Decision:   audit.AuthzDecisionAllowed,
-		CacheHit:   true,
 	})
 
 	recorder.RecordAuthzDecision(context.Background(), "/test.E2E/Check", a, audit.AuthzDetail{
@@ -40,7 +39,6 @@ func TestE2E_LogEmitter_AuthzDecisionAndTupleChanged(t *testing.T) {
 		ObjectType: "platform",
 		ObjectID:   "default",
 		Decision:   audit.AuthzDecisionDenied,
-		CacheHit:   false,
 	})
 
 	recorder.RecordTupleChange(context.Background(), "openfga.WriteTuples", a, audit.TupleMutationDetail{
@@ -111,7 +109,6 @@ func TestE2E_BrokerEmitter_KafkaRoundTrip(t *testing.T) {
 		ObjectType: "platform",
 		ObjectID:   "default",
 		Decision:   audit.AuthzDecisionDenied,
-		CacheHit:   false,
 	})
 
 	select {

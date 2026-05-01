@@ -63,7 +63,6 @@ func toProtoEvent(event *AuditEvent) (*auditv1.AuditEvent, error) {
 			ObjectType:  d.ObjectType,
 			ObjectId:    d.ObjectID,
 			Decision:    toProtoAuthzDecision(d.Decision),
-			CacheHit:    d.CacheHit,
 			ErrorReason: d.ErrorReason,
 		}}
 	case *AuthzDetail:
@@ -72,7 +71,6 @@ func toProtoEvent(event *AuditEvent) (*auditv1.AuditEvent, error) {
 			ObjectType:  d.ObjectType,
 			ObjectId:    d.ObjectID,
 			Decision:    toProtoAuthzDecision(d.Decision),
-			CacheHit:    d.CacheHit,
 			ErrorReason: d.ErrorReason,
 		}}
 	case TupleMutationDetail:
