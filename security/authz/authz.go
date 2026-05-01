@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -98,6 +99,7 @@ type serverConfig struct {
 	rules          map[string]AuthzRule
 	defaultObjID   string
 	decisionLogger func(ctx context.Context, detail DecisionDetail)
+	checkTimeout   time.Duration
 }
 
 // WithRules sets the operation→rule mapping directly.
@@ -161,6 +163,15 @@ func WithDecisionLogger(fn func(ctx context.Context, detail DecisionDetail)) Opt
 	return func(cfg *serverConfig) { cfg.decisionLogger = fn }
 }
 
+// WithCheckTimeout bounds the time spent in Authorizer.Check on each request.
+// Zero (default) disables the deadline — the upstream context applies.
+//
+// This protects business-RPC latency from a slow authorization backend
+// (e.g. OpenFGA cross-region calls).
+func WithCheckTimeout(d time.Duration) Option {
+	return func(cfg *serverConfig) { cfg.checkTimeout = d }
+}
+
 // Server returns a Kratos middleware that performs authorization checks.
 //
 // Behavior:
@@ -215,7 +226,14 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 			principal := string(a.Type()) + ":" + a.ID()
 			relation := rule.Relation
 
-			allowed, err := authorizer.Check(ctx, principal, relation, objectType, objectID)
+			checkCtx := ctx
+			if cfg.checkTimeout > 0 {
+				var cancel context.CancelFunc
+				checkCtx, cancel = context.WithTimeout(ctx, cfg.checkTimeout)
+				defer cancel()
+			}
+
+			allowed, err := authorizer.Check(checkCtx, principal, relation, objectType, objectID)
 			detail := DecisionDetail{
 				Operation:  operation,
 				Subject:    principal,

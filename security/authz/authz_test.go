@@ -3,6 +3,7 @@ package authz
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/transport"
 
@@ -381,5 +382,49 @@ func TestFakeAuthorizer_ImplementsListAllowed(t *testing.T) {
 	}
 	if len(ids) != 2 {
 		t.Fatalf("len(ids) = %d, want 2", len(ids))
+	}
+}
+
+// blockingAuthorizer simulates a slow backend by waiting until ctx is cancelled.
+type blockingAuthorizer struct{}
+
+func (b *blockingAuthorizer) Check(ctx context.Context, _, _, _, _ string) (bool, error) {
+	<-ctx.Done()
+	return false, ctx.Err()
+}
+func (b *blockingAuthorizer) BatchCheck(ctx context.Context, _ []CheckRequest) ([]CheckResult, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+func (b *blockingAuthorizer) ListAllowed(ctx context.Context, _, _, _ string) ([]string, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+// TestServer_CheckTimeout_TripsCheckBeforeBackend ensures Check is bounded.
+func TestServer_CheckTimeout_TripsCheckBeforeBackend(t *testing.T) {
+	mw := Server(
+		&blockingAuthorizer{},
+		WithRules(map[string]AuthzRule{
+			testOp: {Mode: authzpb.AuthzMode_AUTHZ_MODE_CHECK, Relation: "admin", ObjectType: "platform"},
+		}),
+		WithCheckTimeout(50*time.Millisecond),
+	)
+
+	handler := mw(func(ctx context.Context, req any) (any, error) {
+		t.Fatal("handler must not be reached when check times out")
+		return nil, nil
+	})
+
+	ctx := userActorCtx(transportCtx(testOp), "user-123")
+	start := time.Now()
+	_, err := handler(ctx, nil)
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	if elapsed >= 500*time.Millisecond {
+		t.Errorf("elapsed = %v, expected < 500ms (timeout should trip well before)", elapsed)
 	}
 }
