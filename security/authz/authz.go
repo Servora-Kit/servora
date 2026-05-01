@@ -48,6 +48,9 @@ type AuthzRule struct {
 
 // DecisionDetail describes the result of a single authorization check.
 // It is passed to the DecisionLogger callback after every check.
+//
+// Cache-hit signals are intentionally absent — caching is an engine-internal
+// optimization (see infra/openfga) and does not belong in audit semantics.
 type DecisionDetail struct {
 	Operation  string
 	Subject    string
@@ -55,7 +58,6 @@ type DecisionDetail struct {
 	ObjectType string
 	ObjectID   string
 	Allowed    bool
-	CacheHit   bool
 	Err        error
 }
 

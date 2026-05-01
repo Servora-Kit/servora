@@ -52,7 +52,7 @@ authzMw := pkgauthz.Server(authorizer,
 - `AuthzMode_AUTHZ_MODE_CHECK` → 调用 `Authorizer.IsAuthorized()`
 - `AuthzRule.Mode` 引用共享 proto `api/gen/go/servora/authz/v1`（非 IAM 服务 proto）
 - 审计发射通过 `WithDecisionLogger` 回调实现；中间件本身不 import `obs/audit`
-- `DecisionDetail` 包含 `Operation`、`Subject`、`Relation`、`ObjectType`、`ObjectID`、`Allowed`、`CacheHit`、`Err`
+- `DecisionDetail` 包含 `Operation`、`Subject`、`Relation`、`ObjectType`、`ObjectID`、`Allowed`、`Err`（cache 命中不进审计语义，留在 `infra/openfga` 内部）
 - `OpenFGAAuthorizer` 封装 Redis 缓存为内部关注点（`WithRedisCache`）
 
 ## 边界约束
