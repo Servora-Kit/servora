@@ -83,7 +83,7 @@ func buildBatchCheckItems(reqs []BatchCheckItem) []fgaclient.ClientBatchCheckIte
 
 func mapBatchCheckResults(n int, allowed map[string]bool, errs map[string]error) []BatchCheckResult {
 	out := make([]BatchCheckResult, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		corr := correlationIDFromIndex(i)
 		out[i] = BatchCheckResult{
 			Allowed: allowed[corr],

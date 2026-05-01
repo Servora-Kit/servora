@@ -1,6 +1,7 @@
 package openfga
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -36,8 +37,8 @@ func TestBuildBatchCheckItems_PreservesOrderAndMapping(t *testing.T) {
 		}
 	}
 
-	// Ensure type assignment compiles (the helper actually emits ClientBatchCheckItem).
-	var _ []fgaclient.ClientBatchCheckItem = items
+	// Ensure the helper actually emits ClientBatchCheckItem (compile-time check).
+	_ = []fgaclient.ClientBatchCheckItem(items)
 }
 
 func TestMapBatchCheckResults_BackToOrderedResults(t *testing.T) {
@@ -69,7 +70,7 @@ func TestMapBatchCheckResults_BackToOrderedResults(t *testing.T) {
 
 func TestBatchCheck_EmptyInput_ReturnsNilNil(t *testing.T) {
 	c := &Client{}
-	got, err := c.BatchCheck(nil, nil)
+	got, err := c.BatchCheck(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("err = %v", err)
 	}
