@@ -428,3 +428,50 @@ func TestServer_CheckTimeout_TripsCheckBeforeBackend(t *testing.T) {
 		t.Errorf("elapsed = %v, expected < 500ms (timeout should trip well before)", elapsed)
 	}
 }
+
+// TestServer_FailOpenOnMissingRule_PassesThroughAndAlerts verifies the option.
+func TestServer_FailOpenOnMissingRule_PassesThroughAndAlerts(t *testing.T) {
+	var alerted *string
+	mw := Server(nil,
+		// no rules
+		WithFailOpenOnMissingRule(func(ctx context.Context, operation string) {
+			alerted = &operation
+		}),
+	)
+
+	called := false
+	handler := mw(func(ctx context.Context, req any) (any, error) {
+		called = true
+		return "ok", nil
+	})
+
+	ctx := transportCtx(testOp)
+	resp, err := handler(ctx, nil)
+	if err != nil {
+		t.Fatalf("expected pass-through, got err=%v", err)
+	}
+	if !called {
+		t.Fatal("handler must be called when fail-open is on")
+	}
+	if resp != "ok" {
+		t.Errorf("resp = %v, want ok", resp)
+	}
+	if alerted == nil || *alerted != testOp {
+		t.Errorf("alert callback not invoked with operation %q (got %v)", testOp, alerted)
+	}
+}
+
+// TestServer_NoFailOpen_StillFailsClosed ensures default behavior is unchanged.
+func TestServer_NoFailOpen_StillFailsClosed(t *testing.T) {
+	mw := Server(nil) // no rules, no fail-open option
+	handler := mw(func(ctx context.Context, req any) (any, error) {
+		t.Fatal("handler must not be called by default")
+		return nil, nil
+	})
+
+	ctx := transportCtx(testOp)
+	_, err := handler(ctx, nil)
+	if err == nil {
+		t.Fatal("expected fail-closed error for missing rule")
+	}
+}

@@ -96,10 +96,11 @@ type DecisionDetail struct {
 type Option func(*serverConfig)
 
 type serverConfig struct {
-	rules          map[string]AuthzRule
-	defaultObjID   string
-	decisionLogger func(ctx context.Context, detail DecisionDetail)
-	checkTimeout   time.Duration
+	rules              map[string]AuthzRule
+	defaultObjID       string
+	decisionLogger     func(ctx context.Context, detail DecisionDetail)
+	checkTimeout       time.Duration
+	missingRuleAlertFn func(ctx context.Context, operation string)
 }
 
 // WithRules sets the operation→rule mapping directly.
@@ -172,6 +173,17 @@ func WithCheckTimeout(d time.Duration) Option {
 	return func(cfg *serverConfig) { cfg.checkTimeout = d }
 }
 
+// WithFailOpenOnMissingRule changes the missing-rule policy from fail-closed
+// (default — return AUTHZ_NO_RULE 403) to fail-open: the handler is called,
+// and the alertFn callback is invoked so the gap is visible (oncall page,
+// Slack, log warning, etc.).
+//
+// Use during development or staged rollouts. NEVER use in production for
+// security-sensitive services.
+func WithFailOpenOnMissingRule(alertFn func(ctx context.Context, operation string)) Option {
+	return func(cfg *serverConfig) { cfg.missingRuleAlertFn = alertFn }
+}
+
 // Server returns a Kratos middleware that performs authorization checks.
 //
 // Behavior:
@@ -200,6 +212,10 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 			operation := tr.Operation()
 			rule, found := cfg.rules[operation]
 			if !found {
+				if cfg.missingRuleAlertFn != nil {
+					cfg.missingRuleAlertFn(ctx, operation)
+					return handler(ctx, req)
+				}
 				return nil, errors.Forbidden("AUTHZ_NO_RULE",
 					fmt.Sprintf("no authorization rule for operation %s", operation))
 			}
