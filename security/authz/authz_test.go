@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	authzpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
 	"github.com/Servora-Kit/servora/core/actor"
 )
@@ -473,5 +474,65 @@ func TestServer_NoFailOpen_StillFailsClosed(t *testing.T) {
 	_, err := handler(ctx, nil)
 	if err == nil {
 		t.Fatal("expected fail-closed error for missing rule")
+	}
+}
+
+// TestExtractProtoField_DotPath_NestedScalar resolves a nested scalar via path.
+//
+// Fixture choice rationale: structpb.Struct.fields is a map<string, Value> and
+// is therefore rejected at the first segment (maps are not navigable per the
+// id_field contract). To genuinely exercise message→scalar traversal we use
+// auditpb.AuditEvent, whose `target` field is a singular *AuditTarget message
+// containing scalar fields like `id`. The path "target.id" is exactly the kind
+// of `parent.id` shape this feature is designed to support.
+func TestExtractProtoField_DotPath_NestedScalar(t *testing.T) {
+	req := &auditpb.AuditEvent{
+		Target: &auditpb.AuditTarget{Id: "outer-123"},
+	}
+
+	got, err := extractProtoField(req, "target.id")
+	if err != nil {
+		t.Fatalf("extractProtoField err = %v", err)
+	}
+	if got != "outer-123" {
+		t.Errorf("got %q, want outer-123", got)
+	}
+}
+
+// TestExtractProtoField_DotPath_MissingSegment errors out cleanly when a
+// non-leaf segment refers to a field that does not exist on the message.
+func TestExtractProtoField_DotPath_MissingSegment(t *testing.T) {
+	req := &auditpb.AuditEvent{
+		Target: &auditpb.AuditTarget{Id: "x"},
+	}
+	_, err := extractProtoField(req, "target.missing")
+	if err == nil {
+		t.Fatal("expected error for missing nested segment")
+	}
+}
+
+// TestExtractProtoField_DotPath_TerminatesOnMessage_Errors guards against
+// silently String()-ifying a message into textproto garbage.
+func TestExtractProtoField_DotPath_TerminatesOnMessage_Errors(t *testing.T) {
+	req := &auditpb.AuditEvent{
+		Target: &auditpb.AuditTarget{Id: "x"},
+	}
+	// "target" alone terminates on *AuditTarget (a message), which must error.
+	_, err := extractProtoField(req, "target")
+	if err == nil {
+		t.Fatal("expected error when path terminus is a message, not a scalar")
+	}
+}
+
+// TestExtractProtoField_TopLevel_StillWorks ensures backwards compatibility
+// for the existing single-segment case.
+func TestExtractProtoField_TopLevel_StillWorks(t *testing.T) {
+	req := &wrapperspb.StringValue{Value: "user-abc"}
+	got, err := extractProtoField(req, "value")
+	if err != nil {
+		t.Fatalf("err = %v", err)
+	}
+	if got != "user-abc" {
+		t.Errorf("got %q, want user-abc", got)
 	}
 }
