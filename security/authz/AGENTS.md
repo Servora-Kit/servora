@@ -49,11 +49,15 @@ authzMw := pkgauthz.Server(authorizer,
 
 - `Server()` 根据 operation 查找 `AuthzRule`，按规则模式执行授权判定
 - `AuthzMode_AUTHZ_MODE_NONE` → 直接放行（公开接口）
-- `AuthzMode_AUTHZ_MODE_CHECK` → 调用 `Authorizer.IsAuthorized()`
+- `AuthzMode_AUTHZ_MODE_CHECK` → 调用 `Authorizer.Check()`
 - `AuthzRule.Mode` 引用共享 proto `api/gen/go/servora/authz/v1`（非 IAM 服务 proto）
 - 审计发射通过 `WithDecisionLogger` 回调实现；中间件本身不 import `obs/audit`
 - `DecisionDetail` 包含 `Operation`、`Subject`、`Relation`、`ObjectType`、`ObjectID`、`Allowed`、`Err`（cache 命中不进审计语义，留在 `infra/openfga` 内部）
 - `OpenFGAAuthorizer` 封装 Redis 缓存为内部关注点（`WithRedisCache`）
+- `Authorizer` 接口含三方法：`Check` / `BatchCheck` / `ListAllowed`，openfga 与 noop 完整覆盖
+- `WithCheckTimeout(d)` 限制后端调用时长；`WithFailOpenOnMissingRule(alertFn)` 开发期可放行未注册 RPC 并回调告警
+- `extractProtoField` 支持 dot-path（`parent.id`），路径中段必须为单 message，终点必须为标量
+- `NewAuthzBridge(recorder)` 一键把 decision 落到 `obs/audit` Recorder（独立 `bridge.go`，主中间件仍不依赖 `obs/audit`）
 
 ## 边界约束
 

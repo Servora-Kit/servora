@@ -17,14 +17,6 @@
   2. 单元测试覆盖 4 种 EventType
   3. E2E 测试验证「proto 注解 → 中间件 → Broker/Log emitter」端到端落库
 
-### [P0-2] Authz 决策未自动桥接到 Audit Recorder
-
-- **现状**：`security/authz/authz.go:199-201` 提供了 `WithDecisionLogger` 回调，但需要业务层手动转发到 `audit.Recorder`，极易遗漏。
-- **建议**：
-  1. 在 middleware 栈中默认注册 audit bridge，自动把每次授权决策记录为 `AUDIT_EVENT_TYPE_AUTHZ_DECISION`
-  2. 提供 `audit.NewAuthzBridge(recorder)` 便利函数
-  3. 文档说明如何关闭（如出于性能考虑）
-
 ### [P0-3] Authn 失败事件未审计
 
 - **现状**：`security/authn/authn.go` 100 行的实现，认证失败仅返回 error，没有审计钩子。
@@ -135,6 +127,22 @@
 ### [P2-1b] Logger Helper Ctx 规范 ✅ 2026-04-28
 
 `obs/logging/example_test.go` + `For/NewHelper` godoc 修订。业务侧 audit data 层 5 处真实关联缺口已迁移；架构上不该带 trace_id 的位置不动。详见 [`superpowers/plans/2026-04-28-broker-trace-propagation.md`](superpowers/plans/2026-04-28-broker-trace-propagation.md)。
+
+### [P0-2] Authz 决策自动桥接到 Audit Recorder ✅ 2026-05-01
+
+`security/authz` 新增 `NewAuthzBridge(recorder)`，业务一行 `WithDecisionLogger(authz.NewAuthzBridge(recorder))` 即可把所有授权决策（allowed/denied/error）自动转 `audit.AuthzDetail` 落盘。Decision/Err 状态映射统一为 `AuthzDecisionAllowed/Denied/Error`。详见 [`superpowers/plans/2026-05-01-authz-closure-and-hardening.md`](superpowers/plans/2026-05-01-authz-closure-and-hardening.md)。
+
+### [Authz 闭环 + 加固] ✅ 2026-05-01
+
+同一 plan 一并完成：
+- `Authorizer` 接口扩到三方法（`Check` / `BatchCheck` / `ListAllowed`），openfga 实现命中 SDK BatchCheck/ListObjects
+- `DecisionDetail.CacheHit` 与 `audit.AuthzDetail.CacheHit` 字段删除（cache 是 `infra/openfga` 内部优化，不进审计语义）
+- `WithCheckTimeout` option（保护业务 RPC 不被慢授权后端拖垮）
+- `WithFailOpenOnMissingRule` option（开发期友好，缺规则不再黑屏，alert 回调可见）
+- `extractProtoField` 支持 dot-path（`parent.id` 等嵌套字段）
+- 新增 `doc.go` 记录 contextual tuples 的未来路线（暂不实现）
+
+详见 [`superpowers/plans/2026-05-01-authz-closure-and-hardening.md`](superpowers/plans/2026-05-01-authz-closure-and-hardening.md)。
 
 ---
 
