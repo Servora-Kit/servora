@@ -189,6 +189,7 @@ func WithFailOpenOnMissingRule(alertFn func(ctx context.Context, operation strin
 // Behavior:
 //   - No transport in context → passthrough (non-server calls)
 //   - No rule for operation → fail-closed (403 AUTHZ_NO_RULE)
+//   - No rule for operation + WithFailOpenOnMissingRule set → alertFn invoked, handler called
 //   - AUTHZ_MODE_NONE → skip (public endpoint)
 //   - AUTHZ_MODE_CHECK, no actor or anonymous actor → 403 AUTHZ_DENIED
 //   - AUTHZ_MODE_CHECK, nil authorizer → 503 AUTHZ_UNAVAILABLE
