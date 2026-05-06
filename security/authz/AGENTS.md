@@ -13,6 +13,7 @@
 security/authz/
   authz.go          → Authorizer 接口 + AuthzRule + DecisionDetail + Server() 中间件 + Option
   authz_test.go     → 中间件层测试（使用 fakeAuthorizer）
+  doc.go            → 包级 godoc
   openfga/
     openfga.go      → OpenFGAAuthorizer 实现（封装 infra/openfga.Client + 可选 Redis 缓存）
     options.go      → OpenFGA 引擎 Option（WithRedisCache）
@@ -36,14 +37,16 @@ authzMw := pkgauthz.Server(
     pkgauthz.WithRulesFunc(iamv1.AuthzRules),
 )
 
-// 桥接审计事件（DecisionLogger 回调）
+// 桥接审计事件（observer 回调）
 authzMw := pkgauthz.Server(authorizer,
     pkgauthz.WithRulesFunc(rules),
-    pkgauthz.WithDecisionLogger(func(ctx context.Context, d pkgauthz.DecisionDetail) {
-        recorder.RecordAuthzDecision(ctx, d.Operation, actor, ...)
-    }),
+    pkgauthz.WithObserver(recorder.AuthzObserver()),
 )
 ```
+
+`recorder.AuthzObserver()` 来自 `obs/audit`：它返回一个 `func(ctx, DecisionDetail)`，把每次 Check 决策映射成审计事件投递。`security/authz` 主包 import 链上**没有** `obs/audit`，桥接逻辑落在 `obs/audit/observers.go`。
+
+> 历史对照：旧版本曾通过 `pkgauthz.WithDecisionLogger(pkgauthz.NewAuthzBridge(recorder))` 手工桥接，配套的 `bridge.go` 已迁出到 `obs/audit/observers.go`。新代码请直接用 `WithObserver(recorder.AuthzObserver())`，不要再引用 `WithDecisionLogger` 或 `NewAuthzBridge`。
 
 ## 当前实现事实
 
@@ -51,19 +54,19 @@ authzMw := pkgauthz.Server(authorizer,
 - `AuthzMode_AUTHZ_MODE_NONE` → 直接放行（公开接口）
 - `AuthzMode_AUTHZ_MODE_CHECK` → 调用 `Authorizer.Check()`
 - `AuthzRule.Mode` 引用共享 proto `api/gen/go/servora/authz/v1`（非 IAM 服务 proto）
-- 审计发射通过 `WithDecisionLogger` 回调实现；中间件本身不 import `obs/audit`
+- 审计发射通过 `WithObserver(fn)` 回调实现；中间件本身不 import `obs/audit`
 - `DecisionDetail` 包含 `Operation`、`Subject`、`Relation`、`ObjectType`、`ObjectID`、`Allowed`、`Err`（cache 命中不进审计语义，留在 `infra/openfga` 内部）
 - `OpenFGAAuthorizer` 封装 Redis 缓存为内部关注点（`WithRedisCache`）
 - `Authorizer` 接口含三方法：`Check` / `BatchCheck` / `ListAllowed`，openfga 与 noop 完整覆盖
 - `WithCheckTimeout(d)` 限制后端调用时长；`WithFailOpenOnMissingRule(alertFn)` 开发期可放行未注册 RPC 并回调告警
 - `extractProtoField` 支持 dot-path（`parent.id`），路径中段必须为单 message，终点必须为标量
-- `NewAuthzBridge(recorder)` 一键把 decision 落到 `obs/audit` Recorder（独立 `bridge.go`，主中间件仍不依赖 `obs/audit`）
+- 与审计的桥接：使用 `WithObserver(recorder.AuthzObserver())`；`recorder.AuthzObserver()` 实现位于 `obs/audit/observers.go`，本包不引入 `obs/audit`
 
 ## 边界约束
 
 - 本包负责授权执行策略，不负责模型设计、关系写入或 OpenFGA store 运维
 - 不在本包定义业务常量、组织树规则或资源生命周期
-- 审计通过 `WithDecisionLogger` 回调注入，本包不依赖 `obs/audit`
+- 审计通过 `WithObserver` 回调注入，本包对 `obs/audit` **零依赖**；桥接代码位于 `obs/audit/observers.go`
 - 新增授权引擎只需实现 `Authorizer` 接口，放入 `security/authz/<engine>/` 子目录
 
 ## 常见反模式

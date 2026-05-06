@@ -43,6 +43,43 @@ mw = append(mw, authn.Server(
 ))
 ```
 
+## Audit observer 接线
+
+`Server()` 暴露 `WithObserver(fn)` Option：每次 `Authenticate()` 调用后（成功或失败）都会回调一次 `AuthnDetail`。把 `obs/audit.Recorder.AuthnObserver()` 直接传入即可桥接到审计管道：
+
+```go
+import (
+    "github.com/Servora-Kit/servora/security/authn"
+    "github.com/Servora-Kit/servora/obs/audit"
+)
+
+recorder := audit.NewRecorder(emitter, ...)
+
+mw = append(mw, authn.Server(
+    authenticator,
+    authn.WithObserver(recorder.AuthnObserver()),
+))
+```
+
+`AuthnDetail` 字段：
+
+| 字段       | 类型          | 含义                                                                              |
+| ---------- | ------------- | --------------------------------------------------------------------------------- |
+| `Method`   | `string`      | 认证方式标识（当前 JWT 引擎固定为 `"jwt"`；mTLS 在 P1-3 范围内会扩为 `"mtls"`）   |
+| `Subject`  | `actor.Actor` | 成功时为解析得到的 actor；失败/匿名时为 `actor.NewAnonymousActor()`              |
+| `Allowed`  | `bool`        | 成功（含匿名通过）为 `true`；认证错误为 `false`                                  |
+| `Err`      | `error`       | 成功为 `nil`；失败为原始错误（observer 可读取错误原因）                          |
+
+覆盖范围：
+
+- 当前覆盖 JWT 引擎的全部成功 / 失败 / 匿名通过路径
+- P1-3 mTLS app-layer（SAN / XFCC 解析失败等）后续会接入同一 observer
+- **不**覆盖 TLS handshake 错误——握手层错误属于 transport 层指标 + 日志范畴，不在 authn middleware 视野内
+
+## 依赖方向
+
+`security/authn` 主包对 `obs/audit` **零依赖**。observer 桥接方法（`Recorder.AuthnObserver()`）的实现位于 `obs/audit/observers.go`，由 audit 包反向 import authn，遵循「audit 观察 security，security 不感知 audit」的 hub 模式。
+
 ## 当前实现事实
 
 - `Server()` 从 Authorization header 提取 Bearer token 存入 `svrmw.TokenContext`，再调用 `Authenticator.Authenticate(ctx)` 获取 actor
