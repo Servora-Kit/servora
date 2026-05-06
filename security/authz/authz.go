@@ -79,7 +79,7 @@ type AuthzRule struct {
 }
 
 // DecisionDetail describes the result of a single authorization check.
-// It is passed to the DecisionLogger callback after every check.
+// It is passed to the Observer callback after every check.
 //
 // Cache-hit signals are intentionally absent — caching is an engine-internal
 // optimization (see infra/openfga) and does not belong in audit semantics.
@@ -99,7 +99,7 @@ type Option func(*serverConfig)
 type serverConfig struct {
 	rules              map[string]AuthzRule
 	defaultObjID       string
-	decisionLogger     func(ctx context.Context, detail DecisionDetail)
+	observer           func(ctx context.Context, detail DecisionDetail)
 	checkTimeout       time.Duration
 	missingRuleAlertFn func(ctx context.Context, operation string)
 }
@@ -158,11 +158,20 @@ func WithDefaultObjectID(id string) Option {
 	return func(cfg *serverConfig) { cfg.defaultObjID = id }
 }
 
-// WithDecisionLogger sets a callback invoked after every authorization check.
-// Use this to bridge to audit.Recorder or any other audit sink.
-// Replaces the old WithAuditRecorder; keeps pkg/authz free of pkg/audit dependency.
-func WithDecisionLogger(fn func(ctx context.Context, detail DecisionDetail)) Option {
-	return func(cfg *serverConfig) { cfg.decisionLogger = fn }
+// WithObserver installs a callback invoked after every authorization Check.
+// Pair it with `recorder.AuthzObserver()` from obs/audit to bridge decisions
+// into the audit pipeline:
+//
+//	authz.Server(authorizer,
+//	    authz.WithRulesFunc(rules),
+//	    authz.WithObserver(recorder.AuthzObserver()),
+//	)
+//
+// observer == nil leaves the middleware unaffected (no-op).
+// pkg/authz remains free of any pkg/audit dependency — bridging lives in
+// obs/audit/observers.go.
+func WithObserver(fn func(ctx context.Context, detail DecisionDetail)) Option {
+	return func(cfg *serverConfig) { cfg.observer = fn }
 }
 
 // WithCheckTimeout bounds the time spent in Authorizer.Check on each request.
@@ -262,8 +271,8 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 				Err:        err,
 			}
 
-			if cfg.decisionLogger != nil {
-				cfg.decisionLogger(ctx, detail)
+			if cfg.observer != nil {
+				cfg.observer(ctx, detail)
 			}
 
 			if err != nil {

@@ -23,6 +23,7 @@
 //
 // # Audit integration
 //
-// Use authz.NewAuthzBridge(recorder) to forward every decision to obs/audit
-// without per-call wiring.
+// Pair authz.WithObserver with recorder.AuthzObserver() (from obs/audit) to
+// forward every decision to the audit pipeline without per-call wiring.
+// See obs/audit/observers.go for the bridge implementation.
 package authz

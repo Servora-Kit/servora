@@ -227,15 +227,15 @@ func TestServer_NoTransport_Passthrough(t *testing.T) {
 	}
 }
 
-// TestServer_DecisionLogger_Called checks that WithDecisionLogger is invoked.
-func TestServer_DecisionLogger_Called(t *testing.T) {
+// TestServer_Observer_Called checks that WithObserver is invoked.
+func TestServer_Observer_Called(t *testing.T) {
 	var logged *DecisionDetail
 	mw := Server(
 		&fakeAuthorizer{allowed: true},
 		WithRules(map[string]AuthzRule{
 			testOp: {Mode: authzpb.AuthzMode_AUTHZ_MODE_CHECK, Relation: "admin", ObjectType: "platform"},
 		}),
-		WithDecisionLogger(func(_ context.Context, d DecisionDetail) {
+		WithObserver(func(_ context.Context, d DecisionDetail) {
 			logged = &d
 		}),
 	)
@@ -247,7 +247,7 @@ func TestServer_DecisionLogger_Called(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if logged == nil {
-		t.Fatal("expected DecisionLogger to be called")
+		t.Fatal("expected observer to be called")
 	}
 	if !logged.Allowed {
 		t.Errorf("logged.Allowed = false, want true")
