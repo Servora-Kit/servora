@@ -9,15 +9,18 @@ import (
 )
 
 // authnResultKey 与 authzResultKey 是 ctx value 的 sentinel 类型。
-// 类型 unexported 保证别的包无法构造同型 key — 这是 Go 社区惯例。
 type authnResultKey struct{}
 type authzResultKey struct{}
 
 // 写入端固定的 OTel span event 名，与 Collector 的 audit.collected 配对，
 // 便于在 trace UI 上看到完整 audit pipeline 时间线。
+//
+// spanEventCollected 由 Collector middleware 在 emission 阶段挂出，
+// 与上面两个 write-time 事件配对组成 audit pipeline 的完整时间线。
 const (
 	spanEventAuthnRecorded = "audit.authn.recorded"
 	spanEventAuthzRecorded = "audit.authz.recorded"
+	spanEventCollected     = "audit.collected"
 )
 
 // WithAuthnResult 将一次认证结果（来自 security/authn middleware）写入 ctx，

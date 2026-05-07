@@ -140,8 +140,11 @@ func TestCollector_SilentWhenNoDetail(t *testing.T) {
 }
 
 // TestCollector_EmitsAfterHandlerError covers spec scenario:
-// "Collector 在 handler 返回后 emit" — handler returns error, event still emitted with
-// Result.Success=false reflecting the handler outcome.
+// "Collector 在 handler 返回后 emit，但 Result 仅反映 detail" — handler returns error,
+// event still emitted; Result reflects ONLY the authn layer outcome (not the handler
+// business error). The handler error propagates via the middleware return value but
+// must not leak into AuditEvent.Result. Handler RPC-layer errors are recorded by
+// RESOURCE_MUTATION events independently.
 func TestCollector_EmitsAfterHandlerError(t *testing.T) {
 	emitter := &captureEmitter{}
 	rec := NewRecorder(emitter, "test-svc")
@@ -158,16 +161,49 @@ func TestCollector_EmitsAfterHandlerError(t *testing.T) {
 	if len(emitter.events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(emitter.events))
 	}
-	if emitter.events[0].GetResult().GetSuccess() {
-		t.Errorf("Result.Success = true, want false (handler returned error)")
+	if !emitter.events[0].GetResult().GetSuccess() {
+		t.Errorf("Result.Success = false, want true (authn ok; handler err must NOT leak into Result)")
 	}
-	if emitter.events[0].GetResult().GetErrorMessage() != handlerErr.Error() {
-		t.Errorf("ErrorMessage = %q, want %q", emitter.events[0].GetResult().GetErrorMessage(), handlerErr.Error())
+	if emitter.events[0].GetResult().GetErrorMessage() != "" {
+		t.Errorf("ErrorMessage = %q, want empty (handler err must NOT leak into Result)", emitter.events[0].GetResult().GetErrorMessage())
+	}
+}
+
+// TestCollector_AuthnFailedAndHandlerErrored verifies that when BOTH authn fails
+// AND handler returns an error, Result still reflects ONLY the authn outcome
+// (FailureReason from authn, not handler err). This proves the handler error
+// channel and the AuditEvent.Result channel are fully independent.
+func TestCollector_AuthnFailedAndHandlerErrored(t *testing.T) {
+	emitter := &captureEmitter{}
+	rec := NewRecorder(emitter, "test-svc")
+
+	handlerErr := errors.New("downstream failed")
+	mw := Collector(rec)
+	handler := mw(newPassthroughHandler(nil, handlerErr))
+
+	ctx := WithAuthnResult(newCollectorTestContext("/test/Op"), &auditpb.AuthnDetail{
+		Method:        "jwt",
+		Success:       false,
+		FailureReason: "token expired",
+	})
+	_, err := handler(ctx, nil)
+	if !errors.Is(err, handlerErr) {
+		t.Fatalf("handler error not propagated: got %v want %v", err, handlerErr)
+	}
+	if len(emitter.events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(emitter.events))
+	}
+	if emitter.events[0].GetResult().GetSuccess() {
+		t.Errorf("Result.Success = true, want false (authn failed)")
+	}
+	if emitter.events[0].GetResult().GetErrorMessage() != "token expired" {
+		t.Errorf("ErrorMessage = %q, want %q (must come from authn FailureReason, not handler err)",
+			emitter.events[0].GetResult().GetErrorMessage(), "token expired")
 	}
 }
 
 // TestCollector_AuthnFailureReason: authn detail Success=false → Result.Success=false +
-// FailureReason copied to ErrorMessage; handler error overrides only when authn succeeded.
+// FailureReason copied to ErrorMessage.
 func TestCollector_AuthnFailureReason(t *testing.T) {
 	emitter := &captureEmitter{}
 	rec := NewRecorder(emitter, "test-svc")
@@ -180,7 +216,10 @@ func TestCollector_AuthnFailureReason(t *testing.T) {
 		Success:       false,
 		FailureReason: "token expired",
 	})
-	_, _ = handler(ctx, nil)
+	_, err := handler(ctx, nil)
+	if err != nil {
+		t.Fatalf("handler returned error: %v", err)
+	}
 	if len(emitter.events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(emitter.events))
 	}
@@ -206,7 +245,10 @@ func TestCollector_AuthzErrorDecision(t *testing.T) {
 		Decision:    auditpb.AuthzDecision_AUTHZ_DECISION_ERROR,
 		ErrorReason: "fga unreachable",
 	})
-	_, _ = handler(ctx, nil)
+	_, err := handler(ctx, nil)
+	if err != nil {
+		t.Fatalf("handler returned error: %v", err)
+	}
 	if len(emitter.events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(emitter.events))
 	}
