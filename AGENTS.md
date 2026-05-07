@@ -2,18 +2,6 @@
 
 <!-- Updated: 2026-04-10 -->
 
-## 项目概览
-
-`servora` 是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，基于 Go Kratos，提供按域划分的共享基础库（`core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`）、自定义 protoc 插件和 CLI 工具（`cmd/`）、框架级公共 Proto 定义（`api/protos/`，发布到 [BSR](https://buf.build/servora/servora)）。
-
-本仓库**不包含业务微服务**。业务位于：`servora-iam`（IAM + 示例）、`servora-platform`（审计等平台服务）。
-
-当前主线事实：
-- Go module：`github.com/Servora-Kit/servora`，生成代码：`github.com/Servora-Kit/servora/api/gen`
-- 公共 proto 通过 BSR 发布：`buf.build/servora/servora`
-- `go.work` 已 gitignore，仅用于本地多仓库联合开发
-- `v0.2.0` 起 transport 采用 plugin/runtime 统一契约，server 提供 Builder DSL 以降低调用方样板代码
-
 ## 开发约束
 
 ### 提交规范
@@ -27,37 +15,6 @@
 - **何时不打 tag**：仅修改文档、Makefile、CI 配置、基础设施配置等
 - BSR label 与 Git tag 自动同步（`make buf-push` 自动检测 HEAD 上的 tag）
 - tag 一旦推送到 remote 就不要移动
-
-## 顶层目录
-
-- `api/`：公共 proto（`api/protos/servora/`）与 Go 生成代码（`api/gen/go/`）
-- `cmd/`：`svr/`（CLI）、`protoc-gen-servora-authz/`、`protoc-gen-servora-audit/`、`protoc-gen-servora-mapper/`、`openapi-merge/`
-- `core/`：`actor`、`mapper`、`pagination`
-- `transport/`：`client/`、`server/`、`runtime/`、`shared/`
-- `security/`：`authn/`、`authz/`、`jwt/`
-- `obs/`：`audit/`、`logging/`、`telemetry/`
-- `platform/`：`bootstrap/`、`config/`、`health/`、`registry/`、`swagger/`
-- `infra/`：`broker/`、`db/`、`k8s/`、`openfga/`、`redis/`
-
-## Transport 开发规范（v0.2.0+）
-
-### Runtime 合约
-
-- 插件契约统一定义在 `transport/runtime/contracts.go`：`ServerPlugin`、`ClientPlugin`、`ServerBuildInput`、`ClientBuildInput`
-- 插件注册通过 `transport/runtime/registry.go`，错误语义以 `transport/runtime/errors.go` 为准
-- 内建 graph 入口在 `transport/runtime/defaults`，用于需要显式编排的场景
-
-### 内建插件与 DSL
-
-- Server 内建协议：`transport/server/grpc`、`transport/server/http`
-- Client 内建协议：`transport/client/grpc`、`transport/client/http`
-- gRPC/HTTP server 默认优先走 `NewBuilder()` DSL（`Build`/`MustBuild`），避免业务层直接拼 `runtime.GraphInput`
-- 插件开发者不强制提供 Builder，但必须实现 runtime plugin 契约
-
-### 类型与共享能力
-
-- 协议类型请暴露为统一常量：`const Type = "grpc"`（或对应协议字符串）
-- TLS、端点与公共配置逻辑放在 `transport/shared/{tls,endpoint,config}`，避免 client/server 各自重复实现
 
 ## Proto 开发规范
 
@@ -93,28 +50,6 @@
 - 放在各自 `app/<svc>/service/api/protos/`
 - `go_package` 使用各自仓库 module 路径
 - 不要将业务 proto 放入框架仓库
-
-## Ent Tracing 集成
-
-业务仓库使用 Ent 时，**必须** 通过 `infra/db/ent.NewDriverWithTracing` 创建 driver，让所有 SQL 调用日志自动带上当前 OTel trace_id/span_id：
-
-```go
-import (
-    servoraent "github.com/Servora-Kit/servora/infra/db/ent"
-    "github.com/Servora-Kit/servora/obs/logging"
-)
-
-func NewEntClient(cfg *conf.Data, l logging.Logger) (*ent.Client, error) {
-    zapLogger, _ := l.(*logging.ZapLogger)
-    drv, err := servoraent.NewDriverWithTracing(cfg, zapLogger.Zap())
-    if err != nil {
-        return nil, err
-    }
-    return ent.NewClient(ent.Driver(drv)), nil
-}
-```
-
-每条 SQL 调用会输出 `ent.query` / `ent.exec` / `ent.tx.{begin,query,exec,commit,rollback}` 日志，含 `trace_id` / `span_id` / `sql` / `elapsed` / `error` 字段。失败为 ERROR 级，成功为 DEBUG 级。
 
 ## 常用命令
 
