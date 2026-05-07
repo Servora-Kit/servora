@@ -493,8 +493,6 @@ func (m *AuthzDetail) validate(all bool) error {
 
 	// no validation rules for Decision
 
-	// no validation rules for CacheHit
-
 	// no validation rules for ErrorReason
 
 	if len(errors) > 0 {

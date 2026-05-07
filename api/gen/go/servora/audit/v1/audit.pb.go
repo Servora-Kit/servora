@@ -519,8 +519,7 @@ type AuthzDetail struct {
 	ObjectType    string                 `protobuf:"bytes,2,opt,name=object_type,json=objectType,proto3" json:"object_type,omitempty"` // 对象类型（如 "platform"、"project"）
 	ObjectId      string                 `protobuf:"bytes,3,opt,name=object_id,json=objectId,proto3" json:"object_id,omitempty"`       // 对象 ID
 	Decision      AuthzDecision          `protobuf:"varint,4,opt,name=decision,proto3,enum=servora.audit.v1.AuthzDecision" json:"decision,omitempty"`
-	CacheHit      bool                   `protobuf:"varint,5,opt,name=cache_hit,json=cacheHit,proto3" json:"cache_hit,omitempty"`
-	ErrorReason   string                 `protobuf:"bytes,6,opt,name=error_reason,json=errorReason,proto3" json:"error_reason,omitempty"`
+	ErrorReason   string                 `protobuf:"bytes,5,opt,name=error_reason,json=errorReason,proto3" json:"error_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -581,13 +580,6 @@ func (x *AuthzDetail) GetDecision() AuthzDecision {
 		return x.Decision
 	}
 	return AuthzDecision_AUTHZ_DECISION_UNSPECIFIED
-}
-
-func (x *AuthzDetail) GetCacheHit() bool {
-	if x != nil {
-		return x.CacheHit
-	}
-	return false
 }
 
 func (x *AuthzDetail) GetErrorReason() string {
@@ -1001,15 +993,14 @@ const file_servora_audit_v1_audit_proto_rawDesc = "" +
 	"\vAuthnDetail\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12%\n" +
-	"\x0efailure_reason\x18\x03 \x01(\tR\rfailureReason\"\xe4\x01\n" +
+	"\x0efailure_reason\x18\x03 \x01(\tR\rfailureReason\"\xc7\x01\n" +
 	"\vAuthzDetail\x12\x1a\n" +
 	"\brelation\x18\x01 \x01(\tR\brelation\x12\x1f\n" +
 	"\vobject_type\x18\x02 \x01(\tR\n" +
 	"objectType\x12\x1b\n" +
 	"\tobject_id\x18\x03 \x01(\tR\bobjectId\x12;\n" +
-	"\bdecision\x18\x04 \x01(\x0e2\x1f.servora.audit.v1.AuthzDecisionR\bdecision\x12\x1b\n" +
-	"\tcache_hit\x18\x05 \x01(\bR\bcacheHit\x12!\n" +
-	"\ferror_reason\x18\x06 \x01(\tR\verrorReason\"U\n" +
+	"\bdecision\x18\x04 \x01(\x0e2\x1f.servora.audit.v1.AuthzDecisionR\bdecision\x12!\n" +
+	"\ferror_reason\x18\x05 \x01(\tR\verrorReason\"U\n" +
 	"\vTupleChange\x12\x12\n" +
 	"\x04user\x18\x01 \x01(\tR\x04user\x12\x1a\n" +
 	"\brelation\x18\x02 \x01(\tR\brelation\x12\x16\n" +

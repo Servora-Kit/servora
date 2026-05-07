@@ -100,8 +100,6 @@ func (x *AuthzDetail) Redact() string {
 
 	// Safe field: Decision
 
-	// Safe field: CacheHit
-
 	// Safe field: ErrorReason
 	return x.String()
 }

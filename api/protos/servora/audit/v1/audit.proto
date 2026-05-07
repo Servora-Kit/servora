@@ -12,10 +12,10 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1;
 
 enum AuditEventType {
   AUDIT_EVENT_TYPE_UNSPECIFIED = 0;
-  AUDIT_EVENT_TYPE_AUTHN_RESULT = 1;        // 认证结果
-  AUDIT_EVENT_TYPE_AUTHZ_DECISION = 2;      // 授权决策
-  AUDIT_EVENT_TYPE_TUPLE_CHANGED = 3;       // OpenFGA tuple 变更
-  AUDIT_EVENT_TYPE_RESOURCE_MUTATION = 4;   // 资源增删改
+  AUDIT_EVENT_TYPE_AUTHN_RESULT = 1; // 认证结果
+  AUDIT_EVENT_TYPE_AUTHZ_DECISION = 2; // 授权决策
+  AUDIT_EVENT_TYPE_TUPLE_CHANGED = 3; // OpenFGA tuple 变更
+  AUDIT_EVENT_TYPE_RESOURCE_MUTATION = 4; // 资源增删改
 }
 
 // AuthzDecision 表示授权决策结果。
@@ -48,13 +48,13 @@ enum ResourceMutationType {
 
 // AuditActor 是事件发生时 Actor 的不可变快照（不引用动态状态）。
 message AuditActor {
-  string id = 1;           // actor.ID()
-  string type = 2;         // actor.Type()（"user" | "service" | "system" | "anonymous"）
+  string id = 1; // actor.ID()
+  string type = 2; // actor.Type()（"user" | "service" | "system" | "anonymous"）
   string display_name = 3; // actor.DisplayName()
   string email = 4;
-  string subject = 5;      // IdP subject（Keycloak sub）
-  string client_id = 6;    // OAuth2 client_id
-  string realm = 7;        // IdP realm
+  string subject = 5; // IdP subject（Keycloak sub）
+  string client_id = 6; // OAuth2 client_id
+  string realm = 7; // IdP realm
 }
 
 // =============================================================================
@@ -63,9 +63,9 @@ message AuditActor {
 
 // AuditTarget 描述操作的对象。
 message AuditTarget {
-  string type = 1;   // 资源类型（如 "user"、"project"、"organization"）
-  string id = 2;     // 资源 ID
-  string name = 3;   // 资源名称（可选，便于阅读）
+  string type = 1; // 资源类型（如 "user"、"project"、"organization"）
+  string id = 2; // 资源 ID
+  string name = 3; // 资源名称（可选，便于阅读）
 }
 
 // =============================================================================
@@ -75,7 +75,7 @@ message AuditTarget {
 // AuditResult 描述操作结果。
 message AuditResult {
   bool success = 1;
-  string error_code = 2;    // 失败时的错误码
+  string error_code = 2; // 失败时的错误码
   string error_message = 3; // 失败时的错误描述
 }
 
@@ -85,26 +85,25 @@ message AuditResult {
 
 // AuthnDetail 认证事件细节。
 message AuthnDetail {
-  string method = 1;         // 认证方式（"jwt" | "api_key" | "session"）
-  bool success = 2;          // 认证是否成功
+  string method = 1; // 认证方式（"jwt" | "api_key" | "session"）
+  bool success = 2; // 认证是否成功
   string failure_reason = 3; // 失败原因
 }
 
 // AuthzDetail 授权决策事件细节。
 message AuthzDetail {
-  string relation = 1;       // 检查的关系（如 "admin"、"viewer"）
-  string object_type = 2;    // 对象类型（如 "platform"、"project"）
-  string object_id = 3;      // 对象 ID
+  string relation = 1; // 检查的关系（如 "admin"、"viewer"）
+  string object_type = 2; // 对象类型（如 "platform"、"project"）
+  string object_id = 3; // 对象 ID
   AuthzDecision decision = 4;
-  bool cache_hit = 5;
-  string error_reason = 6;
+  string error_reason = 5;
 }
 
 // TupleChange 描述一条 OpenFGA tuple 变更。
 message TupleChange {
-  string user = 1;      // OpenFGA user（如 "user:alice"）
-  string relation = 2;  // 关系（如 "owner"）
-  string object = 3;    // 对象（如 "project:acme"）
+  string user = 1; // OpenFGA user（如 "user:alice"）
+  string relation = 2; // 关系（如 "owner"）
+  string object = 3; // 对象（如 "project:acme"）
 }
 
 // TupleMutationDetail OpenFGA tuple 变更细节。
@@ -126,19 +125,19 @@ message ResourceMutationDetail {
 
 // AuditEvent 是所有审计事件的统一结构。
 message AuditEvent {
-  string event_id = 1;                       // UUID
+  string event_id = 1; // UUID
   AuditEventType event_type = 2;
-  string event_version = 3;                  // 事件 schema 版本（如 "1.0"）
+  string event_version = 3; // 事件 schema 版本（如 "1.0"）
   google.protobuf.Timestamp occurred_at = 4; // 事件发生时间
 
-  string service = 5;    // 产生事件的服务名（如 "iam"、"audit"）
-  string operation = 6;  // gRPC 操作路径（如 "/user.v1.UserService/CreateUser"）
+  string service = 5; // 产生事件的服务名（如 "iam"、"audit"）
+  string operation = 6; // gRPC 操作路径（如 "/user.v1.UserService/CreateUser"）
 
   AuditActor actor = 7;
   AuditTarget target = 8;
   AuditResult result = 9;
 
-  string trace_id = 10;   // OpenTelemetry trace ID
+  string trace_id = 10; // OpenTelemetry trace ID
   string request_id = 11; // 请求 ID（如来自 X-Request-ID header）
 
   oneof detail {
