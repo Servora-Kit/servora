@@ -32,6 +32,10 @@ func NewAuthenticator(opts ...Option) authn.Authenticator {
 	return &authenticator{cfg: cfg}
 }
 
+// Method returns the engine identifier "jwt". Used by authn.Server middleware
+// to populate auditpb.AuthnDetail.Method without hard-coding a scheme.
+func (a *authenticator) Method() string { return "jwt" }
+
 // Authenticate reads the raw token from context, verifies it, and returns an actor.Actor.
 func (a *authenticator) Authenticate(ctx context.Context) (actor.Actor, error) {
 	tokenString, ok := svrmw.TokenFromContext(ctx)

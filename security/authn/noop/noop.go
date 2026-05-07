@@ -20,6 +20,10 @@ func New() authn.Authenticator {
 	return &Authenticator{}
 }
 
+// Method returns the engine identifier "noop". Used by authn.Server middleware
+// to populate auditpb.AuthnDetail.Method without hard-coding a scheme.
+func (a *Authenticator) Method() string { return "noop" }
+
 // Authenticate always returns an anonymous actor with no error.
 func (a *Authenticator) Authenticate(_ context.Context) (actor.Actor, error) {
 	return actor.NewAnonymousActor(), nil
