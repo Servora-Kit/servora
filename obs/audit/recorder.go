@@ -113,6 +113,15 @@ func (r *Recorder) RecordAuthnResult(ctx context.Context, operation string, a ac
 	_ = r.Emit(ctx, evt)
 }
 
+// buildEvent is a small unexported helper used by collector.go to construct an
+// AuditEvent envelope (EventID/OccurredAt/Service/Operation/Actor/TraceID/RequestID
+// auto-fill) without re-implementing actor extraction or metadata wiring.
+// Detail / Result / Target are filled by the caller. This avoids exporting
+// newEvent or duplicating its logic in the collector package.
+func (r *Recorder) buildEvent(ctx context.Context, eventType auditpb.AuditEventType, operation string, a actor.Actor) *auditpb.AuditEvent {
+	return r.newEvent(ctx, eventType, operation, a)
+}
+
 func (r *Recorder) newEvent(ctx context.Context, eventType auditpb.AuditEventType, operation string, a actor.Actor) *auditpb.AuditEvent {
 	evt := &auditpb.AuditEvent{
 		EventId:      uuid.NewString(),
