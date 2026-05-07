@@ -1,10 +1,13 @@
-// Package audit provides Servora's audit event runtime: event model, emitter interface,
-// recorder, and Kratos middleware skeleton.
+// Package audit provides Servora's audit event runtime: emitter interface,
+// recorder, and Kratos middleware skeleton. Schema is sourced from
+// api/protos/servora/audit/v1/audit.proto (auditpb).
+//
+// 本文件仅保留 codegen-friendly 的 Go 字符串枚举，
+// 它们用于 audit middleware 的 Rule struct（基于 proto 注解生成）。
+// 事件本体与各 detail 均使用 auditpb.* 而非 runtime struct（schema 单源 = proto）。
 package audit
 
-import "time"
-
-// EventType categorizes audit events.
+// EventType categorizes audit events. Used by audit middleware Rule.
 type EventType string
 
 const (
@@ -15,6 +18,9 @@ const (
 )
 
 // AuthzDecision describes the outcome of an authorization check.
+//
+// 该 Go 字符串别名仅在 obs/audit 包内部用作可读语义，
+// 不进入对外 schema；对外契约一律走 auditpb.AuthzDecision (proto enum)。
 type AuthzDecision string
 
 const (
@@ -24,7 +30,8 @@ const (
 	AuthzDecisionError   AuthzDecision = "error"
 )
 
-// TupleMutationType describes the type of tuple change.
+// TupleMutationType describes the type of OpenFGA tuple change.
+// Used by Rule struct in audit middleware (codegen-friendly).
 type TupleMutationType string
 
 const (
@@ -33,6 +40,7 @@ const (
 )
 
 // ResourceMutationType describes the type of resource mutation.
+// Used by Rule struct in audit middleware (codegen-friendly).
 type ResourceMutationType string
 
 const (
@@ -40,87 +48,3 @@ const (
 	ResourceMutationUpdate ResourceMutationType = "update"
 	ResourceMutationDelete ResourceMutationType = "delete"
 )
-
-// ActorInfo is an immutable snapshot of the requesting actor at event time.
-type ActorInfo struct {
-	ID          string
-	Type        string
-	DisplayName string
-	Email       string
-	Subject     string
-	ClientID    string
-	Realm       string
-}
-
-// TargetInfo describes the resource the action was performed on.
-type TargetInfo struct {
-	Type string
-	ID   string
-	Name string
-}
-
-// ResultInfo captures the outcome of the audited operation.
-type ResultInfo struct {
-	Success      bool
-	ErrorCode    string
-	ErrorMessage string
-}
-
-// AuthnDetail carries authentication-specific detail.
-type AuthnDetail struct {
-	Method        string
-	Success       bool
-	FailureReason string
-}
-
-// AuthzDetail carries authorization-decision detail.
-// Cache-hit metrics live in infra/openfga (engine-internal optimization),
-// not in audit semantics.
-type AuthzDetail struct {
-	Relation    string
-	ObjectType  string
-	ObjectID    string
-	Decision    AuthzDecision
-	ErrorReason string
-}
-
-// TupleChange describes a single OpenFGA tuple change.
-type TupleChange struct {
-	User     string
-	Relation string
-	Object   string
-}
-
-// TupleMutationDetail carries OpenFGA tuple-write/delete detail.
-type TupleMutationDetail struct {
-	MutationType TupleMutationType
-	Tuples       []TupleChange
-}
-
-// ResourceMutationDetail carries CRUD-operation detail.
-type ResourceMutationDetail struct {
-	MutationType ResourceMutationType
-	ResourceType string
-	ResourceID   string
-}
-
-// AuditEvent is the Go runtime representation of an audit event.
-// It is converted to proto for transport via BrokerEmitter.
-type AuditEvent struct {
-	EventID      string
-	EventType    EventType
-	EventVersion string
-	OccurredAt   time.Time
-
-	Service   string
-	Operation string
-
-	Actor  ActorInfo
-	Target TargetInfo
-	Result ResultInfo
-
-	TraceID   string
-	RequestID string
-
-	Detail any
-}

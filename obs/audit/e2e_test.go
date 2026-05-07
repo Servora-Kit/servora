@@ -8,10 +8,10 @@ import (
 	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/core/actor"
-	"github.com/Servora-Kit/servora/obs/audit"
 	"github.com/Servora-Kit/servora/infra/broker"
 	kafkab "github.com/Servora-Kit/servora/infra/broker/kafka"
-	"github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/obs/audit"
+	logger "github.com/Servora-Kit/servora/obs/logging"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -27,30 +27,30 @@ func TestE2E_LogEmitter_AuthzDecisionAndTupleChanged(t *testing.T) {
 		Email:       "e2e@test.com",
 	})
 
-	recorder.RecordAuthzDecision(context.Background(), "/test.E2E/Check", a, audit.AuthzDetail{
+	recorder.RecordAuthzDecision(context.Background(), "/test.E2E/Check", a, &auditv1.AuthzDetail{
 		Relation:   "viewer",
 		ObjectType: "project",
-		ObjectID:   "proj-1",
-		Decision:   audit.AuthzDecisionAllowed,
+		ObjectId:   "proj-1",
+		Decision:   auditv1.AuthzDecision_AUTHZ_DECISION_ALLOWED,
 	})
 
-	recorder.RecordAuthzDecision(context.Background(), "/test.E2E/Check", a, audit.AuthzDetail{
+	recorder.RecordAuthzDecision(context.Background(), "/test.E2E/Check", a, &auditv1.AuthzDetail{
 		Relation:   "admin",
 		ObjectType: "platform",
-		ObjectID:   "default",
-		Decision:   audit.AuthzDecisionDenied,
+		ObjectId:   "default",
+		Decision:   auditv1.AuthzDecision_AUTHZ_DECISION_DENIED,
 	})
 
-	recorder.RecordTupleChange(context.Background(), "openfga.WriteTuples", a, audit.TupleMutationDetail{
-		MutationType: audit.TupleMutationWrite,
-		Tuples: []audit.TupleChange{
+	recorder.RecordTupleChange(context.Background(), "openfga.WriteTuples", a, &auditv1.TupleMutationDetail{
+		MutationType: auditv1.TupleMutationType_TUPLE_MUTATION_TYPE_WRITE,
+		Tuples: []*auditv1.TupleChange{
 			{User: "user:abc", Relation: "admin", Object: "project:proj-1"},
 		},
 	})
 
-	recorder.RecordTupleChange(context.Background(), "openfga.DeleteTuples", a, audit.TupleMutationDetail{
-		MutationType: audit.TupleMutationDelete,
-		Tuples: []audit.TupleChange{
+	recorder.RecordTupleChange(context.Background(), "openfga.DeleteTuples", a, &auditv1.TupleMutationDetail{
+		MutationType: auditv1.TupleMutationType_TUPLE_MUTATION_TYPE_DELETE,
+		Tuples: []*auditv1.TupleChange{
 			{User: "user:abc", Relation: "viewer", Object: "organization:org-1"},
 		},
 	})
@@ -104,11 +104,11 @@ func TestE2E_BrokerEmitter_KafkaRoundTrip(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	recorder.RecordAuthzDecision(ctx, "/test.Kafka/Check", a, audit.AuthzDetail{
+	recorder.RecordAuthzDecision(ctx, "/test.Kafka/Check", a, &auditv1.AuthzDetail{
 		Relation:   "admin",
 		ObjectType: "platform",
-		ObjectID:   "default",
-		Decision:   audit.AuthzDecisionDenied,
+		ObjectId:   "default",
+		Decision:   auditv1.AuthzDecision_AUTHZ_DECISION_DENIED,
 	})
 
 	select {
