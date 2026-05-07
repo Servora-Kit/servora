@@ -13,12 +13,23 @@ import (
 type authnResultKey struct{}
 type authzResultKey struct{}
 
+// 写入端固定的 OTel span event 名，与 Collector 的 audit.collected 配对，
+// 便于在 trace UI 上看到完整 audit pipeline 时间线。
+const (
+	spanEventAuthnRecorded = "audit.authn.recorded"
+	spanEventAuthzRecorded = "audit.authz.recorded"
+)
+
 // WithAuthnResult 将一次认证结果（来自 security/authn middleware）写入 ctx，
 // 由 transport 链尾的 audit.Collector 读取并 emit 为 AuditEvent。
 // 同时在当前 OTel span 上挂 "audit.authn.recorded" event 便于调试链路。
 // ctx 中无 active span 时 AddEvent 是 SDK 内部 noop，不会 panic。
+// d == nil 时直接返回原 ctx（不写入、不挂 span event），与"未调用"语义对齐。
 func WithAuthnResult(ctx context.Context, d *auditpb.AuthnDetail) context.Context {
-	trace.SpanFromContext(ctx).AddEvent("audit.authn.recorded")
+	if d == nil {
+		return ctx
+	}
+	trace.SpanFromContext(ctx).AddEvent(spanEventAuthnRecorded)
 	return context.WithValue(ctx, authnResultKey{}, d)
 }
 
@@ -29,9 +40,12 @@ func AuthnResultFrom(ctx context.Context) (*auditpb.AuthnDetail, bool) {
 }
 
 // WithAuthzResult 将一次授权决策（来自 security/authz middleware）写入 ctx。
-// 同时挂 "audit.authz.recorded" span event。
+// 同时挂 "audit.authz.recorded" span event。d == nil 时直接返回原 ctx。
 func WithAuthzResult(ctx context.Context, d *auditpb.AuthzDetail) context.Context {
-	trace.SpanFromContext(ctx).AddEvent("audit.authz.recorded")
+	if d == nil {
+		return ctx
+	}
+	trace.SpanFromContext(ctx).AddEvent(spanEventAuthzRecorded)
 	return context.WithValue(ctx, authzResultKey{}, d)
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
@@ -58,8 +57,29 @@ func TestWithAuthzResult_RoundTrip(t *testing.T) {
 // TestAuthzResultFrom_Empty returns (nil, false) on empty ctx.
 func TestAuthzResultFrom_Empty(t *testing.T) {
 	got, ok := AuthzResultFrom(context.Background())
-	if ok || got != nil {
-		t.Errorf("expected (nil,false), got (%+v,%v)", got, ok)
+	if ok {
+		t.Errorf("ok=true on empty ctx")
+	}
+	if got != nil {
+		t.Errorf("got non-nil detail on empty ctx: %+v", got)
+	}
+}
+
+// TestWithAuthnResult_NilDetail returns the original ctx unchanged.
+func TestWithAuthnResult_NilDetail(t *testing.T) {
+	ctx := context.Background()
+	out := WithAuthnResult(ctx, nil)
+	if got, ok := AuthnResultFrom(out); ok {
+		t.Errorf("nil detail should not be stored; got %+v", got)
+	}
+}
+
+// TestWithAuthzResult_NilDetail returns the original ctx unchanged.
+func TestWithAuthzResult_NilDetail(t *testing.T) {
+	ctx := context.Background()
+	out := WithAuthzResult(ctx, nil)
+	if got, ok := AuthzResultFrom(out); ok {
+		t.Errorf("nil detail should not be stored; got %+v", got)
 	}
 }
 
@@ -75,10 +95,10 @@ func TestWithAuthnResult_NoActiveSpan(t *testing.T) {
 }
 
 // TestWithAuthnResult_AddsSpanEvent attaches an event to the active span.
+// Uses local TracerProvider (not otel.SetTracerProvider) to avoid global state pollution.
 func TestWithAuthnResult_AddsSpanEvent(t *testing.T) {
 	exporter := tracetest.NewInMemoryExporter()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
-	otel.SetTracerProvider(tp)
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
 	ctx, span := tp.Tracer("test").Start(context.Background(), "test-span")
@@ -105,7 +125,6 @@ func TestWithAuthnResult_AddsSpanEvent(t *testing.T) {
 func TestWithAuthzResult_AddsSpanEvent(t *testing.T) {
 	exporter := tracetest.NewInMemoryExporter()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
-	otel.SetTracerProvider(tp)
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
 	ctx, span := tp.Tracer("test").Start(context.Background(), "test-span")
