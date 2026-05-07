@@ -66,14 +66,17 @@ func WithErrorHandler(h func(ctx context.Context, err error) error) Option {
 // svrmw.NewTokenContext, then delegates to the Authenticator to produce an actor.Actor.
 //
 // Behavior:
-//   - No transport in context → anonymous actor injected, anonymous-success
+//   - No transport in context - anonymous actor injected, anonymous-success
 //     AuthnDetail written, handler called.
-//   - No Authorization header → anonymous actor injected (authenticator may
+//   - No Authorization header - anonymous actor injected (authenticator may
 //     override); detail reflects authenticator outcome.
-//   - Authenticator success → user-actor + Success=true detail in ctx.
-//   - Authenticator error + no error handler → failure detail written
-//     BEFORE returning the error (so a downstream Collector can still emit).
-//   - Authenticator error + error handler → handler's return value used,
+//   - Authenticator success - user-actor + Success=true detail in ctx.
+//   - Authenticator error + no error handler - failure detail written
+//     BEFORE returning the error. Collector, mounted outer to this
+//     middleware (Chain(Collector, authn, ...)), will reach the post-phase
+//     even when authn short-circuits, and emit the AUTHN_RESULT event from
+//     the ctx-bound *auditpb.AuthnDetail.
+//   - Authenticator error + error handler - handler's return value used,
 //     failure detail still written first.
 func Server(authenticator Authenticator, opts ...Option) middleware.Middleware {
 	cfg := &serverConfig{}

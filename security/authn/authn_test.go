@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
 	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
@@ -361,10 +362,81 @@ func TestServer_MethodFromEngine(t *testing.T) {
 	}
 }
 
-// _ = auditpb is a compile-time anchor confirming the proto schema package is
-// reachable from this test. The actual reads use audit.AuthnResultFrom which
-// returns *auditpb.AuthnDetail.
-var _ = (*auditpb.AuthnDetail)(nil)
+// captureEmitter is a minimal audit.Emitter for end-to-end assembly tests.
+// Mirrored locally (NOT cross-imported from obs/audit/middleware_test.go) to
+// keep test packages independent.
+type captureEmitter struct {
+	events []*auditpb.AuditEvent
+}
+
+func (e *captureEmitter) Emit(_ context.Context, event *auditpb.AuditEvent) error {
+	e.events = append(e.events, event)
+	return nil
+}
+
+func (e *captureEmitter) Close() error { return nil }
+
+// TestServer_FailurePath_EmitsViaOuterCollector locks in the spec correction
+// (audit-context-collector capability, scenario "失败路径仍能 emit"): when
+// authn short-circuits on failure, an OUTER-mounted Collector should still
+// run in the LIFO post-phase and emit the AUTHN_RESULT event from the
+// ctx-bound AuthnDetail.
+//
+// CURRENT STATUS: skipped. The implementation in obs/audit/{context,collector}.go
+// uses context.WithValue, which produces a child ctx whose mutations are
+// invisible to the parent ctx held by an outer middleware. With Kratos
+// middleware.Chain (no ctx-merging on the way back up the stack), an outer
+// Collector cannot observe a detail written by inner authn.
+//
+// To make this scenario implementable, obs/audit must adopt a mutable-holder
+// pattern (single *holder installed once, both authn and Collector mutate /
+// read its fields). That change touches obs/audit/{context.go,collector.go},
+// which is out of Task 4 scope per the controller brief
+// ("DO NOT touch obs/audit/collector.go ... Task 5/6 will sync"). This test
+// is preserved as a forcing function for that follow-up task; flip the t.Skip
+// off once the holder pattern lands.
+func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
+	t.Skip("blocked: requires holder pattern in obs/audit/{context,collector}.go; tracked for Task 5/6")
+
+	emitter := &captureEmitter{}
+	rec := audit.NewRecorder(emitter, "test-svc")
+
+	sentinel := errors.New("auth failed")
+	failAuth := &fakeAuthenticator{returnErr: sentinel}
+
+	// Correct mounting per spec: Collector OUTER, authn INNER.
+	chain := middleware.Chain(audit.Collector(rec), Server(failAuth))
+	handler := chain(func(ctx context.Context, req any) (any, error) {
+		t.Fatal("inner handler must not run on authn failure")
+		return nil, nil
+	})
+
+	ctx := transportCtx(map[string]string{"Authorization": "Bearer x"})
+	if _, err := handler(ctx, nil); !errors.Is(err, sentinel) {
+		t.Errorf("err = %v, want sentinel", err)
+	}
+
+	if len(emitter.events) != 1 {
+		t.Fatalf("emit count = %d, want 1", len(emitter.events))
+	}
+	evt := emitter.events[0]
+	if evt.GetEventType() != auditpb.AuditEventType_AUDIT_EVENT_TYPE_AUTHN_RESULT {
+		t.Errorf("EventType = %v, want AUTHN_RESULT", evt.GetEventType())
+	}
+	d := evt.GetAuthnDetail()
+	if d == nil {
+		t.Fatal("AuthnDetail missing in emitted event")
+	}
+	if d.GetSuccess() {
+		t.Error("AuthnDetail.Success = true on authn-failure event")
+	}
+	if d.GetFailureReason() != sentinel.Error() {
+		t.Errorf("AuthnDetail.FailureReason = %q, want %q", d.GetFailureReason(), sentinel.Error())
+	}
+	if evt.GetResult().GetSuccess() {
+		t.Error("Result.Success = true on authn-failure event (should reflect AuthnDetail.Success=false)")
+	}
+}
 
 // TestExtractBearerToken checks the exported helper.
 func TestExtractBearerToken(t *testing.T) {
