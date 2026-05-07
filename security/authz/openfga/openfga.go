@@ -32,7 +32,9 @@ func NewAuthorizer(fgaClient *pkgfga.Client, opts ...Option) authz.Authorizer {
 }
 
 // Check uses CachedCheck (which falls back to plain Check when redis is nil).
-// Cache-hit signals stay inside this package — they are not exposed via DecisionDetail.
+// Cache-hit signals stay inside this package — they are not surfaced into
+// the ctx-bound *auditpb.AuthzDetail (audit semantics treat allow/deny/error
+// uniformly regardless of cache state).
 func (a *Authorizer) Check(ctx context.Context, subject, relation, objectType, objectID string) (bool, error) {
 	allowed, _, err := a.client.CachedCheck(ctx, a.cfg.redis, a.cfg.cacheTTL,
 		subject, relation, objectType, objectID)

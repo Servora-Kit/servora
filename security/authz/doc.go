@@ -23,7 +23,10 @@
 //
 // # Audit integration
 //
-// Pair authz.WithObserver with recorder.AuthzObserver() (from obs/audit) to
-// forward every decision to the audit pipeline without per-call wiring.
-// See obs/audit/observers.go for the bridge implementation.
+// The Server middleware writes a *auditpb.AuthzDetail to ctx via
+// audit.WithAuthzResult after every Authorizer.Check (allow / deny / error).
+// An OUTER-mounted audit.Collector middleware (from obs/audit) reads the
+// detail post-handler and emits the AUTHZ_DECISION event. This package has
+// zero coupling to the audit emission pipeline — only to the neutral auditpb
+// schema package.
 package authz

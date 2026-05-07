@@ -2,9 +2,11 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -12,6 +14,7 @@ import (
 	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	authzpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
 	"github.com/Servora-Kit/servora/core/actor"
+	"github.com/Servora-Kit/servora/obs/audit"
 )
 
 // fakeTransport implements transport.Transporter for test purposes.
@@ -33,8 +36,14 @@ func (h *fakeHeader) Add(key, value string)      {}
 func (h *fakeHeader) Keys() []string             { return nil }
 func (h *fakeHeader) Values(key string) []string { return nil }
 
+// transportCtx builds a server-side ctx with a fake transport AND a fresh
+// audit detail holder. The holder install mirrors what audit.Collector does
+// at the chain entry in production: without it, security middleware writes
+// (audit.WithAuthzResult) silently drop. Tests that assert ctx-bound details
+// after the middleware runs require the holder to be present up-front.
 func transportCtx(operation string) context.Context {
-	return transport.NewServerContext(context.Background(), &fakeTransport{operation: operation})
+	ctx := transport.NewServerContext(context.Background(), &fakeTransport{operation: operation})
+	return audit.InstallHolder(ctx)
 }
 
 func userActorCtx(ctx context.Context, userID string) context.Context {
@@ -227,33 +236,160 @@ func TestServer_NoTransport_Passthrough(t *testing.T) {
 	}
 }
 
-// TestServer_Observer_Called checks that WithObserver is invoked.
-func TestServer_Observer_Called(t *testing.T) {
-	var logged *DecisionDetail
-	mw := Server(
-		&fakeAuthorizer{allowed: true},
-		WithRules(map[string]AuthzRule{
-			testOp: {Mode: authzpb.AuthzMode_AUTHZ_MODE_CHECK, Relation: "admin", ObjectType: "platform"},
-		}),
-		WithObserver(func(_ context.Context, d DecisionDetail) {
-			logged = &d
-		}),
-	)
+// TestServer_WritesAuthzResultToContext exercises the three-state Decision
+// mapping (allowed / denied / error) and asserts the *auditpb.AuthzDetail
+// written to ctx via audit.WithAuthzResult matches expectations.
+//
+// Pipeline contract: middleware writes detail BEFORE returning (even on
+// denial / authorizer error), so an outer-mounted audit.Collector can read
+// it post-handler and emit an AUTHZ_DECISION event.
+//
+// Reading via the OUTER ctx works thanks to the holder pattern: holder is
+// a pointer threaded through the original ctx, so inner mutations propagate
+// upward despite Go's context.WithValue immutability.
+func TestServer_WritesAuthzResultToContext(t *testing.T) {
+	rule := AuthzRule{Mode: authzpb.AuthzMode_AUTHZ_MODE_CHECK, Relation: "admin", ObjectType: "platform"}
 
-	handler := mw(func(ctx context.Context, req any) (any, error) { return nil, nil })
+	t.Run("allowed", func(t *testing.T) {
+		mw := Server(&fakeAuthorizer{allowed: true}, WithRules(map[string]AuthzRule{testOp: rule}))
+		handler := mw(func(ctx context.Context, req any) (any, error) { return nil, nil })
+
+		ctx := userActorCtx(transportCtx(testOp), "user-123")
+		if _, err := handler(ctx, nil); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		d, ok := audit.AuthzResultFrom(ctx)
+		if !ok {
+			t.Fatal("expected AuthzDetail in ctx")
+		}
+		if d.Decision != auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED {
+			t.Errorf("Decision = %v, want ALLOWED", d.Decision)
+		}
+		if d.ErrorReason != "" {
+			t.Errorf("ErrorReason = %q, want empty", d.ErrorReason)
+		}
+		if d.Relation != "admin" {
+			t.Errorf("Relation = %q, want admin", d.Relation)
+		}
+		if d.ObjectType != "platform" {
+			t.Errorf("ObjectType = %q, want platform", d.ObjectType)
+		}
+		if d.ObjectId != "default" {
+			t.Errorf("ObjectId = %q, want default", d.ObjectId)
+		}
+	})
+
+	t.Run("denied", func(t *testing.T) {
+		mw := Server(&fakeAuthorizer{allowed: false}, WithRules(map[string]AuthzRule{testOp: rule}))
+		handler := mw(func(ctx context.Context, req any) (any, error) {
+			t.Fatal("handler should not run on deny")
+			return nil, nil
+		})
+
+		ctx := userActorCtx(transportCtx(testOp), "user-123")
+		_, err := handler(ctx, nil)
+		if err == nil {
+			t.Fatal("expected denied error")
+		}
+
+		d, ok := audit.AuthzResultFrom(ctx)
+		if !ok {
+			t.Fatal("expected AuthzDetail in ctx (written before deny return)")
+		}
+		if d.Decision != auditpb.AuthzDecision_AUTHZ_DECISION_DENIED {
+			t.Errorf("Decision = %v, want DENIED", d.Decision)
+		}
+		if d.ErrorReason != "" {
+			t.Errorf("ErrorReason = %q, want empty on deny", d.ErrorReason)
+		}
+	})
+
+	t.Run("error", func(t *testing.T) {
+		sentinel := errors.New("backend down")
+		mw := Server(&fakeAuthorizer{err: sentinel}, WithRules(map[string]AuthzRule{testOp: rule}))
+		handler := mw(func(ctx context.Context, req any) (any, error) {
+			t.Fatal("handler should not run on authorizer error")
+			return nil, nil
+		})
+
+		ctx := userActorCtx(transportCtx(testOp), "user-123")
+		_, err := handler(ctx, nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+
+		d, ok := audit.AuthzResultFrom(ctx)
+		if !ok {
+			t.Fatal("expected AuthzDetail in ctx (written before error return)")
+		}
+		if d.Decision != auditpb.AuthzDecision_AUTHZ_DECISION_ERROR {
+			t.Errorf("Decision = %v, want ERROR", d.Decision)
+		}
+		if d.ErrorReason != sentinel.Error() {
+			t.Errorf("ErrorReason = %q, want %q", d.ErrorReason, sentinel.Error())
+		}
+	})
+}
+
+// captureEmitter is a minimal audit.Emitter for end-to-end assembly tests.
+type captureEmitter struct {
+	events []*auditpb.AuditEvent
+}
+
+func (e *captureEmitter) Emit(_ context.Context, event *auditpb.AuditEvent) error {
+	e.events = append(e.events, event)
+	return nil
+}
+
+func (e *captureEmitter) Close() error { return nil }
+
+// TestServer_FailurePath_EmitsViaOuterCollector locks in the spec correction
+// (audit-context-collector capability, scenario "失败路径仍能 emit"): when
+// authz short-circuits on denial, an OUTER-mounted Collector should still
+// run in the LIFO post-phase and emit the AUTHZ_DECISION event from the
+// ctx-bound AuthzDetail.
+//
+// Mirrors security/authn/authn_test.go:TestServer_FailurePath_EmitsViaOuterCollector
+// for the authz half of the push-ctx pipeline.
+func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
+	emitter := &captureEmitter{}
+	rec := audit.NewRecorder(emitter, "test-svc")
+
+	rule := AuthzRule{Mode: authzpb.AuthzMode_AUTHZ_MODE_CHECK, Relation: "admin", ObjectType: "platform"}
+
+	// Correct mounting per spec: Collector OUTER, authz INNER.
+	chain := middleware.Chain(
+		audit.Collector(rec),
+		Server(&fakeAuthorizer{allowed: false}, WithRules(map[string]AuthzRule{testOp: rule})),
+	)
+	handler := chain(func(ctx context.Context, req any) (any, error) {
+		t.Fatal("inner handler must not run on authz denial")
+		return nil, nil
+	})
+
 	ctx := userActorCtx(transportCtx(testOp), "user-123")
 	_, err := handler(ctx, nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if err == nil {
+		t.Fatal("expected denial error")
 	}
-	if logged == nil {
-		t.Fatal("expected observer to be called")
+
+	if len(emitter.events) != 1 {
+		t.Fatalf("emit count = %d, want 1", len(emitter.events))
 	}
-	if !logged.Allowed {
-		t.Errorf("logged.Allowed = false, want true")
+	evt := emitter.events[0]
+	if evt.GetEventType() != auditpb.AuditEventType_AUDIT_EVENT_TYPE_AUTHZ_DECISION {
+		t.Errorf("EventType = %v, want AUTHZ_DECISION", evt.GetEventType())
 	}
-	if logged.Operation != testOp {
-		t.Errorf("logged.Operation = %q, want %q", logged.Operation, testOp)
+	d := evt.GetAuthzDetail()
+	if d == nil {
+		t.Fatal("AuthzDetail missing in emitted event")
+	}
+	if d.GetDecision() != auditpb.AuthzDecision_AUTHZ_DECISION_DENIED {
+		t.Errorf("AuthzDetail.Decision = %v, want DENIED", d.GetDecision())
+	}
+	if evt.GetResult().GetSuccess() {
+		t.Error("Result.Success = true on authz-denial event (should reflect Decision != ALLOWED)")
 	}
 }
 
