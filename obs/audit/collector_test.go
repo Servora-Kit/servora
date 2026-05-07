@@ -24,21 +24,31 @@ func newPassthroughHandler(resp any, err error) middleware.Handler {
 	return func(ctx context.Context, req any) (any, error) { return resp, err }
 }
 
+// inner builds an inner-handler that simulates security middleware: it calls
+// the supplied write fn against the ctx (after Collector installs holder),
+// then returns resp/err. This matches production: Collector is outer, writes
+// happen below it.
+func inner(write func(ctx context.Context), resp any, err error) middleware.Handler {
+	return func(ctx context.Context, req any) (any, error) {
+		if write != nil {
+			write(ctx)
+		}
+		return resp, err
+	}
+}
+
 // TestCollector_EmitsAuthnOnly covers spec scenario:
 // "Collector 仅 emit ctx 中存在 detail 类型的事件" — authn detail only, no authz.
-//
-// Kratos middleware pipeline: outer middleware (authn) writes ctx BEFORE
-// invoking its handler (Collector). So in tests we pre-populate ctx to
-// simulate that authn ran upstream.
 func TestCollector_EmitsAuthnOnly(t *testing.T) {
 	emitter := &captureEmitter{}
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
+	}, "ok", nil))
 
-	ctx := WithAuthnResult(newCollectorTestContext("/test/Op"), &auditpb.AuthnDetail{Method: "jwt", Success: true})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}
@@ -62,15 +72,16 @@ func TestCollector_EmitsAuthzOnly(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthzResult(ctx, &auditpb.AuthzDetail{
+			Relation:   "owner",
+			ObjectType: "doc",
+			ObjectId:   "d1",
+			Decision:   auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED,
+		})
+	}, "ok", nil))
 
-	ctx := WithAuthzResult(newCollectorTestContext("/test/Op"), &auditpb.AuthzDetail{
-		Relation:   "owner",
-		ObjectType: "doc",
-		ObjectId:   "d1",
-		Decision:   auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED,
-	})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}
@@ -95,15 +106,15 @@ func TestCollector_EmitsBoth(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
+		_ = WithAuthzResult(ctx, &auditpb.AuthzDetail{
+			Relation: "viewer",
+			Decision: auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED,
+		})
+	}, "ok", nil))
 
-	ctx := newCollectorTestContext("/test/Op")
-	ctx = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
-	ctx = WithAuthzResult(ctx, &auditpb.AuthzDetail{
-		Relation: "viewer",
-		Decision: auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED,
-	})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}
@@ -151,10 +162,11 @@ func TestCollector_EmitsAfterHandlerError(t *testing.T) {
 
 	handlerErr := errors.New("downstream failed")
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler(nil, handlerErr))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
+	}, nil, handlerErr))
 
-	ctx := WithAuthnResult(newCollectorTestContext("/test/Op"), &auditpb.AuthnDetail{Method: "jwt", Success: true})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if !errors.Is(err, handlerErr) {
 		t.Fatalf("handler error not propagated: got %v want %v", err, handlerErr)
 	}
@@ -179,14 +191,15 @@ func TestCollector_AuthnFailedAndHandlerErrored(t *testing.T) {
 
 	handlerErr := errors.New("downstream failed")
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler(nil, handlerErr))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{
+			Method:        "jwt",
+			Success:       false,
+			FailureReason: "token expired",
+		})
+	}, nil, handlerErr))
 
-	ctx := WithAuthnResult(newCollectorTestContext("/test/Op"), &auditpb.AuthnDetail{
-		Method:        "jwt",
-		Success:       false,
-		FailureReason: "token expired",
-	})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if !errors.Is(err, handlerErr) {
 		t.Fatalf("handler error not propagated: got %v want %v", err, handlerErr)
 	}
@@ -209,14 +222,15 @@ func TestCollector_AuthnFailureReason(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{
+			Method:        "jwt",
+			Success:       false,
+			FailureReason: "token expired",
+		})
+	}, "ok", nil))
 
-	ctx := WithAuthnResult(newCollectorTestContext("/test/Op"), &auditpb.AuthnDetail{
-		Method:        "jwt",
-		Success:       false,
-		FailureReason: "token expired",
-	})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}
@@ -238,14 +252,15 @@ func TestCollector_AuthzErrorDecision(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthzResult(ctx, &auditpb.AuthzDetail{
+			Relation:    "owner",
+			Decision:    auditpb.AuthzDecision_AUTHZ_DECISION_ERROR,
+			ErrorReason: "fga unreachable",
+		})
+	}, "ok", nil))
 
-	ctx := WithAuthzResult(newCollectorTestContext("/test/Op"), &auditpb.AuthzDetail{
-		Relation:    "owner",
-		Decision:    auditpb.AuthzDecision_AUTHZ_DECISION_ERROR,
-		ErrorReason: "fga unreachable",
-	})
-	_, err := handler(ctx, nil)
+	_, err := handler(newCollectorTestContext("/test/Op"), nil)
 	if err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}
@@ -271,12 +286,16 @@ func TestCollector_SpanEventDefault(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
+	}, "ok", nil))
 
 	baseCtx := newCollectorTestContext("/test/Op")
 	ctx, span := tp.Tracer("test").Start(baseCtx, "test-span")
-	ctx = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
-	_, _ = handler(ctx, nil)
+	_, err := handler(ctx, nil)
+	if err != nil {
+		t.Fatalf("handler returned error: %v", err)
+	}
 	span.End()
 
 	spans := exporter.GetSpans()
@@ -306,12 +325,16 @@ func TestCollector_SpanEventDisabled(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec, WithSpanEvents(false))
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
+	}, "ok", nil))
 
 	baseCtx := newCollectorTestContext("/test/Op")
 	ctx, span := tp.Tracer("test").Start(baseCtx, "test-span")
-	ctx = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
-	_, _ = handler(ctx, nil)
+	_, err := handler(ctx, nil)
+	if err != nil {
+		t.Fatalf("handler returned error: %v", err)
+	}
 	span.End()
 
 	spans := exporter.GetSpans()
@@ -342,10 +365,11 @@ func TestCollector_NoTransportContext(t *testing.T) {
 	rec := NewRecorder(emitter, "test-svc")
 
 	mw := Collector(rec)
-	handler := mw(newPassthroughHandler("ok", nil))
+	handler := mw(inner(func(ctx context.Context) {
+		_ = WithAuthnResult(ctx, &auditpb.AuthnDetail{Method: "jwt", Success: true})
+	}, "ok", nil))
 
-	ctx := WithAuthnResult(context.Background(), &auditpb.AuthnDetail{Method: "jwt", Success: true})
-	_, err := handler(ctx, nil)
+	_, err := handler(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("handler returned error: %v", err)
 	}

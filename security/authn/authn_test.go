@@ -19,11 +19,11 @@ type fakeTransport struct {
 	headers map[string]string
 }
 
-func (f *fakeTransport) Kind() transport.Kind             { return transport.KindHTTP }
-func (f *fakeTransport) Endpoint() string                 { return "" }
-func (f *fakeTransport) Operation() string                { return "" }
-func (f *fakeTransport) RequestHeader() transport.Header  { return &fakeHeader{f.headers} }
-func (f *fakeTransport) ReplyHeader() transport.Header    { return &fakeHeader{} }
+func (f *fakeTransport) Kind() transport.Kind            { return transport.KindHTTP }
+func (f *fakeTransport) Endpoint() string                { return "" }
+func (f *fakeTransport) Operation() string               { return "" }
+func (f *fakeTransport) RequestHeader() transport.Header { return &fakeHeader{f.headers} }
+func (f *fakeTransport) ReplyHeader() transport.Header   { return &fakeHeader{} }
 
 type fakeHeader struct {
 	m map[string]string
@@ -35,8 +35,15 @@ func (h *fakeHeader) Add(key, value string)      {}
 func (h *fakeHeader) Keys() []string             { return nil }
 func (h *fakeHeader) Values(key string) []string { return nil }
 
+// transportCtx builds a server-side ctx with a fake transport AND a fresh
+// audit detail holder. The holder install mirrors what audit.Collector does
+// at the chain entry in production: without it, security middleware writes
+// (audit.WithAuthnResult / audit.WithAuthzResult) silently drop. Tests that
+// need to assert ctx-bound details after the middleware runs require the
+// holder to be present up-front.
 func transportCtx(headers map[string]string) context.Context {
-	return transport.NewServerContext(context.Background(), &fakeTransport{headers: headers})
+	ctx := transport.NewServerContext(context.Background(), &fakeTransport{headers: headers})
+	return audit.InstallHolder(ctx)
 }
 
 // fakeAuthenticator is a minimal Authenticator for unit tests.
@@ -299,7 +306,10 @@ func TestServer_WritesAuthnResultToContext(t *testing.T) {
 
 		// No transport in ctx — early-return path. Treated as "anonymous
 		// success" for symmetry with the in-engine missing-header path.
-		if _, err := handler(context.Background(), nil); err != nil {
+		// Holder must still be installed so the middleware's WithAuthnResult
+		// write lands somewhere observable; in production audit.Collector
+		// does this at chain entry.
+		if _, err := handler(audit.InstallHolder(context.Background()), nil); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
@@ -382,22 +392,11 @@ func (e *captureEmitter) Close() error { return nil }
 // run in the LIFO post-phase and emit the AUTHN_RESULT event from the
 // ctx-bound AuthnDetail.
 //
-// CURRENT STATUS: skipped. The implementation in obs/audit/{context,collector}.go
-// uses context.WithValue, which produces a child ctx whose mutations are
-// invisible to the parent ctx held by an outer middleware. With Kratos
-// middleware.Chain (no ctx-merging on the way back up the stack), an outer
-// Collector cannot observe a detail written by inner authn.
-//
-// To make this scenario implementable, obs/audit must adopt a mutable-holder
-// pattern (single *holder installed once, both authn and Collector mutate /
-// read its fields). That change touches obs/audit/{context.go,collector.go},
-// which is out of Task 4 scope per the controller brief
-// ("DO NOT touch obs/audit/collector.go ... Task 5/6 will sync"). This test
-// is preserved as a forcing function for that follow-up task; flip the t.Skip
-// off once the holder pattern lands.
+// Now passes: obs/audit adopted the mutable-holder pattern (Collector
+// installs a *detailHolder at chain entry; inner WithAuthnResult mutates
+// it; outer Collector reads it post-handler). See obs/audit/context.go's
+// detailHolder docstring.
 func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
-	t.Skip("blocked: requires holder pattern in obs/audit/{context,collector}.go; tracked for Task 5/6")
-
 	emitter := &captureEmitter{}
 	rec := audit.NewRecorder(emitter, "test-svc")
 

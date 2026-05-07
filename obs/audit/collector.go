@@ -27,16 +27,23 @@ func WithSpanEvents(enabled bool) CollectorOption {
 	return func(c *collectorConfig) { c.spanEvents = enabled }
 }
 
-// Collector is a transport middleware that runs at the chain tail. After the
-// inner handler returns, it reads *auditpb.AuthnDetail / *auditpb.AuthzDetail
-// from ctx (written by security/authn / security/authz middleware via
-// WithAuthnResult / WithAuthzResult) and emits one *auditpb.AuditEvent per
-// detail present.
+// Collector is a transport middleware that runs at the chain OUTERMOST position
+// (it must wrap authn/authz, not be wrapped by them). At request entry it
+// installs a per-request detail holder into ctx. Inner middleware writes
+// (WithAuthnResult / WithAuthzResult) mutate that holder. After the inner
+// handler returns, Collector reads the holder and emits one
+// *auditpb.AuditEvent per detail present.
 //
-// Mounting position: Collector MUST be mounted AFTER authn/authz middleware so
-// the details are present in ctx by the time the post-handler phase runs.
-// Mounting earlier degrades silently to "no events emitted" — see
-// audit-context-collector spec, requirement 3.
+// Mounting position (CRITICAL): Collector must be the OUTER-most middleware
+// relative to authn/authz. In Kratos middleware chains, the slice order is
+// execution order — list Collector FIRST so authn/authz are wrapped by it.
+// If listed after authn/authz, the holder isn't installed when authn writes,
+// the writes are silently dropped, and no audit events emit.
+//
+// Why outer (not inner) install: Go's context.WithValue is immutable — child
+// ctx writes don't propagate up. Inner-write/outer-read requires a shared
+// mutable holder threaded through the original ctx. See context.go's
+// detailHolder docstring for full rationale.
 //
 // Result semantics: each emitted AuditEvent.Result reflects ONLY its own
 // layer's outcome. AUTHN_RESULT.Result mirrors AuthnDetail.Success /
@@ -59,6 +66,11 @@ func Collector(rec *Recorder, opts ...CollectorOption) middleware.Middleware {
 
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
+			// Install holder BEFORE handler so inner middleware writes land
+			// in this request's holder. Idempotent — nested Collectors keep
+			// the outermost holder.
+			ctx = InstallHolder(ctx)
+
 			resp, handlerErr := handler(ctx, req)
 
 			emitFromContext(ctx, rec)
