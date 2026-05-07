@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	"github.com/Servora-Kit/servora/core/actor"
-	"github.com/Servora-Kit/servora/obs/audit"
 	fgaclient "github.com/openfga/go-sdk/client"
 )
 
@@ -22,7 +22,7 @@ func (c *Client) WriteTuples(ctx context.Context, tuples ...Tuple) error {
 	if err := c.writeTuplesCore(ctx, tuples...); err != nil {
 		return err
 	}
-	c.emitTupleAudit(ctx, "openfga.WriteTuples", audit.TupleMutationWrite, tuples)
+	c.emitTupleAudit(ctx, "openfga.WriteTuples", auditpb.TupleMutationType_TUPLE_MUTATION_TYPE_WRITE, tuples)
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (c *Client) DeleteTuples(ctx context.Context, tuples ...Tuple) error {
 	if err := c.deleteTuplesCore(ctx, tuples...); err != nil {
 		return err
 	}
-	c.emitTupleAudit(ctx, "openfga.DeleteTuples", audit.TupleMutationDelete, tuples)
+	c.emitTupleAudit(ctx, "openfga.DeleteTuples", auditpb.TupleMutationType_TUPLE_MUTATION_TYPE_DELETE, tuples)
 	return nil
 }
 
@@ -112,16 +112,16 @@ func (c *Client) deleteTuplesCore(ctx context.Context, tuples ...Tuple) error {
 	return nil
 }
 
-func (c *Client) emitTupleAudit(ctx context.Context, operation string, mutation audit.TupleMutationType, tuples []Tuple) {
+func (c *Client) emitTupleAudit(ctx context.Context, operation string, mutation auditpb.TupleMutationType, tuples []Tuple) {
 	if c.recorder == nil || len(tuples) == 0 {
 		return
 	}
-	changes := make([]audit.TupleChange, len(tuples))
+	changes := make([]*auditpb.TupleChange, len(tuples))
 	for i, t := range tuples {
-		changes[i] = audit.TupleChange{User: t.User, Relation: t.Relation, Object: t.Object}
+		changes[i] = &auditpb.TupleChange{User: t.User, Relation: t.Relation, Object: t.Object}
 	}
 	a, _ := actor.FromContext(ctx)
-	c.recorder.RecordTupleChange(ctx, operation, a, audit.TupleMutationDetail{
+	c.recorder.RecordTupleChange(ctx, operation, a, &auditpb.TupleMutationDetail{
 		MutationType: mutation,
 		Tuples:       changes,
 	})

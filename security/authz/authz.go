@@ -12,6 +12,12 @@
 //	    fgaengine.NewAuthorizer(fgaClient),
 //	    pkgauthz.WithRulesFunc(iamv1.AuthzRules),
 //	))
+//
+// The middleware writes a *auditpb.AuthzDetail to ctx via
+// audit.WithAuthzResult after every Check (allow / deny / error); emission is
+// the responsibility of the transport-tail audit.Collector middleware. The
+// authz package therefore has zero coupling to the audit emission pipeline
+// (only to the neutral auditpb schema package).
 package authz
 
 import (
@@ -27,8 +33,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	authzpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
 	"github.com/Servora-Kit/servora/core/actor"
+	"github.com/Servora-Kit/servora/obs/audit"
 )
 
 // CheckRequest is one item in a BatchCheck call.
@@ -78,28 +86,12 @@ type AuthzRule struct {
 	IDField string
 }
 
-// DecisionDetail describes the result of a single authorization check.
-// It is passed to the Observer callback after every check.
-//
-// Cache-hit signals are intentionally absent — caching is an engine-internal
-// optimization (see infra/openfga) and does not belong in audit semantics.
-type DecisionDetail struct {
-	Operation  string
-	Subject    string
-	Relation   string
-	ObjectType string
-	ObjectID   string
-	Allowed    bool
-	Err        error
-}
-
 // Option configures the Server middleware.
 type Option func(*serverConfig)
 
 type serverConfig struct {
 	rules              map[string]AuthzRule
 	defaultObjID       string
-	observer           func(ctx context.Context, detail DecisionDetail)
 	checkTimeout       time.Duration
 	missingRuleAlertFn func(ctx context.Context, operation string)
 }
@@ -158,22 +150,6 @@ func WithDefaultObjectID(id string) Option {
 	return func(cfg *serverConfig) { cfg.defaultObjID = id }
 }
 
-// WithObserver installs a callback invoked after every authorization Check.
-// Pair it with `recorder.AuthzObserver()` from obs/audit to bridge decisions
-// into the audit pipeline:
-//
-//	authz.Server(authorizer,
-//	    authz.WithRulesFunc(rules),
-//	    authz.WithObserver(recorder.AuthzObserver()),
-//	)
-//
-// observer == nil leaves the middleware unaffected (no-op).
-// pkg/authz remains free of any pkg/audit dependency — bridging lives in
-// obs/audit/observers.go.
-func WithObserver(fn func(ctx context.Context, detail DecisionDetail)) Option {
-	return func(cfg *serverConfig) { cfg.observer = fn }
-}
-
 // WithCheckTimeout bounds the time spent in Authorizer.Check on each request.
 // Zero (default) disables the deadline — the upstream context applies.
 //
@@ -197,14 +173,24 @@ func WithFailOpenOnMissingRule(alertFn func(ctx context.Context, operation strin
 // Server returns a Kratos middleware that performs authorization checks.
 //
 // Behavior:
-//   - No transport in context → passthrough (non-server calls)
-//   - No rule for operation → fail-closed (403 AUTHZ_NO_RULE)
-//   - No rule for operation + WithFailOpenOnMissingRule set → alertFn invoked, handler called
-//   - AUTHZ_MODE_NONE → skip (public endpoint)
-//   - AUTHZ_MODE_CHECK, no actor or anonymous actor → 403 AUTHZ_DENIED
-//   - AUTHZ_MODE_CHECK, nil authorizer → 503 AUTHZ_UNAVAILABLE
-//   - AUTHZ_MODE_CHECK, allowed → handler called
-//   - AUTHZ_MODE_CHECK, denied → 403 AUTHZ_DENIED
+//   - No transport in context → passthrough (non-server calls); no ctx detail written.
+//   - No rule for operation → fail-closed (403 AUTHZ_NO_RULE); no ctx detail written
+//     (Authorizer was not invoked, so there is no decision to record).
+//   - No rule + WithFailOpenOnMissingRule set → alertFn invoked, handler called;
+//     no ctx detail written (same reason).
+//   - AUTHZ_MODE_NONE → skip (public endpoint); no ctx detail written.
+//   - AUTHZ_MODE_CHECK, no actor or anonymous actor → 403 AUTHZ_DENIED;
+//     no ctx detail written (Authorizer was not invoked).
+//   - AUTHZ_MODE_CHECK, nil authorizer → 503 AUTHZ_UNAVAILABLE; no ctx detail written.
+//   - AUTHZ_MODE_CHECK, authorizer returned (true, nil) → ALLOWED detail in ctx; handler called.
+//   - AUTHZ_MODE_CHECK, authorizer returned (false, nil) → DENIED detail in ctx;
+//     middleware returns 403 AUTHZ_DENIED.
+//   - AUTHZ_MODE_CHECK, authorizer returned (_, err) → ERROR detail in ctx
+//     (with ErrorReason=err.Error()); middleware returns 503 AUTHZ_CHECK_FAILED.
+//
+// In all three Authorizer-invoked outcomes the ctx detail is written BEFORE
+// returning, so an OUTER-mounted audit.Collector can observe it post-handler
+// even when authz short-circuits.
 //
 // The OpenFGA principal is constructed as "<actor.Type()>:<actor.ID()>".
 func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
@@ -261,19 +247,18 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 			}
 
 			allowed, err := authorizer.Check(checkCtx, principal, relation, objectType, objectID)
-			detail := DecisionDetail{
-				Operation:  operation,
-				Subject:    principal,
-				Relation:   relation,
-				ObjectType: objectType,
-				ObjectID:   objectID,
-				Allowed:    allowed,
-				Err:        err,
-			}
 
-			if cfg.observer != nil {
-				cfg.observer(ctx, detail)
-			}
+			// Write the decision to ctx BEFORE acting on it: an outer-mounted
+			// audit.Collector reads the detail post-handler and emits an
+			// AUTHZ_DECISION event regardless of whether this middleware
+			// short-circuits on deny / error.
+			ctx = audit.WithAuthzResult(ctx, &auditpb.AuthzDetail{
+				Relation:    relation,
+				ObjectType:  objectType,
+				ObjectId:    objectID,
+				Decision:    decisionFor(allowed, err),
+				ErrorReason: errorReasonFor(err),
+			})
 
 			if err != nil {
 				return nil, errors.ServiceUnavailable("AUTHZ_CHECK_FAILED",
@@ -286,6 +271,31 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 			return handler(ctx, req)
 		}
 	}
+}
+
+// decisionFor maps the (allowed, err) tuple returned by Authorizer.Check into
+// the proto-level three-state AuthzDecision enum. Inline here (rather than in
+// obs/audit/enums.go) because no runtime-string-enum intermediate exists for
+// the (allowed, err) → proto direction; obs/audit's toProtoAuthzDecision goes
+// from the runtime AuthzDecision string to proto.
+func decisionFor(allowed bool, err error) auditpb.AuthzDecision {
+	switch {
+	case err != nil:
+		return auditpb.AuthzDecision_AUTHZ_DECISION_ERROR
+	case allowed:
+		return auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED
+	default:
+		return auditpb.AuthzDecision_AUTHZ_DECISION_DENIED
+	}
+}
+
+// errorReasonFor stringifies err for the AuthzDetail.ErrorReason field;
+// returns "" when err is nil so allow/deny details have an empty reason.
+func errorReasonFor(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }
 
 // resolveObject determines the FGA object type and ID for the given rule and request.

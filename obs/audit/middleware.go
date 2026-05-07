@@ -6,10 +6,15 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
+	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	"github.com/Servora-Kit/servora/core/actor"
 )
 
 // Rule describes how a specific RPC operation should be audited.
+//
+// 字段类型保留 obs/audit 自有的 Go 字符串枚举，
+// 因为 Rule 主要由 protoc-gen-servora-audit 在编译期生成，使用字符串枚举比 proto enum
+// 更便于代码生成器拼装、阅读与版本演进；middleware 内部转换到 auditpb.* 后再 emit。
 type Rule struct {
 	// EventType is the audit event type to emit.
 	EventType EventType
@@ -97,10 +102,11 @@ func Audit(opts ...AuditMiddlewareOption) middleware.Middleware {
 				opName = operation
 			}
 
-			targetInfo := TargetInfo{Type: rule.TargetType}
+			targetID := ""
 			if rule.TargetIDFunc != nil {
-				targetInfo.ID = rule.TargetIDFunc(req, resp)
+				targetID = rule.TargetIDFunc(req, resp)
 			}
+			target := &auditpb.AuditTarget{Type: rule.TargetType, Id: targetID}
 
 			switch rule.EventType {
 			case EventTypeResourceMutation:
@@ -108,12 +114,12 @@ func Audit(opts ...AuditMiddlewareOption) middleware.Middleware {
 				if mutType == "" {
 					mutType = ResourceMutationUpdate
 				}
-				detail := ResourceMutationDetail{
-					MutationType: mutType,
+				detail := &auditpb.ResourceMutationDetail{
+					MutationType: toProtoResourceMutationType(mutType),
 					ResourceType: rule.TargetType,
-					ResourceID:   targetInfo.ID,
+					ResourceId:   targetID,
 				}
-				cfg.recorder.RecordResourceMutation(ctx, opName, a, targetInfo, detail, err)
+				cfg.recorder.RecordResourceMutation(ctx, opName, a, target, detail, err)
 			}
 
 			return resp, err

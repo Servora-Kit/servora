@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/go-kratos/kratos/v2/transport"
 )
@@ -13,11 +14,11 @@ type stubAuditTransport struct {
 	op string
 }
 
-func (s *stubAuditTransport) Kind() transport.Kind             { return transport.KindHTTP }
-func (s *stubAuditTransport) Endpoint() string                 { return "" }
-func (s *stubAuditTransport) Operation() string                { return s.op }
-func (s *stubAuditTransport) RequestHeader() transport.Header  { return &stubAuditHeader{} }
-func (s *stubAuditTransport) ReplyHeader() transport.Header    { return &stubAuditHeader{} }
+func (s *stubAuditTransport) Kind() transport.Kind            { return transport.KindHTTP }
+func (s *stubAuditTransport) Endpoint() string                { return "" }
+func (s *stubAuditTransport) Operation() string               { return s.op }
+func (s *stubAuditTransport) RequestHeader() transport.Header { return &stubAuditHeader{} }
+func (s *stubAuditTransport) ReplyHeader() transport.Header   { return &stubAuditHeader{} }
 
 type stubAuditHeader struct{}
 
@@ -28,10 +29,10 @@ func (h *stubAuditHeader) Keys() []string         { return nil }
 func (h *stubAuditHeader) Values(string) []string { return nil }
 
 type captureEmitter struct {
-	events []*AuditEvent
+	events []*auditpb.AuditEvent
 }
 
-func (e *captureEmitter) Emit(_ context.Context, event *AuditEvent) error {
+func (e *captureEmitter) Emit(_ context.Context, event *auditpb.AuditEvent) error {
 	e.events = append(e.events, event)
 	return nil
 }
@@ -50,7 +51,7 @@ func TestAuditMiddleware_RecordsResourceMutation(t *testing.T) {
 		WithRecorder(recorder),
 		WithRules(map[string]Rule{
 			"/audit.v1.Test/Mutate": {
-				EventType: EventTypeResourceMutation,
+				EventType:  EventTypeResourceMutation,
 				TargetType: "user",
 			},
 		}),
@@ -67,15 +68,15 @@ func TestAuditMiddleware_RecordsResourceMutation(t *testing.T) {
 	if len(emitter.events) != 1 {
 		t.Fatalf("expected 1 audit event, got %d", len(emitter.events))
 	}
-	if emitter.events[0].Target.Type != "user" {
-		t.Fatalf("target type = %q, want user", emitter.events[0].Target.Type)
+	if emitter.events[0].GetTarget().GetType() != "user" {
+		t.Fatalf("target type = %q, want user", emitter.events[0].GetTarget().GetType())
 	}
-	detail, ok := emitter.events[0].Detail.(ResourceMutationDetail)
-	if !ok {
-		t.Fatalf("expected ResourceMutationDetail, got %T", emitter.events[0].Detail)
+	detail := emitter.events[0].GetResourceMutationDetail()
+	if detail == nil {
+		t.Fatalf("expected ResourceMutationDetail, got nil")
 	}
-	if detail.ResourceType != "user" {
-		t.Fatalf("resource type = %q, want user", detail.ResourceType)
+	if detail.GetResourceType() != "user" {
+		t.Fatalf("resource type = %q, want user", detail.GetResourceType())
 	}
 }
 
@@ -154,11 +155,11 @@ func TestAuditMiddleware_RecordsErrorWhenEnabled(t *testing.T) {
 	if len(emitter.events) != 1 {
 		t.Fatalf("expected 1 audit event, got %d", len(emitter.events))
 	}
-	if emitter.events[0].Result.Success {
+	if emitter.events[0].GetResult().GetSuccess() {
 		t.Fatal("expected recorded event to be unsuccessful")
 	}
-	if emitter.events[0].Result.ErrorMessage != expectedErr.Error() {
-		t.Fatalf("error message = %q, want %q", emitter.events[0].Result.ErrorMessage, expectedErr.Error())
+	if emitter.events[0].GetResult().GetErrorMessage() != expectedErr.Error() {
+		t.Fatalf("error message = %q, want %q", emitter.events[0].GetResult().GetErrorMessage(), expectedErr.Error())
 	}
 }
 
@@ -169,7 +170,7 @@ func TestAuditMiddleware_DoesNotRecordUnsupportedEventType(t *testing.T) {
 		WithRecorder(recorder),
 		WithRules(map[string]Rule{
 			"/audit.v1.Test/Mutate": {
-				EventType: EventTypeAuthzDecision,
+				EventType:  EventTypeAuthzDecision,
 				TargetType: "user",
 			},
 		}),

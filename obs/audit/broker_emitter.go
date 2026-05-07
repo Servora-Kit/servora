@@ -3,6 +3,7 @@ package audit
 import (
 	"context"
 
+	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	"github.com/Servora-Kit/servora/infra/broker"
 	"github.com/Servora-Kit/servora/obs/logging"
 	"google.golang.org/protobuf/proto"
@@ -11,7 +12,7 @@ import (
 const DefaultAuditTopic = "servora.audit.events"
 
 // BrokerEmitter sends audit events to a message broker topic (e.g. Kafka).
-// Events are proto-marshaled using api/protos/audit/v1/audit.proto.
+// 事件本体已是 *auditpb.AuditEvent，直接 proto.Marshal 即可，无需 runtime↔proto mapper。
 type BrokerEmitter struct {
 	broker broker.Broker
 	topic  string
@@ -29,36 +30,31 @@ func NewBrokerEmitter(b broker.Broker, topic string, l logger.Logger) *BrokerEmi
 	}
 }
 
-func (e *BrokerEmitter) Emit(ctx context.Context, event *AuditEvent) error {
+func (e *BrokerEmitter) Emit(ctx context.Context, event *auditpb.AuditEvent) error {
 	if event == nil {
 		e.log.Warn("audit: skip nil event")
 		return nil
 	}
 
-	pb, err := toProtoEvent(event)
+	body, err := proto.Marshal(event)
 	if err != nil {
-		e.log.Warnf("audit: convert event %s to proto: %v", event.EventID, err)
-		return nil
-	}
-	body, err := proto.Marshal(pb)
-	if err != nil {
-		e.log.Warnf("audit: marshal event %s: %v", event.EventID, err)
+		e.log.Warnf("audit: marshal event %s: %v", event.GetEventId(), err)
 		return nil
 	}
 
 	msg := &broker.Message{
-		Key:  event.EventID,
+		Key:  event.GetEventId(),
 		Body: body,
 		Headers: broker.Headers{
 			"content_type":  "application/x-protobuf",
-			"event_type":    string(event.EventType),
-			"event_version": event.EventVersion,
-			"service":       event.Service,
+			"event_type":    eventTypeHeader(event.GetEventType()),
+			"event_version": event.GetEventVersion(),
+			"service":       event.GetService(),
 		},
 	}
 
 	if err := e.broker.Publish(ctx, e.topic, msg); err != nil {
-		e.log.Warnf("audit: publish event %s to topic %s: %v", event.EventID, e.topic, err)
+		e.log.Warnf("audit: publish event %s to topic %s: %v", event.GetEventId(), e.topic, err)
 		return nil
 	}
 	return nil
