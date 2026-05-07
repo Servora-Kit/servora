@@ -126,17 +126,3 @@ func Audit(opts ...AuditMiddlewareOption) middleware.Middleware {
 		}
 	}
 }
-
-// toProtoResourceMutationType maps the codegen-friendly string enum into the proto enum.
-func toProtoResourceMutationType(t ResourceMutationType) auditpb.ResourceMutationType {
-	switch t {
-	case ResourceMutationCreate:
-		return auditpb.ResourceMutationType_RESOURCE_MUTATION_TYPE_CREATE
-	case ResourceMutationUpdate:
-		return auditpb.ResourceMutationType_RESOURCE_MUTATION_TYPE_UPDATE
-	case ResourceMutationDelete:
-		return auditpb.ResourceMutationType_RESOURCE_MUTATION_TYPE_DELETE
-	default:
-		return auditpb.ResourceMutationType_RESOURCE_MUTATION_TYPE_UNSPECIFIED
-	}
-}

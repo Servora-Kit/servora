@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Servora-Kit/servora/infra/broker"
-	logger "github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/obs/logging"
 )
 
 type stubBrokerEmitterBroker struct {

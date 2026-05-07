@@ -33,17 +33,22 @@ func NewRecorder(emitter Emitter, serviceName string) *Recorder {
 // Close releases the underlying emitter resources.
 func (r *Recorder) Close() error { return r.emitter.Close() }
 
-// Emit sends a fully-built AuditEvent to the underlying emitter.
-// 调用方（如 audit.Collector）若已组装好 *auditpb.AuditEvent，可直接 Emit；
-// 错误不会冒泡到业务层（audit 失败不影响业务）。
-func (r *Recorder) Emit(ctx context.Context, event *auditpb.AuditEvent) {
+// Emit publishes a fully-built AuditEvent. Returns the underlying emitter error;
+// callers should typically log-and-continue (audit failures must not break
+// business flow). nil event makes this a no-op and returns nil.
+//
+// This is the low-level entrypoint used by callers (e.g. audit.Collector) that
+// have already assembled an *auditpb.AuditEvent and want to observe emission
+// failures. The high-level Record* helpers internally swallow this error.
+func (r *Recorder) Emit(ctx context.Context, event *auditpb.AuditEvent) error {
 	if event == nil {
-		return
+		return nil
 	}
-	_ = r.emitter.Emit(ctx, event)
+	return r.emitter.Emit(ctx, event)
 }
 
 // RecordAuthzDecision records an OpenFGA authorization check result.
+// nil detail makes this a no-op.
 func (r *Recorder) RecordAuthzDecision(ctx context.Context, operation string, a actor.Actor, detail *auditpb.AuthzDetail) {
 	if detail == nil {
 		return
@@ -55,10 +60,11 @@ func (r *Recorder) RecordAuthzDecision(ctx context.Context, operation string, a 
 		evt.Result.ErrorMessage = detail.GetErrorReason()
 	}
 	evt.Detail = &auditpb.AuditEvent_AuthzDetail{AuthzDetail: detail}
-	_ = r.emitter.Emit(ctx, evt)
+	_ = r.Emit(ctx, evt)
 }
 
 // RecordTupleChange records an OpenFGA tuple write or delete.
+// nil detail makes this a no-op.
 func (r *Recorder) RecordTupleChange(ctx context.Context, operation string, a actor.Actor, detail *auditpb.TupleMutationDetail) {
 	if detail == nil {
 		return
@@ -69,27 +75,31 @@ func (r *Recorder) RecordTupleChange(ctx context.Context, operation string, a ac
 	if tuples := detail.GetTuples(); len(tuples) > 0 {
 		evt.Target = &auditpb.AuditTarget{Id: tuples[0].GetObject()}
 	}
-	_ = r.emitter.Emit(ctx, evt)
+	_ = r.Emit(ctx, evt)
 }
 
 // RecordResourceMutation records a CRUD operation on a business resource.
+// nil detail makes this a no-op (an event with a missing oneof Detail would
+// be malformed).
 func (r *Recorder) RecordResourceMutation(ctx context.Context, operation string, a actor.Actor, target *auditpb.AuditTarget, detail *auditpb.ResourceMutationDetail, err error) {
+	if detail == nil {
+		return
+	}
 	evt := r.newEvent(ctx, auditpb.AuditEventType_AUDIT_EVENT_TYPE_RESOURCE_MUTATION, operation, a)
 	if target != nil {
 		evt.Target = target
 	}
-	if detail != nil {
-		evt.Detail = &auditpb.AuditEvent_ResourceMutationDetail{ResourceMutationDetail: detail}
-	}
+	evt.Detail = &auditpb.AuditEvent_ResourceMutationDetail{ResourceMutationDetail: detail}
 	if err != nil {
 		evt.Result = &auditpb.AuditResult{Success: false, ErrorMessage: err.Error()}
 	} else {
 		evt.Result = &auditpb.AuditResult{Success: true}
 	}
-	_ = r.emitter.Emit(ctx, evt)
+	_ = r.Emit(ctx, evt)
 }
 
 // RecordAuthnResult records an authentication attempt result.
+// nil detail makes this a no-op.
 func (r *Recorder) RecordAuthnResult(ctx context.Context, operation string, a actor.Actor, detail *auditpb.AuthnDetail) {
 	if detail == nil {
 		return
@@ -100,7 +110,7 @@ func (r *Recorder) RecordAuthnResult(ctx context.Context, operation string, a ac
 	if !detail.GetSuccess() {
 		evt.Result.ErrorMessage = detail.GetFailureReason()
 	}
-	_ = r.emitter.Emit(ctx, evt)
+	_ = r.Emit(ctx, evt)
 }
 
 func (r *Recorder) newEvent(ctx context.Context, eventType auditpb.AuditEventType, operation string, a actor.Actor) *auditpb.AuditEvent {

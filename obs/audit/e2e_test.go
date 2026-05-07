@@ -11,7 +11,7 @@ import (
 	"github.com/Servora-Kit/servora/infra/broker"
 	kafkab "github.com/Servora-Kit/servora/infra/broker/kafka"
 	"github.com/Servora-Kit/servora/obs/audit"
-	logger "github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/obs/logging"
 	"google.golang.org/protobuf/proto"
 )
 

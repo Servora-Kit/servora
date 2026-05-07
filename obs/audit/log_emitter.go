@@ -4,7 +4,7 @@ import (
 	"context"
 
 	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
-	logger "github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/obs/logging"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

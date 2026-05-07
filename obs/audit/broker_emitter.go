@@ -5,7 +5,7 @@ import (
 
 	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	"github.com/Servora-Kit/servora/infra/broker"
-	logger "github.com/Servora-Kit/servora/obs/logging"
+	"github.com/Servora-Kit/servora/obs/logging"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -61,20 +61,3 @@ func (e *BrokerEmitter) Emit(ctx context.Context, event *auditpb.AuditEvent) err
 }
 
 func (e *BrokerEmitter) Close() error { return nil }
-
-// eventTypeHeader 将 proto enum 投影成与历史一致的字符串 header 值。
-// 兼容下游既有消费者（如 audit pipeline 按 header 过滤）。
-func eventTypeHeader(t auditpb.AuditEventType) string {
-	switch t {
-	case auditpb.AuditEventType_AUDIT_EVENT_TYPE_AUTHN_RESULT:
-		return string(EventTypeAuthnResult)
-	case auditpb.AuditEventType_AUDIT_EVENT_TYPE_AUTHZ_DECISION:
-		return string(EventTypeAuthzDecision)
-	case auditpb.AuditEventType_AUDIT_EVENT_TYPE_TUPLE_CHANGED:
-		return string(EventTypeTupleChanged)
-	case auditpb.AuditEventType_AUDIT_EVENT_TYPE_RESOURCE_MUTATION:
-		return string(EventTypeResourceMutation)
-	default:
-		return ""
-	}
-}
