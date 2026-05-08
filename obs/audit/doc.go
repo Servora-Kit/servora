@@ -48,13 +48,32 @@
 //
 // Recommended chain order:
 //
-//	recovery → tracing → logging → audit.Collector → authn → authz → handler
-//	                               ^^^^^^^^^^^^^^^
-//	                               outer to authn/authz; after tracing for trace_id capture
+//	recovery → tracing → logging → ratelimit → validate → metrics → audit.Collector → authn → authz → handler
+//	                                                                ^^^^^^^^^^^^^^^
+//	                                                                outer to authn/authz; trailing position
+//	                                                                aligns with transport/server/middleware
+//	                                                                ChainBuilder.Build output
+//
+// 本顺序与 transport/server/middleware.ChainBuilder 的 Build 输出对齐；调用
+// WithAudit(rec) 即自动落到该位置，无需业务方手记 outer/inner。
 //
 // # Example
 //
+// 推荐：通过 ChainBuilder.WithAudit 一行装配（无需手记 outer/inner 顺序）：
+//
 //	recorder := audit.NewRecorder(emitter, "iam")
+//	mw := middleware.NewChainBuilder(l).
+//	    WithTrace(trace).
+//	    WithMetrics(mtc).
+//	    WithAudit(recorder).
+//	    Build()
+//	mw = append(mw,
+//	    authn.Server(jwtAuth),
+//	    authz.Server(fgaAuth, authz.WithRulesFunc(iampb.AuthzRules)),
+//	)
+//
+// 如果不用 ChainBuilder 也可以手写——注意 audit.Collector 必须 OUTER 于 authn/authz：
+//
 //	mw := []middleware.Middleware{
 //	    recovery.Recovery(),
 //	    tracing.Server(),
