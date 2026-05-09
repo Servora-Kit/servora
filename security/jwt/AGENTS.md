@@ -22,7 +22,6 @@
 
 - 不在这里放认证 middleware；请求级认证应留给 `security/authn`
 - 不在这里放业务 claims 模型、组织/项目权限解释或登录流程编排
-- 不在这里发布 JWKS；公钥分发属于下游服务侧组件（如 `servora-iam/pkg/jwks`）
 
 ## 常见反模式
 
@@ -35,8 +34,3 @@
 ```bash
 go test ./security/jwt/...
 ```
-
-## 维护提示
-
-- 若调整签名算法、KID 生成或 PEM 解析流程，需同步检查下游 JWKS 发布组件（如 `servora-iam/pkg/jwks`）与所有 token 使用方
-- claims context helper 应保持通用，不要向某个业务 token 结构倾斜
