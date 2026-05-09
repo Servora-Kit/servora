@@ -81,7 +81,8 @@ type AuthnRule struct {
 	// 认证模式。
 	Mode AuthnRule_Mode `protobuf:"varint,1,opt,name=mode,proto3,enum=servora.authn.v1.AuthnRule_Mode" json:"mode,omitempty"`
 	// 接受的认证机制；空列表表示沿用框架默认引擎。
-	// 取值与 Authenticator.Method() 返回值对齐，例如 "jwt"、"mtls"、"api_key"。
+	// 取值是各 wrapper 子包持有的私有 method 字符串常量（如 `jwt`、`mtls`、`api_key`、`aksk`）；
+	// framework 不枚举这些值，业务自定义引擎也可填任意字符串。
 	// 多个值表示"任一通过即可"。
 	Schemes       []string `protobuf:"bytes,2,rep,name=schemes,proto3" json:"schemes,omitempty"`
 	unknownFields protoimpl.UnknownFields
