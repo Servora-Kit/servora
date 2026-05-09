@@ -1,3 +1,22 @@
+// Command protoc-gen-servora-authz translates servora authz proto annotations
+// into a Go file (`authz_rules.gen.go`) consumed by the runtime to enforce
+// authorization on RPC methods.
+//
+// Merge semantics (matches authn / audit):
+//   - method-level rule with mode != AUTHZ_MODE_UNSPECIFIED replaces the
+//     service-level default in its entirety,
+//   - method-level rule absent (or mode == AUTHZ_MODE_UNSPECIFIED) inherits
+//     the service-level default,
+//   - only methods whose merged mode != AUTHZ_MODE_UNSPECIFIED appear in the
+//     generated map (NONE is preserved so callers can express "explicitly
+//     skip" rather than "no rule"; the runtime decides what to do with NONE).
+//
+// Cross-file template scanning: rules are gathered from ALL input files
+// (including non-generated dependencies) so authz annotations on canonical
+// RPC protos remain visible when only their HTTP-gateway counterparts are in
+// the generation set. Generated output groups by output directory so each
+// directory yields one authz_rules.gen.go covering the services declared in
+// it (resolved through the cross-file template index).
 package main
 
 import (
@@ -14,112 +33,16 @@ import (
 func main() {
 	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
-
-		// ruleParams holds the authorization parameters extracted from a proto annotation.
-		type ruleParams struct {
-			Mode       authzpb.AuthzMode
-			Relation   string
-			ObjectType string
-			IDField    string
-		}
-
-		// Build a rule-template index: shortServiceName → methodName → params.
-		//
-		// Scanning ALL files (including non-generated dependencies) makes authz
-		// annotations on pure-RPC protos (e.g. user.proto) visible when the plugin
-		// processes their HTTP-gateway counterparts (e.g. i_user.proto), which import
-		// the pure-RPC protos as dependencies.  This allows annotations to live on the
-		// canonical gRPC definition rather than being duplicated on the gateway file.
-		templates := map[string]map[string]ruleParams{}
-		for _, f := range gen.Files {
-			for _, svc := range f.Services {
-				shortName := string(svc.Desc.Name())
-				for _, m := range svc.Methods {
-					ext := proto.GetExtension(m.Desc.Options(), authzpb.E_Rule)
-					r, ok := ext.(*authzpb.AuthzRule)
-					if !ok || r == nil || r.Mode == authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
-						continue
-					}
-					if templates[shortName] == nil {
-						templates[shortName] = map[string]ruleParams{}
-					}
-					templates[shortName][string(m.Desc.Name())] = ruleParams{
-						Mode:       r.Mode,
-						Relation:   r.Relation,
-						ObjectType: r.ObjectType,
-						IDField:    r.IdField,
-					}
-				}
-			}
-		}
-
-		if len(templates) == 0 {
-			return nil
-		}
-
-		// Group generated files by output directory.
-		// Each directory receives exactly one authz_rules.gen.go that covers every
-		// service defined in that directory, resolved via the template index above.
-		//
-		// Example outcome for the IAM module:
-		//   user/service/v1/authz_rules.gen.go       — user.service.v1.UserService rules
-		//   authn/service/v1/authz_rules.gen.go       — authn.service.v1.AuthnService rules
-		//   application/service/v1/authz_rules.gen.go — application.service.v1.ApplicationService rules
-		//   iam/service/v1/authz_rules.gen.go         — iam.service.v1.{User,Authn,Application}Service rules
-		type dirGroup struct {
-			targetFile *protogen.File
-			seen       map[string]bool // deduplicate by operation key
-			rules      []ruleEntry
-		}
-		groups := map[string]*dirGroup{}
-
-		for _, f := range gen.Files {
-			if !f.Generate {
-				continue
-			}
-			dir := path.Dir(f.GeneratedFilenamePrefix)
-			for _, svc := range f.Services {
-				methods, ok := templates[string(svc.Desc.Name())]
-				if !ok {
-					continue
-				}
-				if groups[dir] == nil {
-					groups[dir] = &dirGroup{
-						targetFile: f,
-						seen:       map[string]bool{},
-					}
-				}
-				fullName := string(svc.Desc.FullName())
-				for methodName, p := range methods {
-					op := fmt.Sprintf("/%s/%s", fullName, methodName)
-					if groups[dir].seen[op] {
-						continue
-					}
-					groups[dir].seen[op] = true
-					groups[dir].rules = append(groups[dir].rules, ruleEntry{
-						Operation:  op,
-						Mode:       p.Mode,
-						Relation:   p.Relation,
-						ObjectType: p.ObjectType,
-						IDField:    p.IDField,
-					})
-				}
-			}
-		}
-
-		for dir, group := range groups {
-			sort.Slice(group.rules, func(i, j int) bool {
-				return group.rules[i].Operation < group.rules[j].Operation
-			})
-			g := gen.NewGeneratedFile(
-				path.Join(dir, "authz_rules.gen.go"),
-				group.targetFile.GoImportPath,
-			)
-			generateFile(g, group.targetFile.GoPackageName, group.rules)
-		}
-
-		return nil
+		return generate(gen)
 	})
+}
+
+// ruleParams holds the merged authorization parameters for a single method.
+type ruleParams struct {
+	Mode       authzpb.AuthzMode
+	Relation   string
+	ObjectType string
+	IDField    string
 }
 
 type ruleEntry struct {
@@ -128,6 +51,178 @@ type ruleEntry struct {
 	Relation   string
 	ObjectType string
 	IDField    string
+}
+
+// generate is the testable entry point.
+func generate(gen *protogen.Plugin) error {
+	// First pass: build cross-file template index.
+	//   - serviceDefaults[shortName] → service-level default rule
+	//   - methodTemplates[shortName][methodName] → method-level rule
+	//
+	// Scanning all files (not just gen.Files) lets HTTP-gateway protos that
+	// re-declare a service inherit the annotations from their pure-RPC
+	// counterpart, which is included in the request as a dependency.
+	serviceDefaults := map[string]*authzpb.AuthzRule{}
+	methodTemplates := map[string]map[string]*authzpb.AuthzRule{}
+	for _, f := range gen.Files {
+		for _, svc := range f.Services {
+			shortName := string(svc.Desc.Name())
+
+			if def := extractServiceDefault(svc); def != nil {
+				// Last writer wins if the same short name appears in multiple
+				// files — matches the existing method-level merging pattern.
+				serviceDefaults[shortName] = def
+			}
+
+			for _, m := range svc.Methods {
+				if r := extractMethodRule(m); r != nil {
+					if methodTemplates[shortName] == nil {
+						methodTemplates[shortName] = map[string]*authzpb.AuthzRule{}
+					}
+					methodTemplates[shortName][string(m.Desc.Name())] = r
+				}
+			}
+		}
+	}
+
+	// Second pass: emit one authz_rules.gen.go per directory that has at
+	// least one resolved rule. Resolve every method of every service in a
+	// generated file by merging service default + method rule.
+	type dirGroup struct {
+		targetFile *protogen.File
+		seen       map[string]bool
+		rules      []ruleEntry
+	}
+	groups := map[string]*dirGroup{}
+
+	for _, f := range gen.Files {
+		if !f.Generate {
+			continue
+		}
+		dir := path.Dir(f.GeneratedFilenamePrefix)
+		for _, svc := range f.Services {
+			shortName := string(svc.Desc.Name())
+			fullName := string(svc.Desc.FullName())
+
+			svcDefault := serviceDefaults[shortName]
+			methods := methodTemplates[shortName]
+
+			// Iterate every declared method of this service, not just the
+			// ones with method-level annotations — methods inheriting the
+			// service default need to land in the output too.
+			for _, m := range svc.Methods {
+				methodName := string(m.Desc.Name())
+				p, ok := mergeRules(svcDefault, methods[methodName])
+				if !ok {
+					continue
+				}
+
+				if groups[dir] == nil {
+					groups[dir] = &dirGroup{
+						targetFile: f,
+						seen:       map[string]bool{},
+					}
+				}
+
+				op := fmt.Sprintf("/%s/%s", fullName, methodName)
+				if groups[dir].seen[op] {
+					continue
+				}
+				groups[dir].seen[op] = true
+				groups[dir].rules = append(groups[dir].rules, ruleEntry{
+					Operation:  op,
+					Mode:       p.Mode,
+					Relation:   p.Relation,
+					ObjectType: p.ObjectType,
+					IDField:    p.IDField,
+				})
+			}
+		}
+	}
+
+	if len(groups) == 0 {
+		return nil
+	}
+
+	dirs := make([]string, 0, len(groups))
+	for d := range groups {
+		dirs = append(dirs, d)
+	}
+	sort.Strings(dirs)
+
+	for _, dir := range dirs {
+		group := groups[dir]
+		sort.Slice(group.rules, func(i, j int) bool {
+			return group.rules[i].Operation < group.rules[j].Operation
+		})
+		g := gen.NewGeneratedFile(
+			path.Join(dir, "authz_rules.gen.go"),
+			group.targetFile.GoImportPath,
+		)
+		generateFile(g, group.targetFile.GoPackageName, group.rules)
+	}
+
+	return nil
+}
+
+// extractMethodRule returns the AuthzRule attached to a method via E_Rule, or
+// nil when no extension is set.
+func extractMethodRule(m *protogen.Method) *authzpb.AuthzRule {
+	opts := m.Desc.Options()
+	if opts == nil {
+		return nil
+	}
+	if !proto.HasExtension(opts, authzpb.E_Rule) {
+		return nil
+	}
+	r, ok := proto.GetExtension(opts, authzpb.E_Rule).(*authzpb.AuthzRule)
+	if !ok || r == nil {
+		return nil
+	}
+	return r
+}
+
+// extractServiceDefault returns the service-level default rule via
+// E_ServiceDefault, or nil when no extension is set.
+func extractServiceDefault(s *protogen.Service) *authzpb.AuthzRule {
+	opts := s.Desc.Options()
+	if opts == nil {
+		return nil
+	}
+	if !proto.HasExtension(opts, authzpb.E_ServiceDefault) {
+		return nil
+	}
+	r, ok := proto.GetExtension(opts, authzpb.E_ServiceDefault).(*authzpb.AuthzRule)
+	if !ok || r == nil {
+		return nil
+	}
+	return r
+}
+
+// mergeRules implements the spec's merge semantics. Returns (params, true)
+// when the method should be emitted; (_, false) otherwise.
+//
+// A method-level rule with mode != UNSPECIFIED fully replaces the service
+// default. UNSPECIFIED (or absence) inherits the service default verbatim. If
+// neither side contributes a non-UNSPECIFIED mode, the method is skipped.
+func mergeRules(svcDefault, methodRule *authzpb.AuthzRule) (ruleParams, bool) {
+	if methodRule != nil && methodRule.Mode != authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
+		return ruleParams{
+			Mode:       methodRule.Mode,
+			Relation:   methodRule.Relation,
+			ObjectType: methodRule.ObjectType,
+			IDField:    methodRule.IdField,
+		}, true
+	}
+	if svcDefault != nil && svcDefault.Mode != authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
+		return ruleParams{
+			Mode:       svcDefault.Mode,
+			Relation:   svcDefault.Relation,
+			ObjectType: svcDefault.ObjectType,
+			IDField:    svcDefault.IdField,
+		}, true
+	}
+	return ruleParams{}, false
 }
 
 func generateFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rules []ruleEntry) {
