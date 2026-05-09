@@ -101,7 +101,8 @@ mw = append(mw, jwt.Server(jwt.WithVerifier(km.Verifier())))
 ## `Client()` 出站透传逻辑
 
 ```go
-clientCh := pkgmwclient.NewClientChain(...).Append(jwt.Client())
+clientMS := pkgmwclient.NewChainBuilder(logger).Build()
+clientMS = append(clientMS, jwt.Client())
 ```
 
 每请求：
@@ -164,33 +165,38 @@ const methodName = "jwt"   // 包私有
 
 ```go
 import (
+    "github.com/Servora-Kit/servora/security/authn"
     authjwt "github.com/Servora-Kit/servora/security/authn/jwt"
     pkgmw "github.com/Servora-Kit/servora/transport/server/middleware"
     pkgmwclient "github.com/Servora-Kit/servora/transport/client/middleware"
 )
 
 // Server 端：完整 wrapper（标准 OIDC claims）
-chain := pkgmw.NewServerChain(...).
+ms := pkgmw.NewChainBuilder(httpLogger).
     WithAudit(rec).
-    Append(authjwt.Server(authjwt.WithVerifier(km.Verifier())))
+    Build()
+ms = append(ms, authjwt.Server(authjwt.WithVerifier(km.Verifier())))
 
 // Server 端：Keycloak 特有 claims 映射
-chain := pkgmw.NewServerChain(...).
+ms = pkgmw.NewChainBuilder(httpLogger).
     WithAudit(rec).
-    Append(authjwt.Server(
-        authjwt.WithVerifier(km.Verifier()),
-        authjwt.WithClaimsMapper(authjwt.KeycloakClaimsMapper()),
-    ))
+    Build()
+ms = append(ms, authjwt.Server(
+    authjwt.WithVerifier(km.Verifier()),
+    authjwt.WithClaimsMapper(authjwt.KeycloakClaimsMapper()),
+))
 
 // Client 端：显式出站透传 jwt token
-clientCh := pkgmwclient.NewClientChain(...).
-    Append(authjwt.Client())
+clientMS := pkgmwclient.NewChainBuilder(clientLogger).Build()
+clientMS = append(clientMS, authjwt.Client())
 
 // 高级：自组装 wrapper（如 token 不来自 HTTP header 而来自 message envelope）
 auth := authjwt.NewAuthenticator(authjwt.WithVerifier(v))
 mw := authn.Server(auth, authn.WithMethod("jwt"))
 // ↑ 自己实现 ctx-write 的部分（决定怎么把 token 喂给 jwt.WithToken）
 ```
+
+> **注意**：`pkgmw.ChainBuilder` / `pkgmwclient.ChainBuilder` 都没有 fluent `Append` 方法；业务侧用 Go 内建 `append(ms, mw...)` 拼接 jwt wrapper。
 
 ## Authenticate 行为
 

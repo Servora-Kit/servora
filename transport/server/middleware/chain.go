@@ -32,17 +32,27 @@ import (
 //
 // 使用示例：
 //
+//	import (
+//	    "github.com/Servora-Kit/servora/security/authn/jwt"
+//	    pkgmw "github.com/Servora-Kit/servora/transport/server/middleware"
+//	)
+//
 //	httpLogger := logger.With(l, "http/server/my-service")
-//	ms := middleware.NewChainBuilder(httpLogger).
+//	ms := pkgmw.NewChainBuilder(httpLogger).
 //	    WithTrace(trace).
 //	    WithMetrics(mtc).
 //	    WithAudit(recorder).
 //	    Build()
-//	ms = append(ms, authn.Server(jwtAuth), authz.Server(fgaAuth))
+//	// 业务通过 builtin append 追加 authn/authz wrapper（canonical entry 是引擎子包）
+//	ms = append(ms, jwt.Server(jwt.WithVerifier(v)), authz.Server(fgaAuth))
+//
+// 自实现 Authenticator 的高级用法（非 jwt 载体或自定义引擎）：
+//
+//	ms = append(ms, authn.Server(myCustomAuth, authn.WithMethod("custom")))
 //
 // 注意：
 //   - HTTP 和 gRPC 共享同一个 ChainBuilder，通过传入不同的 Logger 区分
-//   - 返回的切片可以通过 append 追加业务特定的中间件（如 auth、selector）
+//   - 返回的切片可以通过 builtin `append` 追加业务特定的中间件（如 authn / authz / selector）；ChainBuilder 不提供 fluent `Append` 方法
 //   - 如果需要完全自定义中间件顺序，请不要使用此 Builder，手动构建切片
 type ChainBuilder struct {
 	logger        log.Logger

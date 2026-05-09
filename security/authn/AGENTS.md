@@ -99,24 +99,27 @@ import (
     "github.com/Servora-Kit/servora/security/authn"
     authjwt "github.com/Servora-Kit/servora/security/authn/jwt"
     pkgmw "github.com/Servora-Kit/servora/transport/server/middleware"
+    pkgmwclient "github.com/Servora-Kit/servora/transport/client/middleware"
 )
 
-// 80% 用例：直接 Append jwt 子包 wrapper
-chain := pkgmw.NewServerChain(...).
+// 80% 用例：用 ChainBuilder 装基础链，再用 builtin append 追加 jwt 子包 wrapper
+ms := pkgmw.NewChainBuilder(httpLogger).
     WithAudit(rec).
-    Append(authjwt.Server(
-        authjwt.WithVerifier(km.Verifier()),
-        authjwt.WithClaimsMapper(authjwt.KeycloakClaimsMapper()),
-    ))
+    Build()
+ms = append(ms, authjwt.Server(
+    authjwt.WithVerifier(km.Verifier()),
+    authjwt.WithClaimsMapper(authjwt.KeycloakClaimsMapper()),
+))
 
 // 出站透传 jwt token（client 默认链不再自动 append，必须显式）
-clientCh := pkgmwclient.NewClientChain(...).
-    Append(authjwt.Client())
+clientMS := pkgmwclient.NewChainBuilder(clientLogger).Build()
+clientMS = append(clientMS, authjwt.Client())
 
 // 高级：自实现 Authenticator + 直接调主包（业务自写 wrapper 也走同一路径）
-chain := pkgmw.NewServerChain(...).
-    Append(authn.Server(myCustomAuth, authn.WithMethod("custom")))
+ms = append(ms, authn.Server(myCustomAuth, authn.WithMethod("custom")))
 ```
+
+> **注意**：`pkgmw.ChainBuilder` 仅提供 `WithTrace / WithMetrics / WithAudit / WithoutRateLimit / Build` 等方法，**没有** fluent `Append`；业务侧用 Go 内建 `append(ms, mw...)` 追加 authn / authz / selector 等业务中间件。
 
 审计事件由 transport 链外层的 `audit.Collector(recorder)` 自动 emit——authn 主包只负责 ctx 写 detail，业务侧**无需**额外接线。详见 [`../../obs/audit/AGENTS.md`](../../obs/audit/AGENTS.md) 的 mounting 位置。
 
