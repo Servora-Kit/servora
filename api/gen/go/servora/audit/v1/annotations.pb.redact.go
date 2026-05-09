@@ -28,7 +28,7 @@ func (x *AuditRule) Redact() string {
 		return ""
 	}
 
-	// Safe field: Enabled
+	// Safe field: Mode
 
 	// Safe field: EventType
 

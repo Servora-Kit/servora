@@ -22,11 +22,122 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// AuditMode 表达审计开关三态。
+// 引入「服务级默认 + 方法级覆盖」机制后，proto3 bool 默认值与「未指定」无法区分；
+// 用 enum 三态可让方法级显式继承（UNSPECIFIED）/ 显式覆盖（DISABLED/ENABLED）语义清晰。
+//
+// 迁移说明：从 v0.x 起替代原 `bool enabled` 字段；旧写法 `enabled: true` 迁移为
+// `mode: AUDIT_MODE_ENABLED`，`enabled: false` 迁移为 `mode: AUDIT_MODE_DISABLED`，
+// 未指定保留为 `AUDIT_MODE_UNSPECIFIED` 表示继承服务级默认。
+type AuditMode int32
+
+const (
+	AuditMode_AUDIT_MODE_UNSPECIFIED AuditMode = 0
+	AuditMode_AUDIT_MODE_DISABLED    AuditMode = 1
+	AuditMode_AUDIT_MODE_ENABLED     AuditMode = 2
+)
+
+// Enum value maps for AuditMode.
+var (
+	AuditMode_name = map[int32]string{
+		0: "AUDIT_MODE_UNSPECIFIED",
+		1: "AUDIT_MODE_DISABLED",
+		2: "AUDIT_MODE_ENABLED",
+	}
+	AuditMode_value = map[string]int32{
+		"AUDIT_MODE_UNSPECIFIED": 0,
+		"AUDIT_MODE_DISABLED":    1,
+		"AUDIT_MODE_ENABLED":     2,
+	}
+)
+
+func (x AuditMode) Enum() *AuditMode {
+	p := new(AuditMode)
+	*p = x
+	return p
+}
+
+func (x AuditMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AuditMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_servora_audit_v1_annotations_proto_enumTypes[0].Descriptor()
+}
+
+func (AuditMode) Type() protoreflect.EnumType {
+	return &file_servora_audit_v1_annotations_proto_enumTypes[0]
+}
+
+func (x AuditMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AuditMode.Descriptor instead.
+func (AuditMode) EnumDescriptor() ([]byte, []int) {
+	return file_servora_audit_v1_annotations_proto_rawDescGZIP(), []int{0}
+}
+
+// ErrorRecordMode 表达 handler 返回错误时是否记录审计事件三态。
+//
+// 迁移说明：从 v0.x 起替代原 `bool record_on_error` 字段；旧写法
+// `record_on_error: true` 迁移为 `record_on_error: ERROR_RECORD_MODE_ON`，
+// `record_on_error: false` 迁移为 `record_on_error: ERROR_RECORD_MODE_OFF`，
+// 未指定保留为 `ERROR_RECORD_MODE_UNSPECIFIED` 表示继承服务级默认。
+type ErrorRecordMode int32
+
+const (
+	ErrorRecordMode_ERROR_RECORD_MODE_UNSPECIFIED ErrorRecordMode = 0
+	ErrorRecordMode_ERROR_RECORD_MODE_OFF         ErrorRecordMode = 1
+	ErrorRecordMode_ERROR_RECORD_MODE_ON          ErrorRecordMode = 2
+)
+
+// Enum value maps for ErrorRecordMode.
+var (
+	ErrorRecordMode_name = map[int32]string{
+		0: "ERROR_RECORD_MODE_UNSPECIFIED",
+		1: "ERROR_RECORD_MODE_OFF",
+		2: "ERROR_RECORD_MODE_ON",
+	}
+	ErrorRecordMode_value = map[string]int32{
+		"ERROR_RECORD_MODE_UNSPECIFIED": 0,
+		"ERROR_RECORD_MODE_OFF":         1,
+		"ERROR_RECORD_MODE_ON":          2,
+	}
+)
+
+func (x ErrorRecordMode) Enum() *ErrorRecordMode {
+	p := new(ErrorRecordMode)
+	*p = x
+	return p
+}
+
+func (x ErrorRecordMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ErrorRecordMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_servora_audit_v1_annotations_proto_enumTypes[1].Descriptor()
+}
+
+func (ErrorRecordMode) Type() protoreflect.EnumType {
+	return &file_servora_audit_v1_annotations_proto_enumTypes[1]
+}
+
+func (x ErrorRecordMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ErrorRecordMode.Descriptor instead.
+func (ErrorRecordMode) EnumDescriptor() ([]byte, []int) {
+	return file_servora_audit_v1_annotations_proto_rawDescGZIP(), []int{1}
+}
+
 // AuditRule 声明一个 RPC 方法的审计规则。
 type AuditRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 是否产生审计事件。false 则跳过（默认 true）。
-	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// 是否产生审计事件。UNSPECIFIED 表示沿用服务级默认或框架默认。
+	Mode AuditMode `protobuf:"varint,1,opt,name=mode,proto3,enum=servora.audit.v1.AuditMode" json:"mode,omitempty"`
 	// 事件类型，通常对应 RESOURCE_MUTATION 或 AUTHZ_TUPLE_CHANGED 等。
 	EventType AuditEventType `protobuf:"varint,2,opt,name=event_type,json=eventType,proto3,enum=servora.audit.v1.AuditEventType" json:"event_type,omitempty"`
 	// 操作语义：CREATE / UPDATE / DELETE。仅用于 RESOURCE_MUTATION 事件类型。
@@ -39,8 +150,8 @@ type AuditRule struct {
 	// 目标 ID 的 proto field path（如 "req.id"、"resp.id"）。
 	// 由 protoc-gen-servora-audit 生成提取函数，留空则不提取。
 	TargetIdField string `protobuf:"bytes,5,opt,name=target_id_field,json=targetIdField,proto3" json:"target_id_field,omitempty"`
-	// 是否在 handler 返回错误时仍记录审计事件。默认 false（仅成功记录）。
-	RecordOnError bool `protobuf:"varint,6,opt,name=record_on_error,json=recordOnError,proto3" json:"record_on_error,omitempty"`
+	// 是否在 handler 返回错误时仍记录审计事件。UNSPECIFIED 表示沿用服务级默认或框架默认。
+	RecordOnError ErrorRecordMode `protobuf:"varint,6,opt,name=record_on_error,json=recordOnError,proto3,enum=servora.audit.v1.ErrorRecordMode" json:"record_on_error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -75,11 +186,11 @@ func (*AuditRule) Descriptor() ([]byte, []int) {
 	return file_servora_audit_v1_annotations_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AuditRule) GetEnabled() bool {
+func (x *AuditRule) GetMode() AuditMode {
 	if x != nil {
-		return x.Enabled
+		return x.Mode
 	}
-	return false
+	return AuditMode_AUDIT_MODE_UNSPECIFIED
 }
 
 func (x *AuditRule) GetEventType() AuditEventType {
@@ -110,46 +221,69 @@ func (x *AuditRule) GetTargetIdField() string {
 	return ""
 }
 
-func (x *AuditRule) GetRecordOnError() bool {
+func (x *AuditRule) GetRecordOnError() ErrorRecordMode {
 	if x != nil {
 		return x.RecordOnError
 	}
-	return false
+	return ErrorRecordMode_ERROR_RECORD_MODE_UNSPECIFIED
 }
 
 var file_servora_audit_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
 		ExtensionType: (*AuditRule)(nil),
-		Field:         50000,
+		Field:         50100,
 		Name:          "servora.audit.v1.audit_rule",
-		Tag:           "bytes,50000,opt,name=audit_rule",
+		Tag:           "bytes,50100,opt,name=audit_rule",
+		Filename:      "servora/audit/v1/annotations.proto",
+	},
+	{
+		ExtendedType:  (*descriptorpb.ServiceOptions)(nil),
+		ExtensionType: (*AuditRule)(nil),
+		Field:         50101,
+		Name:          "servora.audit.v1.service_default",
+		Tag:           "bytes,50101,opt,name=service_default",
 		Filename:      "servora/audit/v1/annotations.proto",
 	},
 }
 
 // Extension fields to descriptorpb.MethodOptions.
 var (
-	// optional servora.audit.v1.AuditRule audit_rule = 50000;
+	// optional servora.audit.v1.AuditRule audit_rule = 50100;
 	E_AuditRule = &file_servora_audit_v1_annotations_proto_extTypes[0]
+)
+
+// Extension fields to descriptorpb.ServiceOptions.
+var (
+	// optional servora.audit.v1.AuditRule service_default = 50101;
+	E_ServiceDefault = &file_servora_audit_v1_annotations_proto_extTypes[1]
 )
 
 var File_servora_audit_v1_annotations_proto protoreflect.FileDescriptor
 
 const file_servora_audit_v1_annotations_proto_rawDesc = "" +
 	"\n" +
-	"\"servora/audit/v1/annotations.proto\x12\x10servora.audit.v1\x1a\x1cservora/audit/v1/audit.proto\x1a google/protobuf/descriptor.proto\"\xa4\x02\n" +
-	"\tAuditRule\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12?\n" +
+	"\"servora/audit/v1/annotations.proto\x12\x10servora.audit.v1\x1a\x1cservora/audit/v1/audit.proto\x1a google/protobuf/descriptor.proto\"\xde\x02\n" +
+	"\tAuditRule\x12/\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x1b.servora.audit.v1.AuditModeR\x04mode\x12?\n" +
 	"\n" +
 	"event_type\x18\x02 \x01(\x0e2 .servora.audit.v1.AuditEventTypeR\teventType\x12K\n" +
 	"\rmutation_type\x18\x03 \x01(\x0e2&.servora.audit.v1.ResourceMutationTypeR\fmutationType\x12\x1f\n" +
 	"\vtarget_type\x18\x04 \x01(\tR\n" +
 	"targetType\x12&\n" +
-	"\x0ftarget_id_field\x18\x05 \x01(\tR\rtargetIdField\x12&\n" +
-	"\x0frecord_on_error\x18\x06 \x01(\bR\rrecordOnError:\\\n" +
+	"\x0ftarget_id_field\x18\x05 \x01(\tR\rtargetIdField\x12I\n" +
+	"\x0frecord_on_error\x18\x06 \x01(\x0e2!.servora.audit.v1.ErrorRecordModeR\rrecordOnError*X\n" +
+	"\tAuditMode\x12\x1a\n" +
+	"\x16AUDIT_MODE_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13AUDIT_MODE_DISABLED\x10\x01\x12\x16\n" +
+	"\x12AUDIT_MODE_ENABLED\x10\x02*i\n" +
+	"\x0fErrorRecordMode\x12!\n" +
+	"\x1dERROR_RECORD_MODE_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15ERROR_RECORD_MODE_OFF\x10\x01\x12\x18\n" +
+	"\x14ERROR_RECORD_MODE_ON\x10\x02:\\\n" +
 	"\n" +
-	"audit_rule\x12\x1e.google.protobuf.MethodOptions\x18І\x03 \x01(\v2\x1b.servora.audit.v1.AuditRuleR\tauditRuleB\xce\x01\n" +
+	"audit_rule\x12\x1e.google.protobuf.MethodOptions\x18\xb4\x87\x03 \x01(\v2\x1b.servora.audit.v1.AuditRuleR\tauditRule:g\n" +
+	"\x0fservice_default\x12\x1f.google.protobuf.ServiceOptions\x18\xb5\x87\x03 \x01(\v2\x1b.servora.audit.v1.AuditRuleR\x0eserviceDefaultB\xce\x01\n" +
 	"\x14com.servora.audit.v1B\x10AnnotationsProtoP\x01ZBgithub.com/Servora-Kit/servora/api/gen/go/servora/audit/v1;auditv1\xa2\x02\x03SAX\xaa\x02\x10Servora.Audit.V1\xca\x02\x10Servora\\Audit\\V1\xe2\x02\x1cServora\\Audit\\V1\\GPBMetadata\xea\x02\x12Servora::Audit::V1b\x06proto3"
 
 var (
@@ -164,23 +298,31 @@ func file_servora_audit_v1_annotations_proto_rawDescGZIP() []byte {
 	return file_servora_audit_v1_annotations_proto_rawDescData
 }
 
+var file_servora_audit_v1_annotations_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_servora_audit_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_servora_audit_v1_annotations_proto_goTypes = []any{
-	(*AuditRule)(nil),                  // 0: servora.audit.v1.AuditRule
-	(AuditEventType)(0),                // 1: servora.audit.v1.AuditEventType
-	(ResourceMutationType)(0),          // 2: servora.audit.v1.ResourceMutationType
-	(*descriptorpb.MethodOptions)(nil), // 3: google.protobuf.MethodOptions
+	(AuditMode)(0),                      // 0: servora.audit.v1.AuditMode
+	(ErrorRecordMode)(0),                // 1: servora.audit.v1.ErrorRecordMode
+	(*AuditRule)(nil),                   // 2: servora.audit.v1.AuditRule
+	(AuditEventType)(0),                 // 3: servora.audit.v1.AuditEventType
+	(ResourceMutationType)(0),           // 4: servora.audit.v1.ResourceMutationType
+	(*descriptorpb.MethodOptions)(nil),  // 5: google.protobuf.MethodOptions
+	(*descriptorpb.ServiceOptions)(nil), // 6: google.protobuf.ServiceOptions
 }
 var file_servora_audit_v1_annotations_proto_depIdxs = []int32{
-	1, // 0: servora.audit.v1.AuditRule.event_type:type_name -> servora.audit.v1.AuditEventType
-	2, // 1: servora.audit.v1.AuditRule.mutation_type:type_name -> servora.audit.v1.ResourceMutationType
-	3, // 2: servora.audit.v1.audit_rule:extendee -> google.protobuf.MethodOptions
-	0, // 3: servora.audit.v1.audit_rule:type_name -> servora.audit.v1.AuditRule
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	3, // [3:4] is the sub-list for extension type_name
-	2, // [2:3] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 0: servora.audit.v1.AuditRule.mode:type_name -> servora.audit.v1.AuditMode
+	3, // 1: servora.audit.v1.AuditRule.event_type:type_name -> servora.audit.v1.AuditEventType
+	4, // 2: servora.audit.v1.AuditRule.mutation_type:type_name -> servora.audit.v1.ResourceMutationType
+	1, // 3: servora.audit.v1.AuditRule.record_on_error:type_name -> servora.audit.v1.ErrorRecordMode
+	5, // 4: servora.audit.v1.audit_rule:extendee -> google.protobuf.MethodOptions
+	6, // 5: servora.audit.v1.service_default:extendee -> google.protobuf.ServiceOptions
+	2, // 6: servora.audit.v1.audit_rule:type_name -> servora.audit.v1.AuditRule
+	2, // 7: servora.audit.v1.service_default:type_name -> servora.audit.v1.AuditRule
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	6, // [6:8] is the sub-list for extension type_name
+	4, // [4:6] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_servora_audit_v1_annotations_proto_init() }
@@ -194,13 +336,14 @@ func file_servora_audit_v1_annotations_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_audit_v1_annotations_proto_rawDesc), len(file_servora_audit_v1_annotations_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      2,
 			NumMessages:   1,
-			NumExtensions: 1,
+			NumExtensions: 2,
 			NumServices:   0,
 		},
 		GoTypes:           file_servora_audit_v1_annotations_proto_goTypes,
 		DependencyIndexes: file_servora_audit_v1_annotations_proto_depIdxs,
+		EnumInfos:         file_servora_audit_v1_annotations_proto_enumTypes,
 		MessageInfos:      file_servora_audit_v1_annotations_proto_msgTypes,
 		ExtensionInfos:    file_servora_audit_v1_annotations_proto_extTypes,
 	}.Build()

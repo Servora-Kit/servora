@@ -57,7 +57,7 @@ func (m *AuditRule) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Enabled
+	// no validation rules for Mode
 
 	// no validation rules for EventType
 

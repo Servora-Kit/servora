@@ -154,9 +154,17 @@ var file_servora_authz_v1_authz_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
 		ExtensionType: (*AuthzRule)(nil),
-		Field:         50100,
+		Field:         50200,
 		Name:          "servora.authz.v1.rule",
-		Tag:           "bytes,50100,opt,name=rule",
+		Tag:           "bytes,50200,opt,name=rule",
+		Filename:      "servora/authz/v1/authz.proto",
+	},
+	{
+		ExtendedType:  (*descriptorpb.ServiceOptions)(nil),
+		ExtensionType: (*AuthzRule)(nil),
+		Field:         50201,
+		Name:          "servora.authz.v1.service_default",
+		Tag:           "bytes,50201,opt,name=service_default",
 		Filename:      "servora/authz/v1/authz.proto",
 	},
 }
@@ -165,8 +173,14 @@ var file_servora_authz_v1_authz_proto_extTypes = []protoimpl.ExtensionInfo{
 var (
 	// rule declares the authorization requirement for an RPC method.
 	//
-	// optional servora.authz.v1.AuthzRule rule = 50100;
+	// optional servora.authz.v1.AuthzRule rule = 50200;
 	E_Rule = &file_servora_authz_v1_authz_proto_extTypes[0]
+)
+
+// Extension fields to descriptorpb.ServiceOptions.
+var (
+	// optional servora.authz.v1.AuthzRule service_default = 50201;
+	E_ServiceDefault = &file_servora_authz_v1_authz_proto_extTypes[1]
 )
 
 var File_servora_authz_v1_authz_proto protoreflect.FileDescriptor
@@ -184,7 +198,8 @@ const file_servora_authz_v1_authz_proto_rawDesc = "" +
 	"\x16AUTHZ_MODE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fAUTHZ_MODE_NONE\x10\x01\x12\x14\n" +
 	"\x10AUTHZ_MODE_CHECK\x10\x02:Q\n" +
-	"\x04rule\x12\x1e.google.protobuf.MethodOptions\x18\xb4\x87\x03 \x01(\v2\x1b.servora.authz.v1.AuthzRuleR\x04ruleB\xc8\x01\n" +
+	"\x04rule\x12\x1e.google.protobuf.MethodOptions\x18\x98\x88\x03 \x01(\v2\x1b.servora.authz.v1.AuthzRuleR\x04rule:g\n" +
+	"\x0fservice_default\x12\x1f.google.protobuf.ServiceOptions\x18\x99\x88\x03 \x01(\v2\x1b.servora.authz.v1.AuthzRuleR\x0eserviceDefaultB\xc8\x01\n" +
 	"\x14com.servora.authz.v1B\n" +
 	"AuthzProtoP\x01ZBgithub.com/Servora-Kit/servora/api/gen/go/servora/authz/v1;authzpb\xa2\x02\x03SAX\xaa\x02\x10Servora.Authz.V1\xca\x02\x10Servora\\Authz\\V1\xe2\x02\x1cServora\\Authz\\V1\\GPBMetadata\xea\x02\x12Servora::Authz::V1b\x06proto3"
 
@@ -203,18 +218,21 @@ func file_servora_authz_v1_authz_proto_rawDescGZIP() []byte {
 var file_servora_authz_v1_authz_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_servora_authz_v1_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_servora_authz_v1_authz_proto_goTypes = []any{
-	(AuthzMode)(0),                     // 0: servora.authz.v1.AuthzMode
-	(*AuthzRule)(nil),                  // 1: servora.authz.v1.AuthzRule
-	(*descriptorpb.MethodOptions)(nil), // 2: google.protobuf.MethodOptions
+	(AuthzMode)(0),                      // 0: servora.authz.v1.AuthzMode
+	(*AuthzRule)(nil),                   // 1: servora.authz.v1.AuthzRule
+	(*descriptorpb.MethodOptions)(nil),  // 2: google.protobuf.MethodOptions
+	(*descriptorpb.ServiceOptions)(nil), // 3: google.protobuf.ServiceOptions
 }
 var file_servora_authz_v1_authz_proto_depIdxs = []int32{
 	0, // 0: servora.authz.v1.AuthzRule.mode:type_name -> servora.authz.v1.AuthzMode
 	2, // 1: servora.authz.v1.rule:extendee -> google.protobuf.MethodOptions
-	1, // 2: servora.authz.v1.rule:type_name -> servora.authz.v1.AuthzRule
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	2, // [2:3] is the sub-list for extension type_name
-	1, // [1:2] is the sub-list for extension extendee
+	3, // 2: servora.authz.v1.service_default:extendee -> google.protobuf.ServiceOptions
+	1, // 3: servora.authz.v1.rule:type_name -> servora.authz.v1.AuthzRule
+	1, // 4: servora.authz.v1.service_default:type_name -> servora.authz.v1.AuthzRule
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	3, // [3:5] is the sub-list for extension type_name
+	1, // [1:3] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
 }
 
@@ -230,7 +248,7 @@ func file_servora_authz_v1_authz_proto_init() {
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_authz_v1_authz_proto_rawDesc), len(file_servora_authz_v1_authz_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   1,
-			NumExtensions: 1,
+			NumExtensions: 2,
 			NumServices:   0,
 		},
 		GoTypes:           file_servora_authz_v1_authz_proto_goTypes,

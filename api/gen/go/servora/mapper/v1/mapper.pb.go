@@ -226,17 +226,17 @@ var file_servora_mapper_v1_mapper_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
 		ExtensionType: (*MapperMessageRule)(nil),
-		Field:         50200,
+		Field:         50000,
 		Name:          "servora.mapper.v1.mapper",
-		Tag:           "bytes,50200,opt,name=mapper",
+		Tag:           "bytes,50000,opt,name=mapper",
 		Filename:      "servora/mapper/v1/mapper.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.FieldOptions)(nil),
 		ExtensionType: (*MapperFieldRule)(nil),
-		Field:         50201,
+		Field:         50001,
 		Name:          "servora.mapper.v1.mapper_field",
-		Tag:           "bytes,50201,opt,name=mapper_field",
+		Tag:           "bytes,50001,opt,name=mapper_field",
 		Filename:      "servora/mapper/v1/mapper.proto",
 	},
 }
@@ -245,7 +245,7 @@ var file_servora_mapper_v1_mapper_proto_extTypes = []protoimpl.ExtensionInfo{
 var (
 	// mapper declares mapper code generation rules for this message.
 	//
-	// optional servora.mapper.v1.MapperMessageRule mapper = 50200;
+	// optional servora.mapper.v1.MapperMessageRule mapper = 50000;
 	E_Mapper = &file_servora_mapper_v1_mapper_proto_extTypes[0]
 )
 
@@ -253,7 +253,7 @@ var (
 var (
 	// mapper_field declares per-field mapping rules.
 	//
-	// optional servora.mapper.v1.MapperFieldRule mapper_field = 50201;
+	// optional servora.mapper.v1.MapperFieldRule mapper_field = 50001;
 	E_MapperField = &file_servora_mapper_v1_mapper_proto_extTypes[1]
 )
 
@@ -279,8 +279,8 @@ const file_servora_mapper_v1_mapper_proto_rawDesc = "" +
 	"\x1aCONVERTER_KIND_ENUM_STRING\x10\x05\x12\x1e\n" +
 	"\x1aCONVERTER_KIND_UUID_STRING\x10\x06\x12\x1c\n" +
 	"\x18CONVERTER_KIND_INT_INT32\x10\a:_\n" +
-	"\x06mapper\x12\x1f.google.protobuf.MessageOptions\x18\x98\x88\x03 \x01(\v2$.servora.mapper.v1.MapperMessageRuleR\x06mapper:f\n" +
-	"\fmapper_field\x12\x1d.google.protobuf.FieldOptions\x18\x99\x88\x03 \x01(\v2\".servora.mapper.v1.MapperFieldRuleR\vmapperFieldB\xd0\x01\n" +
+	"\x06mapper\x12\x1f.google.protobuf.MessageOptions\x18І\x03 \x01(\v2$.servora.mapper.v1.MapperMessageRuleR\x06mapper:f\n" +
+	"\fmapper_field\x12\x1d.google.protobuf.FieldOptions\x18ц\x03 \x01(\v2\".servora.mapper.v1.MapperFieldRuleR\vmapperFieldB\xd0\x01\n" +
 	"\x15com.servora.mapper.v1B\vMapperProtoP\x01ZDgithub.com/Servora-Kit/servora/api/gen/go/servora/mapper/v1;mapperpb\xa2\x02\x03SMX\xaa\x02\x11Servora.Mapper.V1\xca\x02\x11Servora\\Mapper\\V1\xe2\x02\x1dServora\\Mapper\\V1\\GPBMetadata\xea\x02\x13Servora::Mapper::V1b\x06proto3"
 
 var (
