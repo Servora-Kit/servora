@@ -71,3 +71,8 @@ plugins:
     - local: protoc-gen-servora-audit
       out: api/gen/go
       opt: paths=source_relative
+
+    # generate authn rules from proto annotations
+    - local: protoc-gen-servora-authn
+      out: api/gen/go
+      opt: paths=source_relative
