@@ -47,6 +47,14 @@ func transportCtx(headers map[string]string) context.Context {
 	return audit.InstallHolder(ctx)
 }
 
+// holderCtx 返回 audit holder ctx，不挂 transport——用于 dispatcher-only 路径测试。
+// dispatcher 重构后 main package 不再读 transport；新增的 dispatcher-only 测试用这个，
+// 与 transportCtx 的语义区分开：用 transportCtx 的测试是"端到端 collector 管线相关"，
+// 用 holderCtx 的测试是"纯 dispatcher 行为"。
+func holderCtx() context.Context {
+	return audit.InstallHolder(context.Background())
+}
+
 // fakeAuthenticator is a minimal Authenticator for unit tests. After the
 // engine-agnostic refactor the interface contains only `Authenticate` —
 // `Method()` has moved to the wrapper layer via `WithMethod` option.
@@ -369,22 +377,70 @@ func TestServer_DoesNotCallTransportFromServerContext(t *testing.T) {
 
 // TestServer_MethodFromWithMethodOption asserts the Method field of the
 // ctx-bound AuthnDetail equals the string passed to WithMethod(...).
+//
+// The table drives BOTH branches inside Server's dispatch:
+//   - success branch (authenticator returns an actor, nil error)
+//   - failure branch (authenticator returns an error; ctx is still written
+//     before returning so an outer Collector can emit)
+//
+// Empty-string method is also covered: the framework main package is
+// agnostic to the string; missing/empty must NOT crash and must be written
+// verbatim into AuthnDetail.Method (no silent "default to jwt" fallback).
 func TestServer_MethodFromWithMethodOption(t *testing.T) {
-	cases := []string{"jwt", "mtls", "passkey", "custom-engine"}
-	for _, m := range cases {
-		m := m
-		t.Run(m, func(t *testing.T) {
-			auth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
-			mw := Server(auth, WithMethod(m))
+	failure := errors.New("test failure")
 
+	cases := []struct {
+		name    string
+		method  string
+		withErr bool // when true, fakeAuthenticator returns `failure`
+	}{
+		{"jwt-success", "jwt", false},
+		{"jwt-failure", "jwt", true},
+		{"mtls-success", "mtls", false},
+		{"passkey-success", "passkey", false},
+		{"custom-failure", "custom-engine", true},
+		{"empty-success", "", false},
+		{"empty-failure", "", true},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			var auth *fakeAuthenticator
+			if tc.withErr {
+				auth = &fakeAuthenticator{returnErr: failure}
+			} else {
+				auth = &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
+			}
+
+			// capturedCtx is filled either by the inner handler (success path)
+			// or by the WithErrorHandler hook (failure path — handler does not
+			// run when authn fails).
 			var capturedCtx context.Context
+			opts := []Option{WithMethod(tc.method)}
+			if tc.withErr {
+				opts = append(opts, WithErrorHandler(func(ctx context.Context, err error) error {
+					capturedCtx = ctx
+					return err
+				}))
+			}
+			mw := Server(auth, opts...)
+
 			handler := mw(func(ctx context.Context, _ any) (any, error) {
+				if tc.withErr {
+					t.Fatal("handler should not run on auth failure")
+				}
 				capturedCtx = ctx
 				return nil, nil
 			})
 
-			ctx := transportCtx(map[string]string{})
-			if _, err := handler(ctx, nil); err != nil {
+			ctx := holderCtx()
+			_, err := handler(ctx, nil)
+			if tc.withErr {
+				if !errors.Is(err, failure) {
+					t.Fatalf("err = %v, want %v", err, failure)
+				}
+			} else if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
@@ -392,8 +448,23 @@ func TestServer_MethodFromWithMethodOption(t *testing.T) {
 			if !ok {
 				t.Fatal("expected AuthnDetail in ctx")
 			}
-			if d.Method != m {
-				t.Errorf("Method = %q, want %q (from WithMethod option)", d.Method, m)
+			if d.Method != tc.method {
+				t.Errorf("Method = %q, want %q (from WithMethod option)", d.Method, tc.method)
+			}
+			if tc.withErr {
+				if d.Success {
+					t.Errorf("Success = true, want false (failure branch)")
+				}
+				if d.FailureReason != failure.Error() {
+					t.Errorf("FailureReason = %q, want %q", d.FailureReason, failure.Error())
+				}
+			} else {
+				if !d.Success {
+					t.Errorf("Success = false, want true (success branch)")
+				}
+				if d.FailureReason != "" {
+					t.Errorf("FailureReason = %q, want empty (success branch)", d.FailureReason)
+				}
 			}
 		})
 	}
