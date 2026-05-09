@@ -8,9 +8,10 @@ Shared protobuf definitions for the [Servora](https://github.com/Servora-Kit/ser
 |---------|-------------|
 | `servora.conf.v1` | Bootstrap configuration structure |
 | `servora.pagination.v1` | Pagination request/response messages |
-| `servora.authz.v1` | Authorization annotation extensions for `protoc-gen-servora-authz` |
-| `servora.audit.v1` | Audit annotation extensions for `protoc-gen-servora-audit` |
-| `servora.mapper.v1` | Object mapping annotation extensions for `protoc-gen-servora-mapper` |
+| `servora.mapper.v1` | Object mapping annotation extensions for `protoc-gen-servora-mapper` (extension numbers `5000x`) |
+| `servora.audit.v1` | Audit annotation extensions for `protoc-gen-servora-audit` (extension `5010x`, supports service-level `service_default` + three-state `AuditMode` / `ErrorRecordMode` enums) |
+| `servora.authz.v1` | Authorization annotation extensions for `protoc-gen-servora-authz` (extension `5020x`, supports service-level `service_default`) |
+| `servora.authn.v1` | Authentication annotation extensions for `protoc-gen-servora-authn` (extension `5030x`, supports service-level `service_default` + `schemes` / `credentials_locations` fields) |
 
 ## Usage
 
