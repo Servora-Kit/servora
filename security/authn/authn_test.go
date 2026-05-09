@@ -3,6 +3,8 @@ package authn
 import (
 	"context"
 	"errors"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -11,10 +13,11 @@ import (
 	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/Servora-Kit/servora/obs/audit"
-	svrmw "github.com/Servora-Kit/servora/transport/server/middleware"
 )
 
 // fakeTransport implements transport.Transporter for test purposes.
+// Retained because some scenarios still build a transport-bearing ctx for
+// realism even though the dispatcher itself no longer reads transport.
 type fakeTransport struct {
 	headers map[string]string
 }
@@ -38,29 +41,18 @@ func (h *fakeHeader) Values(key string) []string { return nil }
 // transportCtx builds a server-side ctx with a fake transport AND a fresh
 // audit detail holder. The holder install mirrors what audit.Collector does
 // at the chain entry in production: without it, security middleware writes
-// (audit.WithAuthnResult / audit.WithAuthzResult) silently drop. Tests that
-// need to assert ctx-bound details after the middleware runs require the
-// holder to be present up-front.
+// (audit.WithAuthnResult / audit.WithAuthzResult) silently drop.
 func transportCtx(headers map[string]string) context.Context {
 	ctx := transport.NewServerContext(context.Background(), &fakeTransport{headers: headers})
 	return audit.InstallHolder(ctx)
 }
 
-// fakeAuthenticator is a minimal Authenticator for unit tests.
-// `method` allows tests to verify the middleware writes engine.Method() into
-// ctx instead of hard-coding a scheme. Empty `method` defaults to "jwt" for
-// backwards-compatibility with the legacy non-Method-aware tests.
+// fakeAuthenticator is a minimal Authenticator for unit tests. After the
+// engine-agnostic refactor the interface contains only `Authenticate` —
+// `Method()` has moved to the wrapper layer via `WithMethod` option.
 type fakeAuthenticator struct {
-	method      string
 	returnActor actor.Actor
 	returnErr   error
-}
-
-func (f *fakeAuthenticator) Method() string {
-	if f.method == "" {
-		return "jwt"
-	}
-	return f.method
 }
 
 func (f *fakeAuthenticator) Authenticate(_ context.Context) (actor.Actor, error) {
@@ -73,35 +65,12 @@ func (f *fakeAuthenticator) Authenticate(_ context.Context) (actor.Actor, error)
 	return f.returnActor, nil
 }
 
-// TestServer_NoTransport_AnonymousActor checks that without a transport context an
-// anonymous actor is injected and the authenticator is not called.
-func TestServer_NoTransport_AnonymousActor(t *testing.T) {
-	auth := &fakeAuthenticator{}
-	mw := Server(auth)
-
-	handler := mw(func(ctx context.Context, req any) (any, error) {
-		a, ok := actor.FromContext(ctx)
-		if !ok {
-			t.Fatal("expected actor in context")
-		}
-		if a.Type() != actor.TypeAnonymous {
-			t.Errorf("expected TypeAnonymous, got %v", a.Type())
-		}
-		return nil, nil
-	})
-
-	_, err := handler(context.Background(), nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-// TestServer_NoToken_AuthenticatorCalled checks that with no token, the authenticator
-// is still called and its result is used.
-func TestServer_NoToken_AuthenticatorCalled(t *testing.T) {
+// TestServer_AuthenticatorCalled checks that the authenticator is invoked and
+// its returned actor is propagated into ctx for the handler.
+func TestServer_AuthenticatorCalled(t *testing.T) {
 	userActor := actor.NewUserActor(actor.UserActorParams{ID: "u1", DisplayName: "Test"})
 	auth := &fakeAuthenticator{returnActor: userActor}
-	mw := Server(auth)
+	mw := Server(auth, WithMethod("jwt"))
 
 	handler := mw(func(ctx context.Context, req any) (any, error) {
 		a, ok := actor.FromContext(ctx)
@@ -124,43 +93,18 @@ func TestServer_NoToken_AuthenticatorCalled(t *testing.T) {
 	}
 }
 
-// TestServer_WithToken_TokenStoredInContext checks that the raw Bearer token is stored
-// in context for downstream consumers.
-func TestServer_WithToken_TokenStoredInContext(t *testing.T) {
-	auth := &fakeAuthenticator{}
-	mw := Server(auth)
-
-	const rawToken = "myrawtoken"
-	handler := mw(func(ctx context.Context, req any) (any, error) {
-		tok, hasTok := svrmw.TokenFromContext(ctx)
-		if !hasTok {
-			t.Fatal("expected token in context")
-		}
-		if tok != rawToken {
-			t.Errorf("token = %q, want %q", tok, rawToken)
-		}
-		return nil, nil
-	})
-
-	ctx := transportCtx(map[string]string{"Authorization": "Bearer " + rawToken})
-	_, err := handler(ctx, nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
 // TestServer_AuthenticatorError_Propagated checks that errors from the authenticator propagate.
 func TestServer_AuthenticatorError_Propagated(t *testing.T) {
 	sentinel := errors.New("auth failed")
 	auth := &fakeAuthenticator{returnErr: sentinel}
-	mw := Server(auth)
+	mw := Server(auth, WithMethod("jwt"))
 
 	handler := mw(func(ctx context.Context, req any) (any, error) {
 		t.Fatal("handler should not be called on auth error")
 		return nil, nil
 	})
 
-	ctx := transportCtx(map[string]string{"Authorization": "Bearer sometoken"})
+	ctx := transportCtx(map[string]string{})
 	_, err := handler(ctx, nil)
 	if !errors.Is(err, sentinel) {
 		t.Errorf("err = %v, want sentinel", err)
@@ -172,14 +116,17 @@ func TestServer_CustomErrorHandler_InvokedOnError(t *testing.T) {
 	sentinel := errors.New("auth failed")
 	customErr := errors.New("custom error")
 	auth := &fakeAuthenticator{returnErr: sentinel}
-	mw := Server(auth, WithErrorHandler(func(_ context.Context, _ error) error { return customErr }))
+	mw := Server(auth,
+		WithMethod("jwt"),
+		WithErrorHandler(func(_ context.Context, _ error) error { return customErr }),
+	)
 
 	handler := mw(func(ctx context.Context, req any) (any, error) {
 		t.Fatal("handler should not be called on auth error")
 		return nil, nil
 	})
 
-	ctx := transportCtx(map[string]string{"Authorization": "Bearer sometoken"})
+	ctx := transportCtx(map[string]string{})
 	_, err := handler(ctx, nil)
 	if !errors.Is(err, customErr) {
 		t.Errorf("err = %v, want customErr", err)
@@ -198,7 +145,7 @@ func TestServer_WritesAuthnResultToContext(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		userActor := actor.NewUserActor(actor.UserActorParams{ID: "u1", DisplayName: "Test"})
 		auth := &fakeAuthenticator{returnActor: userActor}
-		mw := Server(auth)
+		mw := Server(auth, WithMethod("jwt"))
 
 		var capturedCtx context.Context
 		handler := mw(func(ctx context.Context, req any) (any, error) {
@@ -206,7 +153,7 @@ func TestServer_WritesAuthnResultToContext(t *testing.T) {
 			return nil, nil
 		})
 
-		ctx := transportCtx(map[string]string{"Authorization": "Bearer sometoken"})
+		ctx := transportCtx(map[string]string{})
 		if _, err := handler(ctx, nil); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -234,17 +181,20 @@ func TestServer_WritesAuthnResultToContext(t *testing.T) {
 		// wrote to before returning the error. The handler itself never runs
 		// on failure, so we cannot capture via the inner closure.
 		var capturedCtx context.Context
-		mw := Server(auth, WithErrorHandler(func(ctx context.Context, err error) error {
-			capturedCtx = ctx
-			return err
-		}))
+		mw := Server(auth,
+			WithMethod("jwt"),
+			WithErrorHandler(func(ctx context.Context, err error) error {
+				capturedCtx = ctx
+				return err
+			}),
+		)
 
 		handler := mw(func(ctx context.Context, req any) (any, error) {
 			t.Fatal("handler should not run on auth failure")
 			return nil, nil
 		})
 
-		ctx := transportCtx(map[string]string{"Authorization": "Bearer sometoken"})
+		ctx := transportCtx(map[string]string{})
 		if _, err := handler(ctx, nil); !errors.Is(err, sentinel) {
 			t.Fatalf("err = %v, want sentinel", err)
 		}
@@ -266,7 +216,7 @@ func TestServer_WritesAuthnResultToContext(t *testing.T) {
 
 	t.Run("anonymous", func(t *testing.T) {
 		auth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
-		mw := Server(auth)
+		mw := Server(auth, WithMethod("jwt"))
 
 		var capturedCtx context.Context
 		handler := mw(func(ctx context.Context, req any) (any, error) {
@@ -293,83 +243,6 @@ func TestServer_WritesAuthnResultToContext(t *testing.T) {
 			t.Errorf("FailureReason = %q, want empty", d.FailureReason)
 		}
 	})
-
-	t.Run("no-transport", func(t *testing.T) {
-		auth := &fakeAuthenticator{}
-		mw := Server(auth)
-
-		var capturedCtx context.Context
-		handler := mw(func(ctx context.Context, req any) (any, error) {
-			capturedCtx = ctx
-			return nil, nil
-		})
-
-		// No transport in ctx — early-return path. Treated as "anonymous
-		// success" for symmetry with the in-engine missing-header path.
-		// Holder must still be installed so the middleware's WithAuthnResult
-		// write lands somewhere observable; in production audit.Collector
-		// does this at chain entry.
-		if _, err := handler(audit.InstallHolder(context.Background()), nil); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		d, ok := audit.AuthnResultFrom(capturedCtx)
-		if !ok {
-			t.Fatal("expected AuthnDetail in ctx for no-transport path")
-		}
-		if d.Method != "jwt" {
-			t.Errorf("Method = %q, want jwt", d.Method)
-		}
-		if !d.Success {
-			t.Errorf("Success = false, want true")
-		}
-		if d.FailureReason != "" {
-			t.Errorf("FailureReason = %q, want empty", d.FailureReason)
-		}
-	})
-}
-
-// TestServer_MethodFromEngine is a regression guard: the Method string in the
-// ctx-written AuthnDetail MUST come from authenticator.Method() — never
-// hard-coded inside the middleware. If anyone reverts to a literal "jwt",
-// the mtls/noop sub-cases will fail.
-func TestServer_MethodFromEngine(t *testing.T) {
-	cases := []struct {
-		method string
-	}{
-		{"jwt"},
-		{"mtls"},
-		{"noop"},
-	}
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.method, func(t *testing.T) {
-			auth := &fakeAuthenticator{
-				method:      tc.method,
-				returnActor: actor.NewAnonymousActor(),
-			}
-			mw := Server(auth)
-
-			var capturedCtx context.Context
-			handler := mw(func(ctx context.Context, req any) (any, error) {
-				capturedCtx = ctx
-				return nil, nil
-			})
-
-			ctx := transportCtx(map[string]string{})
-			if _, err := handler(ctx, nil); err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			d, ok := audit.AuthnResultFrom(capturedCtx)
-			if !ok {
-				t.Fatal("expected AuthnDetail in ctx")
-			}
-			if d.Method != tc.method {
-				t.Errorf("Method = %q, want %q (engine is source of truth)", d.Method, tc.method)
-			}
-		})
-	}
 }
 
 // captureEmitter is a minimal audit.Emitter for end-to-end assembly tests.
@@ -391,11 +264,6 @@ func (e *captureEmitter) Close() error { return nil }
 // authn short-circuits on failure, an OUTER-mounted Collector should still
 // run in the LIFO post-phase and emit the AUTHN_RESULT event from the
 // ctx-bound AuthnDetail.
-//
-// Now passes: obs/audit adopted the mutable-holder pattern (Collector
-// installs a *detailHolder at chain entry; inner WithAuthnResult mutates
-// it; outer Collector reads it post-handler). See obs/audit/context.go's
-// detailHolder docstring.
 func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
 	emitter := &captureEmitter{}
 	rec := audit.NewRecorder(emitter, "test-svc")
@@ -404,13 +272,13 @@ func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
 	failAuth := &fakeAuthenticator{returnErr: sentinel}
 
 	// Correct mounting per spec: Collector OUTER, authn INNER.
-	chain := middleware.Chain(audit.Collector(rec), Server(failAuth))
+	chain := middleware.Chain(audit.Collector(rec), Server(failAuth, WithMethod("jwt")))
 	handler := chain(func(ctx context.Context, req any) (any, error) {
 		t.Fatal("inner handler must not run on authn failure")
 		return nil, nil
 	})
 
-	ctx := transportCtx(map[string]string{"Authorization": "Bearer x"})
+	ctx := transportCtx(map[string]string{})
 	if _, err := handler(ctx, nil); !errors.Is(err, sentinel) {
 		t.Errorf("err = %v, want sentinel", err)
 	}
@@ -437,23 +305,96 @@ func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
 	}
 }
 
-// TestExtractBearerToken checks the exported helper.
-func TestExtractBearerToken(t *testing.T) {
-	cases := []struct {
-		header string
-		want   string
-	}{
-		{"", ""},
-		{"Bearer mytoken", "mytoken"},
-		{"bearer mytoken", "mytoken"},
-		{"BEARER mytoken", "mytoken"},
-		{"Basic abc123", ""},
-		{"mytoken", ""},
-	}
-	for _, tc := range cases {
-		got := ExtractBearerToken(tc.header)
-		if got != tc.want {
-			t.Errorf("ExtractBearerToken(%q) = %q, want %q", tc.header, got, tc.want)
+// ============================================================================
+// New tests for the engine-agnostic refactor (Task 1).
+// ============================================================================
+
+// minimalAuthenticator implements the post-refactor `Authenticator` interface
+// with ONLY one method `Authenticate`. The compile-time assertion below is the
+// regression guard: if anyone re-adds `Method() string` to the interface, this
+// file fails to compile.
+type minimalAuthenticator struct{}
+
+func (minimalAuthenticator) Authenticate(_ context.Context) (actor.Actor, error) {
+	return actor.NewAnonymousActor(), nil
+}
+
+// Compile-time check for the single-method contract. If someone re-adds
+// `Method() string` to the interface, this assertion (and the file) fails to
+// compile — the cheapest possible regression guard.
+var _ Authenticator = (*minimalAuthenticator)(nil)
+
+// TestAuthenticator_SingleMethodInterface — runtime smoke that the minimal
+// Authenticator (no Method()) compiles & runs through Server.
+func TestAuthenticator_SingleMethodInterface(t *testing.T) {
+	mw := Server(&minimalAuthenticator{}, WithMethod("minimal"))
+	handler := mw(func(ctx context.Context, _ any) (any, error) {
+		a, ok := actor.FromContext(ctx)
+		if !ok {
+			t.Fatal("expected actor in ctx")
 		}
+		if a.Type() != actor.TypeAnonymous {
+			t.Errorf("actor.Type = %v, want anonymous", a.Type())
+		}
+		return nil, nil
+	})
+
+	if _, err := handler(audit.InstallHolder(context.Background()), nil); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestServer_DoesNotCallTransportFromServerContext is a structural guard: read
+// the source of authn.go and assert there is no `transport.FromServerContext`
+// reference. Equivalent to grepping the source file.
+func TestServer_DoesNotCallTransportFromServerContext(t *testing.T) {
+	src, err := os.ReadFile("authn.go")
+	if err != nil {
+		t.Fatalf("read authn.go: %v", err)
+	}
+	body := string(src)
+	if strings.Contains(body, "transport.FromServerContext") {
+		t.Error("authn.go MUST NOT reference transport.FromServerContext after refactor")
+	}
+	if strings.Contains(body, "ExtractBearerToken") {
+		t.Error("authn.go MUST NOT reference ExtractBearerToken after refactor (moved to jwt sub-package as private)")
+	}
+	if strings.Contains(body, "svrmw") {
+		t.Error("authn.go MUST NOT import or reference svrmw (transport server middleware) after refactor")
+	}
+	if strings.Contains(body, "authenticator.Method()") {
+		t.Error("authn.go MUST NOT call authenticator.Method() after refactor; method comes from WithMethod option")
+	}
+}
+
+// TestServer_MethodFromWithMethodOption asserts the Method field of the
+// ctx-bound AuthnDetail equals the string passed to WithMethod(...).
+func TestServer_MethodFromWithMethodOption(t *testing.T) {
+	cases := []string{"jwt", "mtls", "passkey", "custom-engine"}
+	for _, m := range cases {
+		m := m
+		t.Run(m, func(t *testing.T) {
+			auth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
+			mw := Server(auth, WithMethod(m))
+
+			var capturedCtx context.Context
+			handler := mw(func(ctx context.Context, _ any) (any, error) {
+				capturedCtx = ctx
+				return nil, nil
+			})
+
+			ctx := transportCtx(map[string]string{})
+			if _, err := handler(ctx, nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			d, ok := audit.AuthnResultFrom(capturedCtx)
+			if !ok {
+				t.Fatal("expected AuthnDetail in ctx")
+			}
+			if d.Method != m {
+				t.Errorf("Method = %q, want %q (from WithMethod option)", d.Method, m)
+			}
+		})
 	}
 }
