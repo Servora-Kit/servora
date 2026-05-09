@@ -125,3 +125,15 @@ go test ./security/authn/...
 - 若新增认证引擎，在 `security/authn/<engine>/` 建子目录，实现 `authn.Authenticator`（含 `Method()`）
 - JWT 引擎依赖 `svrmw.TokenFromContext`，确保 `Server()` 在引擎 `Authenticate()` 前已写入 token context
 - 若 `auditpb.AuthnDetail` 字段调整，先改 proto + `make gen`，本包 ctx 写入处随 schema 自动更新
+
+## authn 注解 schemes 字段（v0.5.x 起）
+
+`servora.authn.v1.AuthnRule.schemes`（与 `AuthnServiceDefault.schemes`）字段已在 proto schema 中落地，`protoc-gen-servora-authn` 也会把它生成到 `MethodSchemes()` 表中——**但运行时尚未消费**。当前 `security/authn.Server()` 中间件仍走"单 Authenticator 实例"模型：构造期注入哪一个 engine，请求期就跑哪一个，schemes 字段仅作为静态元数据存在于生成产物里。
+
+后续多机制派发（按方法级 `schemes` 在 middleware 内动态选择 / 串联多个 `Authenticator`）跟踪在 `docs/plans/TODO.md` 的 **[P0-4b]**，依赖 **[P0-6 authn 包重构去 JWT 偏向]** 完成后再落地。本期 servora 框架的 `Authenticator` 接口、`Server()` 中间件签名、以及 audit ctx 写入路径**完全不变**——升级 v0.5.x 不会破坏既有 wire 接线。
+
+设计意图（写下来防忘）：
+
+- 接口层（`Authenticator`）保持引擎无关，schemes 派发逻辑应落在 `Server()` 上层（dispatcher / chain），而非塞进单个 engine
+- 派发表的来源是 plugin 生成的 `MethodSchemes()`（已就位），调用方在装配期把"scheme 名 → engine 实例"映射注入 dispatcher
+- mTLS / api-key 等新引擎到位前，schemes 字段在生产 proto 中应当填，但运行时如果只配了 jwt engine 也不会报错（fallback 行为见 P0-4b 设计稿）

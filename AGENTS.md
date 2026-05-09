@@ -29,11 +29,18 @@
 
 | 注解 | 编号 | 消费者 |
 |------|-----|--------|
-| `servora.audit.v1.audit_rule` | 50000 | `protoc-gen-servora-audit` |
-| `servora.authz.v1.authz_rule` | 50001 | `protoc-gen-servora-authz` |
-| `servora.mapper.v1.mapper` | 50002 | `protoc-gen-servora-mapper` |
+| `servora.mapper.v1.mapper`（MessageOptions） | 50000 | `protoc-gen-servora-mapper` |
+| `servora.mapper.v1.mapper_field`（FieldOptions） | 50001 | `protoc-gen-servora-mapper` |
+| `servora.audit.v1.audit_rule`（MethodOptions） | 50100 | `protoc-gen-servora-audit` |
+| `servora.audit.v1.service_default`（ServiceOptions） | 50101 | `protoc-gen-servora-audit` |
+| `servora.authz.v1.rule`（MethodOptions） | 50200 | `protoc-gen-servora-authz` |
+| `servora.authz.v1.service_default`（ServiceOptions） | 50201 | `protoc-gen-servora-authz` |
+| `servora.authn.v1.rule`（MethodOptions） | 50300 | `protoc-gen-servora-authn` |
+| `servora.authn.v1.service_default`（ServiceOptions） | 50301 | `protoc-gen-servora-authn` |
 
-新增注解编号从 50000 起递增。
+号段约定：每命名空间 `5xx00` 起步，`+0` 给 method 级、`+1` 给 service 级默认；新增命名空间往后递推 `5xx00`。
+
+服务级默认（`service_default`）与方法级注解的合并语义统一为：方法级显式字段覆盖服务级默认；未显式设置的字段继承服务级默认；零值与未设置在 proto3 标量字段下不可区分，因此应优先使用 enum / message 包装类型表达"未设置"。详细规则见各 plugin 文档与 `cmd/protoc-gen-servora-{audit,authz,authn}/` 测试套件。
 
 ### 新增 Proto 流程
 
