@@ -32,5 +32,12 @@ message AuthzRule {
 
 extend google.protobuf.MethodOptions {
   // rule declares the authorization requirement for an RPC method.
-  AuthzRule rule = 50100;
+  AuthzRule rule = 50200;
+}
+
+// 服务级默认：在 service 块内声明，作为该 service 下未显式标 rule 或 mode 为
+// UNSPECIFIED 的方法的默认值，由 protoc-gen-servora-authz 按「服务级默认 +
+// 方法级覆盖」语义合并消费。
+extend google.protobuf.ServiceOptions {
+  AuthzRule service_default = 50201;
 }

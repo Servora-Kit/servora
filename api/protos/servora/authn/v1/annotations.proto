@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package servora.authn.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/authn/v1;authnpb";
+
+// AuthnRule 声明 RPC 方法的认证策略。
+message AuthnRule {
+  // Mode 表达认证模式三态。
+  enum Mode {
+    // 未指定，等价"未写注解"：私有 + 框架默认引擎（fail-closed 默认）。
+    MODE_UNSPECIFIED = 0;
+    // 显式公开。schemes 必须为空。
+    MODE_PUBLIC = 1;
+    // 必须用 schemes 指定的认证机制。schemes 必须非空。
+    MODE_REQUIRED = 2;
+  }
+
+  // 认证模式。
+  Mode mode = 1;
+
+  // 接受的认证机制；空列表表示沿用框架默认引擎。
+  // 取值与 Authenticator.Method() 返回值对齐，例如 "jwt"、"mtls"、"api_key"。
+  // 多个值表示"任一通过即可"。
+  repeated string schemes = 2;
+}
+
+// 服务级默认：在 service 块内声明，作为该 service 下未显式标 rule 或 mode 为
+// MODE_UNSPECIFIED 的方法的默认值，由 protoc-gen-servora-authn 按「服务级默认 +
+// 方法级覆盖」语义合并消费。
+extend google.protobuf.ServiceOptions {
+  AuthnRule service_default = 50301;
+}
+
+// 方法级覆盖：在 RPC 方法块内声明。当 mode != MODE_UNSPECIFIED 时整段覆盖服务级
+// 默认（schemes 一并替换，不做字段级合并），由 protoc-gen-servora-authn 消费。
+extend google.protobuf.MethodOptions {
+  AuthnRule rule = 50300;
+}

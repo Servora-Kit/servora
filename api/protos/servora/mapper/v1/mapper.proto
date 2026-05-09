@@ -47,10 +47,10 @@ message MapperFieldRule {
 
 extend google.protobuf.MessageOptions {
   // mapper declares mapper code generation rules for this message.
-  MapperMessageRule mapper = 50200;
+  MapperMessageRule mapper = 50000;
 }
 
 extend google.protobuf.FieldOptions {
   // mapper_field declares per-field mapping rules.
-  MapperFieldRule mapper_field = 50201;
+  MapperFieldRule mapper_field = 50001;
 }
