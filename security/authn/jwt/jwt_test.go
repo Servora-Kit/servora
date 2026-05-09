@@ -153,25 +153,88 @@ func TestServer_ExtractsBearerAndDispatches(t *testing.T) {
 	}
 }
 
-// TestClient_PropagatesToken asserts the client middleware reads the token
-// from the jwt-private ctx channel and sets the outbound Authorization header.
+// TestClient_PropagatesToken asserts Client() correctly propagates the token
+// in the happy path AND silently passes through on every precondition miss
+// (no token in ctx, empty token, no client transport). For all four cases
+// the inner handler must run exactly once with no panic and no error.
 func TestClient_PropagatesToken(t *testing.T) {
-	mw := Client()
-
-	ctx, tr := clientCtx()
-	ctx = WithToken(ctx, "abc123")
-
-	handler := mw(func(_ context.Context, _ any) (any, error) {
-		return "ok", nil
-	})
-
-	if _, err := handler(ctx, nil); err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	cases := []struct {
+		name string
+		// setup builds the ctx + optional outbound transport. If tr is nil the
+		// ctx has no client transport attached (no-client-transport branch).
+		setup func() (ctx context.Context, tr *fakeClientTransport)
+		// wantHeader is the expected outbound Authorization header value.
+		// Empty string means "header must NOT be set". Ignored when tr is nil.
+		wantHeader string
+	}{
+		{
+			name: "with-token",
+			setup: func() (context.Context, *fakeClientTransport) {
+				ctx, tr := clientCtx()
+				ctx = WithToken(ctx, "abc123")
+				return ctx, tr
+			},
+			wantHeader: "Bearer abc123",
+		},
+		{
+			name: "no-token-in-ctx",
+			setup: func() (context.Context, *fakeClientTransport) {
+				// Client transport present, but WithToken never called.
+				return clientCtx()
+			},
+			wantHeader: "",
+		},
+		{
+			name: "empty-token",
+			setup: func() (context.Context, *fakeClientTransport) {
+				ctx, tr := clientCtx()
+				ctx = WithToken(ctx, "")
+				return ctx, tr
+			},
+			wantHeader: "",
+		},
+		{
+			name: "no-client-transport",
+			setup: func() (context.Context, *fakeClientTransport) {
+				// Token in ctx but no outbound transport attached → middleware
+				// must pass through without panicking. No transport to assert
+				// on; the handler-call assertion below is the contract.
+				ctx := WithToken(context.Background(), "abc123")
+				return ctx, nil
+			},
+			wantHeader: "",
+		},
 	}
 
-	got := tr.headers["Authorization"]
-	if got != "Bearer abc123" {
-		t.Errorf("outbound Authorization = %q, want %q", got, "Bearer abc123")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mw := Client()
+			ctx, tr := tc.setup()
+
+			calls := 0
+			handler := mw(func(_ context.Context, _ any) (any, error) {
+				calls++
+				return "ok", nil
+			})
+
+			got, err := handler(ctx, nil)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != "ok" {
+				t.Errorf("handler return = %v, want %q", got, "ok")
+			}
+			if calls != 1 {
+				t.Errorf("handler calls = %d, want 1", calls)
+			}
+
+			if tr != nil {
+				gotHeader := tr.headers["Authorization"]
+				if gotHeader != tc.wantHeader {
+					t.Errorf("outbound Authorization = %q, want %q", gotHeader, tc.wantHeader)
+				}
+			}
+		})
 	}
 }
 

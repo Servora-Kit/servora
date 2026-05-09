@@ -57,9 +57,11 @@ func NewAuthenticator(opts ...Option) authn.Authenticator {
 	return newAuthenticator(opts...)
 }
 
-// newAuthenticator is the package-private constructor returning the concrete
-// type, used by [Server] / [serverWith] to avoid an interface conversion when
-// composing the wrapper. Behavior is identical to [NewAuthenticator].
+// newAuthenticator is the package-private constructor used by
+// [NewAuthenticator] and [Server] / serverWith to avoid duplicating Option
+// processing; it returns the concrete *authenticator so jwt-package internals
+// can read unexported fields. External callers should use [NewAuthenticator]
+// which returns the [authn.Authenticator] interface.
 func newAuthenticator(opts ...Option) *authenticator {
 	cfg := &authenticatorConfig{
 		claimsMapper: DefaultClaimsMapper(),

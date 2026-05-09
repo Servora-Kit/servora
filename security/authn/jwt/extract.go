@@ -5,6 +5,12 @@ import "strings"
 // extractBearerToken parses the Bearer token out of an Authorization header
 // value. Returns "" if the header is absent or malformed.
 //
+// Robust to extra whitespace between the scheme and the token: the returned
+// token is trimmed of surrounding whitespace, so inputs like "Bearer  abc"
+// (double space) yield "abc" rather than " abc". A whitespace-only or empty
+// remainder (e.g. "Bearer " or "Bearer  ") is treated as no token and
+// returns "".
+//
 // Migrated from the historical public `authn.ExtractBearerToken`: the
 // framework main package no longer hosts credential-carrier parsing because
 // "Bearer" is a jwt-shaped concept (mTLS reads peer certs, API-Key reads a
@@ -20,5 +26,5 @@ func extractBearerToken(header string) string {
 	if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
 		return ""
 	}
-	return parts[1]
+	return strings.TrimSpace(parts[1])
 }

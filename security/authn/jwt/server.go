@@ -43,6 +43,11 @@ func Server(opts ...Option) middleware.Middleware {
 // need to inject a stub Authenticator without going through the public
 // Option chain (which requires a real Verifier dep).
 //
+// The method passed to authn.Server is the package-private [methodName]
+// constant ("jwt") and is NOT injectable; only the Authenticator is. This
+// keeps the engine identifier written into AuthnDetail.Method consistent
+// across every code path that flows through the jwt package.
+//
 // The composition exactly mirrors what Server() produces — keep them in
 // lockstep when changing wrapper semantics.
 func serverWith(auth authn.Authenticator) middleware.Middleware {
