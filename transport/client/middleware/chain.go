@@ -13,6 +13,10 @@ import (
 )
 
 // ChainBuilder 构建标准 client 中间件链。
+//
+// 默认链不包含 jwt token 透传：跨服务调用时若需将入站 Bearer token
+// 转发到下游，调用方需显式 append `security/authn/jwt.Client()`，详见该
+// sub-package godoc 与 design.md Decision 5。
 type ChainBuilder struct {
 	logger  log.Logger
 	trace   *conf.Trace
@@ -60,8 +64,6 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 	if b.circuit {
 		ms = append(ms, circuitbreaker.Client())
 	}
-
-	ms = append(ms, TokenPropagation())
 
 	if b.metrics != nil {
 		ms = append(ms, metrics.Client(
