@@ -131,7 +131,7 @@ func TestChain_DefaultDoesNotPropagateJWTToken(t *testing.T) {
 	ms := NewChainBuilder(log.DefaultLogger).Build()
 
 	// Compose the chain right-to-left around a leaf handler.
-	var handler func(context.Context, any) (any, error) = func(_ context.Context, _ any) (any, error) {
+	handler := func(_ context.Context, _ any) (any, error) {
 		return "ok", nil
 	}
 	for i := len(ms) - 1; i >= 0; i-- {

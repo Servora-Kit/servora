@@ -49,7 +49,7 @@ func TestAuthenticator_DoesNotExposeMethod(t *testing.T) {
 	type withMethod interface {
 		Method() string
 	}
-	var a authn.Authenticator = NewAuthenticator()
+	a := NewAuthenticator()
 	if _, ok := a.(withMethod); ok {
 		t.Error("noop.Authenticator unexpectedly satisfies an interface with Method() — Task 2/3 should have removed it")
 	}
