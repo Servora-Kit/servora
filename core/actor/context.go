@@ -4,21 +4,22 @@ import "context"
 
 type contextKey struct{}
 
+// NewContext returns a new context carrying the given Actor.
 func NewContext(ctx context.Context, a Actor) context.Context {
 	return context.WithValue(ctx, contextKey{}, a)
 }
 
-func FromContext(ctx context.Context) (Actor, bool) {
+// From extracts the Actor previously stored via NewContext.
+func From(ctx context.Context) (Actor, bool) {
 	a, ok := ctx.Value(contextKey{}).(Actor)
 	return a, ok
 }
 
-// MustFromContext panics if no actor in context — use only in trusted code paths.
-func MustFromContext(ctx context.Context) Actor {
-	a, ok := FromContext(ctx)
+// MustFrom panics if no actor is in context — use only in trusted code paths.
+func MustFrom(ctx context.Context) Actor {
+	a, ok := From(ctx)
 	if !ok {
 		panic("actor: no actor in context")
 	}
 	return a
 }
-
