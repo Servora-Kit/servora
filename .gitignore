@@ -58,6 +58,9 @@ tmp/
 .understand-anything/
 docs/plans
 
+# Worktrees (superpowers using-git-worktrees skill default location)
+.worktrees/
+
 # Go workspace (local development only)
 go.work
 go.work.sum
