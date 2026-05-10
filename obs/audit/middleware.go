@@ -96,7 +96,7 @@ func Audit(opts ...AuditMiddlewareOption) middleware.Middleware {
 				return resp, err
 			}
 
-			a, _ := actor.FromContext(ctx)
+			a, _ := actor.From(ctx)
 			opName := rule.Operation
 			if opName == "" {
 				opName = operation

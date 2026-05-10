@@ -89,7 +89,7 @@ func Collector(rec *Recorder, opts ...CollectorOption) middleware.Middleware {
 // "Collector 同时 emit authn + authz 事件").
 func emitFromContext(ctx context.Context, rec *Recorder) {
 	operation := operationFromContext(ctx)
-	a, _ := actor.FromContext(ctx)
+	a, _ := actor.From(ctx)
 
 	// Emit errors are intentionally silent at this layer — Recorder.Emit's contract
 	// is fire-and-forget for audit (audit failures must not break business flow).

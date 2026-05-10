@@ -134,14 +134,15 @@ func (r *Recorder) newEvent(ctx context.Context, eventType auditpb.AuditEventTyp
 		RequestId:    requestIDFromContext(ctx),
 	}
 	if a != nil {
+		// After core/actor was slimmed to the three-piece (ID/Type/DisplayName),
+		// OIDC fields (Email/Subject/ClientId/Realm) are no longer carried by
+		// the framework Actor. Business-side recorder implementations are
+		// responsible for filling those AuditActor fields from their own ctx
+		// channels (see obs/audit/AGENTS.md and tasks.md item 10.1).
 		evt.Actor = &auditpb.AuditActor{
 			Id:          a.ID(),
 			Type:        string(a.Type()),
 			DisplayName: a.DisplayName(),
-			Email:       a.Email(),
-			Subject:     a.Subject(),
-			ClientId:    a.ClientID(),
-			Realm:       a.Realm(),
 		}
 	}
 	return evt
