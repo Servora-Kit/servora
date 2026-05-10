@@ -26,7 +26,7 @@ import (
 func Client() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
-			tok, ok := TokenFromContext(ctx)
+			tok, ok := TokenFrom(ctx)
 			if !ok || tok == "" {
 				return handler(ctx, req)
 			}
