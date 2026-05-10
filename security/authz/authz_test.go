@@ -47,7 +47,7 @@ func transportCtx(operation string) context.Context {
 }
 
 func userActorCtx(ctx context.Context, userID string) context.Context {
-	return actor.NewContext(ctx, actor.NewUserActor(actor.UserActorParams{ID: userID, DisplayName: "Test User", Email: "test@example.com"}))
+	return actor.NewContext(ctx, actor.NewUserActor(userID, "Test User"))
 }
 
 const testOp = "/test.service.v1.TestService/TestMethod"

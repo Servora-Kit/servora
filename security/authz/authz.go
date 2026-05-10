@@ -221,7 +221,7 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 				return handler(ctx, req)
 			}
 
-			a, ok := actor.FromContext(ctx)
+			a, ok := actor.From(ctx)
 			if !ok || a.Type() == actor.TypeAnonymous {
 				return nil, errors.Forbidden("AUTHZ_DENIED", "authentication required")
 			}
