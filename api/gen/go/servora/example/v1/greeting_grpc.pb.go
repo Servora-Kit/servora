@@ -8,7 +8,7 @@
 // 本文件不实现任何业务逻辑，仅作为 schema 演示与生成产物的回归基线。
 //
 // 演示矩阵：
-//   - SayHello    : 全部继承服务级默认（authn=REQUIRED jwt / authz=CHECK greeting:user / audit=ENABLED）
+//   - SayHello    : authn 显式覆盖为 multi-scheme（REQUIRED + schemes=["jwt","apikey"]），authz/audit 继承默认
 //   - Healthz     : 三注解都显式覆盖为 OFF（PUBLIC / NONE / DISABLED）
 //   - AdminPurge  : authn 显式覆盖为 mTLS（REQUIRED + schemes=["mtls"]），authz/audit 继承默认
 
@@ -38,7 +38,7 @@ const (
 //
 // GreetingService 是灯塔示例服务，声明三注解服务级默认并通过两个方法演示覆盖语义。
 type GreetingServiceClient interface {
-	// SayHello 不写任何方法级注解，三注解全部继承服务级默认。
+	// SayHello 显式覆盖 authn 为 multi-scheme（jwt + apikey）；authz 与 audit 继承服务级默认。
 	SayHello(ctx context.Context, in *SayHelloRequest, opts ...grpc.CallOption) (*SayHelloResponse, error)
 	// Healthz 显式覆盖为 OFF：authn=PUBLIC、authz=NONE、audit=DISABLED。
 	Healthz(ctx context.Context, in *HealthzRequest, opts ...grpc.CallOption) (*HealthzResponse, error)
@@ -90,7 +90,7 @@ func (c *greetingServiceClient) AdminPurge(ctx context.Context, in *AdminPurgeRe
 //
 // GreetingService 是灯塔示例服务，声明三注解服务级默认并通过两个方法演示覆盖语义。
 type GreetingServiceServer interface {
-	// SayHello 不写任何方法级注解，三注解全部继承服务级默认。
+	// SayHello 显式覆盖 authn 为 multi-scheme（jwt + apikey）；authz 与 audit 继承服务级默认。
 	SayHello(context.Context, *SayHelloRequest) (*SayHelloResponse, error)
 	// Healthz 显式覆盖为 OFF：authn=PUBLIC、authz=NONE、audit=DISABLED。
 	Healthz(context.Context, *HealthzRequest) (*HealthzResponse, error)

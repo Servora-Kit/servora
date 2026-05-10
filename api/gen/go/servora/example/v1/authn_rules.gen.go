@@ -2,36 +2,33 @@
 
 package examplev1
 
-// _publicMethods is the immutable backing slice of public RPC paths.
-var _publicMethods = []string{
-	"/servora.example.v1.GreetingService/Healthz",
+import (
+	authn "github.com/Servora-Kit/servora/security/authn"
+)
+
+// _authnRules is the immutable backing store for AuthnRules.
+var _authnRules = authn.Rules{
+	PublicMethods: []string{
+		"/servora.example.v1.GreetingService/Healthz",
+	},
+	MethodSchemes: map[string][]string{
+		"/servora.example.v1.GreetingService/AdminPurge": {"mtls"},
+		"/servora.example.v1.GreetingService/SayHello":   {"jwt", "apikey"},
+	},
 }
 
-// PublicMethods returns a copy of the public RPC paths declared via
-// authn proto annotations. Each call allocates a new slice; callers may
-// mutate the returned value freely without affecting other callers.
-func PublicMethods() []string {
-	out := make([]string, len(_publicMethods))
-	copy(out, _publicMethods)
-	return out
-}
-
-// _methodSchemes is the immutable backing map of REQUIRED RPC paths to
-// their accepted authentication schemes.
-var _methodSchemes = map[string][]string{
-	"/servora.example.v1.GreetingService/AdminPurge": {"mtls"},
-	"/servora.example.v1.GreetingService/SayHello":   {"jwt"},
-}
-
-// MethodSchemes returns a copy of the RPC-path → schemes table for
-// REQUIRED methods. Each call allocates a fresh map and per-key slice;
-// callers may mutate the result without affecting other callers.
-func MethodSchemes() map[string][]string {
-	out := make(map[string][]string, len(_methodSchemes))
-	for k, v := range _methodSchemes {
+// AuthnRules returns the authentication rules declared via authn proto
+// annotations. Each call allocates fresh slices and a fresh map (with
+// deep-copied inner slices); callers may mutate the returned value freely
+// without affecting other callers or package-internal state.
+func AuthnRules() authn.Rules {
+	pm := make([]string, len(_authnRules.PublicMethods))
+	copy(pm, _authnRules.PublicMethods)
+	ms := make(map[string][]string, len(_authnRules.MethodSchemes))
+	for k, v := range _authnRules.MethodSchemes {
 		cp := make([]string, len(v))
 		copy(cp, v)
-		out[k] = cp
+		ms[k] = cp
 	}
-	return out
+	return authn.Rules{PublicMethods: pm, MethodSchemes: ms}
 }
