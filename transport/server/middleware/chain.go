@@ -48,7 +48,10 @@ import (
 //
 // 自实现 Authenticator 的高级用法（非 jwt 载体或自定义引擎）：
 //
-//	ms = append(ms, authn.Server(myCustomAuth, authn.WithMethod("custom")))
+//	// 单引擎：直接传给 authn.Server
+//	ms = append(ms, authn.Server(myCustomAuth))
+//	// 多引擎并存：用 authn.Named + authn.Multi 包一层
+//	ms = append(ms, authn.Server(authn.Multi(authn.Named("custom", myCustomAuth))))
 //
 // 注意：
 //   - HTTP 和 gRPC 共享同一个 ChainBuilder，通过传入不同的 Logger 区分
