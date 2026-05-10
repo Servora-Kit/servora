@@ -40,7 +40,7 @@ func (e *captureEmitter) Emit(_ context.Context, event *auditpb.AuditEvent) erro
 func (e *captureEmitter) Close() error { return nil }
 
 func newAuditTestContext(op string) context.Context {
-	ctx := actor.NewContext(context.Background(), actor.NewUserActor(actor.UserActorParams{ID: "u1"}))
+	ctx := actor.NewContext(context.Background(), actor.NewUserActor("u1", ""))
 	return transport.NewServerContext(ctx, &stubAuditTransport{op: op})
 }
 

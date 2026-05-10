@@ -28,6 +28,15 @@
 - `Recorder.AuthnObserver()` / `Recorder.AuthzObserver()` callback 桥接已**移除**（v0.4.4 break）。security middleware 不再走 callback，改为 push-ctx
 - 包内同时提供 broker / log / noop 三种 emitter 适配不同部署形态
 
+### AuditActor 字段填充责任划分
+
+`auditpb.AuditActor` proto schema **保持 7 个字段不变**：`id` / `type` / `display_name` / `email` / `subject` / `client_id` / `realm`。但 `core/actor.Actor` 已被精简为「三件套」（`ID()` / `Type()` / `DisplayName()`），不再持有 OIDC 元数据。因此：
+
+- **框架 Recorder（本包 `recorder.go`）**：只负责填 `Id` / `Type` / `DisplayName` 三个字段——这是任意身份引擎都能稳定提供的最小集合
+- **业务侧 Recorder Wrapper**：若业务关心 `Email` / `Subject` / `ClientId` / `Realm`，需在自己的 wrapper 里从业务专属的 ctx 通道读出（典型如 `iam.UserInfoFrom(ctx)`），再二次设值后 `Emit`。框架不假设这些字段存在，也不替业务从 `core/actor` 反向「补齐」
+
+该划分让框架对身份协议（JWT / API Key / OIDC / 自研）保持中立，避免 `core/actor` 重新长出协议特定字段。
+
 ## Push-ctx pipeline
 
 `security/{authn,authz}` middleware 通过 ctx 把 `*auditpb.AuthnDetail` / `*auditpb.AuthzDetail` 推给 `obs/audit`；`Collector` middleware 在请求末端单点 emit。security 包对 `obs/audit` 的依赖只剩中立 schema 包 `auditpb`（不再 import emit 实现）。

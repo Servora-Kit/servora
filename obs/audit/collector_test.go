@@ -16,7 +16,7 @@ import (
 // newCollectorTestContext returns a ctx with a transport ServerContext (op set)
 // and an actor — mirroring the shape Collector sees in production.
 func newCollectorTestContext(op string) context.Context {
-	ctx := actor.NewContext(context.Background(), actor.NewUserActor(actor.UserActorParams{ID: "u1"}))
+	ctx := actor.NewContext(context.Background(), actor.NewUserActor("u1", ""))
 	return transport.NewServerContext(ctx, &stubAuditTransport{op: op})
 }
 

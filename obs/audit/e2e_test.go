@@ -21,11 +21,7 @@ func TestE2E_LogEmitter_AuthzDecisionAndTupleChanged(t *testing.T) {
 	recorder := audit.NewRecorder(emitter, "e2e-test")
 	defer func() { _ = recorder.Close() }()
 
-	a := actor.NewUserActor(actor.UserActorParams{
-		ID:          "user-e2e-123",
-		DisplayName: "E2E User",
-		Email:       "e2e@test.com",
-	})
+	a := actor.NewUserActor("user-e2e-123", "E2E User")
 
 	recorder.RecordAuthzDecision(context.Background(), "/test.E2E/Check", a, &auditv1.AuthzDetail{
 		Relation:   "viewer",
@@ -87,10 +83,7 @@ func TestE2E_BrokerEmitter_KafkaRoundTrip(t *testing.T) {
 	recorder := audit.NewRecorder(emitter, "e2e-test-svc")
 	defer func() { _ = recorder.Close() }()
 
-	a := actor.NewUserActor(actor.UserActorParams{
-		ID:          "user-kafka-789",
-		DisplayName: "Kafka E2E",
-	})
+	a := actor.NewUserActor("user-kafka-789", "Kafka E2E")
 
 	received := make(chan *broker.Message, 1)
 	sub, err := b.Subscribe(ctx, topic, func(_ context.Context, event broker.Event) error {
