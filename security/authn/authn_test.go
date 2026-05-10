@@ -526,6 +526,80 @@ func TestMulti_FirstSuccessWins(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Multi: anonymous-fallthrough sub-success is treated as soft failure
+// ---------------------------------------------------------------------------
+
+// TestMulti_AnonymousSuccess_TreatedAsSoftFailure verifies that an engine
+// returning (AnonymousActor, nil) — the "no credential, passthrough" pattern
+// from single-engine direct mounts — does NOT short-circuit Multi. The next
+// allowed engine is given a chance to produce a concrete identity.
+//
+// Without this guard, jwt's "no Authorization header → anonymous + nil err"
+// would silently win first-success-wins and starve subsequent engines (e.g.
+// apikey), defeating the multi-scheme contract enforced by MODE_REQUIRED
+// schemes=[jwt,apikey].
+func TestMulti_AnonymousSuccess_TreatedAsSoftFailure(t *testing.T) {
+	jwtAuth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
+	apikeyAuth := &fakeAuthenticator{returnActor: actor.NewServiceActor("svc-1", "Service One")}
+
+	auth := Multi(
+		Named("jwt", jwtAuth),
+		Named("apikey", apikeyAuth),
+	)
+
+	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
+	a, err := auth.Authenticate(ctx)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a == nil || a.ID() != "svc-1" {
+		t.Errorf("actor = %v, want id=svc-1 (apikey wins after jwt anonymous fallthrough)", a)
+	}
+	if jwtAuth.called != 1 {
+		t.Errorf("jwtAuth.called = %d, want 1", jwtAuth.called)
+	}
+	if apikeyAuth.called != 1 {
+		t.Errorf("apikeyAuth.called = %d, want 1 (anonymous fallthrough must not short-circuit)", apikeyAuth.called)
+	}
+	if h := schemeHolderFrom(ctx); h == nil || h.scheme != "apikey" {
+		t.Errorf("holder scheme = %q, want apikey", h.scheme)
+	}
+}
+
+// TestMulti_AnonymousOnlyEngines_AllFail verifies that when EVERY engine
+// returns anonymous, Multi reports schemeAttemptsErr (not silent success).
+// The aggregate FailureReason carries one "no credential ..." entry per
+// engine, so audit logs can distinguish "no token sent" from "bad token".
+func TestMulti_AnonymousOnlyEngines_AllFail(t *testing.T) {
+	jwtAuth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
+	apikeyAuth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
+
+	auth := Multi(
+		Named("jwt", jwtAuth),
+		Named("apikey", apikeyAuth),
+	)
+
+	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
+	a, err := auth.Authenticate(ctx)
+	if a != nil {
+		t.Errorf("actor = %v, want nil", a)
+	}
+	as, ok := err.(SchemeAttemptsErr)
+	if !ok {
+		t.Fatalf("err = %v, want SchemeAttemptsErr", err)
+	}
+	attempts := as.SchemeAttempts()
+	if len(attempts) != 2 {
+		t.Fatalf("attempts = %d, want 2", len(attempts))
+	}
+	for _, at := range attempts {
+		if !strings.Contains(at.Reason, "no credential") {
+			t.Errorf("attempt %q reason = %q, want contains 'no credential'", at.Scheme, at.Reason)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Multi: allowed filter skips non-matching engines
 // ---------------------------------------------------------------------------
 

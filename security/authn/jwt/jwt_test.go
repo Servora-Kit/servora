@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	gojwt "github.com/golang-jwt/jwt/v5"
@@ -281,9 +282,13 @@ func TestServer_ChainShortCircuit_PassthroughOnExistingActor(t *testing.T) {
 
 // TestServer_NoBearerHeader_ReachesAuthenticator asserts that when there is
 // no Authorization header AND no pre-set actor, the wrapper still delegates
-// to the dispatcher.
+// to the dispatcher. Since v0.6.0 the dispatcher's `Multi` decorator guards
+// against anonymous fallthrough — the engine is reached but its
+// (anonymous, nil) result is converted into a soft failure inside Multi,
+// surfacing as schemeAttemptsErr → AUTHN_FAILED 401. This protects the
+// MODE_REQUIRED contract from being defeated by absent credentials.
 func TestServer_NoBearerHeader_ReachesAuthenticator(t *testing.T) {
-	stub := &countingAuthenticator{} // returnActor nil → anonymous
+	stub := &countingAuthenticator{} // returnActor nil → anonymous fallthrough
 	mw := serverWithStub(stub)
 
 	var capturedCtx context.Context
@@ -293,26 +298,23 @@ func TestServer_NoBearerHeader_ReachesAuthenticator(t *testing.T) {
 	})
 
 	ctx := serverCtx(nil)
-	if _, err := handler(ctx, nil); err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := handler(ctx, nil)
+	if err == nil {
+		t.Fatal("expected AUTHN_FAILED error, got nil (Multi must guard anonymous fallthrough)")
+	}
+	if !strings.Contains(err.Error(), "AUTHN_FAILED") {
+		t.Errorf("err = %v, want contains AUTHN_FAILED", err)
 	}
 
 	if stub.calls != 1 {
-		t.Fatalf("Authenticate calls = %d, want 1", stub.calls)
+		t.Fatalf("Authenticate calls = %d, want 1 (engine MUST be reached even when it ends up filtered)", stub.calls)
 	}
 	if stub.observedHasTok || stub.observedToken != "" {
 		t.Errorf("engine saw token = (%q,%v), want (\"\",false)", stub.observedToken, stub.observedHasTok)
 	}
 
-	d, ok := audit.AuthnResultFrom(capturedCtx)
-	if !ok {
-		t.Fatal("expected AuthnDetail in ctx")
-	}
-	if d.Method != Scheme {
-		t.Errorf("AuthnDetail.Method = %q, want %q", d.Method, Scheme)
-	}
-	if !d.Success {
-		t.Errorf("AuthnDetail.Success = false, want true (anonymous pass-through)")
+	if capturedCtx != nil {
+		t.Error("handler must NOT be called on AUTHN_FAILED (capturedCtx should be nil)")
 	}
 }
 
@@ -348,13 +350,19 @@ func TestAuthenticate_NoVerifier_ReturnsAnonymous(t *testing.T) {
 }
 
 // TestAuthenticate_TransportHeaderFallback: when no jwt-private ctx token but
-// a Kratos server transport carries Authorization: Bearer ... AND no Verifier
-// is configured, the engine still surfaces the token through (anonymous via
-// pass-through). This proves the transport-header fallback path engages.
+// a Kratos server transport carries Authorization: Bearer ... the engine is
+// reached via Multi. This test uses a stub that returns a concrete actor on
+// invocation (not anonymous) so Multi's anonymous-fallthrough guard does NOT
+// kick in — proving the transport-header path engages and produces a normal
+// success. The stub-level introspection of observedHasTok / observedToken
+// remains useful: the dispatcher writes WithToken before invoking the engine
+// inside Multi only when jwt.Server (the convenience wrapper) is used; here
+// we wire authn.Server(authn.Multi(...)) directly, so the engine gets only
+// the raw transport ctx — observedHasTok must therefore be false.
 func TestAuthenticate_TransportHeaderFallback(t *testing.T) {
-	captured := &countingAuthenticator{}
-	// Wire the engine through Multi WITHOUT pre-write of WithToken; rely on
-	// the transport-header fallback inside Authenticate.
+	captured := &countingAuthenticator{
+		returnActor: actor.NewServiceActor("fallback-svc", "Fallback Service"),
+	}
 	mw := authn.Server(authn.Multi(authn.Named(Scheme, captured)))
 	handler := mw(func(_ context.Context, _ any) (any, error) { return "ok", nil })
 
@@ -366,13 +374,8 @@ func TestAuthenticate_TransportHeaderFallback(t *testing.T) {
 	if captured.calls != 1 {
 		t.Fatalf("Authenticate calls = %d, want 1", captured.calls)
 	}
-	// Multi calls Authenticate with the original ctx (no WithToken was
-	// installed by the framework dispatcher), so the stub observes the
-	// jwt-private channel as empty — but Authenticate's real implementation
-	// would consult the transport header. The stub here only proves the
-	// engine was reached; tokenForAuth coverage is the next test.
 	if captured.observedHasTok {
-		t.Errorf("stub saw WithToken-backed entry, want empty (fallback proves engine resolves header itself)")
+		t.Errorf("stub saw WithToken-backed entry, want empty (Multi direct wiring leaves jwt-private channel untouched)")
 	}
 }
 

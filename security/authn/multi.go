@@ -141,6 +141,25 @@ func (m *multi) Authenticate(ctx context.Context) (actor.Actor, error) {
 		participated++
 		a, err := named.inner.Authenticate(ctx)
 		if err == nil {
+			// Anonymous-fallthrough guard: a sub-engine that quietly returns
+			// (anonymous, nil) — the historical "no credential, treat as
+			// anonymous passthrough" pattern from single-engine direct mounts —
+			// is treated as a SOFT FAILURE inside Multi. Otherwise the first
+			// such engine would short-circuit dispatch and other engines
+			// (e.g. apikey) would never run, defeating the multi-scheme intent.
+			//
+			// Rationale: in a Multi composition the contract is "produce a
+			// concrete identity from one of the configured schemes"; anonymous
+			// is the absence of identity, not a successful one. Engines that
+			// want to allow anonymous fallthrough should do so via a separate
+			// non-Multi mount path (or wait for a future explicit option).
+			if a == nil || a.Type() == actor.TypeAnonymous {
+				attempts = append(attempts, SchemeAttempt{
+					Scheme: named.scheme,
+					Reason: "no credential (engine returned anonymous)",
+				})
+				continue
+			}
 			if holder != nil {
 				holder.set(named.scheme)
 			}
