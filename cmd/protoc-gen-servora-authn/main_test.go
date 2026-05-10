@@ -252,17 +252,18 @@ func TestMethodOverridesServiceDefault_PublicWins(t *testing.T) {
 	publicOp := `"/example.v1.GreetingService/PublicHello"`
 	privateOp := `"/example.v1.GreetingService/PrivateHello"`
 
-	// PublicHello must appear in _publicMethods slice section.
+	// PublicHello must appear in the PublicMethods slice section of the
+	// aggregate _authnRules literal.
 	publicSection, schemesSection := splitSections(t, content)
 
 	if !strings.Contains(publicSection, publicOp) {
-		t.Errorf("PublicHello missing from _publicMethods section:\n%s", publicSection)
+		t.Errorf("PublicHello missing from PublicMethods section:\n%s", publicSection)
 	}
 	if strings.Contains(schemesSection, publicOp) {
-		t.Errorf("PublicHello should NOT appear in _methodSchemes (was overridden):\n%s", schemesSection)
+		t.Errorf("PublicHello should NOT appear in MethodSchemes (was overridden):\n%s", schemesSection)
 	}
 	if !strings.Contains(schemesSection, privateOp) {
-		t.Errorf("PrivateHello missing from _methodSchemes (should inherit jwt):\n%s", schemesSection)
+		t.Errorf("PrivateHello missing from MethodSchemes (should inherit jwt):\n%s", schemesSection)
 	}
 }
 
@@ -358,10 +359,10 @@ func TestInvalid_UnspecifiedWithSchemes(t *testing.T) {
 }
 
 // TestGeneratedAccessorsReturnIndependentCopies validates the produced Go file
-// declares PublicMethods / MethodSchemes accessors that explicitly copy the
-// backing slice and map (deep copy for slices inside the map). We assert on
-// generated source presence rather than execute it (which would require a
-// separate `go test` pipeline on the produced file).
+// declares a single AuthnRules() accessor that explicitly deep-copies the
+// backing PublicMethods slice, MethodSchemes map, and per-key scheme slices.
+// We assert on generated source presence rather than execute it (which would
+// require a separate `go test` pipeline on the produced file).
 func TestGeneratedAccessorsReturnIndependentCopies(t *testing.T) {
 	gen, err := runPluginScenario(t, []fileSpec{
 		{
@@ -389,21 +390,27 @@ func TestGeneratedAccessorsReturnIndependentCopies(t *testing.T) {
 	}
 	files := generatedFiles(t, gen)
 	content := lookupAuthnFile(t, files)
-	// PublicMethods accessor must allocate a fresh slice and copy.
+	// AuthnRules accessor must import authn main package, declare a single
+	// aggregate function, and deep-copy slices + map.
 	for _, sig := range []string{
-		"func PublicMethods() []string",
-		"copy(",       // slice copy in PublicMethods
-		"make([]string,", // fresh slice allocation
-		"func MethodSchemes() map[string][]string",
+		`authn "github.com/Servora-Kit/servora/security/authn"`,
+		"func AuthnRules() authn.Rules",
+		"make([]string,",            // fresh PublicMethods slice
+		"copy(",                     // slice copy
+		"make(map[string][]string,", // fresh MethodSchemes map
 	} {
 		if !strings.Contains(content, sig) {
 			t.Errorf("generated file missing %q\n--- generated ---\n%s", sig, content)
 		}
 	}
-	// MethodSchemes must deep-copy slices (one copy per slice value).
-	// We look for the loop that allocates a per-key slice copy.
-	if !strings.Contains(content, "make(map[string][]string,") {
-		t.Errorf("MethodSchemes() should allocate a fresh map")
+	// The legacy double-func shape MUST NOT be emitted.
+	for _, banned := range []string{
+		"func PublicMethods() []string",
+		"func MethodSchemes() map[string][]string",
+	} {
+		if strings.Contains(content, banned) {
+			t.Errorf("generated file unexpectedly contains legacy %q\n--- generated ---\n%s", banned, content)
+		}
 	}
 }
 
@@ -447,16 +454,41 @@ func TestGeneratedFileCompiles(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module sandbox\n\ngo 1.22\n"), 0o644); err != nil {
 		t.Fatalf("write go.mod: %v", err)
 	}
-	// The generated file declares `package examplev1`, so we need to align.
-	// We rewrite the package directive for the sandbox build.
-	rewrite := strings.Replace(src, "package examplev1", "package sandbox", 1)
+	// The generated file declares `package examplev1` and imports the real
+	// security/authn main package for the Rules type. The sandbox is offline
+	// (GOWORK=off + GOFLAGS=-mod=mod with no network), so we redirect that
+	// import to a local stub under sandbox/authn that declares the Rules
+	// shape. The package directive is also realigned so go vet ./... can
+	// type-check the file as part of the sandbox module root.
+	rewrite := src
+	rewrite = strings.Replace(rewrite, "package examplev1", "package sandbox", 1)
+	rewrite = strings.Replace(
+		rewrite,
+		`authn "github.com/Servora-Kit/servora/security/authn"`,
+		`authn "sandbox/authn"`,
+		1,
+	)
 	if err := os.WriteFile(filepath.Join(dir, "authn_rules.gen.go"), []byte(rewrite), 0o644); err != nil {
 		t.Fatalf("write generated file: %v", err)
 	}
 
+	// Stub authn package: just enough for the generated file to type-check.
+	authnDir := filepath.Join(dir, "authn")
+	if err := os.MkdirAll(authnDir, 0o755); err != nil {
+		t.Fatalf("mkdir authn stub: %v", err)
+	}
+	stub := "package authn\n\n" +
+		"type Rules struct {\n" +
+		"\tPublicMethods []string\n" +
+		"\tMethodSchemes map[string][]string\n" +
+		"}\n"
+	if err := os.WriteFile(filepath.Join(authnDir, "authn.go"), []byte(stub), 0o644); err != nil {
+		t.Fatalf("write authn stub: %v", err)
+	}
+
 	cmd := exec.Command("go", "vet", "./...")
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), "GOWORK=off")
+	cmd.Env = append(os.Environ(), "GOWORK=off", "GOFLAGS=-mod=mod")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("go vet failed on generated file:\n%s\n--- source ---\n%s", out, rewrite)
@@ -494,11 +526,12 @@ func keysOf[V any](m map[string]V) []string {
 }
 
 // splitSections splits the generated file at the boundary between the
-// _publicMethods declaration and the _methodSchemes declaration so tests can
-// assert containment in the correct section without false positives.
+// PublicMethods slice literal and the MethodSchemes map literal inside the
+// aggregate _authnRules struct, so tests can assert containment in the
+// correct section without false positives.
 func splitSections(t *testing.T, content string) (publicSection, schemesSection string) {
 	t.Helper()
-	idx := strings.Index(content, "_methodSchemes")
+	idx := strings.Index(content, "MethodSchemes:")
 	if idx < 0 {
 		return content, ""
 	}
