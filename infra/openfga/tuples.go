@@ -120,7 +120,7 @@ func (c *Client) emitTupleAudit(ctx context.Context, operation string, mutation 
 	for i, t := range tuples {
 		changes[i] = &auditpb.TupleChange{User: t.User, Relation: t.Relation, Object: t.Object}
 	}
-	a, _ := actor.FromContext(ctx)
+	a, _ := actor.From(ctx)
 	c.recorder.RecordTupleChange(ctx, operation, a, &auditpb.TupleMutationDetail{
 		MutationType: mutation,
 		Tuples:       changes,
