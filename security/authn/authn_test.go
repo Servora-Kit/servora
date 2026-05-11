@@ -7,12 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
-
-	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
-	"github.com/Servora-Kit/servora/core/actor"
-	"github.com/Servora-Kit/servora/obs/audit"
 )
 
 // readFile is a thin os.ReadFile wrapper kept package-local so the structural
@@ -43,96 +40,56 @@ func (h *fakeHeader) Add(key, value string)      {}
 func (h *fakeHeader) Keys() []string             { return nil }
 func (h *fakeHeader) Values(key string) []string { return nil }
 
-// transportCtx builds a server-side ctx with a fake transport plus a fresh
-// audit detail holder (mirrors what audit.Collector installs in production).
+// transportCtx builds a server-side ctx with a fake transport.
 func transportCtx(op string) context.Context {
-	ctx := transport.NewServerContext(context.Background(), &fakeTransport{op: op})
-	return audit.InstallHolder(ctx)
+	return transport.NewServerContext(context.Background(), &fakeTransport{op: op})
 }
 
 // fakeAuthenticator records its invocation count and returns configured
-// (actor, err). Used everywhere the dispatcher (`Server`) is exercised
+// (ctx, err). Used everywhere the dispatcher (`Server`) is exercised
 // without a Multi decorator.
 type fakeAuthenticator struct {
-	called      int
-	returnActor actor.Actor
-	returnErr   error
+	called    int
+	returnCtx context.Context // if nil, returns the input ctx on success
+	returnErr error
 
 	// captureCtx, if non-nil, records the ctx received by Authenticate
 	// so per-test assertions can inspect ctx channels installed by Server.
 	captureCtx *context.Context
 }
 
-func (f *fakeAuthenticator) Authenticate(ctx context.Context) (actor.Actor, error) {
+func (f *fakeAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	f.called++
 	if f.captureCtx != nil {
 		*f.captureCtx = ctx
 	}
 	if f.returnErr != nil {
-		return nil, f.returnErr
+		return ctx, f.returnErr
 	}
-	if f.returnActor == nil {
-		return actor.NewAnonymousActor(), nil
+	if f.returnCtx != nil {
+		return f.returnCtx, nil
 	}
-	return f.returnActor, nil
+	return ctx, nil
 }
 
 // Compile-time guard: minimal Authenticator (single method only).
 type minimalAuthenticator struct{}
 
-func (minimalAuthenticator) Authenticate(_ context.Context) (actor.Actor, error) {
-	return actor.NewAnonymousActor(), nil
+func (minimalAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	return ctx, nil
 }
 
 var _ Authenticator = (*minimalAuthenticator)(nil)
 var _ Authenticator = (*fakeAuthenticator)(nil)
 
-// captureEmitter is a minimal audit.Emitter used in the end-to-end Collector
-// assembly test. Mirrored locally to keep test packages independent.
-type captureEmitter struct {
-	events []*auditpb.AuditEvent
+// fakeAuditor captures CloudEvents emitted via WithAuditOnFailure.
+type fakeAuditor struct {
+	events []cloudevents.Event
 }
 
-func (e *captureEmitter) Emit(_ context.Context, event *auditpb.AuditEvent) error {
-	e.events = append(e.events, event)
+func (a *fakeAuditor) Emit(_ context.Context, event cloudevents.Event) error {
+	a.events = append(a.events, event)
 	return nil
-}
-
-func (e *captureEmitter) Close() error { return nil }
-
-// ---------------------------------------------------------------------------
-// Server: chain short-circuit on existing non-anonymous actor
-// ---------------------------------------------------------------------------
-
-func TestServer_ChainShortCircuit_PreExistingActor(t *testing.T) {
-	auth := &fakeAuthenticator{returnErr: errors.New("must not be called")}
-	mw := Server(auth)
-
-	handler := mw(func(ctx context.Context, req any) (any, error) {
-		a, ok := actor.From(ctx)
-		if !ok {
-			t.Fatal("expected pre-existing actor in ctx")
-		}
-		if a.ID() != "u-existing" {
-			t.Errorf("actor.ID = %q, want u-existing", a.ID())
-		}
-		return "ok", nil
-	})
-
-	ctx := actor.NewContext(transportCtx("/svc/Op"), actor.NewUserActor("u-existing", "Existing"))
-	resp, err := handler(ctx, nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp != "ok" {
-		t.Errorf("resp = %v, want ok", resp)
-	}
-	if auth.called != 0 {
-		t.Errorf("authenticator called %d times, want 0 (chain short-circuit)", auth.called)
-	}
-	if _, ok := audit.AuthnResultFrom(ctx); ok {
-		t.Error("AuthnDetail should NOT be written on chain short-circuit")
-	}
 }
 
 // ---------------------------------------------------------------------------
@@ -146,22 +103,20 @@ func TestServer_PublicMethodsPassthrough(t *testing.T) {
 	}
 
 	mw := Server(auth, WithRulesFuncs(rules))
-	handler := mw(func(ctx context.Context, req any) (any, error) {
-		if _, ok := actor.From(ctx); ok {
-			t.Error("PublicMethods passthrough must NOT inject an actor")
-		}
+	handler := mw(func(_ context.Context, _ any) (any, error) {
 		return "ok", nil
 	})
 
 	ctx := transportCtx("/svc/Healthz")
-	if _, err := handler(ctx, nil); err != nil {
+	resp, err := handler(ctx, nil)
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp != "ok" {
+		t.Errorf("resp = %v, want ok", resp)
 	}
 	if auth.called != 0 {
 		t.Errorf("authenticator called %d times, want 0", auth.called)
-	}
-	if _, ok := audit.AuthnResultFrom(ctx); ok {
-		t.Error("AuthnDetail should NOT be written on PublicMethods passthrough")
 	}
 }
 
@@ -172,8 +127,7 @@ func TestServer_PublicMethodsPassthrough(t *testing.T) {
 func TestServer_MethodSchemes_InstallsAllowedSet(t *testing.T) {
 	var capturedCtx context.Context
 	auth := &fakeAuthenticator{
-		returnActor: actor.NewUserActor("u1", "Test"),
-		captureCtx:  &capturedCtx,
+		captureCtx: &capturedCtx,
 	}
 
 	rules := func() Rules {
@@ -216,8 +170,7 @@ func TestServer_MethodSchemes_InstallsAllowedSet(t *testing.T) {
 func TestServer_UnannotatedPath_AllowedNil(t *testing.T) {
 	var capturedCtx context.Context
 	auth := &fakeAuthenticator{
-		returnActor: actor.NewUserActor("u1", "Test"),
-		captureCtx:  &capturedCtx,
+		captureCtx: &capturedCtx,
 	}
 
 	rules := func() Rules {
@@ -245,29 +198,20 @@ func TestServer_UnannotatedPath_AllowedNil(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Server: success → AuthnDetail written + actor injected
+// Server: success → enriched ctx passed to handler
 // ---------------------------------------------------------------------------
 
-func TestServer_Success_WritesDetailAndInjectsActor(t *testing.T) {
-	user := actor.NewUserActor("u1", "Test")
-
-	// Wrap engine in Multi(Named) so a scheme name flows into the holder
-	// (which Server then writes into AuthnDetail.Method).
-	inner := &fakeAuthenticator{returnActor: user}
+func TestServer_Success_UsesEnrichedCtx(t *testing.T) {
+	// The engine returns a ctx enriched with an auth type.
+	enriched := WithAuthType(context.Background(), "jwt")
+	inner := &fakeAuthenticator{returnCtx: enriched}
 	auth := Multi(Named("jwt", inner))
 
 	mw := Server(auth)
 
-	var capturedCtx context.Context
+	var handlerCtx context.Context
 	handler := mw(func(ctx context.Context, _ any) (any, error) {
-		capturedCtx = ctx
-		a, ok := actor.From(ctx)
-		if !ok {
-			t.Fatal("expected actor injected into ctx")
-		}
-		if a.ID() != "u1" {
-			t.Errorf("actor.ID = %q, want u1", a.ID())
-		}
+		handlerCtx = ctx
 		return nil, nil
 	})
 
@@ -275,63 +219,44 @@ func TestServer_Success_WritesDetailAndInjectsActor(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	d, ok := audit.AuthnResultFrom(capturedCtx)
+	// The handler should receive the enriched ctx from the engine.
+	authType, ok := AuthTypeFrom(handlerCtx)
 	if !ok {
-		t.Fatal("expected AuthnDetail written to ctx on success")
+		t.Fatal("expected AuthType in handler ctx (enriched from engine)")
 	}
-	if d.Method != "jwt" {
-		t.Errorf("Method = %q, want jwt (from holder)", d.Method)
-	}
-	if !d.Success {
-		t.Error("Success = false, want true")
-	}
-	if d.FailureReason != "" {
-		t.Errorf("FailureReason = %q, want empty", d.FailureReason)
+	if authType != "jwt" {
+		t.Errorf("AuthType = %q, want jwt", authType)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Server: single-engine failure → AuthnDetail with err.Error()
+// Server: single-engine failure → default Unauthorized
 // ---------------------------------------------------------------------------
 
-func TestServer_SingleFailure_WritesDetail(t *testing.T) {
+func TestServer_SingleFailure_ReturnsUnauthorized(t *testing.T) {
 	sentinel := errors.New("token expired")
 	auth := &fakeAuthenticator{returnErr: sentinel}
 
-	var capturedCtx context.Context
-	mw := Server(auth, WithErrorHandler(func(ctx context.Context, err error) error {
-		capturedCtx = ctx
-		return err
-	}))
-
+	mw := Server(auth)
 	handler := mw(func(_ context.Context, _ any) (any, error) {
 		t.Fatal("handler must not run on auth failure")
 		return nil, nil
 	})
 
 	_, err := handler(transportCtx("/svc/Op"), nil)
-	if !errors.Is(err, sentinel) {
-		t.Fatalf("err = %v, want sentinel", err)
+	if err == nil {
+		t.Fatal("expected error")
 	}
-
-	d, ok := audit.AuthnResultFrom(capturedCtx)
-	if !ok {
-		t.Fatal("expected AuthnDetail written before error return")
+	if !strings.Contains(err.Error(), "AUTHN_FAILED") {
+		t.Errorf("err = %q, expected to contain AUTHN_FAILED", err.Error())
 	}
-	// No Multi → holder empty → Method empty (single-engine direct mount).
-	if d.Method != "" {
-		t.Errorf("Method = %q, want empty (no Multi → holder unwritten)", d.Method)
-	}
-	if d.Success {
-		t.Error("Success = true, want false")
-	}
-	if d.FailureReason != sentinel.Error() {
-		t.Errorf("FailureReason = %q, want %q", d.FailureReason, sentinel.Error())
+	if !strings.Contains(err.Error(), "token expired") {
+		t.Errorf("err = %q, expected to contain underlying reason", err.Error())
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Server: Multi failure (SchemeAttemptsErr) → Method=multi, aggregated reason
+// Server: Multi failure (SchemeAttemptsErr) → aggregated reason
 // ---------------------------------------------------------------------------
 
 func TestServer_MultiFailure_AggregatesReason(t *testing.T) {
@@ -349,11 +274,9 @@ func TestServer_MultiFailure_AggregatesReason(t *testing.T) {
 		}
 	}
 
-	var capturedCtx context.Context
 	mw := Server(auth,
 		WithRulesFuncs(rules),
-		WithErrorHandler(func(ctx context.Context, err error) error {
-			capturedCtx = ctx
+		WithErrorHandler(func(_ context.Context, err error) error {
 			return err
 		}),
 	)
@@ -370,25 +293,12 @@ func TestServer_MultiFailure_AggregatesReason(t *testing.T) {
 	if _, ok := err.(SchemeAttemptsErr); !ok {
 		t.Errorf("err type = %T, want SchemeAttemptsErr", err)
 	}
-
-	d, ok := audit.AuthnResultFrom(capturedCtx)
-	if !ok {
-		t.Fatal("expected AuthnDetail written before error return")
+	errStr := err.Error()
+	if !strings.Contains(errStr, "jwt: jwt verify failed") {
+		t.Errorf("err = %q, missing jwt attempt", errStr)
 	}
-	if d.Method != "multi" {
-		t.Errorf("Method = %q, want multi", d.Method)
-	}
-	if d.Success {
-		t.Error("Success = true, want false")
-	}
-	if !strings.Contains(d.FailureReason, "jwt: jwt verify failed") {
-		t.Errorf("FailureReason = %q, missing jwt attempt", d.FailureReason)
-	}
-	if !strings.Contains(d.FailureReason, "apikey: missing X-API-Key") {
-		t.Errorf("FailureReason = %q, missing apikey attempt", d.FailureReason)
-	}
-	if !strings.Contains(d.FailureReason, ";") {
-		t.Errorf("FailureReason = %q, expected attempts joined by '; '", d.FailureReason)
+	if !strings.Contains(errStr, "apikey: missing X-API-Key") {
+		t.Errorf("err = %q, missing apikey attempt", errStr)
 	}
 }
 
@@ -434,14 +344,70 @@ func TestServer_DefaultErrorIsUnauthorized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	// Kratos errors.Unauthorized produces an *errors.Error with reason
-	// "AUTHN_FAILED" and message containing the underlying err string.
 	if !strings.Contains(err.Error(), "AUTHN_FAILED") {
 		t.Errorf("err = %q, expected to contain AUTHN_FAILED", err.Error())
 	}
 	if !strings.Contains(err.Error(), "boom") {
 		t.Errorf("err = %q, expected to contain underlying reason 'boom'", err.Error())
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Server: WithAuditOnFailure emits CloudEvent
+// ---------------------------------------------------------------------------
+
+func TestServer_WithAuditOnFailure_Emits(t *testing.T) {
+	sentinel := errors.New("bad token")
+	auth := &fakeAuthenticator{returnErr: sentinel}
+	auditor := &fakeAuditor{}
+
+	mw := Server(auth, WithAuditOnFailure(auditor))
+	handler := mw(func(_ context.Context, _ any) (any, error) {
+		t.Fatal("handler must not run on auth failure")
+		return nil, nil
+	})
+
+	_, _ = handler(transportCtx("/svc/SecureOp"), nil)
+
+	if len(auditor.events) != 1 {
+		t.Fatalf("auditor.events count = %d, want 1", len(auditor.events))
+	}
+	evt := auditor.events[0]
+	if evt.Type() != "servora.authn.v1.failure" {
+		t.Errorf("event type = %q, want servora.authn.v1.failure", evt.Type())
+	}
+	if evt.Source() != "/svc/SecureOp" {
+		t.Errorf("event source = %q, want /svc/SecureOp", evt.Source())
+	}
+	sev, _ := evt.Extensions()["severity"].(string)
+	if sev != "WARN" {
+		t.Errorf("event severity = %q, want WARN", sev)
+	}
+	// Data should contain the error reason.
+	if data := string(evt.Data()); !strings.Contains(data, "bad token") {
+		t.Errorf("event data = %q, want to contain 'bad token'", data)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Server: WithAuditOnFailure NOT configured → silent
+// ---------------------------------------------------------------------------
+
+func TestServer_WithoutAuditOnFailure_Silent(t *testing.T) {
+	auth := &fakeAuthenticator{returnErr: errors.New("fail")}
+
+	// No auditor configured — should not panic or emit.
+	mw := Server(auth)
+	handler := mw(func(_ context.Context, _ any) (any, error) {
+		t.Fatal("handler must not run on auth failure")
+		return nil, nil
+	})
+
+	_, err := handler(transportCtx("/svc/Op"), nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	// No assertion on auditor — just ensure no panic.
 }
 
 // ---------------------------------------------------------------------------
@@ -501,7 +467,8 @@ func TestWithRulesFuncs_LaterOverwritesEarlier(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestMulti_FirstSuccessWins(t *testing.T) {
-	first := &fakeAuthenticator{returnActor: actor.NewUserActor("u1", "First")}
+	enriched := WithAuthType(context.Background(), "jwt")
+	first := &fakeAuthenticator{returnCtx: enriched}
 	second := &fakeAuthenticator{returnErr: errors.New("must not be called")}
 
 	auth := Multi(
@@ -510,12 +477,13 @@ func TestMulti_FirstSuccessWins(t *testing.T) {
 	)
 
 	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
-	a, err := auth.Authenticate(ctx)
+	resultCtx, err := auth.Authenticate(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a == nil || a.ID() != "u1" {
-		t.Errorf("actor = %v, want id=u1", a)
+	// Verify the enriched ctx is returned.
+	if at, ok := AuthTypeFrom(resultCtx); !ok || at != "jwt" {
+		t.Errorf("AuthType from result = (%q, %v), want (jwt, true)", at, ok)
 	}
 	if first.called != 1 {
 		t.Errorf("first.called = %d, want 1", first.called)
@@ -526,85 +494,11 @@ func TestMulti_FirstSuccessWins(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Multi: anonymous-fallthrough sub-success is treated as soft failure
-// ---------------------------------------------------------------------------
-
-// TestMulti_AnonymousSuccess_TreatedAsSoftFailure verifies that an engine
-// returning (AnonymousActor, nil) — the "no credential, passthrough" pattern
-// from single-engine direct mounts — does NOT short-circuit Multi. The next
-// allowed engine is given a chance to produce a concrete identity.
-//
-// Without this guard, jwt's "no Authorization header → anonymous + nil err"
-// would silently win first-success-wins and starve subsequent engines (e.g.
-// apikey), defeating the multi-scheme contract enforced by MODE_REQUIRED
-// schemes=[jwt,apikey].
-func TestMulti_AnonymousSuccess_TreatedAsSoftFailure(t *testing.T) {
-	jwtAuth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
-	apikeyAuth := &fakeAuthenticator{returnActor: actor.NewServiceActor("svc-1", "Service One")}
-
-	auth := Multi(
-		Named("jwt", jwtAuth),
-		Named("apikey", apikeyAuth),
-	)
-
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
-	a, err := auth.Authenticate(ctx)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if a == nil || a.ID() != "svc-1" {
-		t.Errorf("actor = %v, want id=svc-1 (apikey wins after jwt anonymous fallthrough)", a)
-	}
-	if jwtAuth.called != 1 {
-		t.Errorf("jwtAuth.called = %d, want 1", jwtAuth.called)
-	}
-	if apikeyAuth.called != 1 {
-		t.Errorf("apikeyAuth.called = %d, want 1 (anonymous fallthrough must not short-circuit)", apikeyAuth.called)
-	}
-	if h := schemeHolderFrom(ctx); h == nil || h.scheme != "apikey" {
-		t.Errorf("holder scheme = %q, want apikey", h.scheme)
-	}
-}
-
-// TestMulti_AnonymousOnlyEngines_AllFail verifies that when EVERY engine
-// returns anonymous, Multi reports schemeAttemptsErr (not silent success).
-// The aggregate FailureReason carries one "no credential ..." entry per
-// engine, so audit logs can distinguish "no token sent" from "bad token".
-func TestMulti_AnonymousOnlyEngines_AllFail(t *testing.T) {
-	jwtAuth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
-	apikeyAuth := &fakeAuthenticator{returnActor: actor.NewAnonymousActor()}
-
-	auth := Multi(
-		Named("jwt", jwtAuth),
-		Named("apikey", apikeyAuth),
-	)
-
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
-	a, err := auth.Authenticate(ctx)
-	if a != nil {
-		t.Errorf("actor = %v, want nil", a)
-	}
-	as, ok := err.(SchemeAttemptsErr)
-	if !ok {
-		t.Fatalf("err = %v, want SchemeAttemptsErr", err)
-	}
-	attempts := as.SchemeAttempts()
-	if len(attempts) != 2 {
-		t.Fatalf("attempts = %d, want 2", len(attempts))
-	}
-	for _, at := range attempts {
-		if !strings.Contains(at.Reason, "no credential") {
-			t.Errorf("attempt %q reason = %q, want contains 'no credential'", at.Scheme, at.Reason)
-		}
-	}
-}
-
-// ---------------------------------------------------------------------------
 // Multi: allowed filter skips non-matching engines
 // ---------------------------------------------------------------------------
 
 func TestMulti_AllowedFilter_SkipsNonMatching(t *testing.T) {
-	jwtAuth := &fakeAuthenticator{returnActor: actor.NewUserActor("u1", "JWT")}
+	jwtAuth := &fakeAuthenticator{}
 	apikeyAuth := &fakeAuthenticator{returnErr: errors.New("must not be called")}
 
 	auth := Multi(
@@ -653,7 +547,7 @@ func TestMulti_EmptyIntersection_ReturnsErrSchemesEmpty(t *testing.T) {
 
 func TestMulti_WritesSchemeToHolderOnSuccess(t *testing.T) {
 	first := &fakeAuthenticator{returnErr: errors.New("first failed")}
-	second := &fakeAuthenticator{returnActor: actor.NewUserActor("u1", "Second")}
+	second := &fakeAuthenticator{} // success
 
 	auth := Multi(
 		Named("jwt", first),
@@ -741,11 +635,11 @@ func TestMulti_IterationFollowsInjectionOrderNotAllowedOrder(t *testing.T) {
 	apikeyAuth := &fakeAuthenticator{returnErr: errors.New("apikey failed")}
 
 	// Wrap each fake so we can observe call order.
-	tracedJWT := authenticatorFunc(func(ctx context.Context) (actor.Actor, error) {
+	tracedJWT := authenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		callOrder = append(callOrder, "jwt")
 		return jwtAuth.Authenticate(ctx)
 	})
-	tracedAPIKey := authenticatorFunc(func(ctx context.Context) (actor.Actor, error) {
+	tracedAPIKey := authenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		callOrder = append(callOrder, "apikey")
 		return apikeyAuth.Authenticate(ctx)
 	})
@@ -772,68 +666,17 @@ func TestMulti_IterationFollowsInjectionOrderNotAllowedOrder(t *testing.T) {
 }
 
 // authenticatorFunc adapts a func to the Authenticator interface for tests.
-type authenticatorFunc func(ctx context.Context) (actor.Actor, error)
+type authenticatorFunc func(ctx context.Context) (context.Context, error)
 
-func (f authenticatorFunc) Authenticate(ctx context.Context) (actor.Actor, error) {
+func (f authenticatorFunc) Authenticate(ctx context.Context) (context.Context, error) {
 	return f(ctx)
-}
-
-// ---------------------------------------------------------------------------
-// End-to-end: outer Collector still emits AUTHN_RESULT on authn failure
-// ---------------------------------------------------------------------------
-
-func TestServer_FailurePath_EmitsViaOuterCollector(t *testing.T) {
-	emitter := &captureEmitter{}
-	rec := audit.NewRecorder(emitter, "test-svc")
-
-	sentinel := errors.New("auth failed")
-	failAuth := &fakeAuthenticator{returnErr: sentinel}
-
-	chain := middleware.Chain(audit.Collector(rec), Server(failAuth))
-	handler := chain(func(_ context.Context, _ any) (any, error) {
-		t.Fatal("inner handler must not run on authn failure")
-		return nil, nil
-	})
-
-	_, err := handler(transportCtx("/svc/Op"), nil)
-	if err == nil {
-		t.Fatal("expected error from authn failure")
-	}
-
-	if len(emitter.events) != 1 {
-		t.Fatalf("emit count = %d, want 1", len(emitter.events))
-	}
-	evt := emitter.events[0]
-	if evt.GetEventType() != auditpb.AuditEventType_AUDIT_EVENT_TYPE_AUTHN_RESULT {
-		t.Errorf("EventType = %v, want AUTHN_RESULT", evt.GetEventType())
-	}
-	d := evt.GetAuthnDetail()
-	if d == nil {
-		t.Fatal("AuthnDetail missing in emitted event")
-	}
-	if d.GetSuccess() {
-		t.Error("AuthnDetail.Success = true on authn-failure event")
-	}
-	if d.GetFailureReason() != sentinel.Error() {
-		t.Errorf("AuthnDetail.FailureReason = %q, want %q", d.GetFailureReason(), sentinel.Error())
-	}
-	if evt.GetResult().GetSuccess() {
-		t.Error("Result.Success = true on authn-failure event")
-	}
 }
 
 // ---------------------------------------------------------------------------
 // Compile-time guard: WithMethod has been removed
 // ---------------------------------------------------------------------------
 
-// If a future commit re-adds WithMethod, this file remains compilable but the
-// behavior of the rest of the package would diverge from spec. The grep-based
-// guard below catches that explicitly.
-
 func TestWithMethod_Removed(t *testing.T) {
-	// Reflectively assert that no exported symbol named WithMethod exists by
-	// reading the source file. A direct compile-time reference would tie the
-	// test to the very symbol we want to ensure is gone.
 	body := mustReadFile(t, "authn.go")
 	if strings.Contains(body, "func WithMethod(") {
 		t.Error("authn.go MUST NOT define WithMethod after Multi/Named refactor")
@@ -848,3 +691,6 @@ func mustReadFile(t *testing.T, path string) string {
 	}
 	return string(b)
 }
+
+// Ensure unused imports are not present (satisfy the Go compiler).
+var _ middleware.Middleware

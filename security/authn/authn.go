@@ -24,11 +24,10 @@
 // `authn.Server` via a package-private mutable holder ctx channel — the
 // `Authenticator` interface stays unchanged (still single-method).
 //
-// The middleware writes a `*auditpb.AuthnDetail` to ctx via
-// `audit.WithAuthnResult`; emission is the responsibility of the
-// transport-tail `audit.Collector` middleware. The authn package therefore
-// has zero coupling to the audit emission pipeline (only to the neutral
-// auditpb schema package).
+// On success the enriched context returned by the engine is passed directly
+// to the handler. On failure an optional `WithAuditOnFailure` auditor emits
+// a CloudEvents event; the dispatcher itself does not write to the legacy
+// auditpb detail holder.
 package authn
 
 import (
@@ -36,12 +35,11 @@ import (
 	"fmt"
 	"strings"
 
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
-	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
-	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/Servora-Kit/servora/obs/audit"
 )
 
@@ -65,7 +63,7 @@ import (
 // the dispatcher by `Named` at wiring time, and orchestration is the
 // `Multi` decorator's responsibility.
 type Authenticator interface {
-	Authenticate(ctx context.Context) (actor.Actor, error)
+	Authenticate(ctx context.Context) (context.Context, error)
 }
 
 // Rules is the aggregate authentication-rules table consumed by `Server`.
@@ -95,6 +93,7 @@ type Option func(*serverConfig)
 type serverConfig struct {
 	rules        Rules
 	errorHandler func(ctx context.Context, err error) error
+	auditor      audit.Auditor
 }
 
 // WithRulesFuncs registers one or more rule-table generator functions.
@@ -131,13 +130,23 @@ func WithRulesFuncs(fns ...func() Rules) Option {
 }
 
 // WithErrorHandler installs a custom error transformer invoked when
-// authentication fails. The detail has already been written to ctx by the
-// dispatcher BEFORE this hook is called, so handlers can rely on
-// `audit.AuthnResultFrom(ctx)` for structured access. If the underlying
-// error implements `SchemeAttemptsErr` (i.e. came from `Multi`), the hook
-// can type-assert to retrieve per-scheme attempts.
+// authentication fails. If the underlying error implements
+// `SchemeAttemptsErr` (i.e. came from `Multi`), the hook can type-assert
+// to retrieve per-scheme attempts.
 func WithErrorHandler(h func(ctx context.Context, err error) error) Option {
 	return func(c *serverConfig) { c.errorHandler = h }
+}
+
+// WithAuditOnFailure installs an Auditor that receives a CloudEvents event
+// on every authentication failure. The event carries:
+//   - type = "servora.authn.v1.failure"
+//   - source = the RPC operation from transport ctx
+//   - severity extension = "WARN"
+//   - data = error message as text/plain
+//
+// When no auditor is configured (default), the failure path does not emit.
+func WithAuditOnFailure(a audit.Auditor) Option {
+	return func(c *serverConfig) { c.auditor = a }
 }
 
 // Server returns a Kratos middleware that dispatches authentication to the
@@ -146,30 +155,18 @@ func WithErrorHandler(h func(ctx context.Context, err error) error) Option {
 // Per-request behavior:
 //
 //  1. Resolve operation: `transport.FromServerContext(ctx).Operation()`.
-//  2. Chain short-circuit: if a non-anonymous actor already sits in ctx
-//     (a previous middleware authenticated), passthrough — do not call
-//     the engine, do not write `AuthnDetail`.
-//  3. PublicMethods passthrough: if op ∈ `Rules.PublicMethods`, passthrough
-//     — do not call the engine, do not write `AuthnDetail`.
-//  4. Build the allowed-schemes set: if op ∈ `Rules.MethodSchemes`, install
+//  2. PublicMethods passthrough: if op ∈ `Rules.PublicMethods`, passthrough
+//     — do not call the engine.
+//  3. Build the allowed-schemes set: if op ∈ `Rules.MethodSchemes`, install
 //     `allowed = set(rules.MethodSchemes[op])` into ctx. Otherwise install
 //     nil (fail-open / unannotated).
-//  5. Install a mutable `schemeHolder` into ctx — `Multi` writes the
+//  4. Install a mutable `schemeHolder` into ctx — `Multi` writes the
 //     successful scheme back via `holder.set(scheme)`.
-//  6. Call `a.Authenticate(ctx)`.
-//  7. Success → write `AuthnDetail{Method: holder.get(), Success: true}`,
-//     inject the actor, call the handler.
-//  8. Failure:
-//     - If err implements `SchemeAttemptsErr` → method = "multi",
-//     reason = serialized attempts ("jwt: …; apikey: …").
-//     - Otherwise → method = holder.get() (may be empty),
-//     reason = err.Error().
-//     Write `AuthnDetail{Success: false, …}` to ctx, then either invoke
-//     `WithErrorHandler` (if set) or return
+//  5. Call `a.Authenticate(ctx)`.
+//  6. Success → use the returned enriched ctx directly, call the handler.
+//  7. Failure → optionally emit audit event (if WithAuditOnFailure set),
+//     then either invoke `WithErrorHandler` (if set) or return
 //     `errors.Unauthorized("AUTHN_FAILED", reason)`.
-//
-// The detail is always written BEFORE returning so an OUTER-mounted
-// `audit.Collector` observes it post-handler even when authn short-circuits.
 func Server(a Authenticator, opts ...Option) middleware.Middleware {
 	cfg := &serverConfig{}
 	for _, opt := range opts {
@@ -179,11 +176,6 @@ func Server(a Authenticator, opts ...Option) middleware.Middleware {
 
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			// Step 2: chain short-circuit on existing non-anonymous actor.
-			if existing, ok := actor.From(ctx); ok && existing != nil && existing.Type() != actor.TypeAnonymous {
-				return handler(ctx, req)
-			}
-
 			// Step 1: resolve operation (best-effort — may be absent in
 			// non-server contexts; dispatch still proceeds with empty op,
 			// which means PublicMethods/MethodSchemes lookups miss and the
@@ -193,64 +185,60 @@ func Server(a Authenticator, opts ...Option) middleware.Middleware {
 				op = tr.Operation()
 			}
 
-			// Step 3: PublicMethods passthrough — engine NOT called, no
-			// AuthnDetail written. Business handler sees ctx without an
-			// actor and is expected to treat it as anonymous.
+			// Step 2: PublicMethods passthrough — engine NOT called.
+			// Business handler sees ctx as-is and is expected to treat
+			// it as anonymous.
 			if _, isPublic := publicSet[op]; isPublic {
 				return handler(ctx, req)
 			}
 
-			// Step 4: build the allowed-schemes set for Multi to filter on.
+			// Step 3: build the allowed-schemes set for Multi to filter on.
 			// Absent op → allowed=nil → Multi tries every engine.
 			var allowed map[string]struct{}
 			if schemes, ok := cfg.rules.MethodSchemes[op]; ok {
 				allowed = stringSet(schemes)
 			}
 
-			// Step 5: install both ctx channels before dispatch. `Multi`
+			// Step 4: install both ctx channels before dispatch. `Multi`
 			// reads `allowedSchemes`; on success writes `schemeHolder`.
 			ctx = withAllowedSchemes(ctx, allowed)
 			ctx = installSchemeHolder(ctx)
 
-			// Step 6: dispatch.
-			principal, err := a.Authenticate(ctx)
+			// Step 5: dispatch.
+			enrichedCtx, err := a.Authenticate(ctx)
 
-			// Read scheme out of holder (empty string if no Multi or single
-			// engine that did not write).
-			var scheme string
-			if h := schemeHolderFrom(ctx); h != nil {
-				scheme = h.get()
-			}
-
-			// Step 8: failure path.
+			// Step 7: failure path.
 			if err != nil {
-				method := scheme
 				reason := err.Error()
 				if as, ok := err.(SchemeAttemptsErr); ok {
-					method = multiMethodTag
 					reason = renderSchemeAttempts(as.SchemeAttempts())
 				}
-				ctx = audit.WithAuthnResult(ctx, &auditpb.AuthnDetail{
-					Method:        method,
-					Success:       false,
-					FailureReason: reason,
-				})
+				// Emit audit event if auditor is configured.
+				if cfg.auditor != nil {
+					emitAuthnFailure(ctx, cfg.auditor, op, reason)
+				}
 				if cfg.errorHandler != nil {
 					return nil, cfg.errorHandler(ctx, err)
 				}
 				return nil, errors.Unauthorized(authnFailedReason, reason)
 			}
 
-			// Step 7: success path.
-			ctx = audit.WithAuthnResult(ctx, &auditpb.AuthnDetail{
-				Method:        scheme,
-				Success:       true,
-				FailureReason: "",
-			})
-			ctx = actor.NewContext(ctx, principal)
-			return handler(ctx, req)
+			// Step 6: success path — use the enriched ctx from engine.
+			return handler(enrichedCtx, req)
 		}
 	}
+}
+
+// emitAuthnFailure constructs a CloudEvents event and emits it via the
+// configured Auditor. Errors from Emit are silently ignored (audit must
+// not break business flow).
+func emitAuthnFailure(ctx context.Context, auditor audit.Auditor, op, reason string) {
+	event := cloudevents.NewEvent()
+	event.SetType("servora.authn.v1.failure")
+	event.SetSource(op)
+	event.SetExtension("severity", "WARN")
+	_ = event.SetData("text/plain", reason)
+	_ = auditor.Emit(ctx, event)
 }
 
 // multiMethodTag is the value written into `AuthnDetail.Method` when the
