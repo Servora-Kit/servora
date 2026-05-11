@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/transport"
 
-	"github.com/Servora-Kit/servora/core/actor"
+	"github.com/Servora-Kit/servora/security/authn"
 )
 
 // ============================================================================
@@ -44,26 +44,25 @@ func serverCtx(headers map[string]string) context.Context {
 	return transport.NewServerContext(context.Background(), &fakeServerTransport{headers: headers})
 }
 
-// stubStore is a minimal in-memory [Store] used only by these tests; the
-//灯塔 / e2e in-memory stub belongs to servora-example, not this package.
+// stubStore is a minimal in-memory [Store] used only by these tests.
 type stubStore struct {
-	keys     map[string]actor.Actor
+	keys     map[string]KeyMeta
 	forceErr error
 	calls    int
 	gotKey   string
 }
 
-func (s *stubStore) Lookup(_ context.Context, key string) (actor.Actor, error) {
+func (s *stubStore) Lookup(_ context.Context, key string) (KeyMeta, error) {
 	s.calls++
 	s.gotKey = key
 	if s.forceErr != nil {
-		return nil, s.forceErr
+		return KeyMeta{}, s.forceErr
 	}
-	a, ok := s.keys[key]
+	m, ok := s.keys[key]
 	if !ok {
-		return nil, errors.New("apikey: unknown key")
+		return KeyMeta{}, errors.New("apikey: unknown key")
 	}
-	return a, nil
+	return m, nil
 }
 
 // ============================================================================
@@ -105,19 +104,19 @@ func TestNewAuthenticator_WithoutStore_Panics(t *testing.T) {
 // ============================================================================
 
 // TestAuthenticate_MissingHeader_ReturnsError: ctx with transport but no
-// X-API-Key header → engine returns (nil, error containing "missing
+// X-API-Key header → engine returns (ctx, error containing "missing
 // X-API-Key") and Store.Lookup MUST NOT be called.
 func TestAuthenticate_MissingHeader_ReturnsError(t *testing.T) {
-	store := &stubStore{keys: map[string]actor.Actor{}}
+	store := &stubStore{keys: map[string]KeyMeta{}}
 	auth := NewAuthenticator(WithStore(store))
 
 	ctx := serverCtx(nil)
-	a, err := auth.Authenticate(ctx)
+	resultCtx, err := auth.Authenticate(ctx)
 	if err == nil {
 		t.Fatal("expected error for missing X-API-Key, got nil")
 	}
-	if a != nil {
-		t.Errorf("actor = %v, want nil on error", a)
+	if resultCtx == nil {
+		t.Error("ctx = nil, want non-nil (original ctx returned on error)")
 	}
 	if !strings.Contains(err.Error(), "missing X-API-Key") {
 		t.Errorf("error = %q, want substring %q", err.Error(), "missing X-API-Key")
@@ -125,21 +124,25 @@ func TestAuthenticate_MissingHeader_ReturnsError(t *testing.T) {
 	if store.calls != 0 {
 		t.Errorf("Store.Lookup calls = %d, want 0 (header check must short-circuit)", store.calls)
 	}
+	// KeyMeta should NOT be present on error path.
+	if _, ok := KeyMetaFrom(resultCtx); ok {
+		t.Error("KeyMetaFrom should return false on error path")
+	}
 }
 
 // TestAuthenticate_NoTransport_ReturnsError: bare context.Background() with
 // no Kratos server transport attached → same missing-header error path
 // (extractAPIKey returns "" → engine returns errMissingHeader).
 func TestAuthenticate_NoTransport_ReturnsError(t *testing.T) {
-	store := &stubStore{keys: map[string]actor.Actor{}}
+	store := &stubStore{keys: map[string]KeyMeta{}}
 	auth := NewAuthenticator(WithStore(store))
 
-	a, err := auth.Authenticate(context.Background())
+	resultCtx, err := auth.Authenticate(context.Background())
 	if err == nil {
 		t.Fatal("expected error for missing transport, got nil")
 	}
-	if a != nil {
-		t.Errorf("actor = %v, want nil on error", a)
+	if resultCtx == nil {
+		t.Error("ctx = nil, want non-nil on error")
 	}
 	if !strings.Contains(err.Error(), "missing X-API-Key") {
 		t.Errorf("error = %q, want substring %q", err.Error(), "missing X-API-Key")
@@ -150,30 +153,55 @@ func TestAuthenticate_NoTransport_ReturnsError(t *testing.T) {
 }
 
 // TestAuthenticate_HappyPath: valid X-API-Key resolves through Store to a
-// concrete ServiceActor, returned verbatim.
+// KeyMeta, which is attached to ctx along with auth type "api_key".
 func TestAuthenticate_HappyPath(t *testing.T) {
-	wantActor := actor.NewServiceActor("svc-1", "Test Service")
+	wantMeta := KeyMeta{KeyID: "key-001", OwnerID: "svc-1"}
 	store := &stubStore{
-		keys: map[string]actor.Actor{
-			"valid": wantActor,
+		keys: map[string]KeyMeta{
+			"valid": wantMeta,
 		},
 	}
 	auth := NewAuthenticator(WithStore(store))
 
 	ctx := serverCtx(map[string]string{"X-API-Key": "valid"})
-	a, err := auth.Authenticate(ctx)
+	resultCtx, err := auth.Authenticate(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a == nil {
-		t.Fatal("actor = nil, want ServiceActor")
+	if resultCtx == nil {
+		t.Fatal("ctx = nil, want enriched ctx")
 	}
-	if a.ID() != "svc-1" {
-		t.Errorf("actor.ID = %q, want svc-1", a.ID())
+
+	// Verify KeyMeta is attached.
+	meta, ok := KeyMetaFrom(resultCtx)
+	if !ok {
+		t.Fatal("KeyMetaFrom returned false, want true")
 	}
-	if a.Type() != actor.TypeService {
-		t.Errorf("actor.Type = %v, want TypeService", a.Type())
+	if meta.KeyID != "key-001" {
+		t.Errorf("meta.KeyID = %q, want key-001", meta.KeyID)
 	}
+	if meta.OwnerID != "svc-1" {
+		t.Errorf("meta.OwnerID = %q, want svc-1", meta.OwnerID)
+	}
+
+	// Verify auth type is set.
+	authType, ok := authn.AuthTypeFrom(resultCtx)
+	if !ok {
+		t.Fatal("AuthTypeFrom returned false, want true")
+	}
+	if authType != "api_key" {
+		t.Errorf("authType = %q, want api_key", authType)
+	}
+
+	// Verify SubjectFrom works.
+	sub, ok := SubjectFrom(resultCtx)
+	if !ok {
+		t.Fatal("SubjectFrom returned false, want true")
+	}
+	if sub != "svc-1" {
+		t.Errorf("SubjectFrom = %q, want svc-1", sub)
+	}
+
 	if store.calls != 1 {
 		t.Errorf("Store.Lookup calls = %d, want 1", store.calls)
 	}
@@ -192,15 +220,87 @@ func TestAuthenticate_StoreError_Propagates(t *testing.T) {
 	auth := NewAuthenticator(WithStore(store))
 
 	ctx := serverCtx(map[string]string{"X-API-Key": "anything"})
-	a, err := auth.Authenticate(ctx)
+	resultCtx, err := auth.Authenticate(ctx)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
 	if !errors.Is(err, wantErr) {
 		t.Errorf("error = %v, want errors.Is(%v) true", err, wantErr)
 	}
-	if a != nil {
-		t.Errorf("actor = %v, want nil on error", a)
+	if resultCtx == nil {
+		t.Error("ctx = nil, want non-nil on error")
+	}
+	// KeyMeta should NOT be present on error path.
+	if _, ok := KeyMetaFrom(resultCtx); ok {
+		t.Error("KeyMetaFrom should return false on store error path")
+	}
+}
+
+// ============================================================================
+// SubjectFrom tests.
+// ============================================================================
+
+// TestSubjectFrom_Present: ctx with KeyMeta containing non-empty OwnerID.
+func TestSubjectFrom_Present(t *testing.T) {
+	ctx := WithKeyMeta(context.Background(), KeyMeta{KeyID: "k1", OwnerID: "user-42"})
+	sub, ok := SubjectFrom(ctx)
+	if !ok {
+		t.Fatal("SubjectFrom returned false, want true")
+	}
+	if sub != "user-42" {
+		t.Errorf("SubjectFrom = %q, want user-42", sub)
+	}
+}
+
+// TestSubjectFrom_EmptyOwnerID: ctx with KeyMeta but OwnerID is empty →
+// returns ("", false).
+func TestSubjectFrom_EmptyOwnerID(t *testing.T) {
+	ctx := WithKeyMeta(context.Background(), KeyMeta{KeyID: "k1", OwnerID: ""})
+	sub, ok := SubjectFrom(ctx)
+	if ok {
+		t.Error("SubjectFrom returned true, want false for empty OwnerID")
+	}
+	if sub != "" {
+		t.Errorf("SubjectFrom = %q, want \"\"", sub)
+	}
+}
+
+// TestSubjectFrom_NoKeyMeta: bare ctx without KeyMeta → returns ("", false).
+func TestSubjectFrom_NoKeyMeta(t *testing.T) {
+	sub, ok := SubjectFrom(context.Background())
+	if ok {
+		t.Error("SubjectFrom returned true, want false for missing KeyMeta")
+	}
+	if sub != "" {
+		t.Errorf("SubjectFrom = %q, want \"\"", sub)
+	}
+}
+
+// ============================================================================
+// KeyMetaFrom tests.
+// ============================================================================
+
+// TestKeyMetaFrom_Present: round-trip test for WithKeyMeta/KeyMetaFrom.
+func TestKeyMetaFrom_Present(t *testing.T) {
+	want := KeyMeta{KeyID: "k-abc", OwnerID: "owner-xyz"}
+	ctx := WithKeyMeta(context.Background(), want)
+	got, ok := KeyMetaFrom(ctx)
+	if !ok {
+		t.Fatal("KeyMetaFrom returned false, want true")
+	}
+	if got != want {
+		t.Errorf("KeyMetaFrom = %+v, want %+v", got, want)
+	}
+}
+
+// TestKeyMetaFrom_Absent: bare ctx → returns zero value and false.
+func TestKeyMetaFrom_Absent(t *testing.T) {
+	got, ok := KeyMetaFrom(context.Background())
+	if ok {
+		t.Error("KeyMetaFrom returned true, want false for bare ctx")
+	}
+	if got != (KeyMeta{}) {
+		t.Errorf("KeyMetaFrom = %+v, want zero KeyMeta", got)
 	}
 }
 

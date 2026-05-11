@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/Servora-Kit/servora/security/authn"
 )
 
@@ -22,9 +21,12 @@ var errMissingHeader = errors.New("apikey: missing X-API-Key header")
 // The returned authenticator's `Authenticate(ctx)`:
 //
 //  1. Reads the `X-API-Key` header from the Kratos server transport.
-//  2. If absent / empty → returns `(nil, errMissingHeader)`.
-//  3. Otherwise calls `Store.Lookup(ctx, key)` and propagates its
-//     `(actor.Actor, error)` verbatim.
+//  2. If absent / empty → returns `(ctx, errMissingHeader)`.
+//  3. Otherwise calls `Store.Lookup(ctx, key)`.
+//  4. On success: attaches [KeyMeta] via [WithKeyMeta] and sets
+//     auth type to "api_key" via [authn.WithAuthType]; returns the
+//     enriched ctx.
+//  5. On failure: propagates Store.Lookup error verbatim.
 //
 // REQUIRED: at least one [WithStore] Option MUST be supplied. Calling
 // `NewAuthenticator()` (no opts) panics with `apikey: WithStore is
@@ -46,12 +48,19 @@ type authenticator struct {
 }
 
 // Authenticate reads the X-API-Key header off the inbound transport and
-// dispatches to the configured [Store]. Returns `(nil, errMissingHeader)`
-// when the header is absent; otherwise propagates `Store.Lookup` verbatim.
-func (a *authenticator) Authenticate(ctx context.Context) (actor.Actor, error) {
+// dispatches to the configured [Store]. Returns `(ctx, errMissingHeader)`
+// when the header is absent; on success attaches [KeyMeta] and auth type
+// to ctx; on Store error propagates verbatim.
+func (a *authenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	key := extractAPIKey(ctx)
 	if key == "" {
-		return nil, errMissingHeader
+		return ctx, errMissingHeader
 	}
-	return a.store.Lookup(ctx, key)
+	meta, err := a.store.Lookup(ctx, key)
+	if err != nil {
+		return ctx, err
+	}
+	ctx = WithKeyMeta(ctx, meta)
+	ctx = authn.WithAuthType(ctx, "api_key")
+	return ctx, nil
 }

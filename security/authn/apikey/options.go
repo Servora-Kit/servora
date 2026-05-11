@@ -11,7 +11,7 @@ type config struct {
 type Option func(*config)
 
 // WithStore configures the storage backend used to resolve API keys into
-// actors. It is REQUIRED — [NewAuthenticator] panics if called without
+// [KeyMeta]. It is REQUIRED — [NewAuthenticator] panics if called without
 // `WithStore` (fail-fast: an apikey engine without a Store can never
 // authenticate any request, so silent acceptance would mask wiring bugs).
 func WithStore(s Store) Option {

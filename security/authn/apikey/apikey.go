@@ -28,13 +28,18 @@
 //     revoked; that is a business / platform concern.
 //   - Implementations of [Store] may be backed by an in-memory map (test
 //     stub), a database table, a cache, or a cross-service RPC.
-//   - Likewise, [Store.Lookup] returns a generic [actor.Actor]; concrete
-//     implementations decide whether to return `*actor.UserActor` (human-
-//     issued keys), `*actor.ServiceActor` (service-account keys), or any
-//     custom actor implementation.
+//   - [Store.Lookup] returns a [KeyMeta] with the key identifier and owner
+//     subject. On successful authentication, the engine writes [KeyMeta]
+//     into ctx via [WithKeyMeta] and sets auth type to "api_key".
+//
+// Downstream code reads the result via:
+//
+//   - [KeyMetaFrom] — full metadata struct.
+//   - [SubjectFrom] — convenience: extracts OwnerID only.
+//   - [authn.AuthTypeFrom] — "api_key" on success.
 //
 // Unlike `security/authn/jwt`, this subpackage exposes no `ClaimsMapper`
-// extension point: API keys carry no JWT claims and the actor shape is
+// extension point: API keys carry no JWT claims and the key metadata is
 // produced directly by [Store.Lookup].
 package apikey
 
