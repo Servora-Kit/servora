@@ -34,6 +34,7 @@ service GreetingService {
   option (servora.audit.v1.service_default) = {
     mode: AUDIT_MODE_ENABLED
     event_type: "servora.audit.resource_mutation"
+    severity: "INFO"
   };
 
   // SayHello 显式覆盖 authn 为 multi-scheme（jwt + apikey）；authz 与 audit 继承服务级默认。

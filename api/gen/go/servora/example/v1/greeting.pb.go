@@ -303,12 +303,12 @@ const file_servora_example_v1_greeting_proto_rawDesc = "" +
 	"\x11AdminPurgeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"$\n" +
 	"\x12AdminPurgeResponse\x12\x0e\n" +
-	"\x02ok\x18\x01 \x01(\bR\x02ok2\x9a\x03\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok2\xa0\x03\n" +
 	"\x0fGreetingService\x12j\n" +
 	"\bSayHello\x12#.servora.example.v1.SayHelloRequest\x1a$.servora.example.v1.SayHelloResponse\"\x13\xe2\xc7\x18\x0f\b\x02\x12\x03jwt\x12\x06apikey\x12f\n" +
 	"\aHealthz\x12\".servora.example.v1.HealthzRequest\x1a#.servora.example.v1.HealthzResponse\"\x12\xa2\xbb\x18\x02\b\x01\xc2\xc1\x18\x02\b\x01\xe2\xc7\x18\x02\b\x01\x12i\n" +
 	"\n" +
-	"AdminPurge\x12%.servora.example.v1.AdminPurgeRequest\x1a&.servora.example.v1.AdminPurgeResponse\"\f\xe2\xc7\x18\b\b\x02\x12\x04mtls\x1aH\xaa\xbb\x18#\b\x02\x12\x1fservora.audit.resource_mutation\xca\xc1\x18\x12\b\x02\x12\x04user\x1a\bgreeting\xea\xc7\x18\a\b\x02\x12\x03jwtB\xd9\x01\n" +
+	"AdminPurge\x12%.servora.example.v1.AdminPurgeRequest\x1a&.servora.example.v1.AdminPurgeResponse\"\f\xe2\xc7\x18\b\b\x02\x12\x04mtls\x1aN\xaa\xbb\x18)\b\x02\x12\x1fservora.audit.resource_mutation\x1a\x04INFO\xca\xc1\x18\x12\b\x02\x12\x04user\x1a\bgreeting\xea\xc7\x18\a\b\x02\x12\x03jwtB\xd9\x01\n" +
 	"\x16com.servora.example.v1B\rGreetingProtoP\x01ZFgithub.com/Servora-Kit/servora/api/gen/go/servora/example/v1;examplev1\xa2\x02\x03SEX\xaa\x02\x12Servora.Example.V1\xca\x02\x12Servora\\Example\\V1\xe2\x02\x1eServora\\Example\\V1\\GPBMetadata\xea\x02\x14Servora::Example::V1b\x06proto3"
 
 var (
