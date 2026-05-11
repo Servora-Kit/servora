@@ -17,9 +17,9 @@ func WithVerifier(v *jwtpkg.Verifier) Option {
 	return func(c *authenticatorConfig) { c.verifier = v }
 }
 
-// WithClaimsMapper sets a custom ClaimsMapper to convert JWT claims into
-// an actor.Actor. Defaults to [DefaultClaimsMapper], which maps only the
-// canonical three-piece (sub → ID, name/preferred_username → DisplayName).
+// WithClaimsMapper sets a custom ClaimsMapper to enrich the ctx with parsed
+// JWT claims. Defaults to [DefaultClaimsMapper], which validates the sub
+// claim and stores the full claims map via [WithClaims].
 //
 // Business code that needs IdP-specific fields (custom roles / scopes /
 // tenant / group memberships / …) installs its own mapper here.

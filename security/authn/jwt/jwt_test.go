@@ -3,15 +3,12 @@ package jwt
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 	"testing"
 
 	gojwt "github.com/golang-jwt/jwt/v5"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
-	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/Servora-Kit/servora/obs/audit"
 	"github.com/Servora-Kit/servora/security/authn"
 )
@@ -72,22 +69,22 @@ func clientCtx() (context.Context, *fakeClientTransport) {
 
 type countingAuthenticator struct {
 	calls          int
-	returnActor    actor.Actor
+	enrichCtx      bool // if true, enrich ctx with authn.WithAuthType on success
 	returnErr      error
 	observedToken  string
 	observedHasTok bool
 }
 
-func (c *countingAuthenticator) Authenticate(ctx context.Context) (actor.Actor, error) {
+func (c *countingAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	c.calls++
 	c.observedToken, c.observedHasTok = TokenFrom(ctx)
 	if c.returnErr != nil {
-		return nil, c.returnErr
+		return ctx, c.returnErr
 	}
-	if c.returnActor == nil {
-		return actor.NewAnonymousActor(), nil
+	if c.enrichCtx {
+		return authn.WithAuthType(ctx, "user"), nil
 	}
-	return c.returnActor, nil
+	return ctx, nil
 }
 
 // serverWithStub builds a Server-equivalent middleware backed by the supplied
@@ -120,10 +117,10 @@ func serverWithStub(stub authn.Authenticator) middleware.Middleware {
 // TestServer_ExtractsBearerAndDispatches asserts the wrapper:
 //  1. reads Authorization: Bearer <tok> off the inbound transport,
 //  2. stashes the raw token into the jwt-private ctx channel,
-//  3. delegates to authn.Server which writes AuthnDetail.Method = "jwt".
+//  3. delegates to authn.Server + Multi dispatcher.
 func TestServer_ExtractsBearerAndDispatches(t *testing.T) {
 	stub := &countingAuthenticator{
-		returnActor: actor.NewUserActor("u1", "Alice"),
+		enrichCtx: true,
 	}
 	mw := serverWithStub(stub)
 
@@ -151,15 +148,12 @@ func TestServer_ExtractsBearerAndDispatches(t *testing.T) {
 		t.Errorf("TokenFrom(handler ctx) = (%q,%v), want (\"raw-token-xyz\",true)", tok, ok)
 	}
 
-	d, ok := audit.AuthnResultFrom(capturedCtx)
+	authType, ok := authn.AuthTypeFrom(capturedCtx)
 	if !ok {
-		t.Fatal("expected AuthnDetail in ctx")
+		t.Fatal("expected AuthType in ctx")
 	}
-	if d.Method != Scheme {
-		t.Errorf("AuthnDetail.Method = %q, want %q", d.Method, Scheme)
-	}
-	if !d.Success {
-		t.Errorf("AuthnDetail.Success = false, want true")
+	if authType != "user" {
+		t.Errorf("AuthType = %q, want %q", authType, "user")
 	}
 }
 
@@ -238,17 +232,15 @@ func TestClient_PropagatesToken(t *testing.T) {
 	}
 }
 
-// TestServer_ChainShortCircuit_PassthroughOnExistingActor asserts that when
-// ctx already carries a non-anonymous actor (a previous engine in a chain
-// won), authn.Server short-circuits: stub Authenticator never runs, no
-// AuthnDetail written.
-func TestServer_ChainShortCircuit_PassthroughOnExistingActor(t *testing.T) {
-	stub := &countingAuthenticator{
-		returnActor: actor.NewUserActor("should-not-be-used", ""),
-	}
+// TestServer_TokenPassthroughInCtx asserts that when jwt.Server sees an
+// Authorization header, the raw token is available in the ctx passed to the
+// handler (via the jwt-private ctx channel) even when the stub returns the
+// input ctx unmodified (the wrapper's pre-extract step installs the token
+// before dispatch).
+func TestServer_TokenPassthroughInCtx(t *testing.T) {
+	// Stub returns an enriched ctx so Multi considers it success.
+	stub := &countingAuthenticator{enrichCtx: true}
 	mw := serverWithStub(stub)
-
-	preSet := actor.NewUserActor("pre-set", "")
 
 	var capturedCtx context.Context
 	handler := mw(func(ctx context.Context, _ any) (any, error) {
@@ -256,39 +248,27 @@ func TestServer_ChainShortCircuit_PassthroughOnExistingActor(t *testing.T) {
 		return "ok", nil
 	})
 
-	ctx := serverCtx(map[string]string{"Authorization": "Bearer would-be-token"})
-	ctx = actor.NewContext(ctx, preSet)
-
+	ctx := serverCtx(map[string]string{"Authorization": "Bearer my-token"})
 	if _, err := handler(ctx, nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if stub.calls != 0 {
-		t.Errorf("Authenticate calls = %d, want 0 (short-circuit)", stub.calls)
+	if stub.calls != 1 {
+		t.Errorf("Authenticate calls = %d, want 1", stub.calls)
 	}
 
-	a, ok := actor.From(capturedCtx)
-	if !ok {
-		t.Fatal("expected actor in handler ctx")
-	}
-	if a.ID() != "pre-set" {
-		t.Errorf("handler actor ID = %q, want pre-set", a.ID())
-	}
-
-	if _, ok := audit.AuthnResultFrom(capturedCtx); ok {
-		t.Errorf("AuthnDetail must NOT be written when short-circuit triggers (dispatcher never reached)")
+	tok, ok := TokenFrom(capturedCtx)
+	if !ok || tok != "my-token" {
+		t.Errorf("TokenFrom(handler ctx) = (%q,%v), want (\"my-token\",true)", tok, ok)
 	}
 }
 
 // TestServer_NoBearerHeader_ReachesAuthenticator asserts that when there is
-// no Authorization header AND no pre-set actor, the wrapper still delegates
-// to the dispatcher. Since v0.6.0 the dispatcher's `Multi` decorator guards
-// against anonymous fallthrough — the engine is reached but its
-// (anonymous, nil) result is converted into a soft failure inside Multi,
-// surfacing as schemeAttemptsErr → AUTHN_FAILED 401. This protects the
-// MODE_REQUIRED contract from being defeated by absent credentials.
+// no Authorization header, the wrapper still delegates to the dispatcher and
+// the engine is reached. The engine returns (ctx, nil) as pass-through which
+// Multi treats as success (no enrichment, no error).
 func TestServer_NoBearerHeader_ReachesAuthenticator(t *testing.T) {
-	stub := &countingAuthenticator{} // returnActor nil → anonymous fallthrough
+	stub := &countingAuthenticator{} // returnCtx nil → pass-through
 	mw := serverWithStub(stub)
 
 	var capturedCtx context.Context
@@ -299,22 +279,19 @@ func TestServer_NoBearerHeader_ReachesAuthenticator(t *testing.T) {
 
 	ctx := serverCtx(nil)
 	_, err := handler(ctx, nil)
-	if err == nil {
-		t.Fatal("expected AUTHN_FAILED error, got nil (Multi must guard anonymous fallthrough)")
-	}
-	if !strings.Contains(err.Error(), "AUTHN_FAILED") {
-		t.Errorf("err = %v, want contains AUTHN_FAILED", err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if stub.calls != 1 {
-		t.Fatalf("Authenticate calls = %d, want 1 (engine MUST be reached even when it ends up filtered)", stub.calls)
+		t.Fatalf("Authenticate calls = %d, want 1", stub.calls)
 	}
 	if stub.observedHasTok || stub.observedToken != "" {
 		t.Errorf("engine saw token = (%q,%v), want (\"\",false)", stub.observedToken, stub.observedHasTok)
 	}
 
-	if capturedCtx != nil {
-		t.Error("handler must NOT be called on AUTHN_FAILED (capturedCtx should be nil)")
+	if capturedCtx == nil {
+		t.Error("handler must be called (capturedCtx should not be nil)")
 	}
 }
 
@@ -322,46 +299,43 @@ func TestServer_NoBearerHeader_ReachesAuthenticator(t *testing.T) {
 // Authenticate-level tests (engine in isolation, no transport / wrapper).
 // ============================================================================
 
-// TestAuthenticate_NoTokenInContext_ReturnsAnonymous: no token in ctx + no
-// transport → anonymous.
-func TestAuthenticate_NoTokenInContext_ReturnsAnonymous(t *testing.T) {
+// TestAuthenticate_NoTokenInContext_Passthrough: no token in ctx + no
+// transport → ctx returned unchanged (pass-through).
+func TestAuthenticate_NoTokenInContext_Passthrough(t *testing.T) {
 	auth := NewAuthenticator()
-	a, err := auth.Authenticate(context.Background())
+	ctx := context.Background()
+	got, err := auth.Authenticate(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a.Type() != actor.TypeAnonymous {
-		t.Errorf("actor type = %v, want anonymous", a.Type())
+	// No enrichment: AuthType should be absent.
+	if _, ok := authn.AuthTypeFrom(got); ok {
+		t.Error("AuthType should not be present in pass-through ctx")
 	}
 }
 
-// TestAuthenticate_NoVerifier_ReturnsAnonymous: token present but no Verifier
-// configured → anonymous (pass-through mode).
-func TestAuthenticate_NoVerifier_ReturnsAnonymous(t *testing.T) {
+// TestAuthenticate_NoVerifier_Passthrough: token present but no Verifier
+// configured → ctx returned unchanged (pass-through mode).
+func TestAuthenticate_NoVerifier_Passthrough(t *testing.T) {
 	auth := NewAuthenticator()
 	ctx := WithToken(context.Background(), "any-token")
-	a, err := auth.Authenticate(ctx)
+	got, err := auth.Authenticate(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a.Type() != actor.TypeAnonymous {
-		t.Errorf("actor type = %v, want anonymous", a.Type())
+	if _, ok := authn.AuthTypeFrom(got); ok {
+		t.Error("AuthType should not be present in pass-through ctx")
 	}
 }
 
 // TestAuthenticate_TransportHeaderFallback: when no jwt-private ctx token but
 // a Kratos server transport carries Authorization: Bearer ... the engine is
-// reached via Multi. This test uses a stub that returns a concrete actor on
-// invocation (not anonymous) so Multi's anonymous-fallthrough guard does NOT
-// kick in — proving the transport-header path engages and produces a normal
-// success. The stub-level introspection of observedHasTok / observedToken
-// remains useful: the dispatcher writes WithToken before invoking the engine
-// inside Multi only when jwt.Server (the convenience wrapper) is used; here
-// we wire authn.Server(authn.Multi(...)) directly, so the engine gets only
-// the raw transport ctx — observedHasTok must therefore be false.
+// reached via Multi. This test wires authn.Server(authn.Multi(...)) directly
+// (no jwt.Server convenience wrapper), so the engine gets the raw transport
+// ctx — observedHasTok must therefore be false (Multi does not pre-extract).
 func TestAuthenticate_TransportHeaderFallback(t *testing.T) {
 	captured := &countingAuthenticator{
-		returnActor: actor.NewServiceActor("fallback-svc", "Fallback Service"),
+		enrichCtx: true,
 	}
 	mw := authn.Server(authn.Multi(authn.Named(Scheme, captured)))
 	handler := mw(func(_ context.Context, _ any) (any, error) { return "ok", nil })
@@ -408,76 +382,38 @@ func TestTokenForAuth_EmptyEverywhere(t *testing.T) {
 }
 
 // ============================================================================
-// ClaimsMapper tests — minimal three-piece mapping + extension point.
+// ClaimsMapper tests — default mapper stores full claims into ctx.
 // ============================================================================
 
-// TestDefaultClaimsMapper_SubAndName: canonical claims → 3-piece UserActor.
-func TestDefaultClaimsMapper_SubAndName(t *testing.T) {
+// TestDefaultClaimsMapper_SubPresent: canonical claims → ctx enriched with
+// full claims map accessible via ClaimsFrom / SubjectFrom.
+func TestDefaultClaimsMapper_SubPresent(t *testing.T) {
 	mapper := DefaultClaimsMapper()
-	a, err := mapper(gojwt.MapClaims{
+	claims := gojwt.MapClaims{
 		"sub":  "user-123",
 		"name": "Alice",
-	})
+	}
+	ctx := context.Background()
+	got, err := mapper(ctx, claims)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a.Type() != actor.TypeUser {
-		t.Errorf("actor type = %v, want user", a.Type())
-	}
-	if a.ID() != "user-123" {
-		t.Errorf("actor.ID = %q, want user-123", a.ID())
-	}
-	ua, ok := a.(*actor.UserActor)
+	stored, ok := ClaimsFrom(got)
 	if !ok {
-		t.Fatalf("actor concrete type = %T, want *actor.UserActor", a)
+		t.Fatal("ClaimsFrom returned false after DefaultClaimsMapper success")
 	}
-	if ua.DisplayName() != "Alice" {
-		t.Errorf("DisplayName = %q, want Alice", ua.DisplayName())
+	if stored["sub"] != "user-123" {
+		t.Errorf("stored sub = %v, want user-123", stored["sub"])
 	}
-}
-
-// TestDefaultClaimsMapper_PreferredUsernameFallback: when name is absent,
-// preferred_username takes over for DisplayName.
-func TestDefaultClaimsMapper_PreferredUsernameFallback(t *testing.T) {
-	mapper := DefaultClaimsMapper()
-	a, err := mapper(gojwt.MapClaims{
-		"sub":                "user-456",
-		"preferred_username": "alice42",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	ua, ok := a.(*actor.UserActor)
-	if !ok {
-		t.Fatalf("actor concrete type = %T, want *actor.UserActor", a)
-	}
-	if ua.DisplayName() != "alice42" {
-		t.Errorf("DisplayName = %q, want alice42", ua.DisplayName())
-	}
-}
-
-// TestDefaultClaimsMapper_NameOverridesPreferredUsername: when both present,
-// name wins (per spec ordering).
-func TestDefaultClaimsMapper_NameOverridesPreferredUsername(t *testing.T) {
-	mapper := DefaultClaimsMapper()
-	a, err := mapper(gojwt.MapClaims{
-		"sub":                "user-789",
-		"name":               "Real Name",
-		"preferred_username": "alice42",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	ua := a.(*actor.UserActor)
-	if ua.DisplayName() != "Real Name" {
-		t.Errorf("DisplayName = %q, want Real Name", ua.DisplayName())
+	if stored["name"] != "Alice" {
+		t.Errorf("stored name = %v, want Alice", stored["name"])
 	}
 }
 
 // TestDefaultClaimsMapper_EmptySubFails: sub is REQUIRED.
 func TestDefaultClaimsMapper_EmptySubFails(t *testing.T) {
 	mapper := DefaultClaimsMapper()
-	_, err := mapper(gojwt.MapClaims{
+	_, err := mapper(context.Background(), gojwt.MapClaims{
 		"name": "Alice",
 	})
 	if err == nil {
@@ -485,30 +421,31 @@ func TestDefaultClaimsMapper_EmptySubFails(t *testing.T) {
 	}
 }
 
-// TestDefaultClaimsMapper_OnlySub: name absent + preferred_username absent →
-// 3-piece with empty DisplayName, no error.
-func TestDefaultClaimsMapper_OnlySub(t *testing.T) {
+// TestDefaultClaimsMapper_SubjectFromConvenience: SubjectFrom extracts the
+// sub claim from the enriched ctx produced by DefaultClaimsMapper.
+func TestDefaultClaimsMapper_SubjectFromConvenience(t *testing.T) {
 	mapper := DefaultClaimsMapper()
-	a, err := mapper(gojwt.MapClaims{"sub": "user-xyz"})
+	ctx, err := mapper(context.Background(), gojwt.MapClaims{"sub": "user-xyz"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	ua := a.(*actor.UserActor)
-	if ua.ID() != "user-xyz" || ua.DisplayName() != "" {
-		t.Errorf("actor = (%q,%q), want (user-xyz,\"\")", ua.ID(), ua.DisplayName())
+	sub, ok := SubjectFrom(ctx)
+	if !ok || sub != "user-xyz" {
+		t.Errorf("SubjectFrom = (%q,%v), want (\"user-xyz\",true)", sub, ok)
 	}
 }
 
 // TestWithClaimsMapper_CustomExtensionPoint: business-installed mapper is
-// honored end-to-end, and can return ANY actor.Actor implementation.
+// honored end-to-end and can write arbitrary ctx values.
 func TestWithClaimsMapper_CustomExtensionPoint(t *testing.T) {
-	custom := func(claims gojwt.MapClaims) (actor.Actor, error) {
-		sub, _ := claims["sub"].(string)
+	type customKey struct{}
+	custom := func(ctx context.Context, claims gojwt.MapClaims) (context.Context, error) {
 		role, _ := claims["custom_role"].(string)
 		if role == "" {
-			return nil, errors.New("custom: missing custom_role")
+			return ctx, errors.New("custom: missing custom_role")
 		}
-		return actor.NewUserActor(sub, fmt.Sprintf("%s[%s]", sub, role)), nil
+		ctx = WithClaims(ctx, claims)
+		return context.WithValue(ctx, customKey{}, role), nil
 	}
 
 	auth := newAuthenticator(WithClaimsMapper(custom))
@@ -516,23 +453,21 @@ func TestWithClaimsMapper_CustomExtensionPoint(t *testing.T) {
 		t.Fatal("ClaimsMapper not installed by Option")
 	}
 
-	a, err := auth.cfg.claimsMapper(gojwt.MapClaims{
+	ctx := context.Background()
+	got, err := auth.cfg.claimsMapper(ctx, gojwt.MapClaims{
 		"sub":         "user-1",
 		"custom_role": "admin",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	ua, ok := a.(*actor.UserActor)
-	if !ok {
-		t.Fatalf("actor type = %T", a)
-	}
-	if ua.DisplayName() != "user-1[admin]" {
-		t.Errorf("DisplayName = %q, want user-1[admin]", ua.DisplayName())
+	role, ok := got.Value(customKey{}).(string)
+	if !ok || role != "admin" {
+		t.Errorf("custom ctx value = (%q,%v), want (\"admin\",true)", role, ok)
 	}
 
 	// And that errors propagate.
-	_, err = auth.cfg.claimsMapper(gojwt.MapClaims{"sub": "user-1"})
+	_, err = auth.cfg.claimsMapper(ctx, gojwt.MapClaims{"sub": "user-1"})
 	if err == nil {
 		t.Error("expected error from custom mapper, got nil")
 	}

@@ -1,11 +1,20 @@
 package jwt
 
-import "context"
+import (
+	"context"
+
+	gojwt "github.com/golang-jwt/jwt/v5"
+)
 
 // tokenKey is the package-private ctx key under which the raw bearer token
 // flows from [Server] (inbound extraction) to the engine [Authenticate], and
 // from arbitrary callers to [Client] (outbound propagation).
 type tokenKey struct{}
+
+// claimsKey is the package-private ctx key under which the parsed JWT
+// MapClaims are stored after successful verification. Business code reads
+// individual claims via [ClaimsFrom] or the convenience [SubjectFrom].
+type claimsKey struct{}
 
 // WithToken stores the raw bearer token into a jwt-package-private ctx
 // channel. It is invoked by [Server] after parsing the inbound Authorization
@@ -27,4 +36,19 @@ func WithToken(ctx context.Context, token string) context.Context {
 func TokenFrom(ctx context.Context) (string, bool) {
 	t, ok := ctx.Value(tokenKey{}).(string)
 	return t, ok
+}
+
+// WithClaims stores the parsed JWT MapClaims into a jwt-package-private ctx
+// channel. It is invoked by the default [ClaimsMapper] after successful
+// verification, and may also be called by custom mappers that wish to expose
+// the full claims to downstream handlers via [ClaimsFrom].
+func WithClaims(ctx context.Context, claims gojwt.MapClaims) context.Context {
+	return context.WithValue(ctx, claimsKey{}, claims)
+}
+
+// ClaimsFrom reads the parsed JWT MapClaims previously stored by [WithClaims].
+// Returns (nil, false) if no claims are present in the context.
+func ClaimsFrom(ctx context.Context) (gojwt.MapClaims, bool) {
+	c, ok := ctx.Value(claimsKey{}).(gojwt.MapClaims)
+	return c, ok
 }

@@ -40,7 +40,6 @@ import (
 	gojwt "github.com/golang-jwt/jwt/v5"
 	"github.com/go-kratos/kratos/v2/transport"
 
-	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/Servora-Kit/servora/security/authn"
 )
 
@@ -66,11 +65,11 @@ type authenticator struct {
 //  2. The inbound Authorization header on the Kratos server transport — used
 //     when the engine is wired into authn.Multi directly without [Server].
 //
-// If no token is found, an anonymous actor is returned with nil error
+// If no token is found, ctx is returned unchanged with nil error
 // (pass-through mode). If a token is found but no Verifier is configured,
-// an anonymous actor is also returned (pass-through mode for local/test).
+// ctx is also returned unchanged (pass-through mode for local/test).
 //
-// Verifier failure → (nil, err). ClaimsMapper failure → (nil, err).
+// Verifier failure → (ctx, err). ClaimsMapper failure → (ctx, err).
 func NewAuthenticator(opts ...Option) authn.Authenticator {
 	return newAuthenticator(opts...)
 }
@@ -94,23 +93,27 @@ func newAuthenticator(opts ...Option) *authenticator {
 }
 
 // Authenticate reads the raw bearer token (ctx channel first, transport
-// header fallback), verifies it, and returns an actor.Actor.
-func (a *authenticator) Authenticate(ctx context.Context) (actor.Actor, error) {
+// header fallback), verifies it, and returns an enriched context.
+func (a *authenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	tokenString := tokenForAuth(ctx)
 	if tokenString == "" {
-		return actor.NewAnonymousActor(), nil
+		return ctx, nil
 	}
 
 	if a.cfg.verifier == nil {
-		return actor.NewAnonymousActor(), nil
+		return ctx, nil
 	}
 
 	claims := gojwt.MapClaims{}
 	if err := a.cfg.verifier.Verify(tokenString, claims); err != nil {
-		return nil, fmt.Errorf("jwt: verify token: %w", err)
+		return ctx, fmt.Errorf("jwt: verify token: %w", err)
 	}
 
-	return a.cfg.claimsMapper(claims)
+	enriched, err := a.cfg.claimsMapper(ctx, claims)
+	if err != nil {
+		return ctx, err
+	}
+	return authn.WithAuthType(enriched, "user"), nil
 }
 
 // tokenForAuth resolves the raw bearer token used for verification. The
