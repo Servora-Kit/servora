@@ -10,7 +10,6 @@ syntax = "proto3";
 package servora.example.v1;
 
 import "servora/audit/v1/annotations.proto";
-import "servora/audit/v1/audit.proto";
 import "servora/authn/v1/annotations.proto";
 import "servora/authz/v1/authz.proto";
 
@@ -34,7 +33,7 @@ service GreetingService {
   // audit 服务级默认：开启资源变更类审计。
   option (servora.audit.v1.service_default) = {
     mode: AUDIT_MODE_ENABLED
-    event_type: AUDIT_EVENT_TYPE_RESOURCE_MUTATION
+    event_type: "servora.audit.resource_mutation"
   };
 
   // SayHello 显式覆盖 authn 为 multi-scheme（jwt + apikey）；authz 与 audit 继承服务级默认。

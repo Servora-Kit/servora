@@ -35,6 +35,166 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on ExtensionMapping with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ExtensionMapping) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ExtensionMapping with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ExtensionMappingMultiError, or nil if none found.
+func (m *ExtensionMapping) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ExtensionMapping) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	switch v := m.Source.(type) {
+	case *ExtensionMapping_FromField:
+		if v == nil {
+			err := ExtensionMappingValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		// no validation rules for FromField
+	case *ExtensionMapping_Literal:
+		if v == nil {
+			err := ExtensionMappingValidationError{
+				field:  "Source",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetLiteral()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ExtensionMappingValidationError{
+						field:  "Literal",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ExtensionMappingValidationError{
+						field:  "Literal",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetLiteral()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ExtensionMappingValidationError{
+					field:  "Literal",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
+
+	if len(errors) > 0 {
+		return ExtensionMappingMultiError(errors)
+	}
+
+	return nil
+}
+
+// ExtensionMappingMultiError is an error wrapping multiple validation errors
+// returned by ExtensionMapping.ValidateAll() if the designated constraints
+// aren't met.
+type ExtensionMappingMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ExtensionMappingMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ExtensionMappingMultiError) AllErrors() []error { return m }
+
+// ExtensionMappingValidationError is the validation error returned by
+// ExtensionMapping.Validate if the designated constraints aren't met.
+type ExtensionMappingValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExtensionMappingValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExtensionMappingValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExtensionMappingValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExtensionMappingValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExtensionMappingValidationError) ErrorName() string { return "ExtensionMappingValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ExtensionMappingValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExtensionMapping.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExtensionMappingValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExtensionMappingValidationError{}
+
 // Validate checks the field values on AuditRule with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -61,13 +221,45 @@ func (m *AuditRule) validate(all bool) error {
 
 	// no validation rules for EventType
 
-	// no validation rules for MutationType
+	// no validation rules for Severity
 
-	// no validation rules for TargetType
+	// no validation rules for DetailMessageField
 
 	// no validation rules for TargetIdField
 
-	// no validation rules for RecordOnError
+	for idx, item := range m.GetExtensions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AuditRuleValidationError{
+						field:  fmt.Sprintf("Extensions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AuditRuleValidationError{
+						field:  fmt.Sprintf("Extensions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AuditRuleValidationError{
+					field:  fmt.Sprintf("Extensions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return AuditRuleMultiError(errors)

@@ -8,12 +8,8 @@ import (
 
 // _auditRules is the immutable backing store for AuditRules.
 var _auditRules = map[string]audit.Rule{
-	"/servora.example.v1.GreetingService/AdminPurge": {
-		EventType: audit.EventTypeResourceMutation,
-	},
-	"/servora.example.v1.GreetingService/SayHello": {
-		EventType: audit.EventTypeResourceMutation,
-	},
+	"/servora.example.v1.GreetingService/AdminPurge": {},
+	"/servora.example.v1.GreetingService/SayHello":   {},
 }
 
 // AuditRules returns a copy of the audit rules for this package.

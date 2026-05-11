@@ -5,6 +5,7 @@ package auditv1
 
 import (
 	context "context"
+	cev1 "github.com/Servora-Kit/servora/api/gen/go/servora/cloudevents/v1"
 	redact "github.com/menta2k/protoc-gen-redact/v3/redact/v3"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -20,7 +21,18 @@ var (
 	_ codes.Code
 	_ status.Status
 	_ descriptorpb.FileDescriptorSet
+	_ cev1.CloudEvent
 )
+
+// Redact method implementation for ExtensionMapping
+func (x *ExtensionMapping) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Name
+	return x.String()
+}
 
 // Redact method implementation for AuditRule
 func (x *AuditRule) Redact() string {
@@ -32,12 +44,12 @@ func (x *AuditRule) Redact() string {
 
 	// Safe field: EventType
 
-	// Safe field: MutationType
+	// Safe field: Severity
 
-	// Safe field: TargetType
+	// Safe field: DetailMessageField
 
 	// Safe field: TargetIdField
 
-	// Safe field: RecordOnError
+	// Safe field: Extensions
 	return x.String()
 }

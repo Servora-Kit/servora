@@ -21,8 +21,7 @@ var (
 	_ redact.Redactor
 	_ codes.Code
 	_ status.Status
-	_ auditv1.AuditRule
-	_ auditv1.AuditActor
+	_ auditv1.ExtensionMapping
 	_ authnpb.AuthnRule
 	_ authzpb.AuthzRule
 )
