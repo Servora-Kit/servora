@@ -1,32 +1,31 @@
-// Package authz provides a Kratos middleware for relationship-based authorization.
+// Package authz provides a Kratos middleware for engine-agnostic authorization.
 //
 // # Engine model
 //
-// The Authorizer interface (Check / BatchCheck / ListAllowed) maps directly onto
-// OpenFGA SDK and SpiceDB primitives. Both ReBAC backends support all three
-// methods natively. The interface is not designed to host non-ReBAC engines
-// (Cedar, Rego); those would require a separate abstraction.
+// The Authorizer interface exposes a single Check method that accepts a
+// CheckRequest (Subject, Action, ResourceType, ResourceID, Attributes).
+// Any authorization backend — OpenFGA, SpiceDB, Cedar, OPA, or custom —
+// can implement this interface.
 //
-// # Future: contextual tuples
+// Batch and list capabilities are available via optional sub-interfaces in
+// the batch and lister sub-packages, which engines may implement as needed.
 //
-// OpenFGA's "contextual tuples" (and SpiceDB's "caveats") express request-level
-// facts that participate in a decision but are not persisted: device trust,
-// active session, time-of-day, request region, etc.
+// # Subject resolution
 //
-// When this is needed, the planned API is:
-//
-//	ctx = authz.WithContextualTuples(ctx, tuples...)        // upstream mw injects
-//	authz.ContextualTuplesFromContext(ctx) []Tuple          // engine adapter reads
-//
-// The Authorizer interface signatures already accept context.Context as the
-// first parameter, so no signature change will be required when this is added.
+// The middleware does NOT assume how a subject string is derived from the
+// request context. Callers provide a WithSubjectFunc option that extracts
+// the subject from ctx. This decouples authz from any specific authn scheme.
 //
 // # Audit integration
 //
-// The Server middleware writes a *auditpb.AuthzDetail to ctx via
-// audit.WithAuthzResult after every Authorizer.Check (allow / deny / error).
-// An OUTER-mounted audit.Collector middleware (from obs/audit) reads the
-// detail post-handler and emits the AUTHZ_DECISION event. This package has
-// zero coupling to the audit emission pipeline — only to the neutral auditpb
-// schema package.
+// When WithAuditOnDeny is configured with an audit.Auditor, the middleware
+// emits CloudEvents events on authorization denial or error. This is purely
+// opt-in; without the option, the middleware is silent.
+//
+// # Future: contextual tuples / attributes
+//
+// The CheckRequest.Attributes field (map[string]any) is reserved for
+// request-level facts that participate in a decision but are not persisted:
+// device trust, active session, time-of-day, request region, etc.
+// Engines that support ABAC or contextual tuples can read from this field.
 package authz

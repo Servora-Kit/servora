@@ -30,10 +30,10 @@ func (x *AuthzRule) Redact() string {
 
 	// Safe field: Mode
 
-	// Safe field: Relation
+	// Safe field: Action
 
-	// Safe field: ObjectType
+	// Safe field: ResourceType
 
-	// Safe field: IdField
+	// Safe field: ResourceIdField
 	return x.String()
 }

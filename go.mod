@@ -8,6 +8,7 @@ require (
 	github.com/Servora-Kit/servora/api/gen v0.4.6
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-kratos/kratos/contrib/config/consul/v2 v2.0.0-20260404020628-f149714c1d54
 	github.com/go-kratos/kratos/contrib/config/nacos/v2 v2.0.0-20260404020628-f149714c1d54
@@ -97,7 +98,6 @@ require (
 	github.com/charmbracelet/x/exp/strings v0.0.0-20240722160745-212f7b056ed0 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/clbanning/mxj/v2 v2.5.5 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.16.2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

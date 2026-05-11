@@ -39,18 +39,18 @@ func main() {
 
 // ruleParams holds the merged authorization parameters for a single method.
 type ruleParams struct {
-	Mode       authzpb.AuthzMode
-	Relation   string
-	ObjectType string
-	IDField    string
+	Mode            authzpb.AuthzMode
+	Action          string
+	ResourceType    string
+	ResourceIDField string
 }
 
 type ruleEntry struct {
-	Operation  string
-	Mode       authzpb.AuthzMode
-	Relation   string
-	ObjectType string
-	IDField    string
+	Operation       string
+	Mode            authzpb.AuthzMode
+	Action          string
+	ResourceType    string
+	ResourceIDField string
 }
 
 // generate is the testable entry point.
@@ -130,11 +130,11 @@ func generate(gen *protogen.Plugin) error {
 				}
 				groups[dir].seen[op] = true
 				groups[dir].rules = append(groups[dir].rules, ruleEntry{
-					Operation:  op,
-					Mode:       p.Mode,
-					Relation:   p.Relation,
-					ObjectType: p.ObjectType,
-					IDField:    p.IDField,
+					Operation:       op,
+					Mode:            p.Mode,
+					Action:          p.Action,
+					ResourceType:    p.ResourceType,
+					ResourceIDField: p.ResourceIDField,
 				})
 			}
 		}
@@ -208,18 +208,18 @@ func extractServiceDefault(s *protogen.Service) *authzpb.AuthzRule {
 func mergeRules(svcDefault, methodRule *authzpb.AuthzRule) (ruleParams, bool) {
 	if methodRule != nil && methodRule.Mode != authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
 		return ruleParams{
-			Mode:       methodRule.Mode,
-			Relation:   methodRule.Relation,
-			ObjectType: methodRule.ObjectType,
-			IDField:    methodRule.IdField,
+			Mode:            methodRule.Mode,
+			Action:          methodRule.GetAction(),
+			ResourceType:    methodRule.GetResourceType(),
+			ResourceIDField: methodRule.GetResourceIdField(),
 		}, true
 	}
 	if svcDefault != nil && svcDefault.Mode != authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
 		return ruleParams{
-			Mode:       svcDefault.Mode,
-			Relation:   svcDefault.Relation,
-			ObjectType: svcDefault.ObjectType,
-			IDField:    svcDefault.IdField,
+			Mode:            svcDefault.Mode,
+			Action:          svcDefault.GetAction(),
+			ResourceType:    svcDefault.GetResourceType(),
+			ResourceIDField: svcDefault.GetResourceIdField(),
 		}, true
 	}
 	return ruleParams{}, false
@@ -245,14 +245,14 @@ func generateFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rul
 		})
 		g.P(fmt.Sprintf("	%q: {", r.Operation))
 		g.P("		Mode: ", modeIdent, ",")
-		if r.Relation != "" {
-			g.P(fmt.Sprintf("		Relation: %q,", r.Relation))
+		if r.Action != "" {
+			g.P(fmt.Sprintf("		Action: %q,", r.Action))
 		}
-		if r.ObjectType != "" {
-			g.P(fmt.Sprintf("		ObjectType: %q,", r.ObjectType))
+		if r.ResourceType != "" {
+			g.P(fmt.Sprintf("		ResourceType: %q,", r.ResourceType))
 		}
-		if r.IDField != "" {
-			g.P(fmt.Sprintf("		IDField: %q,", r.IDField))
+		if r.ResourceIDField != "" {
+			g.P(fmt.Sprintf("		ResourceIDField: %q,", r.ResourceIDField))
 		}
 		g.P("	},")
 	}

@@ -12,22 +12,22 @@ enum AuthzMode {
   AUTHZ_MODE_UNSPECIFIED = 0;
   // Skip authorization entirely (public endpoint).
   AUTHZ_MODE_NONE = 1;
-  // Perform an OpenFGA check. object_type / relation / id_field are from AuthzRule.
+  // Perform an authorization check using action / resource_type / resource_id_field.
   AUTHZ_MODE_CHECK = 2;
 }
 
 // AuthzRule binds authorization requirements to an RPC method.
-// object_type and relation are free strings matching the OpenFGA model.
+// action and resource_type are free strings matching the authorization model.
 message AuthzRule {
   // Authorization mode.
   AuthzMode mode = 1;
-  // OpenFGA relation to check, e.g. "admin", "can_delete".
-  string relation = 2;
-  // OpenFGA resource type, e.g. "platform", "video", "server".
-  string object_type = 3;
+  // Action to check, e.g. "admin", "can_delete", "view".
+  string action = 2;
+  // Resource type, e.g. "platform", "video", "server".
+  string resource_type = 3;
   // Proto field name in the request that carries the resource ID, e.g. "id".
-  // When empty, a static default object ID is used (singleton/platform-level checks).
-  string id_field = 4;
+  // When empty, a static default resource ID is used (singleton/platform-level checks).
+  string resource_id_field = 4;
 }
 
 extend google.protobuf.MethodOptions {

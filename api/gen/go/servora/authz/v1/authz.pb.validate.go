@@ -59,11 +59,11 @@ func (m *AuthzRule) validate(all bool) error {
 
 	// no validation rules for Mode
 
-	// no validation rules for Relation
+	// no validation rules for Action
 
-	// no validation rules for ObjectType
+	// no validation rules for ResourceType
 
-	// no validation rules for IdField
+	// no validation rules for ResourceIdField
 
 	if len(errors) > 0 {
 		return AuthzRuleMultiError(errors)

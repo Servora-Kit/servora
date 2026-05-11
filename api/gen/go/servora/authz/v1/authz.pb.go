@@ -30,7 +30,7 @@ const (
 	AuthzMode_AUTHZ_MODE_UNSPECIFIED AuthzMode = 0
 	// Skip authorization entirely (public endpoint).
 	AuthzMode_AUTHZ_MODE_NONE AuthzMode = 1
-	// Perform an OpenFGA check. object_type / relation / id_field are from AuthzRule.
+	// Perform an authorization check using action / resource_type / resource_id_field.
 	AuthzMode_AUTHZ_MODE_CHECK AuthzMode = 2
 )
 
@@ -76,20 +76,20 @@ func (AuthzMode) EnumDescriptor() ([]byte, []int) {
 }
 
 // AuthzRule binds authorization requirements to an RPC method.
-// object_type and relation are free strings matching the OpenFGA model.
+// action and resource_type are free strings matching the authorization model.
 type AuthzRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Authorization mode.
 	Mode AuthzMode `protobuf:"varint,1,opt,name=mode,proto3,enum=servora.authz.v1.AuthzMode" json:"mode,omitempty"`
-	// OpenFGA relation to check, e.g. "admin", "can_delete".
-	Relation string `protobuf:"bytes,2,opt,name=relation,proto3" json:"relation,omitempty"`
-	// OpenFGA resource type, e.g. "platform", "video", "server".
-	ObjectType string `protobuf:"bytes,3,opt,name=object_type,json=objectType,proto3" json:"object_type,omitempty"`
+	// Action to check, e.g. "admin", "can_delete", "view".
+	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	// Resource type, e.g. "platform", "video", "server".
+	ResourceType string `protobuf:"bytes,3,opt,name=resource_type,json=resourceType,proto3" json:"resource_type,omitempty"`
 	// Proto field name in the request that carries the resource ID, e.g. "id".
-	// When empty, a static default object ID is used (singleton/platform-level checks).
-	IdField       string `protobuf:"bytes,4,opt,name=id_field,json=idField,proto3" json:"id_field,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// When empty, a static default resource ID is used (singleton/platform-level checks).
+	ResourceIdField string `protobuf:"bytes,4,opt,name=resource_id_field,json=resourceIdField,proto3" json:"resource_id_field,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *AuthzRule) Reset() {
@@ -129,23 +129,23 @@ func (x *AuthzRule) GetMode() AuthzMode {
 	return AuthzMode_AUTHZ_MODE_UNSPECIFIED
 }
 
-func (x *AuthzRule) GetRelation() string {
+func (x *AuthzRule) GetAction() string {
 	if x != nil {
-		return x.Relation
+		return x.Action
 	}
 	return ""
 }
 
-func (x *AuthzRule) GetObjectType() string {
+func (x *AuthzRule) GetResourceType() string {
 	if x != nil {
-		return x.ObjectType
+		return x.ResourceType
 	}
 	return ""
 }
 
-func (x *AuthzRule) GetIdField() string {
+func (x *AuthzRule) GetResourceIdField() string {
 	if x != nil {
-		return x.IdField
+		return x.ResourceIdField
 	}
 	return ""
 }
@@ -187,13 +187,12 @@ var File_servora_authz_v1_authz_proto protoreflect.FileDescriptor
 
 const file_servora_authz_v1_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x1cservora/authz/v1/authz.proto\x12\x10servora.authz.v1\x1a google/protobuf/descriptor.proto\"\x94\x01\n" +
+	"\x1cservora/authz/v1/authz.proto\x12\x10servora.authz.v1\x1a google/protobuf/descriptor.proto\"\xa5\x01\n" +
 	"\tAuthzRule\x12/\n" +
-	"\x04mode\x18\x01 \x01(\x0e2\x1b.servora.authz.v1.AuthzModeR\x04mode\x12\x1a\n" +
-	"\brelation\x18\x02 \x01(\tR\brelation\x12\x1f\n" +
-	"\vobject_type\x18\x03 \x01(\tR\n" +
-	"objectType\x12\x19\n" +
-	"\bid_field\x18\x04 \x01(\tR\aidField*R\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x1b.servora.authz.v1.AuthzModeR\x04mode\x12\x16\n" +
+	"\x06action\x18\x02 \x01(\tR\x06action\x12#\n" +
+	"\rresource_type\x18\x03 \x01(\tR\fresourceType\x12*\n" +
+	"\x11resource_id_field\x18\x04 \x01(\tR\x0fresourceIdField*R\n" +
 	"\tAuthzMode\x12\x1a\n" +
 	"\x16AUTHZ_MODE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fAUTHZ_MODE_NONE\x10\x01\x12\x14\n" +

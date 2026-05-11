@@ -10,17 +10,17 @@ import (
 // _authzRules is the immutable backing store for AuthzRules.
 var _authzRules = map[string]authz.AuthzRule{
 	"/servora.example.v1.GreetingService/AdminPurge": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
-		Relation:   "user",
-		ObjectType: "greeting",
+		Mode:         v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Action:       "user",
+		ResourceType: "greeting",
 	},
 	"/servora.example.v1.GreetingService/Healthz": {
 		Mode: v1.AuthzMode_AUTHZ_MODE_NONE,
 	},
 	"/servora.example.v1.GreetingService/SayHello": {
-		Mode:       v1.AuthzMode_AUTHZ_MODE_CHECK,
-		Relation:   "user",
-		ObjectType: "greeting",
+		Mode:         v1.AuthzMode_AUTHZ_MODE_CHECK,
+		Action:       "user",
+		ResourceType: "greeting",
 	},
 }
 

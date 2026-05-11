@@ -24,11 +24,11 @@ service GreetingService {
     schemes: ["jwt"]
   };
 
-  // authz 服务级默认：对 greeting 资源做 user 关系的 OpenFGA 检查。
+  // authz 服务级默认：对 greeting 资源做 user 动作的授权检查。
   option (servora.authz.v1.service_default) = {
     mode: AUTHZ_MODE_CHECK
-    relation: "user"
-    object_type: "greeting"
+    action: "user"
+    resource_type: "greeting"
   };
 
   // audit 服务级默认：开启资源变更类审计。

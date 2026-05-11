@@ -11,13 +11,8 @@
 //	mw = append(mw, pkgauthz.Server(
 //	    fgaengine.NewAuthorizer(fgaClient),
 //	    pkgauthz.WithRulesFunc(iamv1.AuthzRules),
+//	    pkgauthz.WithSubjectFunc(mySubjectExtractor),
 //	))
-//
-// The middleware writes a *auditpb.AuthzDetail to ctx via
-// audit.WithAuthzResult after every Check (allow / deny / error); emission is
-// the responsibility of the transport-tail audit.Collector middleware. The
-// authz package therefore has zero coupling to the audit emission pipeline
-// (only to the neutral auditpb schema package).
 package authz
 
 import (
@@ -30,60 +25,41 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+
 	authzpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
-	"github.com/Servora-Kit/servora/core/actor"
 	"github.com/Servora-Kit/servora/obs/audit"
 )
 
-// CheckRequest is one item in a BatchCheck call.
-type CheckRequest struct {
-	Subject    string
-	Relation   string
-	ObjectType string
-	ObjectID   string
-}
-
-// CheckResult is the per-item outcome of BatchCheck.
-// Order matches the input []CheckRequest index.
-type CheckResult struct {
-	Allowed bool
-	Err     error
-}
-
-// Authorizer is the interface for relationship-based authorization decisions.
-// All three methods are required: implementations targeting non-ReBAC backends
-// (e.g. pure Cedar/Rego) would need a different abstraction entirely, so we
-// commit to the ReBAC shape rather than a sub-interface fan-out.
-//
-// Method names match OpenFGA SDK semantics for direct mapping; SpiceDB
-// (LookupResources / BulkCheck) maps cleanly as well.
+// Authorizer is the single-method interface for authorization decisions.
+// Implementations may target any backend (OpenFGA, SpiceDB, Cedar, OPA, etc.).
 type Authorizer interface {
-	// Check returns whether subject has relation on objectType:objectID.
-	Check(ctx context.Context, subject, relation, objectType, objectID string) (allowed bool, err error)
+	// Check returns whether the request described by req is authorized.
+	Check(ctx context.Context, req CheckRequest) (allowed bool, err error)
+}
 
-	// BatchCheck runs N checks in one round-trip; output order matches input.
-	// Implementations may internally chunk if the backend has per-call limits
-	// (OpenFGA caps at 50 per request).
-	BatchCheck(ctx context.Context, reqs []CheckRequest) ([]CheckResult, error)
-
-	// ListAllowed returns IDs of objects (of objectType) the subject has the
-	// given relation to. The returned strings are bare IDs without "type:" prefix.
-	// Useful for "list" endpoints — caller fetches by `WHERE id IN (...)`.
-	ListAllowed(ctx context.Context, subject, relation, objectType string) ([]string, error)
+// CheckRequest describes a single authorization check.
+type CheckRequest struct {
+	Subject      string
+	Action       string
+	ResourceType string
+	ResourceID   string
+	Attributes   map[string]any
 }
 
 // AuthzRule describes the authorization requirement for a single RPC operation.
 type AuthzRule struct {
-	Mode       authzpb.AuthzMode
-	Relation   string
-	ObjectType string
-	// IDField is the proto field name to extract object ID from the request.
-	// When empty, "default" is used as the object ID (singleton/platform-level checks).
-	IDField string
+	Mode         authzpb.AuthzMode
+	Action       string
+	ResourceType string
+	// ResourceIDField is the proto field name (or dot-path) to extract resource
+	// ID from the request. When empty, a default resource ID is used
+	// (singleton/platform-level checks).
+	ResourceIDField string
 }
 
 // Option configures the Server middleware.
@@ -91,9 +67,11 @@ type Option func(*serverConfig)
 
 type serverConfig struct {
 	rules              map[string]AuthzRule
-	defaultObjID       string
+	defaultResourceID  string
 	checkTimeout       time.Duration
 	missingRuleAlertFn func(ctx context.Context, operation string)
+	subjectFunc        func(context.Context) (string, bool)
+	auditOnDeny        audit.Auditor
 }
 
 // WithRules sets the operation→rule mapping directly.
@@ -144,17 +122,16 @@ func MergeRules(ms ...map[string]AuthzRule) map[string]AuthzRule {
 	return merged
 }
 
-// WithDefaultObjectID overrides the fallback object ID used when IDField is empty.
-// Defaults to "default".
-func WithDefaultObjectID(id string) Option {
-	return func(cfg *serverConfig) { cfg.defaultObjID = id }
+// WithDefaultResourceID overrides the fallback resource ID used when
+// ResourceIDField is empty. Defaults to "default".
+func WithDefaultResourceID(id string) Option {
+	return func(cfg *serverConfig) { cfg.defaultResourceID = id }
 }
 
 // WithCheckTimeout bounds the time spent in Authorizer.Check on each request.
 // Zero (default) disables the deadline — the upstream context applies.
 //
-// This protects business-RPC latency from a slow authorization backend
-// (e.g. OpenFGA cross-region calls).
+// This protects business-RPC latency from a slow authorization backend.
 func WithCheckTimeout(d time.Duration) Option {
 	return func(cfg *serverConfig) { cfg.checkTimeout = d }
 }
@@ -170,31 +147,42 @@ func WithFailOpenOnMissingRule(alertFn func(ctx context.Context, operation strin
 	return func(cfg *serverConfig) { cfg.missingRuleAlertFn = alertFn }
 }
 
+// WithSubjectFunc sets the function used to extract the subject string from
+// the request context. The function should return the subject identifier and
+// a boolean indicating whether the subject was found. When not set or when
+// the function returns false, the middleware returns 403 AUTHZ_DENIED.
+func WithSubjectFunc(fn func(context.Context) (string, bool)) Option {
+	return func(cfg *serverConfig) { cfg.subjectFunc = fn }
+}
+
+// WithAuditOnDeny configures the middleware to emit CloudEvents audit events
+// when authorization is denied or encounters an error.
+//
+//   - Check returns (false, nil): emit event type "servora.authz.v1.denied",
+//     severity "WARN".
+//   - Check returns (_, err): emit event type "servora.authz.v1.denied",
+//     severity "ERROR".
+//   - Not configured (auditor is nil): silent, no events emitted.
+func WithAuditOnDeny(auditor audit.Auditor) Option {
+	return func(cfg *serverConfig) { cfg.auditOnDeny = auditor }
+}
+
 // Server returns a Kratos middleware that performs authorization checks.
 //
 // Behavior:
-//   - No transport in context → passthrough (non-server calls); no ctx detail written.
-//   - No rule for operation → fail-closed (403 AUTHZ_NO_RULE); no ctx detail written
-//     (Authorizer was not invoked, so there is no decision to record).
-//   - No rule + WithFailOpenOnMissingRule set → alertFn invoked, handler called;
-//     no ctx detail written (same reason).
-//   - AUTHZ_MODE_NONE → skip (public endpoint); no ctx detail written.
-//   - AUTHZ_MODE_CHECK, no actor or anonymous actor → 403 AUTHZ_DENIED;
-//     no ctx detail written (Authorizer was not invoked).
-//   - AUTHZ_MODE_CHECK, nil authorizer → 503 AUTHZ_UNAVAILABLE; no ctx detail written.
-//   - AUTHZ_MODE_CHECK, authorizer returned (true, nil) → ALLOWED detail in ctx; handler called.
-//   - AUTHZ_MODE_CHECK, authorizer returned (false, nil) → DENIED detail in ctx;
-//     middleware returns 403 AUTHZ_DENIED.
-//   - AUTHZ_MODE_CHECK, authorizer returned (_, err) → ERROR detail in ctx
-//     (with ErrorReason=err.Error()); middleware returns 503 AUTHZ_CHECK_FAILED.
-//
-// In all three Authorizer-invoked outcomes the ctx detail is written BEFORE
-// returning, so an OUTER-mounted audit.Collector can observe it post-handler
-// even when authz short-circuits.
-//
-// The OpenFGA principal is constructed as "<actor.Type()>:<actor.ID()>".
+//   - No transport in context → passthrough (non-server calls).
+//   - No rule for operation → fail-closed (403 AUTHZ_NO_RULE).
+//   - No rule + WithFailOpenOnMissingRule set → alertFn invoked, handler called.
+//   - AUTHZ_MODE_NONE → skip (public endpoint).
+//   - AUTHZ_MODE_CHECK, no subject → 403 AUTHZ_DENIED.
+//   - AUTHZ_MODE_CHECK, nil authorizer → 503 AUTHZ_UNAVAILABLE.
+//   - AUTHZ_MODE_CHECK, authorizer returned (true, nil) → handler called.
+//   - AUTHZ_MODE_CHECK, authorizer returned (false, nil) → 403 AUTHZ_DENIED;
+//     if WithAuditOnDeny is set, emits CloudEvents event with severity WARN.
+//   - AUTHZ_MODE_CHECK, authorizer returned (_, err) → 503 AUTHZ_CHECK_FAILED;
+//     if WithAuditOnDeny is set, emits CloudEvents event with severity ERROR.
 func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
-	cfg := &serverConfig{defaultObjID: "default"}
+	cfg := &serverConfig{defaultResourceID: "default"}
 	for _, o := range opts {
 		o(cfg)
 	}
@@ -221,8 +209,11 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 				return handler(ctx, req)
 			}
 
-			a, ok := actor.From(ctx)
-			if !ok || a.Type() == actor.TypeAnonymous {
+			subject, ok := "", false
+			if cfg.subjectFunc != nil {
+				subject, ok = cfg.subjectFunc(ctx)
+			}
+			if !ok || subject == "" {
 				return nil, errors.Forbidden("AUTHZ_DENIED", "authentication required")
 			}
 
@@ -230,14 +221,11 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 				return nil, errors.ServiceUnavailable("AUTHZ_UNAVAILABLE", "authorization service not available")
 			}
 
-			objectType, objectID, err := resolveObject(rule, req, cfg.defaultObjID)
+			resourceType, resourceID, err := resolveResource(rule, req, cfg.defaultResourceID)
 			if err != nil {
 				return nil, errors.BadRequest("AUTHZ_BAD_REQUEST",
 					fmt.Sprintf("cannot resolve authorization target: %v", err))
 			}
-
-			principal := string(a.Type()) + ":" + a.ID()
-			relation := rule.Relation
 
 			checkCtx := ctx
 			if cfg.checkTimeout > 0 {
@@ -246,25 +234,20 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 				defer cancel()
 			}
 
-			allowed, err := authorizer.Check(checkCtx, principal, relation, objectType, objectID)
-
-			// Write the decision to ctx BEFORE acting on it: an outer-mounted
-			// audit.Collector reads the detail post-handler and emits an
-			// AUTHZ_DECISION event regardless of whether this middleware
-			// short-circuits on deny / error.
-			ctx = audit.WithAuthzResult(ctx, &auditpb.AuthzDetail{
-				Relation:    relation,
-				ObjectType:  objectType,
-				ObjectId:    objectID,
-				Decision:    decisionFor(allowed, err),
-				ErrorReason: errorReasonFor(err),
+			allowed, checkErr := authorizer.Check(checkCtx, CheckRequest{
+				Subject:      subject,
+				Action:       rule.Action,
+				ResourceType: resourceType,
+				ResourceID:   resourceID,
 			})
 
-			if err != nil {
+			if checkErr != nil {
+				emitAuditOnDeny(ctx, cfg.auditOnDeny, operation, subject, rule.Action, resourceType, resourceID, checkErr)
 				return nil, errors.ServiceUnavailable("AUTHZ_CHECK_FAILED",
-					fmt.Sprintf("authorization check failed: %v", err))
+					fmt.Sprintf("authorization check failed: %v", checkErr))
 			}
 			if !allowed {
+				emitAuditOnDeny(ctx, cfg.auditOnDeny, operation, subject, rule.Action, resourceType, resourceID, nil)
 				return nil, errors.Forbidden("AUTHZ_DENIED", "insufficient permissions")
 			}
 
@@ -273,43 +256,57 @@ func Server(authorizer Authorizer, opts ...Option) middleware.Middleware {
 	}
 }
 
-// decisionFor maps the (allowed, err) tuple returned by Authorizer.Check into
-// the proto-level three-state AuthzDecision enum. Inline here (rather than in
-// obs/audit/enums.go) because no runtime-string-enum intermediate exists for
-// the (allowed, err) → proto direction; obs/audit's toProtoAuthzDecision goes
-// from the runtime AuthzDecision string to proto.
-func decisionFor(allowed bool, err error) auditpb.AuthzDecision {
-	switch {
-	case err != nil:
-		return auditpb.AuthzDecision_AUTHZ_DECISION_ERROR
-	case allowed:
-		return auditpb.AuthzDecision_AUTHZ_DECISION_ALLOWED
-	default:
-		return auditpb.AuthzDecision_AUTHZ_DECISION_DENIED
+// emitAuditOnDeny emits a CloudEvents audit event when authorization is denied
+// or encounters an error. If auditor is nil, this is a no-op.
+func emitAuditOnDeny(
+	ctx context.Context,
+	auditor audit.Auditor,
+	operation, subject, action, resourceType, resourceID string,
+	checkErr error,
+) {
+	if auditor == nil {
+		return
 	}
+
+	e := cloudevents.NewEvent()
+	e.SetID(uuid.New().String())
+	e.SetType("servora.authz.v1.denied")
+	e.SetSource(operation)
+
+	severity := "WARN"
+	if checkErr != nil {
+		severity = "ERROR"
+	}
+
+	payload := map[string]any{
+		"subject":       subject,
+		"action":        action,
+		"resource_type": resourceType,
+		"resource_id":   resourceID,
+		"severity":      severity,
+	}
+	if checkErr != nil {
+		payload["error"] = checkErr.Error()
+	}
+
+	_ = e.SetData(cloudevents.ApplicationJSON, payload)
+
+	// Best-effort: audit emission should not block the authz response.
+	_ = auditor.Emit(ctx, e)
 }
 
-// errorReasonFor stringifies err for the AuthzDetail.ErrorReason field;
-// returns "" when err is nil so allow/deny details have an empty reason.
-func errorReasonFor(err error) string {
-	if err == nil {
-		return ""
-	}
-	return err.Error()
-}
-
-// resolveObject determines the FGA object type and ID for the given rule and request.
-func resolveObject(rule AuthzRule, req any, defaultObjectID string) (objectType, objectID string, err error) {
-	objectType = rule.ObjectType
-	if objectType == "" {
-		return "", "", fmt.Errorf("object_type not specified in authz rule")
+// resolveResource determines the resource type and ID for the given rule and request.
+func resolveResource(rule AuthzRule, req any, defaultResourceID string) (resourceType, resourceID string, err error) {
+	resourceType = rule.ResourceType
+	if resourceType == "" {
+		return "", "", fmt.Errorf("resource_type not specified in authz rule")
 	}
 
-	if rule.IDField == "" {
-		return objectType, defaultObjectID, nil
+	if rule.ResourceIDField == "" {
+		return resourceType, defaultResourceID, nil
 	}
 
-	objectID, err = extractProtoField(req, rule.IDField)
+	resourceID, err = extractProtoField(req, rule.ResourceIDField)
 	return
 }
 
@@ -323,7 +320,7 @@ func resolveObject(rule AuthzRule, req any, defaultObjectID string) (objectType,
 // Single-segment paths preserve the prior behavior (top-level scalar lookup).
 func extractProtoField(req any, fieldPath string) (string, error) {
 	if fieldPath == "" {
-		return "", fmt.Errorf("id_field not specified")
+		return "", fmt.Errorf("resource_id_field not specified")
 	}
 	msg, ok := req.(proto.Message)
 	if !ok {
@@ -340,7 +337,7 @@ func extractProtoField(req any, fieldPath string) (string, error) {
 				seg, current.Descriptor().FullName())
 		}
 		if fd.IsList() || fd.IsMap() {
-			return "", fmt.Errorf("field %q is repeated/map; not supported in id_field path", seg)
+			return "", fmt.Errorf("field %q is repeated/map; not supported in resource_id_field path", seg)
 		}
 
 		isLast := i == len(segments)-1

@@ -196,8 +196,8 @@ func TestMethodLevelCheck_GoesToOutput(t *testing.T) {
 					methods: []methodSpec{
 						{name: "Hello", rule: &authzpb.AuthzRule{
 							Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-							Relation:   "user",
-							ObjectType: "greeting",
+							Action:       "user",
+							ResourceType: "greeting",
 						}},
 					},
 				},
@@ -215,8 +215,8 @@ func TestMethodLevelCheck_GoesToOutput(t *testing.T) {
 	if !strings.Contains(content, "AuthzMode_AUTHZ_MODE_CHECK") {
 		t.Errorf("authz rule missing CHECK mode literal\n--- generated ---\n%s", content)
 	}
-	if !strings.Contains(content, "Relation:") || !strings.Contains(content, `"user"`) {
-		t.Errorf("authz rule missing Relation literal\n--- generated ---\n%s", content)
+	if !strings.Contains(content, "Action:") || !strings.Contains(content, `"user"`) {
+		t.Errorf("authz rule missing Action literal\n--- generated ---\n%s", content)
 	}
 }
 
@@ -233,8 +233,8 @@ func TestServiceDefault_MethodInherits(t *testing.T) {
 					name: "GreetingService",
 					serviceDefault: &authzpb.AuthzRule{
 						Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Relation:   "user",
-						ObjectType: "greeting",
+						Action:     "user",
+						ResourceType: "greeting",
 					},
 					methods: []methodSpec{
 						{name: "Hello"}, // no method-level rule → inherits CHECK
@@ -254,8 +254,8 @@ func TestServiceDefault_MethodInherits(t *testing.T) {
 	if !strings.Contains(content, "AuthzMode_AUTHZ_MODE_CHECK") {
 		t.Errorf("inherited mode lost\n--- generated ---\n%s", content)
 	}
-	if !strings.Contains(content, "Relation:") || !strings.Contains(content, `"user"`) {
-		t.Errorf("inherited Relation lost\n--- generated ---\n%s", content)
+	if !strings.Contains(content, "Action:") || !strings.Contains(content, `"user"`) {
+		t.Errorf("inherited Action lost\n--- generated ---\n%s", content)
 	}
 }
 
@@ -273,14 +273,14 @@ func TestServiceDefault_MethodUnspecifiedInherits(t *testing.T) {
 					name: "GreetingService",
 					serviceDefault: &authzpb.AuthzRule{
 						Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Relation:   "user",
-						ObjectType: "greeting",
+						Action:     "user",
+						ResourceType: "greeting",
 					},
 					methods: []methodSpec{
 						{name: "Hello", rule: &authzpb.AuthzRule{
 							// Mode left UNSPECIFIED — partial fields like
-							// Relation should NOT leak into the merged rule.
-							Relation: "ignored-because-mode-unspecified",
+							// Action should NOT leak into the merged rule.
+							Action: "ignored-because-mode-unspecified",
 						}},
 					},
 				},
@@ -295,8 +295,8 @@ func TestServiceDefault_MethodUnspecifiedInherits(t *testing.T) {
 	if !strings.Contains(content, `"/example.v1.GreetingService/Hello"`) {
 		t.Fatalf("inherited rule missing operation key\n--- generated ---\n%s", content)
 	}
-	if !strings.Contains(content, "Relation:") || !strings.Contains(content, `"user"`) {
-		t.Errorf("inherited Relation lost (or method partial leaked)\n--- generated ---\n%s", content)
+	if !strings.Contains(content, "Action:") || !strings.Contains(content, `"user"`) {
+		t.Errorf("inherited Action lost (or method partial leaked)\n--- generated ---\n%s", content)
 	}
 	if strings.Contains(content, "ignored-because-mode-unspecified") {
 		t.Errorf("method-level partial leaked into output (UNSPECIFIED should inherit whole)\n--- generated ---\n%s", content)
@@ -317,8 +317,8 @@ func TestMethodOverridesServiceDefault_NoneWins(t *testing.T) {
 					name: "GreetingService",
 					serviceDefault: &authzpb.AuthzRule{
 						Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Relation:   "user",
-						ObjectType: "greeting",
+						Action:     "user",
+						ResourceType: "greeting",
 					},
 					methods: []methodSpec{
 						{name: "Hello"}, // inherits CHECK
@@ -341,7 +341,7 @@ func TestMethodOverridesServiceDefault_NoneWins(t *testing.T) {
 		t.Errorf("Hello entry missing\n--- generated ---\n%s", content)
 	}
 	// Healthz should be present with NONE (override won outright; service
-	// default's relation/object_type must not leak).
+	// default's action/resource_type must not leak).
 	healthzMarker := `"/example.v1.GreetingService/Healthz"`
 	if !strings.Contains(content, healthzMarker) {
 		t.Fatalf("Healthz entry missing\n--- generated ---\n%s", content)
@@ -358,9 +358,9 @@ func TestMethodOverridesServiceDefault_NoneWins(t *testing.T) {
 		t.Errorf("Healthz should carry NONE mode (override), got block:\n%s", healthzBlock)
 	}
 	// Override drops service-default fields entirely; the Healthz block
-	// should contain neither a Relation entry nor the "user" relation value.
-	if strings.Contains(healthzBlock, "Relation:") || strings.Contains(healthzBlock, `"user"`) {
-		t.Errorf("Healthz override should drop service-default Relation, got block:\n%s", healthzBlock)
+	// should contain neither an Action entry nor the "user" action value.
+	if strings.Contains(healthzBlock, "Action:") || strings.Contains(healthzBlock, `"user"`) {
+		t.Errorf("Healthz override should drop service-default Action, got block:\n%s", healthzBlock)
 	}
 }
 
@@ -377,8 +377,8 @@ func TestServiceDefault_NoMethodsDeclared_NoOutput(t *testing.T) {
 				{
 					name: "EmptyService",
 					serviceDefault: &authzpb.AuthzRule{
-						Mode:     authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Relation: "user",
+						Mode:   authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+						Action: "user",
 					},
 				},
 			},
