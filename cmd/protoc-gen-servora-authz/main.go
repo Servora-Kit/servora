@@ -25,6 +25,7 @@ import (
 	"sort"
 
 	authzpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
+	"github.com/Servora-Kit/servora/cmd/internal/optionmerge"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -112,9 +113,16 @@ func generate(gen *protogen.Plugin) error {
 			// service default need to land in the output too.
 			for _, m := range svc.Methods {
 				methodName := string(m.Desc.Name())
-				p, ok := mergeRules(svcDefault, methods[methodName])
+				methodR := methods[methodName]
+				merged, ok := optionmerge.Merge(svcDefault, methodR, methodR != nil)
 				if !ok {
 					continue
+				}
+				p := ruleParams{
+					Mode:            merged.Mode,
+					Action:          merged.GetAction(),
+					ResourceType:    merged.GetResourceType(),
+					ResourceIDField: merged.GetResourceIdField(),
 				}
 
 				if groups[dir] == nil {
@@ -199,31 +207,7 @@ func extractServiceDefault(s *protogen.Service) *authzpb.AuthzRule {
 	return r
 }
 
-// mergeRules implements the spec's merge semantics. Returns (params, true)
-// when the method should be emitted; (_, false) otherwise.
-//
-// A method-level rule with mode != UNSPECIFIED fully replaces the service
-// default. UNSPECIFIED (or absence) inherits the service default verbatim. If
-// neither side contributes a non-UNSPECIFIED mode, the method is skipped.
-func mergeRules(svcDefault, methodRule *authzpb.AuthzRule) (ruleParams, bool) {
-	if methodRule != nil && methodRule.Mode != authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
-		return ruleParams{
-			Mode:            methodRule.Mode,
-			Action:          methodRule.GetAction(),
-			ResourceType:    methodRule.GetResourceType(),
-			ResourceIDField: methodRule.GetResourceIdField(),
-		}, true
-	}
-	if svcDefault != nil && svcDefault.Mode != authzpb.AuthzMode_AUTHZ_MODE_UNSPECIFIED {
-		return ruleParams{
-			Mode:            svcDefault.Mode,
-			Action:          svcDefault.GetAction(),
-			ResourceType:    svcDefault.GetResourceType(),
-			ResourceIDField: svcDefault.GetResourceIdField(),
-		}, true
-	}
-	return ruleParams{}, false
-}
+// mergeRules is now provided by cmd/internal/optionmerge.Merge.
 
 func generateFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rules []ruleEntry) {
 	authzPkg := protogen.GoImportPath("github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1")

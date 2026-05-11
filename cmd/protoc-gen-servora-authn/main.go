@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	authnpb "github.com/Servora-Kit/servora/api/gen/go/servora/authn/v1"
+	"github.com/Servora-Kit/servora/cmd/internal/optionmerge"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -64,7 +65,7 @@ func generate(gen *protogen.Plugin) error {
 					}
 				}
 
-				merged, ok := mergeRules(svcDefault, rule, hasMethod)
+				merged, ok := optionmerge.Merge(svcDefault, rule, hasMethod)
 				if !ok {
 					continue
 				}
@@ -165,31 +166,7 @@ func serviceDefault(s *protogen.Service) *authnpb.AuthnRule {
 	return r
 }
 
-// mergeRules implements the spec's merge semantics. Returns (rule, true) when
-// the method should appear in generated output; (_, false) when neither
-// service nor method declared anything.
-//
-// Method-level rule with mode != UNSPECIFIED *fully replaces* the service
-// default — including its schemes. UNSPECIFIED (or absence) inherits the
-// service default verbatim.
-func mergeRules(svcDefault *authnpb.AuthnRule, methodRule *authnpb.AuthnRule, hasMethod bool) (*authnpb.AuthnRule, bool) {
-	switch {
-	case hasMethod && methodRule.Mode != authnpb.AuthnRule_MODE_UNSPECIFIED:
-		// Method-level wins outright.
-		return &authnpb.AuthnRule{
-			Mode:    methodRule.Mode,
-			Schemes: append([]string(nil), methodRule.Schemes...),
-		}, true
-	case svcDefault != nil && svcDefault.Mode != authnpb.AuthnRule_MODE_UNSPECIFIED:
-		// Inherit service default.
-		return &authnpb.AuthnRule{
-			Mode:    svcDefault.Mode,
-			Schemes: append([]string(nil), svcDefault.Schemes...),
-		}, true
-	}
-	// Neither side contributes a usable rule.
-	return nil, false
-}
+// mergeRules is now provided by cmd/internal/optionmerge.Merge.
 
 // validateRule rejects illegal mode/schemes combinations. The error message
 // always includes the file path, service name, method name, and the violation

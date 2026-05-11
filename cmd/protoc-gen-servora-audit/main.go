@@ -28,6 +28,7 @@ import (
 
 	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	cev1 "github.com/Servora-Kit/servora/api/gen/go/servora/cloudevents/v1"
+	"github.com/Servora-Kit/servora/cmd/internal/optionmerge"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -96,7 +97,7 @@ func generate(gen *protogen.Plugin) error {
 			svcDefault := serviceDefault(svc)
 			for _, m := range svc.Methods {
 				rule, hasMethod := methodRule(m)
-				merged, ok := mergeRules(svcDefault, rule, hasMethod)
+				merged, ok := optionmerge.Merge(svcDefault, rule, hasMethod)
 				if !ok {
 					continue
 				}
@@ -207,38 +208,7 @@ func serviceDefault(s *protogen.Service) *auditv1.AuditRule {
 	return r
 }
 
-// mergeRules implements the spec's merge semantics. Returns (rule, true) when
-// the method should be considered for emission; (_, false) when neither side
-// declared anything.
-//
-// A method-level rule with mode != AUDIT_MODE_UNSPECIFIED fully replaces the
-// service default. UNSPECIFIED (or absence) inherits the service default
-// verbatim. The caller then filters by `mode == ENABLED` for emission.
-func mergeRules(svcDefault *auditv1.AuditRule, methodRule *auditv1.AuditRule, hasMethod bool) (*auditv1.AuditRule, bool) {
-	switch {
-	case hasMethod && methodRule.Mode != auditv1.AuditMode_AUDIT_MODE_UNSPECIFIED:
-		return cloneAuditRule(methodRule), true
-	case svcDefault != nil && svcDefault.Mode != auditv1.AuditMode_AUDIT_MODE_UNSPECIFIED:
-		return cloneAuditRule(svcDefault), true
-	}
-	return nil, false
-}
-
-func cloneAuditRule(r *auditv1.AuditRule) *auditv1.AuditRule {
-	clone := &auditv1.AuditRule{
-		Mode:               r.Mode,
-		EventType:          r.EventType,
-		Severity:           r.Severity,
-		DetailMessageField: r.DetailMessageField,
-		TargetIdField:      r.TargetIdField,
-	}
-	// Deep-copy extensions slice.
-	if len(r.Extensions) > 0 {
-		clone.Extensions = make([]*auditv1.ExtensionMapping, len(r.Extensions))
-		copy(clone.Extensions, r.Extensions)
-	}
-	return clone
-}
+// mergeRules is now provided by cmd/internal/optionmerge.Merge.
 
 func generateFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rules []ruleEntry) {
 	auditPkg := protogen.GoImportPath("github.com/Servora-Kit/servora/obs/audit")
