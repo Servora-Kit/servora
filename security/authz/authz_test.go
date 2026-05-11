@@ -12,8 +12,9 @@ import (
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 
-	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	authzpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/v1"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // ---------------------------------------------------------------------------
@@ -41,10 +42,6 @@ func (h *fakeHeader) Values(key string) []string { return nil }
 
 func transportCtx(operation string) context.Context {
 	return transport.NewServerContext(context.Background(), &fakeTransport{operation: operation})
-}
-
-func subjectCtx(ctx context.Context) context.Context {
-	return ctx // subject is resolved via WithSubjectFunc option, not ctx
 }
 
 const testOp = "/test.service.v1.TestService/TestMethod"
@@ -676,33 +673,33 @@ func TestExtractProtoField_EmptyFieldValue_Error(t *testing.T) {
 }
 
 func TestExtractProtoField_DotPath_NestedScalar(t *testing.T) {
-	req := &auditpb.AuditEvent{
-		Target: &auditpb.AuditTarget{Id: "outer-123"},
+	req := &descriptorpb.FileDescriptorProto{
+		Options: &descriptorpb.FileOptions{GoPackage: proto.String("example.com/pkg")},
 	}
-	got, err := extractProtoField(req, "target.id")
+	got, err := extractProtoField(req, "options.go_package")
 	if err != nil {
 		t.Fatalf("extractProtoField err = %v", err)
 	}
-	if got != "outer-123" {
-		t.Errorf("got %q, want outer-123", got)
+	if got != "example.com/pkg" {
+		t.Errorf("got %q, want example.com/pkg", got)
 	}
 }
 
 func TestExtractProtoField_DotPath_MissingSegment(t *testing.T) {
-	req := &auditpb.AuditEvent{
-		Target: &auditpb.AuditTarget{Id: "x"},
+	req := &descriptorpb.FileDescriptorProto{
+		Options: &descriptorpb.FileOptions{GoPackage: proto.String("x")},
 	}
-	_, err := extractProtoField(req, "target.missing")
+	_, err := extractProtoField(req, "options.missing")
 	if err == nil {
 		t.Fatal("expected error for missing nested segment")
 	}
 }
 
 func TestExtractProtoField_DotPath_TerminatesOnMessage_Errors(t *testing.T) {
-	req := &auditpb.AuditEvent{
-		Target: &auditpb.AuditTarget{Id: "x"},
+	req := &descriptorpb.FileDescriptorProto{
+		Options: &descriptorpb.FileOptions{GoPackage: proto.String("x")},
 	}
-	_, err := extractProtoField(req, "target")
+	_, err := extractProtoField(req, "options")
 	if err == nil {
 		t.Fatal("expected error when path terminus is a message, not a scalar")
 	}

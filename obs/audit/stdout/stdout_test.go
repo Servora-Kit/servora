@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewAuditor_ImplementsInterface(t *testing.T) {
-	var _ audit.Auditor = NewAuditor()
+	var _ audit.Auditor = NewAuditor() //nolint:staticcheck // compile-time interface assertion
 }
 
 func TestAuditor_EmitWritesJSON(t *testing.T) {

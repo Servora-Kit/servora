@@ -241,11 +241,6 @@ func emitAuthnFailure(ctx context.Context, auditor audit.Auditor, op, reason str
 	_ = auditor.Emit(ctx, event)
 }
 
-// multiMethodTag is the value written into `AuthnDetail.Method` when the
-// failure error came from `Multi` (all engines failed). Single-engine
-// failures use the scheme written into the holder (or empty string if the
-// engine did not write).
-const multiMethodTag = "multi"
 
 // authnFailedReason is the kratos error reason used for the default
 // `errors.Unauthorized(...)` return when no `WithErrorHandler` is set.

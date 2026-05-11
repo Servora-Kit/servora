@@ -1,6 +1,7 @@
 package openfga
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Servora-Kit/servora/security/authz"
@@ -56,7 +57,7 @@ func TestNewAuthorizer_WithRedisCache_NilClient(t *testing.T) {
 
 func TestBatchCheck_EmptyInput(t *testing.T) {
 	a := NewAuthorizer(&Client{})
-	got, err := a.BatchCheck(nil, nil)
+	got, err := a.BatchCheck(context.TODO(), nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

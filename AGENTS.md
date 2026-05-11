@@ -1,12 +1,12 @@
 # AGENTS.md - servora 框架核心仓库
 
-<!-- Updated: 2026-04-10 -->
+<!-- Updated: 2026-05-11 -->
 
 ## 开发约束
 
 ### 提交规范
 
-格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议：`api`/`buf`/`cmd`/`core`/`transport`/`security`/`obs`/`platform`/`infra`/`repo`，可用"一级域/二级域"结构（如 `obs/audit`）。
+格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议：`api`/`buf`/`cmd`/`transport`/`security`/`obs`/`platform`/`infra`/`repo`，可用"一级域/二级域"结构（如 `security/authn`、`obs/audit`）。
 
 ### 版本管理与打 Tag 规则
 

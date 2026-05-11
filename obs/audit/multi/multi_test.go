@@ -89,5 +89,5 @@ func TestMulti_Empty(t *testing.T) {
 }
 
 func TestMulti_ImplementsInterface(t *testing.T) {
-	var _ audit.Auditor = New()
+	var _ audit.Auditor = New() //nolint:staticcheck // compile-time interface assertion
 }
