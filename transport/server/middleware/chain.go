@@ -12,7 +12,6 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 
 	"github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	"github.com/Servora-Kit/servora/obs/audit"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 )
 
@@ -26,9 +25,6 @@ import (
 //  4. RateLimit - 限流保护（默认启用，可调用 WithoutRateLimit 禁用）
 //  5. Validate  - Proto 参数校验
 //  6. Metrics   - 指标收集（可选，需调用 WithMetrics）
-//  7. Audit     - 审计事件采集（可选，需调用 WithAudit）；位于切片末尾，
-//     OUTER 于用户后续 append 的 authn/authz，保证 authn 失败短路时
-//     Collector 仍能在 LIFO 后置阶段 emit 审计事件
 //
 // 使用示例：
 //
@@ -41,9 +37,8 @@ import (
 //	ms := pkgmw.NewChainBuilder(httpLogger).
 //	    WithTrace(trace).
 //	    WithMetrics(mtc).
-//	    WithAudit(recorder).
 //	    Build()
-//	// 业务通过 builtin append 追加 authn/authz wrapper（canonical entry 是引擎子包）
+//	// 业务通过 builtin append 追加 authn/authz/audit wrapper
 //	ms = append(ms, jwt.Server(jwt.WithVerifier(v)), authz.Server(fgaAuth))
 //
 // 自实现 Authenticator 的高级用法（非 jwt 载体或自定义引擎）：
@@ -58,12 +53,10 @@ import (
 //   - 返回的切片可以通过 builtin `append` 追加业务特定的中间件（如 authn / authz / selector）；ChainBuilder 不提供 fluent `Append` 方法
 //   - 如果需要完全自定义中间件顺序，请不要使用此 Builder，手动构建切片
 type ChainBuilder struct {
-	logger        log.Logger
-	trace         *conf.Trace
-	metrics       *telemetry.Metrics
-	rateLimit     bool // 默认 true
-	auditRecorder *audit.Recorder
-	auditOpts     []audit.CollectorOption
+	logger    log.Logger
+	trace     *conf.Trace
+	metrics   *telemetry.Metrics
+	rateLimit bool // 默认 true
 }
 
 // NewChainBuilder 创建中间件链构建器。
@@ -108,26 +101,6 @@ func (b *ChainBuilder) WithoutRateLimit() *ChainBuilder {
 	return b
 }
 
-// WithAudit 启用审计中间件 audit.Collector。
-//
-// rec 为 nil 时跳过 audit middleware——Build 输出不包含任何 audit
-// middleware（与 WithTrace(nil) / WithMetrics(nil) "传 nil 跳过" 语义一致）。
-// 注意：若先前已通过 WithAudit(rec) 设置过 recorder，再调用 WithAudit(nil)
-// 会**清除**已设置的 recorder（后写覆盖语义），而非保留前值。
-//
-// 多次调用 WithAudit 时仅最后一次生效（后写覆盖，与 WithTrace / WithMetrics 一致）。
-//
-// opts 透传给 audit.Collector，未来 Collector 新增 option 不需要 builder 同步维护。
-//
-// audit.Collector 在 Build 切片的最后位置——保证业务方后续 append 的 authn/authz
-// 在执行链上 inner 于 Collector，authn 失败短路时 Collector 仍能在 LIFO 后置阶段
-// emit 审计事件。详见 obs/audit/doc.go 的 mount contract。
-func (b *ChainBuilder) WithAudit(rec *audit.Recorder, opts ...audit.CollectorOption) *ChainBuilder {
-	b.auditRecorder = rec
-	b.auditOpts = opts
-	return b
-}
-
 // Build 构建并返回中间件切片。
 //
 // 中间件按以下固定顺序添加：
@@ -137,10 +110,9 @@ func (b *ChainBuilder) WithAudit(rec *audit.Recorder, opts ...audit.CollectorOpt
 //  4. RateLimit - 在业务逻辑之前进行限流
 //  5. Validate  - Proto 参数校验
 //  6. Metrics   - 记录请求指标
-//  7. Audit     - 审计事件采集（可选, WithAudit）；末尾，OUTER 于用户 append 的
-//     authn/authz，保证 authn 失败短路时 Collector 仍能 emit
 //
-// 返回的切片可以通过 append 追加业务特定的中间件。
+// 返回的切片可以通过 append 追加业务特定的中间件（如 authn / authz / audit）。
+// 审计中间件由业务代码通过 audit.Middleware 自行挂载。
 func (b *ChainBuilder) Build() []middleware.Middleware {
 	var ms []middleware.Middleware
 
@@ -169,11 +141,6 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 			metrics.WithSeconds(b.metrics.Seconds),
 			metrics.WithRequests(b.metrics.Requests),
 		))
-	}
-
-	// 7. Audit Collector - optional; outer to user-appended authn/authz.
-	if b.auditRecorder != nil {
-		ms = append(ms, audit.Collector(b.auditRecorder, b.auditOpts...))
 	}
 
 	return ms

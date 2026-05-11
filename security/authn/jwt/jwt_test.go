@@ -9,7 +9,6 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
-	"github.com/Servora-Kit/servora/obs/audit"
 	"github.com/Servora-Kit/servora/security/authn"
 )
 
@@ -47,14 +46,12 @@ func (h *fakeHeader) Add(_ string, _ string)   {}
 func (h *fakeHeader) Keys() []string           { return nil }
 func (h *fakeHeader) Values(_ string) []string { return nil }
 
-// serverCtx builds a server-side ctx with a fake transport carrying the given
-// headers AND a fresh audit detail holder.
+// serverCtx builds a server-side ctx with a fake transport carrying the given headers.
 func serverCtx(headers map[string]string) context.Context {
 	if headers == nil {
 		headers = map[string]string{}
 	}
-	ctx := transport.NewServerContext(context.Background(), &fakeServerTransport{headers: headers})
-	return audit.InstallHolder(ctx)
+	return transport.NewServerContext(context.Background(), &fakeServerTransport{headers: headers})
 }
 
 // clientCtx builds a client-side ctx with a fake outbound transport.

@@ -2,26 +2,7 @@ package openfga
 
 import (
 	"testing"
-
-	"github.com/Servora-Kit/servora/obs/audit"
 )
-
-func TestWithAuditRecorder(t *testing.T) {
-	var o clientOptions
-	r := audit.NewRecorder(nil, "test")
-	WithAuditRecorder(r)(&o)
-	if o.recorder != r {
-		t.Fatal("recorder not set")
-	}
-}
-
-func TestWithAuditRecorder_Nil(t *testing.T) {
-	var o clientOptions
-	WithAuditRecorder(nil)(&o)
-	if o.recorder != nil {
-		t.Fatal("expected nil recorder")
-	}
-}
 
 func TestWithComputedRelations(t *testing.T) {
 	m := map[string][]string{"project": {"can_view", "can_edit"}}

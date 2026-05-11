@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	auditpb "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
-	"github.com/Servora-Kit/servora/core/actor"
 	fgaclient "github.com/openfga/go-sdk/client"
 )
 
@@ -16,14 +14,11 @@ type Tuple struct {
 	Object   string // e.g. "organization:uuid", "project:uuid"
 }
 
-// WriteTuples writes one or more relationship tuples atomically and emits
-// an audit event on success when a recorder is configured.
+// WriteTuples writes one or more relationship tuples atomically.
+// Audit of tuple changes is handled by the annotation-based audit system
+// or business code using auditor.Emit directly.
 func (c *Client) WriteTuples(ctx context.Context, tuples ...Tuple) error {
-	if err := c.writeTuplesCore(ctx, tuples...); err != nil {
-		return err
-	}
-	c.emitTupleAudit(ctx, "openfga.WriteTuples", auditpb.TupleMutationType_TUPLE_MUTATION_TYPE_WRITE, tuples)
-	return nil
+	return c.writeTuplesCore(ctx, tuples...)
 }
 
 func (c *Client) writeTuplesCore(ctx context.Context, tuples ...Tuple) error {
@@ -81,14 +76,11 @@ func (c *Client) EnsureTuples(ctx context.Context, tuples ...Tuple) error {
 	return nil
 }
 
-// DeleteTuples deletes one or more relationship tuples atomically and emits
-// an audit event on success when a recorder is configured.
+// DeleteTuples deletes one or more relationship tuples atomically.
+// Audit of tuple changes is handled by the annotation-based audit system
+// or business code using auditor.Emit directly.
 func (c *Client) DeleteTuples(ctx context.Context, tuples ...Tuple) error {
-	if err := c.deleteTuplesCore(ctx, tuples...); err != nil {
-		return err
-	}
-	c.emitTupleAudit(ctx, "openfga.DeleteTuples", auditpb.TupleMutationType_TUPLE_MUTATION_TYPE_DELETE, tuples)
-	return nil
+	return c.deleteTuplesCore(ctx, tuples...)
 }
 
 func (c *Client) deleteTuplesCore(ctx context.Context, tuples ...Tuple) error {
@@ -110,19 +102,4 @@ func (c *Client) deleteTuplesCore(ctx context.Context, tuples ...Tuple) error {
 		return fmt.Errorf("openfga delete: %w", err)
 	}
 	return nil
-}
-
-func (c *Client) emitTupleAudit(ctx context.Context, operation string, mutation auditpb.TupleMutationType, tuples []Tuple) {
-	if c.recorder == nil || len(tuples) == 0 {
-		return
-	}
-	changes := make([]*auditpb.TupleChange, len(tuples))
-	for i, t := range tuples {
-		changes[i] = &auditpb.TupleChange{User: t.User, Relation: t.Relation, Object: t.Object}
-	}
-	a, _ := actor.From(ctx)
-	c.recorder.RecordTupleChange(ctx, operation, a, &auditpb.TupleMutationDetail{
-		MutationType: mutation,
-		Tuples:       changes,
-	})
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	openfgaconfpb "github.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1"
-	"github.com/Servora-Kit/servora/obs/audit"
 	fgaclient "github.com/openfga/go-sdk/client"
 	fgacredentials "github.com/openfga/go-sdk/credentials"
 )
@@ -13,14 +12,7 @@ import (
 type ClientOption func(*clientOptions)
 
 type clientOptions struct {
-	recorder          *audit.Recorder
 	computedRelations map[string][]string
-}
-
-// WithAuditRecorder injects an audit recorder for tuple-change and check events.
-// Passing nil is safe and disables audit emission.
-func WithAuditRecorder(r *audit.Recorder) ClientOption {
-	return func(o *clientOptions) { o.recorder = r }
 }
 
 // WithComputedRelations provides a mapping from object-type to computed relations
@@ -30,10 +22,9 @@ func WithComputedRelations(m map[string][]string) ClientOption {
 	return func(o *clientOptions) { o.computedRelations = m }
 }
 
-// Client wraps the OpenFGA SDK client with caching, audit, and framework integration.
+// Client wraps the OpenFGA SDK client with caching and framework integration.
 type Client struct {
 	sdk               *fgaclient.OpenFgaClient
-	recorder          *audit.Recorder
 	computedRelations map[string][]string
 }
 
@@ -70,7 +61,6 @@ func NewClient(cfg *openfgaconfpb.Config, opts ...ClientOption) (*Client, error)
 
 	return &Client{
 		sdk:               sdk,
-		recorder:          o.recorder,
 		computedRelations: o.computedRelations,
 	}, nil
 }
