@@ -1,88 +1,37 @@
-// Package audit records cross-cutting audit events (authentication outcomes,
-// authorization decisions, OpenFGA tuple changes, business resource mutations)
-// into a unified auditpb.AuditEvent envelope and delivers them through a
-// pluggable Emitter (broker, log, noop). Schema is sourced exclusively from
-// api/gen/go/servora/audit/v1 — there is no runtime↔proto mapper.
+// Package audit provides engine-agnostic audit event emission using CloudEvents
+// as the envelope format. It defines the Auditor contract and ships MVP backends
+// (noop, stdout, kafka, multi) plus a Kratos middleware that intercepts RPC
+// calls and emits structured audit events.
 //
-// # API surface
+// # Architecture
 //
-// Three groups, top-down by typical caller:
+// The central abstraction is the Auditor interface (auditor.go):
 //
-//   1. Ctx helpers — written by security middleware, read by Collector:
-//        WithAuthnResult(ctx, *auditpb.AuthnDetail) context.Context
-//        AuthnResultFrom(ctx) (*auditpb.AuthnDetail, bool)
-//        WithAuthzResult(ctx, *auditpb.AuthzDetail) context.Context
-//        AuthzResultFrom(ctx) (*auditpb.AuthzDetail, bool)
-//        InstallHolder(ctx) context.Context  // auto-called by Collector; rarely needed directly
-//
-//   2. Middleware — assembled by business apps:
-//        Collector(rec *Recorder, opts ...CollectorOption) middleware.Middleware
-//        WithSpanEvents(enabled bool) CollectorOption  // default true
-//
-//   3. Recorder — direct event emission for non-middleware paths:
-//        NewRecorder(emitter Emitter, serviceName string) *Recorder
-//        (*Recorder).Emit(ctx, *auditpb.AuditEvent) error
-//        (*Recorder).RecordResourceMutation(...)   // proto-annotation-driven middleware uses this
-//        (*Recorder).RecordTupleChange(...)        // security/authz/openfga write path uses this
-//
-// # Audit event sources topology
-//
-// The four auditpb.AuditEventType values originate from different modules:
-//
-//   AUTHN_RESULT       ← security/authn middleware writes ctx, Collector emits
-//   AUTHZ_DECISION    ← security/authz middleware writes ctx, Collector emits
-//   RESOURCE_MUTATION ← obs/audit middleware (proto-annotation driven, separate path)
-//   TUPLE_CHANGED     ← security/authz/openfga write path (calls Recorder.RecordTupleChange directly)
-//
-// Each EventType's Result reflects only its own layer's outcome. Handler
-// business errors are recorded via RESOURCE_MUTATION, never leak into
-// AUTHN_RESULT or AUTHZ_DECISION — consumers can distinguish "authn failed"
-// from "authn ok but business failed" by EventType alone.
-//
-// # Mounting rule (CRITICAL)
-//
-// Collector MUST be the OUTER-most middleware relative to authn / authz.
-// Kratos middleware chains wrap inner LIFO; if authn fails and short-circuits,
-// only an outer Collector reaches its post-phase to read ctx and emit. Listing
-// Collector inner to authn silently drops failure events (no panic, no error).
-//
-// Recommended chain order:
-//
-//	recovery → tracing → logging → ratelimit → validate → metrics → audit.Collector → authn → authz → handler
-//	                                                                ^^^^^^^^^^^^^^^
-//	                                                                outer to authn/authz; trailing position
-//	                                                                aligns with transport/server/middleware
-//	                                                                ChainBuilder.Build output
-//
-// 本顺序与 transport/server/middleware.ChainBuilder 的 Build 输出对齐；调用
-// WithAudit(rec) 即自动落到该位置，无需业务方手记 outer/inner。
-//
-// # Example
-//
-// 推荐：通过 ChainBuilder.WithAudit 一行装配（无需手记 outer/inner 顺序）：
-//
-//	recorder := audit.NewRecorder(emitter, "iam")
-//	mw := middleware.NewChainBuilder(l).
-//	    WithTrace(trace).
-//	    WithMetrics(mtc).
-//	    WithAudit(recorder).
-//	    Build()
-//	mw = append(mw,
-//	    authn.Server(jwtAuth),
-//	    authz.Server(fgaAuth, authz.WithRulesFunc(iampb.AuthzRules)),
-//	)
-//
-// 如果不用 ChainBuilder 也可以手写——注意 audit.Collector 必须 OUTER 于 authn/authz：
-//
-//	mw := []middleware.Middleware{
-//	    recovery.Recovery(),
-//	    tracing.Server(),
-//	    logging.Server(l),
-//	    audit.Collector(recorder),
-//	    authn.Server(jwtAuth),
-//	    authz.Server(fgaAuth, authz.WithRulesFunc(iampb.AuthzRules)),
+//	type Auditor interface {
+//	    Emit(ctx context.Context, event cloudevents.Event) error
 //	}
 //
-// See AGENTS.md in this package for the full mounting contract, push-ctx
-// rationale, and emit pipeline.
+// Implementations live in sub-packages:
+//
+//   - obs/audit/noop   — discards all events (testing / disabled mode)
+//   - obs/audit/stdout — JSON-encodes events to stdout (local dev)
+//   - obs/audit/kafka  — delivers events to Kafka via CloudEvents binding (stub)
+//   - obs/audit/multi  — fans out to multiple auditors
+//
+// # Middleware
+//
+// The Middleware function (audit_middleware.go) intercepts RPC calls, looks up
+// CompiledRules by operation, builds CloudEvents events, supplements auth
+// metadata, and emits through the configured Auditor. Emission errors are logged
+// but never block business logic.
+//
+// Recommended middleware chain order:
+//
+//	recovery → tracing → logging → ratelimit → validate → metrics → audit.Middleware → authn → authz → handler
+//
+// # CloudEvents Extensions
+//
+// Servora audit events use the following CloudEvents extension attributes
+// (defined in extensions.go): authid, authtype, traceparent, tracestate,
+// severitytext, recordedtime, partitionkey, errormessage.
 package audit
