@@ -23,7 +23,7 @@
 //        NewRecorder(emitter Emitter, serviceName string) *Recorder
 //        (*Recorder).Emit(ctx, *auditpb.AuditEvent) error
 //        (*Recorder).RecordResourceMutation(...)   // proto-annotation-driven middleware uses this
-//        (*Recorder).RecordTupleChange(...)        // infra/openfga write path uses this
+//        (*Recorder).RecordTupleChange(...)        // security/authz/openfga write path uses this
 //
 // # Audit event sources topology
 //
@@ -32,7 +32,7 @@
 //   AUTHN_RESULT       ← security/authn middleware writes ctx, Collector emits
 //   AUTHZ_DECISION    ← security/authz middleware writes ctx, Collector emits
 //   RESOURCE_MUTATION ← obs/audit middleware (proto-annotation driven, separate path)
-//   TUPLE_CHANGED     ← infra/openfga write path (calls Recorder.RecordTupleChange directly)
+//   TUPLE_CHANGED     ← security/authz/openfga write path (calls Recorder.RecordTupleChange directly)
 //
 // Each EventType's Result reflects only its own layer's outcome. Handler
 // business errors are recorded via RESOURCE_MUTATION, never leak into

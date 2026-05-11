@@ -88,7 +88,7 @@ recovery → tracing → logging → audit.Collector → authn → authz → han
 | `AUTHN_RESULT`       | `security/authn` middleware 写 ctx                                         | `audit.WithAuthnResult` → holder → `Collector` 末端 emit            |
 | `AUTHZ_DECISION`     | `security/authz` middleware 写 ctx                                         | `audit.WithAuthzResult` → holder → `Collector` 末端 emit            |
 | `RESOURCE_MUTATION`  | `obs/audit/middleware.go`（proto 注解 `servora.audit.v1.audit_rule` 驱动）| 业务 RPC handler 完成后由 `Audit` middleware 直接 emit              |
-| `TUPLE_CHANGED`      | `infra/openfga` 写路径                                                     | tuple 写入成功后直接 `Recorder.RecordTupleChange` emit               |
+| `TUPLE_CHANGED`      | `security/authz/openfga` 写路径                                            | tuple 写入成功后直接 `Recorder.RecordTupleChange` emit               |
 
 设计意图：每个 EventType 的 `Result` 反映该层自己的结果。handler 业务错误属 RPC 层信息，由 `RESOURCE_MUTATION` 独立记录，不污染 authn/authz 决策记录——consumer 可按 EventType 维度区分「authn 失败」与「authn ok 但业务失败」。
 

@@ -1,7 +1,7 @@
 # AGENTS.md - security/authz/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-05-07 -->
+<!-- Generated: 2026-03-22 | Updated: 2026-05-11 -->
 
 ## 模块目的
 
@@ -15,8 +15,17 @@ security/authz/
   authz_test.go     → 中间件层测试（使用 fakeAuthorizer）
   doc.go            → 包级 godoc
   openfga/
-    openfga.go      → OpenFGAAuthorizer 实现（封装 infra/openfga.Client + 可选 Redis 缓存）
-    options.go      → OpenFGA 引擎 Option（WithRedisCache）
+    authorizer.go   → Authorizer 实现（authz.Authorizer + batch.BatchAuthorizer + lister.Lister）
+    client.go       → 底层 OpenFGA SDK 客户端构造
+    check.go        → 底层关系检查封装
+    list.go         → 底层列表查询封装
+    tuples.go       → tuple 写入/删除 + 审计
+    cache.go        → Redis 缓存层
+    config.go       → NewClientOptional 便捷构造
+  batch/
+    batch.go        → BatchAuthorizer 子接口
+  lister/
+    lister.go       → Lister 子接口
   noop/
     noop.go         → NoopAuthorizer（总是放行，用于测试）
 ```
@@ -74,8 +83,8 @@ authzMw := pkgauthz.Server(
 - `AuthzMode_AUTHZ_MODE_NONE` → 直接放行（公开接口）
 - `AuthzMode_AUTHZ_MODE_CHECK` → 调用 `Authorizer.Check()`
 - `AuthzRule.Mode` 引用共享 proto `api/gen/go/servora/authz/v1`（非 IAM 服务 proto）
-- `OpenFGAAuthorizer` 封装 Redis 缓存为内部关注点（`WithRedisCache`）
-- `Authorizer` 接口含三方法：`Check` / `BatchCheck` / `ListAllowed`，openfga 与 noop 完整覆盖
+- `openfga.Authorizer` 实现三接口：`authz.Authorizer` / `batch.BatchAuthorizer` / `lister.Lister`
+- Redis 缓存为 openfga 内部关注点（`WithRedisCache` 选项注入）
 - `WithCheckTimeout(d)` 限制后端调用时长；`WithFailOpenOnMissingRule(alertFn)` 开发期可放行未注册 RPC 并回调告警
 - `extractProtoField` 支持 dot-path（`parent.id`），路径中段必须为单 message，终点必须为标量
 - principal 构造为 `<actor.Type()>:<actor.ID()>`（与 OpenFGA SDK 语义对齐）
@@ -93,7 +102,7 @@ authzMw := pkgauthz.Server(
 - 缺少规则时默认放行，导致权限面失控
 - 把对象解析、授权决策、业务补偿逻辑揉在一起
 - 在主包 import `obs/audit` 的 emit 实现（破坏 push-ctx + 末端 emit 的单点设计）
-- 把 cache 命中作为审计语义暴露给 middleware（cache 是 `infra/openfga` 内部关注点）
+- 把 cache 命中作为审计语义暴露给 middleware（cache 是 `security/authz/openfga` 内部关注点）
 
 ## 测试与使用
 

@@ -1,32 +1,35 @@
-# AGENTS.md - infra/openfga/
+# AGENTS.md - security/authz/openfga/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
+<!-- Generated: 2026-03-22 | Updated: 2026-05-11 -->
 
 ## 模块目的
 
-提供 OpenFGA 客户端与常用操作封装，统一组织配置、关系检查、列表查询、tuple 写入、缓存辅助与审计集成。
+提供 OpenFGA 客户端与常用操作封装，并实现 `authz.Authorizer`、`batch.BatchAuthorizer`、`lister.Lister` 三接口，统一组织配置、关系检查、列表查询、tuple 写入、缓存辅助与审计集成。
 
 ## 当前文件
 
-- `client.go`：客户端构造、`ClientOption` 模式（`WithAuditRecorder`、`WithComputedRelations`）
+- `authorizer.go`：`Authorizer` 结构体，实现 `authz.Authorizer` + `batch.BatchAuthorizer` + `lister.Lister`
+- `client.go`：底层 OpenFGA SDK 客户端构造、`ClientOption` 模式（`WithAuditRecorder`、`WithComputedRelations`）
 - `config.go`：`NewClientOptional` 便捷构造（支持透传 `ClientOption`）
-- `check.go`：关系检查封装（`user` 参数为完整 principal，如 `"user:uuid"`）
-- `list.go`：列表查询封装（`user` 参数为完整 principal）
+- `check.go`：底层关系检查封装（`user` 参数为完整 principal，如 `"user:uuid"`）
+- `list.go`：底层列表查询封装（`user` 参数为完整 principal）
 - `tuples.go`：tuple 写入/删除（core/public 分层，成功后自动 emit audit 事件）
 - `cache.go`：Redis 缓存（`CachedCheck` 返回 `cacheHit`，`InvalidateForTuples` 为 Client 方法）
 - `client_test.go`：ClientOption 单元测试
 - `cache_test.go`：缓存层去特化单元测试
+- `check_batch_test.go`：BatchCheck 辅助函数单元测试
+- `authorizer_test.go`：接口断言与集成测试
 
 ## 当前实现事实
 
-- `NewClient(cfg, ...ClientOption)` 支持注入 `*audit.Recorder` 和 `ComputedRelationMap`
-- `Check`/`ListObjects`/`CachedCheck`/`CachedListObjects` 参数为完整 principal（如 `"user:uuid"`），不再内部拼接前缀
-- `CachedCheck` 返回 `(allowed, cacheHit, error)`
+- `NewAuthorizer(client, ...AuthorizerOption)` 满足三接口，通过类型断言可访问 BatchCheck/ListAllowed
+- `Check(ctx, authz.CheckRequest)` 内部映射：Subject → User, Action → Relation, ResourceType:ResourceID → Object
+- `BatchCheck(ctx, []authz.CheckRequest) ([]bool, error)` — 不走缓存，单次 OpenFGA 批量调用
+- `ListAllowed(ctx, subject, action, resourceType) ([]string, error)` — 走缓存
+- 底层 `Client` 保留独立 API：`Check`/`ListObjects`/`CachedCheck`/`CachedListObjects`/`BatchCheck`
 - `WriteTuples`/`DeleteTuples` 采用 core/public 分层，成功后自动通过 `obs/audit.Recorder` emit `tuple.changed` 事件
 - `InvalidateForTuples` 是 `Client` 方法（需要访问 `computedRelations`）
-- `parseTupleComponents` 通用化解析任意 `type:id` principal
-- `affectedRelations` 使用 `Client.computedRelations`（通过 `WithComputedRelations` 注入），无硬编码
 
 ## 边界约束
 
@@ -37,7 +40,7 @@
 
 ## 常见反模式
 
-- 在 `infra/openfga` 中硬编码业务资源名、关系名和领域规则
+- 在 `security/authz/openfga` 中硬编码业务资源名、关系名和领域规则
 - 把缓存命中逻辑与授权结论语义混为一谈
 - 直接在业务层重复拼装 OpenFGA client 而绕过统一 wrapper
 - 调用 `Check`/`ListObjects` 时传裸 ID 而非完整 principal
@@ -45,7 +48,7 @@
 ## 测试与使用
 
 ```bash
-go test ./infra/openfga/...
+go test ./security/authz/openfga/... -count=1 -race
 ```
 
 ## 维护提示

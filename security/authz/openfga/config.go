@@ -12,13 +12,13 @@ import (
 // where authorisation is not required.
 func NewClientOptional(cfg *conf.App, l logger.Logger, opts ...ClientOption) *Client {
 	if cfg.Openfga == nil || cfg.Openfga.ApiUrl == "" || cfg.Openfga.StoreId == "" {
-		logger.For(l, "openfga/infra").
+		logger.For(l, "security/authz/openfga").
 			Info("OpenFGA not configured, authorization checks disabled")
 		return nil
 	}
 	c, err := NewClient(cfg.Openfga, opts...)
 	if err != nil {
-		logger.For(l, "openfga/infra").
+		logger.For(l, "security/authz/openfga").
 			Warnf("failed to create OpenFGA client: %v", err)
 		return nil
 	}
