@@ -433,9 +433,7 @@ type App struct {
 	Jwt           *App_Jwt               `protobuf:"bytes,4,opt,name=jwt,proto3" json:"jwt,omitempty"`                                                                                     // JWT配置
 	Log           *App_Log               `protobuf:"bytes,5,opt,name=log,proto3" json:"log,omitempty"`                                                                                     // 日志配置
 	Metadata      map[string]string      `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 元数据
-	Openfga       *App_OpenFGA           `protobuf:"bytes,7,opt,name=openfga,proto3" json:"openfga,omitempty"`                                                                             // OpenFGA 配置
 	ExternalUrl   string                 `protobuf:"bytes,8,opt,name=external_url,json=externalUrl,proto3" json:"external_url,omitempty"`                                                  // 应用外部访问基地址（如 https://iam.example.com），用于 OIDC Discovery、邮件链接等
-	Oidc          *App_Oidc              `protobuf:"bytes,9,opt,name=oidc,proto3" json:"oidc,omitempty"`                                                                                   // OIDC Provider 配置
 	Audit         *App_Audit             `protobuf:"bytes,10,opt,name=audit,proto3" json:"audit,omitempty"`                                                                                // 审计配置
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -513,25 +511,11 @@ func (x *App) GetMetadata() map[string]string {
 	return nil
 }
 
-func (x *App) GetOpenfga() *App_OpenFGA {
-	if x != nil {
-		return x.Openfga
-	}
-	return nil
-}
-
 func (x *App) GetExternalUrl() string {
 	if x != nil {
 		return x.ExternalUrl
 	}
 	return ""
-}
-
-func (x *App) GetOidc() *App_Oidc {
-	if x != nil {
-		return x.Oidc
-	}
-	return nil
 }
 
 func (x *App) GetAudit() *App_Audit {
@@ -2606,142 +2590,6 @@ func (x *App_Log) GetCompress() bool {
 	return false
 }
 
-type App_OpenFGA struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ApiUrl        string                 `protobuf:"bytes,1,opt,name=api_url,json=apiUrl,proto3" json:"api_url,omitempty"`       // OpenFGA HTTP API 地址
-	StoreId       string                 `protobuf:"bytes,2,opt,name=store_id,json=storeId,proto3" json:"store_id,omitempty"`    // Store ID
-	ModelId       string                 `protobuf:"bytes,3,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`    // Authorization Model ID
-	ApiToken      string                 `protobuf:"bytes,4,opt,name=api_token,json=apiToken,proto3" json:"api_token,omitempty"` // API Token（可选，生产环境使用）
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *App_OpenFGA) Reset() {
-	*x = App_OpenFGA{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *App_OpenFGA) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*App_OpenFGA) ProtoMessage() {}
-
-func (x *App_OpenFGA) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use App_OpenFGA.ProtoReflect.Descriptor instead.
-func (*App_OpenFGA) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 2}
-}
-
-func (x *App_OpenFGA) GetApiUrl() string {
-	if x != nil {
-		return x.ApiUrl
-	}
-	return ""
-}
-
-func (x *App_OpenFGA) GetStoreId() string {
-	if x != nil {
-		return x.StoreId
-	}
-	return ""
-}
-
-func (x *App_OpenFGA) GetModelId() string {
-	if x != nil {
-		return x.ModelId
-	}
-	return ""
-}
-
-func (x *App_OpenFGA) GetApiToken() string {
-	if x != nil {
-		return x.ApiToken
-	}
-	return ""
-}
-
-type App_Oidc struct {
-	state                    protoimpl.MessageState `protogen:"open.v1"`
-	CryptoKey                string                 `protobuf:"bytes,1,opt,name=crypto_key,json=cryptoKey,proto3" json:"crypto_key,omitempty"`                                                  // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
-	GrantTypeRefreshToken    bool                   `protobuf:"varint,2,opt,name=grant_type_refresh_token,json=grantTypeRefreshToken,proto3" json:"grant_type_refresh_token,omitempty"`         // 是否启用 refresh_token grant type
-	DefaultLogoutRedirectUri string                 `protobuf:"bytes,3,opt,name=default_logout_redirect_uri,json=defaultLogoutRedirectUri,proto3" json:"default_logout_redirect_uri,omitempty"` // 默认登出重定向 URI
-	LoginBaseUrl             string                 `protobuf:"bytes,4,opt,name=login_base_url,json=loginBaseUrl,proto3" json:"login_base_url,omitempty"`                                       // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
-}
-
-func (x *App_Oidc) Reset() {
-	*x = App_Oidc{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[33]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *App_Oidc) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*App_Oidc) ProtoMessage() {}
-
-func (x *App_Oidc) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[33]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use App_Oidc.ProtoReflect.Descriptor instead.
-func (*App_Oidc) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 3}
-}
-
-func (x *App_Oidc) GetCryptoKey() string {
-	if x != nil {
-		return x.CryptoKey
-	}
-	return ""
-}
-
-func (x *App_Oidc) GetGrantTypeRefreshToken() bool {
-	if x != nil {
-		return x.GrantTypeRefreshToken
-	}
-	return false
-}
-
-func (x *App_Oidc) GetDefaultLogoutRedirectUri() string {
-	if x != nil {
-		return x.DefaultLogoutRedirectUri
-	}
-	return ""
-}
-
-func (x *App_Oidc) GetLoginBaseUrl() string {
-	if x != nil {
-		return x.LoginBaseUrl
-	}
-	return ""
-}
-
 // 审计配置（控制 pkg/audit 的 Emitter 类型与目标）
 type App_Audit struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
@@ -2759,7 +2607,7 @@ type App_Audit struct {
 
 func (x *App_Audit) Reset() {
 	*x = App_Audit{}
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[34]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2771,7 +2619,7 @@ func (x *App_Audit) String() string {
 func (*App_Audit) ProtoMessage() {}
 
 func (x *App_Audit) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_conf_proto_msgTypes[34]
+	mi := &file_servora_conf_v1_conf_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2784,7 +2632,7 @@ func (x *App_Audit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App_Audit.ProtoReflect.Descriptor instead.
 func (*App_Audit) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 4}
+	return file_servora_conf_v1_conf_proto_rawDescGZIP(), []int{5, 2}
 }
 
 func (x *App_Audit) GetEnabled() bool {
@@ -2945,17 +2793,15 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\x03tls\x18\n" +
 	" \x01(\bR\x03tls\x12&\n" +
 	"\x0ftls_skip_verify\x18\v \x01(\bR\rtlsSkipVerify\x12\x1a\n" +
-	"\bcompress\x18\f \x01(\tR\bcompress\"\xc2\v\n" +
+	"\bcompress\x18\f \x01(\tR\bcompress\"\x9e\b\n" +
 	"\x03App\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\tR\aversion\x12*\n" +
 	"\x03jwt\x18\x04 \x01(\v2\x18.servora.conf.v1.App.JwtR\x03jwt\x12*\n" +
 	"\x03log\x18\x05 \x01(\v2\x18.servora.conf.v1.App.LogR\x03log\x12>\n" +
-	"\bmetadata\x18\x06 \x03(\v2\".servora.conf.v1.App.MetadataEntryR\bmetadata\x126\n" +
-	"\aopenfga\x18\a \x01(\v2\x1c.servora.conf.v1.App.OpenFGAR\aopenfga\x12!\n" +
-	"\fexternal_url\x18\b \x01(\tR\vexternalUrl\x12-\n" +
-	"\x04oidc\x18\t \x01(\v2\x19.servora.conf.v1.App.OidcR\x04oidc\x120\n" +
+	"\bmetadata\x18\x06 \x03(\v2\".servora.conf.v1.App.MetadataEntryR\bmetadata\x12!\n" +
+	"\fexternal_url\x18\b \x01(\tR\vexternalUrl\x120\n" +
 	"\x05audit\x18\n" +
 	" \x01(\v2\x1a.servora.conf.v1.App.AuditR\x05audit\x1a\xd7\x01\n" +
 	"\x03Jwt\x12(\n" +
@@ -2972,18 +2818,7 @@ const file_servora_conf_v1_conf_proto_rawDesc = "" +
 	"\vmax_backups\x18\x04 \x01(\x05R\n" +
 	"maxBackups\x12\x17\n" +
 	"\amax_age\x18\x05 \x01(\x05R\x06maxAge\x12\x1a\n" +
-	"\bcompress\x18\x06 \x01(\bR\bcompress\x1au\n" +
-	"\aOpenFGA\x12\x17\n" +
-	"\aapi_url\x18\x01 \x01(\tR\x06apiUrl\x12\x19\n" +
-	"\bstore_id\x18\x02 \x01(\tR\astoreId\x12\x19\n" +
-	"\bmodel_id\x18\x03 \x01(\tR\amodelId\x12\x1b\n" +
-	"\tapi_token\x18\x04 \x01(\tR\bapiToken\x1a\xc3\x01\n" +
-	"\x04Oidc\x12\x1d\n" +
-	"\n" +
-	"crypto_key\x18\x01 \x01(\tR\tcryptoKey\x127\n" +
-	"\x18grant_type_refresh_token\x18\x02 \x01(\bR\x15grantTypeRefreshToken\x12=\n" +
-	"\x1bdefault_logout_redirect_uri\x18\x03 \x01(\tR\x18defaultLogoutRedirectUri\x12$\n" +
-	"\x0elogin_base_url\x18\x04 \x01(\tR\floginBaseUrl\x1a\xa7\x02\n" +
+	"\bcompress\x18\x06 \x01(\bR\bcompress\x1a\xa7\x02\n" +
 	"\x05Audit\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12!\n" +
 	"\femitter_type\x18\x02 \x01(\tR\vemitterType\x12\x14\n" +
@@ -3087,7 +2922,7 @@ func file_servora_conf_v1_conf_proto_rawDescGZIP() []byte {
 	return file_servora_conf_v1_conf_proto_rawDescData
 }
 
-var file_servora_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_servora_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_servora_conf_v1_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),            // 0: servora.conf.v1.Bootstrap
 	(*TLSConfig)(nil),            // 1: servora.conf.v1.TLSConfig
@@ -3121,12 +2956,10 @@ var file_servora_conf_v1_conf_proto_goTypes = []any{
 	(*Data_Kafka_SASL)(nil),      // 29: servora.conf.v1.Data.Kafka.SASL
 	(*App_Jwt)(nil),              // 30: servora.conf.v1.App.Jwt
 	(*App_Log)(nil),              // 31: servora.conf.v1.App.Log
-	(*App_OpenFGA)(nil),          // 32: servora.conf.v1.App.OpenFGA
-	(*App_Oidc)(nil),             // 33: servora.conf.v1.App.Oidc
-	(*App_Audit)(nil),            // 34: servora.conf.v1.App.Audit
-	nil,                          // 35: servora.conf.v1.App.MetadataEntry
-	(*durationpb.Duration)(nil),  // 36: google.protobuf.Duration
-	(*structpb.Struct)(nil),      // 37: google.protobuf.Struct
+	(*App_Audit)(nil),            // 32: servora.conf.v1.App.Audit
+	nil,                          // 33: servora.conf.v1.App.MetadataEntry
+	(*durationpb.Duration)(nil),  // 34: google.protobuf.Duration
+	(*structpb.Struct)(nil),      // 35: google.protobuf.Struct
 }
 var file_servora_conf_v1_conf_proto_depIdxs = []int32{
 	5,  // 0: servora.conf.v1.Bootstrap.app:type_name -> servora.conf.v1.App
@@ -3138,7 +2971,7 @@ var file_servora_conf_v1_conf_proto_depIdxs = []int32{
 	13, // 6: servora.conf.v1.Bootstrap.trace:type_name -> servora.conf.v1.Trace
 	14, // 7: servora.conf.v1.Bootstrap.metrics:type_name -> servora.conf.v1.Metrics
 	15, // 8: servora.conf.v1.Bootstrap.mail:type_name -> servora.conf.v1.Mail
-	36, // 9: servora.conf.v1.CORS.max_age:type_name -> google.protobuf.Duration
+	34, // 9: servora.conf.v1.CORS.max_age:type_name -> google.protobuf.Duration
 	20, // 10: servora.conf.v1.Server.http:type_name -> servora.conf.v1.Server.HTTP
 	21, // 11: servora.conf.v1.Server.grpc:type_name -> servora.conf.v1.Server.GRPC
 	22, // 12: servora.conf.v1.Data.database:type_name -> servora.conf.v1.Data.Database
@@ -3148,59 +2981,57 @@ var file_servora_conf_v1_conf_proto_depIdxs = []int32{
 	26, // 16: servora.conf.v1.Data.clickhouse:type_name -> servora.conf.v1.Data.ClickHouse
 	30, // 17: servora.conf.v1.App.jwt:type_name -> servora.conf.v1.App.Jwt
 	31, // 18: servora.conf.v1.App.log:type_name -> servora.conf.v1.App.Log
-	35, // 19: servora.conf.v1.App.metadata:type_name -> servora.conf.v1.App.MetadataEntry
-	32, // 20: servora.conf.v1.App.openfga:type_name -> servora.conf.v1.App.OpenFGA
-	33, // 21: servora.conf.v1.App.oidc:type_name -> servora.conf.v1.App.Oidc
-	34, // 22: servora.conf.v1.App.audit:type_name -> servora.conf.v1.App.Audit
-	9,  // 23: servora.conf.v1.Registry.consul:type_name -> servora.conf.v1.ConsulConfig
-	10, // 24: servora.conf.v1.Registry.etcd:type_name -> servora.conf.v1.EtcdConfig
-	11, // 25: servora.conf.v1.Registry.nacos:type_name -> servora.conf.v1.NacosConfig
-	12, // 26: servora.conf.v1.Registry.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
-	9,  // 27: servora.conf.v1.Discovery.consul:type_name -> servora.conf.v1.ConsulConfig
-	10, // 28: servora.conf.v1.Discovery.etcd:type_name -> servora.conf.v1.EtcdConfig
-	11, // 29: servora.conf.v1.Discovery.nacos:type_name -> servora.conf.v1.NacosConfig
-	12, // 30: servora.conf.v1.Discovery.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
-	9,  // 31: servora.conf.v1.Config.consul:type_name -> servora.conf.v1.ConsulConfig
-	10, // 32: servora.conf.v1.Config.etcd:type_name -> servora.conf.v1.EtcdConfig
-	11, // 33: servora.conf.v1.Config.nacos:type_name -> servora.conf.v1.NacosConfig
-	36, // 34: servora.conf.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
-	36, // 35: servora.conf.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
-	36, // 36: servora.conf.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
-	16, // 37: servora.conf.v1.Mail.smtp:type_name -> servora.conf.v1.Smtp
-	17, // 38: servora.conf.v1.Mail.from:type_name -> servora.conf.v1.MailFrom
-	36, // 39: servora.conf.v1.Mail.verify_email_ttl:type_name -> google.protobuf.Duration
-	36, // 40: servora.conf.v1.Mail.reset_password_ttl:type_name -> google.protobuf.Duration
-	36, // 41: servora.conf.v1.Smtp.send_timeout:type_name -> google.protobuf.Duration
-	36, // 42: servora.conf.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
-	18, // 43: servora.conf.v1.Server.HTTP.listen:type_name -> servora.conf.v1.Server.Listen
-	1,  // 44: servora.conf.v1.Server.HTTP.tls:type_name -> servora.conf.v1.TLSConfig
-	2,  // 45: servora.conf.v1.Server.HTTP.cors:type_name -> servora.conf.v1.CORS
-	19, // 46: servora.conf.v1.Server.HTTP.registry:type_name -> servora.conf.v1.Server.Registry
-	18, // 47: servora.conf.v1.Server.GRPC.listen:type_name -> servora.conf.v1.Server.Listen
-	1,  // 48: servora.conf.v1.Server.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
-	19, // 49: servora.conf.v1.Server.GRPC.registry:type_name -> servora.conf.v1.Server.Registry
-	36, // 50: servora.conf.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
-	36, // 51: servora.conf.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	36, // 52: servora.conf.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	27, // 53: servora.conf.v1.Data.Client.services:type_name -> servora.conf.v1.Data.Client.Service
-	36, // 54: servora.conf.v1.Data.Kafka.retry_backoff:type_name -> google.protobuf.Duration
-	36, // 55: servora.conf.v1.Data.Kafka.dial_timeout:type_name -> google.protobuf.Duration
-	36, // 56: servora.conf.v1.Data.Kafka.read_timeout:type_name -> google.protobuf.Duration
-	36, // 57: servora.conf.v1.Data.Kafka.write_timeout:type_name -> google.protobuf.Duration
-	29, // 58: servora.conf.v1.Data.Kafka.sasl:type_name -> servora.conf.v1.Data.Kafka.SASL
-	36, // 59: servora.conf.v1.Data.ClickHouse.dial_timeout:type_name -> google.protobuf.Duration
-	36, // 60: servora.conf.v1.Data.ClickHouse.read_timeout:type_name -> google.protobuf.Duration
-	36, // 61: servora.conf.v1.Data.ClickHouse.conn_max_lifetime:type_name -> google.protobuf.Duration
-	28, // 62: servora.conf.v1.Data.Client.Service.endpoints:type_name -> servora.conf.v1.Data.Client.Endpoint
-	36, // 63: servora.conf.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
-	1,  // 64: servora.conf.v1.Data.Client.Endpoint.tls:type_name -> servora.conf.v1.TLSConfig
-	37, // 65: servora.conf.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
-	36, // 66: servora.conf.v1.App.Audit.consumer_flush_interval:type_name -> google.protobuf.Duration
-	67, // [67:67] is the sub-list for method output_type
-	67, // [67:67] is the sub-list for method input_type
-	67, // [67:67] is the sub-list for extension type_name
-	67, // [67:67] is the sub-list for extension extendee
-	0,  // [0:67] is the sub-list for field type_name
+	33, // 19: servora.conf.v1.App.metadata:type_name -> servora.conf.v1.App.MetadataEntry
+	32, // 20: servora.conf.v1.App.audit:type_name -> servora.conf.v1.App.Audit
+	9,  // 21: servora.conf.v1.Registry.consul:type_name -> servora.conf.v1.ConsulConfig
+	10, // 22: servora.conf.v1.Registry.etcd:type_name -> servora.conf.v1.EtcdConfig
+	11, // 23: servora.conf.v1.Registry.nacos:type_name -> servora.conf.v1.NacosConfig
+	12, // 24: servora.conf.v1.Registry.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
+	9,  // 25: servora.conf.v1.Discovery.consul:type_name -> servora.conf.v1.ConsulConfig
+	10, // 26: servora.conf.v1.Discovery.etcd:type_name -> servora.conf.v1.EtcdConfig
+	11, // 27: servora.conf.v1.Discovery.nacos:type_name -> servora.conf.v1.NacosConfig
+	12, // 28: servora.conf.v1.Discovery.kubernetes:type_name -> servora.conf.v1.KubernetesConfig
+	9,  // 29: servora.conf.v1.Config.consul:type_name -> servora.conf.v1.ConsulConfig
+	10, // 30: servora.conf.v1.Config.etcd:type_name -> servora.conf.v1.EtcdConfig
+	11, // 31: servora.conf.v1.Config.nacos:type_name -> servora.conf.v1.NacosConfig
+	34, // 32: servora.conf.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
+	34, // 33: servora.conf.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
+	34, // 34: servora.conf.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
+	16, // 35: servora.conf.v1.Mail.smtp:type_name -> servora.conf.v1.Smtp
+	17, // 36: servora.conf.v1.Mail.from:type_name -> servora.conf.v1.MailFrom
+	34, // 37: servora.conf.v1.Mail.verify_email_ttl:type_name -> google.protobuf.Duration
+	34, // 38: servora.conf.v1.Mail.reset_password_ttl:type_name -> google.protobuf.Duration
+	34, // 39: servora.conf.v1.Smtp.send_timeout:type_name -> google.protobuf.Duration
+	34, // 40: servora.conf.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
+	18, // 41: servora.conf.v1.Server.HTTP.listen:type_name -> servora.conf.v1.Server.Listen
+	1,  // 42: servora.conf.v1.Server.HTTP.tls:type_name -> servora.conf.v1.TLSConfig
+	2,  // 43: servora.conf.v1.Server.HTTP.cors:type_name -> servora.conf.v1.CORS
+	19, // 44: servora.conf.v1.Server.HTTP.registry:type_name -> servora.conf.v1.Server.Registry
+	18, // 45: servora.conf.v1.Server.GRPC.listen:type_name -> servora.conf.v1.Server.Listen
+	1,  // 46: servora.conf.v1.Server.GRPC.tls:type_name -> servora.conf.v1.TLSConfig
+	19, // 47: servora.conf.v1.Server.GRPC.registry:type_name -> servora.conf.v1.Server.Registry
+	34, // 48: servora.conf.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
+	34, // 49: servora.conf.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	34, // 50: servora.conf.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	27, // 51: servora.conf.v1.Data.Client.services:type_name -> servora.conf.v1.Data.Client.Service
+	34, // 52: servora.conf.v1.Data.Kafka.retry_backoff:type_name -> google.protobuf.Duration
+	34, // 53: servora.conf.v1.Data.Kafka.dial_timeout:type_name -> google.protobuf.Duration
+	34, // 54: servora.conf.v1.Data.Kafka.read_timeout:type_name -> google.protobuf.Duration
+	34, // 55: servora.conf.v1.Data.Kafka.write_timeout:type_name -> google.protobuf.Duration
+	29, // 56: servora.conf.v1.Data.Kafka.sasl:type_name -> servora.conf.v1.Data.Kafka.SASL
+	34, // 57: servora.conf.v1.Data.ClickHouse.dial_timeout:type_name -> google.protobuf.Duration
+	34, // 58: servora.conf.v1.Data.ClickHouse.read_timeout:type_name -> google.protobuf.Duration
+	34, // 59: servora.conf.v1.Data.ClickHouse.conn_max_lifetime:type_name -> google.protobuf.Duration
+	28, // 60: servora.conf.v1.Data.Client.Service.endpoints:type_name -> servora.conf.v1.Data.Client.Endpoint
+	34, // 61: servora.conf.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
+	1,  // 62: servora.conf.v1.Data.Client.Endpoint.tls:type_name -> servora.conf.v1.TLSConfig
+	35, // 63: servora.conf.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
+	34, // 64: servora.conf.v1.App.Audit.consumer_flush_interval:type_name -> google.protobuf.Duration
+	65, // [65:65] is the sub-list for method output_type
+	65, // [65:65] is the sub-list for method input_type
+	65, // [65:65] is the sub-list for extension type_name
+	65, // [65:65] is the sub-list for extension extendee
+	0,  // [0:65] is the sub-list for field type_name
 }
 
 func init() { file_servora_conf_v1_conf_proto_init() }
@@ -3231,7 +3062,7 @@ func file_servora_conf_v1_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_conf_v1_conf_proto_rawDesc), len(file_servora_conf_v1_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

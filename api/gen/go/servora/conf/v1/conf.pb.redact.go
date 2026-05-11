@@ -136,11 +136,7 @@ func (x *App) Redact() string {
 
 	// Safe field: Metadata
 
-	// Safe field: Openfga
-
 	// Safe field: ExternalUrl
-
-	// Safe field: Oidc
 
 	// Safe field: Audit
 	return x.String()
@@ -573,38 +569,6 @@ func (x *App_Log) Redact() string {
 	// Safe field: MaxAge
 
 	// Safe field: Compress
-	return x.String()
-}
-
-// Redact method implementation for App_OpenFGA
-func (x *App_OpenFGA) Redact() string {
-	if x == nil {
-		return ""
-	}
-
-	// Safe field: ApiUrl
-
-	// Safe field: StoreId
-
-	// Safe field: ModelId
-
-	// Safe field: ApiToken
-	return x.String()
-}
-
-// Redact method implementation for App_Oidc
-func (x *App_Oidc) Redact() string {
-	if x == nil {
-		return ""
-	}
-
-	// Safe field: CryptoKey
-
-	// Safe field: GrantTypeRefreshToken
-
-	// Safe field: DefaultLogoutRedirectUri
-
-	// Safe field: LoginBaseUrl
 	return x.String()
 }
 

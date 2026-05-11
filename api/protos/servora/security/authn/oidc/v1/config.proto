@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package servora.security.authn.oidc.v1;
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/security/authn/oidc/v1;oidcconfpb";
+
+// OIDC Provider 引擎配置（由 security/authn/oidc 子包消费）
+message Config {
+  string crypto_key = 1; // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
+  bool grant_type_refresh_token = 2; // 是否启用 refresh_token grant type
+  string default_logout_redirect_uri = 3; // 默认登出重定向 URI
+  string login_base_url = 4; // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
+}

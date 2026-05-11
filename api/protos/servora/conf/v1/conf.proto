@@ -187,18 +187,6 @@ message App {
     int32 max_age = 5; // 日志文件最大保留天数
     bool compress = 6; // 是否压缩日志文件
   }
-  message OpenFGA {
-    string api_url = 1; // OpenFGA HTTP API 地址
-    string store_id = 2; // Store ID
-    string model_id = 3; // Authorization Model ID
-    string api_token = 4; // API Token（可选，生产环境使用）
-  }
-  message Oidc {
-    string crypto_key = 1; // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
-    bool grant_type_refresh_token = 2; // 是否启用 refresh_token grant type
-    string default_logout_redirect_uri = 3; // 默认登出重定向 URI
-    string login_base_url = 4; // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
-  }
   // 审计配置（控制 pkg/audit 的 Emitter 类型与目标）
   message Audit {
     bool enabled = 1; // 是否启用审计事件采集
@@ -217,9 +205,7 @@ message App {
   Jwt jwt = 4; // JWT配置
   Log log = 5; // 日志配置
   map<string, string> metadata = 6; // 元数据
-  OpenFGA openfga = 7; // OpenFGA 配置
   string external_url = 8; // 应用外部访问基地址（如 https://iam.example.com），用于 OIDC Discovery、邮件链接等
-  Oidc oidc = 9; // OIDC Provider 配置
   Audit audit = 10; // 审计配置
 }
 

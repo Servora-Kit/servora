@@ -3,7 +3,7 @@ package openfga
 import (
 	"fmt"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	openfgaconfpb "github.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1"
 	"github.com/Servora-Kit/servora/obs/audit"
 	fgaclient "github.com/openfga/go-sdk/client"
 	fgacredentials "github.com/openfga/go-sdk/credentials"
@@ -38,7 +38,7 @@ type Client struct {
 }
 
 // NewClient creates a new OpenFGA client from the given configuration.
-func NewClient(cfg *conf.App_OpenFGA, opts ...ClientOption) (*Client, error) {
+func NewClient(cfg *openfgaconfpb.Config, opts ...ClientOption) (*Client, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("openfga: nil config")
 	}
