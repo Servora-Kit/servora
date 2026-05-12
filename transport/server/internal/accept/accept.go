@@ -1,4 +1,4 @@
-package lifecycle
+package accept
 
 import (
 	"errors"

@@ -8,8 +8,9 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
-	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
-	sharedtls "github.com/Servora-Kit/servora/transport/shared/tls"
+	endpointindex "github.com/Servora-Kit/servora/transport/client/internal/endpointindex"
+	normalize "github.com/Servora-Kit/servora/transport/internal/normalize"
+	tls "github.com/Servora-Kit/servora/transport/internal/tls"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/registry"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
@@ -92,7 +93,7 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*gogrpc.ClientConn, e
 
 // BuildClientConfigIndex 预构建 gRPC 客户端配置索引，避免热路径重复遍历配置列表。
 func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
-	return sharedconfig.BuildClientEndpointIndex(dataCfg, Type)
+	return endpointindex.BuildClientEndpointIndex(dataCfg, Type)
 }
 
 func createConnection(
@@ -145,7 +146,7 @@ func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf
 		return kgrpc.DialInsecure(ctx, opts...)
 	}
 
-	clientTLSCfg, err := sharedtls.BuildClientTLS(tlsCfg)
+	clientTLSCfg, err := tls.BuildClientTLS(tlsCfg)
 	if err != nil {
 		return nil, fmt.Errorf("build grpc TLS config: %w", err)
 	}
@@ -170,8 +171,8 @@ func resolveConnectionConfig(
 		return endpoint, timeout, tlsCfg, false
 	}
 
-	timeout = sharedconfig.NormalizeDuration(grpcCfg.GetTimeout(), timeout)
-	endpoint = sharedconfig.NormalizeEndpoint(grpcCfg.GetEndpoint(), endpoint)
+	timeout = normalize.NormalizeDuration(grpcCfg.GetTimeout(), timeout)
+	endpoint = normalize.NormalizeEndpoint(grpcCfg.GetEndpoint(), endpoint)
 	if configuredTLS := grpcCfg.GetTls(); configuredTLS != nil {
 		tlsCfg = configuredTLS
 	}

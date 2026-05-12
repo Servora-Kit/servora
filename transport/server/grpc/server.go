@@ -8,8 +8,8 @@ import (
 
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 
-	sharedendpoint "github.com/Servora-Kit/servora/transport/shared/endpoint"
-	sharedtls "github.com/Servora-Kit/servora/transport/shared/tls"
+	registry "github.com/Servora-Kit/servora/transport/server/internal/registry"
+	tls "github.com/Servora-Kit/servora/transport/internal/tls"
 )
 
 func NewServer(opts ...ServerOption) *kgrpc.Server {
@@ -39,7 +39,7 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		if timeout := listen.GetTimeout(); timeout != nil {
 			serverOpts = append(serverOpts, kgrpc.Timeout(timeout.AsDuration()))
 		}
-		if tlsCfg := sharedtls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
+		if tlsCfg := tls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
 			serverOpts = append(serverOpts, kgrpc.TLSConfig(tlsCfg))
 		}
 
@@ -58,7 +58,7 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		q := url.Values{}
 		q.Set("isSecure", strconv.FormatBool(secure))
 
-		endpoint, err := sharedendpoint.ResolveRegistryEndpoint(sharedendpoint.RegistryEndpointInput{
+		endpoint, err := registry.ResolveRegistryEndpoint(registry.RegistryEndpointInput{
 			Scheme:   scheme,
 			BindAddr: bindAddr,
 			Endpoint: registryEndpoint,

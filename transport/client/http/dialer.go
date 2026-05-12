@@ -9,7 +9,8 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
-	sharedconfig "github.com/Servora-Kit/servora/transport/shared/config"
+	endpointindex "github.com/Servora-Kit/servora/transport/client/internal/endpointindex"
+	normalize "github.com/Servora-Kit/servora/transport/internal/normalize"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/registry"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
@@ -122,7 +123,7 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*khttp.Client, error)
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。
 func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
-	return sharedconfig.BuildClientEndpointIndex(dataCfg, Type)
+	return endpointindex.BuildClientEndpointIndex(dataCfg, Type)
 }
 
 func resolveConnectionConfig(
@@ -139,8 +140,8 @@ func resolveConnectionConfig(
 		return endpoint, timeout, false
 	}
 
-	timeout = sharedconfig.NormalizeDuration(httpCfg.GetTimeout(), defaultTimeout)
-	endpoint = sharedconfig.NormalizeEndpoint(httpCfg.GetEndpoint(), defaultEndpoint)
+	timeout = normalize.NormalizeDuration(httpCfg.GetTimeout(), defaultTimeout)
+	endpoint = normalize.NormalizeEndpoint(httpCfg.GetEndpoint(), defaultEndpoint)
 
 	return endpoint, timeout, true
 }
