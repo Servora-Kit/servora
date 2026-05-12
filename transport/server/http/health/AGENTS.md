@@ -1,4 +1,4 @@
-# AGENTS.md - platform/health/
+# AGENTS.md - transport/server/http/health/
 
 <!-- Parent: ../AGENTS.md -->
 <!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
@@ -36,7 +36,7 @@
 ## 测试与使用
 
 ```bash
-go test ./platform/health/...
+go test ./transport/server/http/health/...
 ```
 
 ## 维护提示

@@ -1,17 +1,17 @@
 # AGENTS.md - servora 框架核心仓库
 
-<!-- Updated: 2026-05-11 -->
+<!-- Updated: 2026-05-12 -->
 
 ## 开发约束
 
 ### 提交规范
 
-格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议：`api`/`buf`/`cmd`/`transport`/`security`/`obs`/`platform`/`infra`/`repo`，可用"一级域/二级域"结构（如 `security/authn`、`obs/audit`）。
+格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议：`api`/`buf`/`cmd`/`transport`/`security`/`obs`/`core`/`infra`/`repo`，可用"一级域/二级域"结构（如 `security/authn`、`obs/audit`、`core/bootstrap`）。
 
 ### 版本管理与打 Tag 规则
 
 - **`make tag TAG=v0.x.y`** 仅打主模块 tag（`v0.x.y`）；proto/gen 有变更时额外执行 **`make tag.api TAG=v0.x.y`** 打 `api/gen/v0.x.y`
-- **何时打 tag**：修改了 `core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
+- **何时打 tag**：修改了 `core/`、`transport/`、`security/`、`obs/`、`infra/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
 - **何时不打 tag**：仅修改文档、Makefile、CI 配置、基础设施配置等
 - BSR label 与 Git tag 自动同步（`make buf-push` 自动检测 HEAD 上的 tag）
 - tag 一旦推送到 remote 就不要移动

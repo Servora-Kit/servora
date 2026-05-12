@@ -1,4 +1,4 @@
-# AGENTS.md - platform/swagger/
+# AGENTS.md - transport/server/http/swagger/
 
 <!-- Parent: ../AGENTS.md -->
 <!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
@@ -27,14 +27,14 @@
 
 ## 常见反模式
 
-- 在 `platform/swagger` 中加入 OpenAPI 生成逻辑，混淆挂载与生成职责
+- 在 `transport/server/http/swagger` 中加入 OpenAPI 生成逻辑，混淆挂载与生成职责
 - 多处手写 `/docs` 路由而绕过统一注册入口
 - 把共享 UI 模板改成某个服务专用页面，影响其他服务复用
 
 ## 测试与使用
 
 ```bash
-go test ./platform/swagger/...
+go test ./transport/server/http/swagger/...
 ```
 
 ## 维护提示

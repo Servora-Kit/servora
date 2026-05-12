@@ -1,4 +1,4 @@
-# AGENTS.md - platform/bootstrap/
+# AGENTS.md - core/bootstrap/
 
 <!-- Parent: ../AGENTS.md -->
 <!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
@@ -10,7 +10,7 @@
 ## 当前结构
 
 ```text
-platform/bootstrap/
+core/bootstrap/
 ├── bootstrap.go
 ├── bootstrap_test.go
 └── config/
@@ -38,7 +38,7 @@ platform/bootstrap/
 ## 测试与使用
 
 ```bash
-go test ./platform/bootstrap/...
+go test ./core/bootstrap/...
 ```
 
 ## 维护提示

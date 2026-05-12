@@ -8,7 +8,7 @@
 
 简体中文
 
-`servora` 是一个基于 Go Kratos 的微服务快速开发框架，采用 **Proto First** 开发方式，提供按域划分的框架能力（`core/`、`transport/`、`security/`、`obs/`、`platform/`、`infra/`）、自定义 protoc 插件与 CLI 工具（`cmd/`），以及框架级公共 Proto 定义（`api/protos/`）。
+`servora` 是一个基于 Go Kratos 的微服务快速开发框架，采用 **Proto First** 开发方式，提供按域划分的框架能力（`core/`、`transport/`、`security/`、`obs/`、`infra/`）、自定义 protoc 插件与 CLI 工具（`cmd/`），以及框架级公共 Proto 定义（`api/protos/`）。
 
 本仓库是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，不包含具体业务微服务。业务微服务请参考：
 
@@ -19,7 +19,7 @@
 ## 核心能力
 
 - **共享基础库**：认证、授权、审计、配置引导、消息代理、服务治理等开箱即用
-- **传输层简洁直接**：`transport/server` 和 `transport/client` 分别提供函数式选项构造，TLS/端点/配置共享到 `transport/shared`
+- **传输层简洁直接**：`transport/server` 和 `transport/client` 分别提供函数式选项构造，双向共享的工具（normalize / TLS builder）放 `transport/internal`，server/client 各自专属辅助在对应的 `internal/` 子树
 - **Proto First**：框架级公共 proto 定义，通过 [BSR](https://buf.build/servora/servora) 发布
 - **自定义 protoc 插件**：`protoc-gen-servora-authz`、`protoc-gen-servora-audit`、`protoc-gen-servora-mapper`
 - **CLI 工具**：`svr` 命令行工具（GORM GEN 代码生成、OpenFGA 初始化与 model 管理）
@@ -28,12 +28,7 @@
 - **全链路审计**：`obs/audit` 经 Kafka 投递审计事件
 - **服务治理**：注册发现、配置中心（支持重载）与基础遥测
 
-## v0.3.0 重点变更
 
-- **transport 架构简化**：移除 plugin/runtime/factory 中间层，server 与 client 均采用直接构造模式。
-- **Server 函数式选项**：内建 gRPC/HTTP 提供 `NewServer(opts...)`，通过 `WithConfig`/`WithLogger`/`WithMiddleware`/`WithServices` 等选项组装。
-- **Client Dialer 模式**：按协议分别实例化 `grpc.Dialer` / `http.Dialer`，调用 `Dial(ctx, target)` 获取连接。
-- **共享能力下沉**：TLS、端点与公共配置归拢到 `transport/shared`，减少重复实现。
 
 ## Transport 快速示例
 
@@ -123,15 +118,15 @@ if err != nil {
 │   ├── protoc-gen-servora-authz/    # AuthZ 规则生成插件
 │   ├── protoc-gen-servora-audit/    # Audit 注解生成插件
 │   └── protoc-gen-servora-mapper/   # 对象映射生成插件
-├── core/                            # 领域无关核心抽象（actor/mapper/pagination）
+├── core/                            # 框架横切协议 + 平台能力（bootstrap/config/registry/mapper/pagination）
 ├── transport/
-│   ├── client/                      # 客户端 Dialer（grpc/http/middleware）
-│   ├── server/                      # 服务端 NewServer（grpc/http/middleware）
-│   └── shared/                      # transport 共享能力（tls/endpoint/config）
+│   ├── client/                      # 客户端 Dialer（grpc/http/middleware）+ internal/endpointindex
+│   ├── server/                      # 服务端 NewServer（grpc/http/middleware）+ internal/{registry,accept}
+│   │                                # 其中 http/ 含 cors/swagger/health 子包
+│   └── internal/                    # 双向 shared：normalize/tls
 ├── security/                        # 认证授权与 JWT/JWKS
 ├── obs/                             # 审计、日志、遥测
-├── platform/                        # 启动、配置、健康、注册、swagger
-├── infra/                           # broker、db、k8s、openfga、redis
+├── infra/                           # broker、db、k8s、redis
 ├── buf.yaml                         # Buf v2 workspace（公共 proto 发布到 buf.build/servora/servora）
 ├── buf.go.gen.yaml                  # Go 代码生成模板（含 authz / mapper / audit 等自定义插件）
 ├── go.mod                           # Go module: github.com/Servora-Kit/servora
