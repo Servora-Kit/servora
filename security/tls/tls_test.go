@@ -1,4 +1,4 @@
-package tlsutil
+package tls
 
 import (
 	"crypto/ecdsa"

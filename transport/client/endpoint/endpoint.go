@@ -1,4 +1,4 @@
-package endpointindex
+package endpoint
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 )
 
-// BuildClientEndpointIndex 按协议类型构建 service -> endpoint 配置索引。
-func BuildClientEndpointIndex(dataCfg *conf.Data, protocol string) (map[string]*conf.Data_Client_Endpoint, error) {
+// IndexByProtocol 按协议类型构建 service -> endpoint 配置索引。
+func IndexByProtocol(dataCfg *conf.Data, protocol string) (map[string]*conf.Data_Client_Endpoint, error) {
 	if dataCfg == nil || dataCfg.Client == nil {
 		return nil, nil
 	}

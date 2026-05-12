@@ -23,7 +23,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/obs/logging"
-	"github.com/Servora-Kit/servora/security/tlsutil"
+	svrtls "github.com/Servora-Kit/servora/security/tls"
 )
 
 // NewConnOptional opens a ClickHouse connection from the Data config.
@@ -73,7 +73,7 @@ func NewConnOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) (driv
 	}
 
 	if chCfg.Tls {
-		tlsCfg, err := tlsutil.NewClientConfig(tlsutil.ClientConfigOptions{
+		tlsCfg, err := svrtls.NewClientConfig(svrtls.ClientConfigOptions{
 			InsecureSkipVerify: chCfg.TlsSkipVerify,
 		})
 		if err != nil {

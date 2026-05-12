@@ -8,8 +8,8 @@ import (
 
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 
-	registry "github.com/Servora-Kit/servora/transport/server/internal/registry"
-	tls "github.com/Servora-Kit/servora/transport/internal/tls"
+	svrtls "github.com/Servora-Kit/servora/security/tls"
+	"github.com/Servora-Kit/servora/transport/server/endpoint"
 )
 
 func NewServer(opts ...ServerOption) *kgrpc.Server {
@@ -39,7 +39,7 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		if timeout := listen.GetTimeout(); timeout != nil {
 			serverOpts = append(serverOpts, kgrpc.Timeout(timeout.AsDuration()))
 		}
-		if tlsCfg := tls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
+		if tlsCfg := svrtls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
 			serverOpts = append(serverOpts, kgrpc.TLSConfig(tlsCfg))
 		}
 
@@ -58,7 +58,7 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		q := url.Values{}
 		q.Set("isSecure", strconv.FormatBool(secure))
 
-		endpoint, err := registry.ResolveRegistryEndpoint(registry.RegistryEndpointInput{
+		ep, err := endpoint.ResolveRegistry(endpoint.RegistryInput{
 			Scheme:   scheme,
 			BindAddr: bindAddr,
 			Endpoint: registryEndpoint,
@@ -68,8 +68,8 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 		if err != nil {
 			panic(fmt.Sprintf("resolve grpc registry endpoint: %v", err))
 		}
-		if endpoint != nil {
-			serverOpts = append(serverOpts, kgrpc.Endpoint(endpoint))
+		if ep != nil {
+			serverOpts = append(serverOpts, kgrpc.Endpoint(ep))
 		}
 	}
 

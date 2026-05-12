@@ -1,13 +1,13 @@
-package tlsutil
+package tls
 
 import (
-	"crypto/tls"
+	stdtls "crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"os"
 )
 
-const defaultMinVersion = tls.VersionTLS12
+const defaultMinVersion = stdtls.VersionTLS12
 
 // ServerConfigOptions 描述服务端 TLS 配置来源。
 type ServerConfigOptions struct {
@@ -27,24 +27,24 @@ type ClientConfigOptions struct {
 }
 
 // NewServerConfig 构造服务端 TLS 配置。
-func NewServerConfig(opts ServerConfigOptions) (*tls.Config, error) {
+func NewServerConfig(opts ServerConfigOptions) (*stdtls.Config, error) {
 	if opts.CertPath == "" || opts.KeyPath == "" {
 		return nil, fmt.Errorf("tls cert_path and key_path are required")
 	}
 
-	cert, err := tls.LoadX509KeyPair(opts.CertPath, opts.KeyPath)
+	cert, err := stdtls.LoadX509KeyPair(opts.CertPath, opts.KeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("load x509 key pair: %w", err)
 	}
 
-	return &tls.Config{
-		Certificates: []tls.Certificate{cert},
+	return &stdtls.Config{
+		Certificates: []stdtls.Certificate{cert},
 		MinVersion:   normalizeMinVersion(opts.MinVersion),
 	}, nil
 }
 
 // MustServerConfig 构造服务端 TLS 配置，失败时 panic。
-func MustServerConfig(opts ServerConfigOptions) *tls.Config {
+func MustServerConfig(opts ServerConfigOptions) *stdtls.Config {
 	cfg, err := NewServerConfig(opts)
 	if err != nil {
 		panic(err)
@@ -53,12 +53,12 @@ func MustServerConfig(opts ServerConfigOptions) *tls.Config {
 }
 
 // NewClientConfig 构造客户端 TLS 配置。
-func NewClientConfig(opts ClientConfigOptions) (*tls.Config, error) {
+func NewClientConfig(opts ClientConfigOptions) (*stdtls.Config, error) {
 	if (opts.CertPath == "") != (opts.KeyPath == "") {
 		return nil, fmt.Errorf("tls cert_path and key_path must both be set for mTLS")
 	}
 
-	cfg := &tls.Config{
+	cfg := &stdtls.Config{
 		InsecureSkipVerify: opts.InsecureSkipVerify, //nolint:gosec
 		MinVersion:         normalizeMinVersion(opts.MinVersion),
 		ServerName:         opts.ServerName,
@@ -73,11 +73,11 @@ func NewClientConfig(opts ClientConfigOptions) (*tls.Config, error) {
 	}
 
 	if opts.CertPath != "" {
-		cert, err := tls.LoadX509KeyPair(opts.CertPath, opts.KeyPath)
+		cert, err := stdtls.LoadX509KeyPair(opts.CertPath, opts.KeyPath)
 		if err != nil {
 			return nil, fmt.Errorf("load x509 key pair: %w", err)
 		}
-		cfg.Certificates = []tls.Certificate{cert}
+		cfg.Certificates = []stdtls.Certificate{cert}
 	}
 
 	return cfg, nil

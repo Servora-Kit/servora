@@ -1,30 +1,28 @@
 # AGENTS.md - transport/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
+<!-- Generated: 2026-03-22 | Updated: 2026-05-12 -->
 
 ## 模块目的
 
-提供服务间 transport 工具箱，覆盖 client / server 装配、连接管理、TLS 与通用 middleware 支撑。
+提供服务间 transport 工具箱，覆盖 client / server 装配、连接管理与通用 middleware 支撑。TLS 配置构造归 `security/tls`。
 
 ## 当前结构
 
 ```text
 transport/
-├── client/
-├── runtime/
-├── shared/
-└── server/
+├── client/                   # Dialer（grpc/http/middleware）+ endpoint 索引
+└── server/                   # NewServer（grpc/http/middleware）+ endpoint/accept
+                              # http/ 含 cors/swagger/health 子包
 ```
 
 ## 当前实现事实
 
-- `client/` 目录承载 `contracts.go`、`factory.go`、`dial_value.go`、`grpc/`、`http/` 与客户端 middleware
-- `runtime/` 目录承载插件契约、registry、graph 及默认插件注册（`runtime/defaults`）
-- `shared/` 目录承载 tls/endpoint/config 等跨协议复用能力
-- `server/` 目录承载 `grpc/`、`http/`、`middleware/`、`plugin.go`、`server.go`、`tls.go`
+- `client/` 目录承载 `grpc/`、`http/`、`middleware/` 与 `endpoint/`（按 protocol 索引 service endpoint 配置）
+- `server/` 目录承载 `grpc/`、`http/`、`middleware/`、`endpoint/`（注册中心 endpoint URL 解析）、`accept/`（TCP accept 循环）
 - `server/middleware/whitelist.go` 的白名单语义是 **operation 白名单**，不是 IP 白名单
 - 本级目录表达的是 transport 共性能力，不直接承载认证/授权业务本身
+- TLS 配置构造（`BuildServerTLS` / `BuildClientTLS`）归 `security/tls`；transport 通过 alias `svrtls` 引用
 
 ## 边界约束
 

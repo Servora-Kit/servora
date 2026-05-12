@@ -7,7 +7,7 @@ import (
 	"time"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	"github.com/Servora-Kit/servora/security/tlsutil"
+	svrtls "github.com/Servora-Kit/servora/security/tls"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -129,7 +129,7 @@ func newTraceExporterOptions(runtimeCfg traceRuntimeConfig) ([]otlptracegrpc.Opt
 	}
 
 	if runtimeCfg.caPath != "" {
-		tlsCfg, err := tlsutil.NewClientConfig(tlsutil.ClientConfigOptions{
+		tlsCfg, err := svrtls.NewClientConfig(svrtls.ClientConfigOptions{
 			CAPath: runtimeCfg.caPath,
 		})
 		if err != nil {

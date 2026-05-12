@@ -1,12 +1,12 @@
-package registry
+package endpoint
 
 import (
 	"net/url"
 	"testing"
 )
 
-func TestResolveRegistryEndpoint_UsesExplicitEndpoint(t *testing.T) {
-	ep, err := ResolveRegistryEndpoint(RegistryEndpointInput{
+func TestResolveRegistry_UsesExplicitEndpoint(t *testing.T) {
+	ep, err := ResolveRegistry(RegistryInput{
 		Scheme:   "grpcs",
 		BindAddr: "0.0.0.0:8011",
 		Endpoint: "grpcs://svc.internal:8011?isSecure=true",
@@ -19,10 +19,10 @@ func TestResolveRegistryEndpoint_UsesExplicitEndpoint(t *testing.T) {
 	}
 }
 
-func TestResolveRegistryEndpoint_UsesHostAndBindPort(t *testing.T) {
+func TestResolveRegistry_UsesHostAndBindPort(t *testing.T) {
 	q := url.Values{}
 	q.Set("isSecure", "true")
-	ep, err := ResolveRegistryEndpoint(RegistryEndpointInput{
+	ep, err := ResolveRegistry(RegistryInput{
 		Scheme:   "grpcs",
 		BindAddr: "0.0.0.0:8011",
 		Host:     "192.168.1.10",
@@ -36,8 +36,8 @@ func TestResolveRegistryEndpoint_UsesHostAndBindPort(t *testing.T) {
 	}
 }
 
-func TestResolveRegistryEndpoint_NoHostReturnsNil(t *testing.T) {
-	ep, err := ResolveRegistryEndpoint(RegistryEndpointInput{
+func TestResolveRegistry_NoHostReturnsNil(t *testing.T) {
+	ep, err := ResolveRegistry(RegistryInput{
 		Scheme:   "grpc",
 		BindAddr: "0.0.0.0:8011",
 	})
@@ -49,8 +49,8 @@ func TestResolveRegistryEndpoint_NoHostReturnsNil(t *testing.T) {
 	}
 }
 
-func TestResolveRegistryEndpoint_NoQueryParams(t *testing.T) {
-	ep, err := ResolveRegistryEndpoint(RegistryEndpointInput{
+func TestResolveRegistry_NoQueryParams(t *testing.T) {
+	ep, err := ResolveRegistry(RegistryInput{
 		Scheme:   "ws",
 		BindAddr: "0.0.0.0:9000",
 		Host:     "10.0.0.1",

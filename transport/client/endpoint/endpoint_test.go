@@ -1,4 +1,4 @@
-package endpointindex
+package endpoint
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 )
 
-func TestBuildClientEndpointIndex_FilterByProtocol(t *testing.T) {
+func TestIndexByProtocol_FilterByProtocol(t *testing.T) {
 	dataCfg := &conf.Data{
 		Client: &conf.Data_Client{
 			Services: []*conf.Data_Client_Service{
@@ -29,7 +29,7 @@ func TestBuildClientEndpointIndex_FilterByProtocol(t *testing.T) {
 		},
 	}
 
-	index, err := BuildClientEndpointIndex(dataCfg, "grpc")
+	index, err := IndexByProtocol(dataCfg, "grpc")
 	if err != nil {
 		t.Fatalf("build endpoint index: %v", err)
 	}
@@ -44,19 +44,19 @@ func TestBuildClientEndpointIndex_FilterByProtocol(t *testing.T) {
 	}
 }
 
-func TestBuildClientEndpointIndex_EmptyInputs(t *testing.T) {
-	if got, err := BuildClientEndpointIndex(nil, "grpc"); err != nil || got != nil {
+func TestIndexByProtocol_EmptyInputs(t *testing.T) {
+	if got, err := IndexByProtocol(nil, "grpc"); err != nil || got != nil {
 		t.Fatalf("expected nil for nil data, got %#v", got)
 	}
-	if got, err := BuildClientEndpointIndex(&conf.Data{Client: &conf.Data_Client{}}, "grpc"); err != nil || got != nil {
+	if got, err := IndexByProtocol(&conf.Data{Client: &conf.Data_Client{}}, "grpc"); err != nil || got != nil {
 		t.Fatalf("expected nil for empty services, got %#v", got)
 	}
-	if _, err := BuildClientEndpointIndex(&conf.Data{Client: &conf.Data_Client{}}, " "); err == nil {
+	if _, err := IndexByProtocol(&conf.Data{Client: &conf.Data_Client{}}, " "); err == nil {
 		t.Fatal("expected error for blank protocol")
 	}
 }
 
-func TestBuildClientEndpointIndex_EmptyServiceName(t *testing.T) {
+func TestIndexByProtocol_EmptyServiceName(t *testing.T) {
 	dataCfg := &conf.Data{
 		Client: &conf.Data_Client{
 			Services: []*conf.Data_Client_Service{
@@ -65,12 +65,12 @@ func TestBuildClientEndpointIndex_EmptyServiceName(t *testing.T) {
 		},
 	}
 
-	if _, err := BuildClientEndpointIndex(dataCfg, "grpc"); err == nil {
+	if _, err := IndexByProtocol(dataCfg, "grpc"); err == nil {
 		t.Fatal("expected empty service name error")
 	}
 }
 
-func TestBuildClientEndpointIndex_DuplicateServiceProtocol(t *testing.T) {
+func TestIndexByProtocol_DuplicateServiceProtocol(t *testing.T) {
 	dataCfg := &conf.Data{
 		Client: &conf.Data_Client{
 			Services: []*conf.Data_Client_Service{
@@ -85,12 +85,12 @@ func TestBuildClientEndpointIndex_DuplicateServiceProtocol(t *testing.T) {
 		},
 	}
 
-	if _, err := BuildClientEndpointIndex(dataCfg, "grpc"); err == nil {
+	if _, err := IndexByProtocol(dataCfg, "grpc"); err == nil {
 		t.Fatal("expected duplicate endpoint error")
 	}
 }
 
-func TestBuildClientEndpointIndex_EmptyEndpointProtocol(t *testing.T) {
+func TestIndexByProtocol_EmptyEndpointProtocol(t *testing.T) {
 	dataCfg := &conf.Data{
 		Client: &conf.Data_Client{
 			Services: []*conf.Data_Client_Service{
@@ -104,7 +104,7 @@ func TestBuildClientEndpointIndex_EmptyEndpointProtocol(t *testing.T) {
 		},
 	}
 
-	if _, err := BuildClientEndpointIndex(dataCfg, "grpc"); err == nil {
+	if _, err := IndexByProtocol(dataCfg, "grpc"); err == nil {
 		t.Fatal("expected empty protocol error")
 	}
 }

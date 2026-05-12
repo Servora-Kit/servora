@@ -8,10 +8,10 @@ import (
 
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 
+	svrtls "github.com/Servora-Kit/servora/security/tls"
+	"github.com/Servora-Kit/servora/transport/server/endpoint"
 	"github.com/Servora-Kit/servora/transport/server/http/cors"
 	"github.com/Servora-Kit/servora/transport/server/http/swagger"
-	registry "github.com/Servora-Kit/servora/transport/server/internal/registry"
-	tls "github.com/Servora-Kit/servora/transport/internal/tls"
 )
 
 func NewServer(opts ...ServerOption) *khttp.Server {
@@ -41,7 +41,7 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 		if timeout := listen.GetTimeout(); timeout != nil {
 			serverOpts = append(serverOpts, khttp.Timeout(timeout.AsDuration()))
 		}
-		if tlsCfg := tls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
+		if tlsCfg := svrtls.MustBuildServerTLS(o.conf.GetTls()); tlsCfg != nil {
 			serverOpts = append(serverOpts, khttp.TLSConfig(tlsCfg))
 		}
 
@@ -60,7 +60,7 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 		q := url.Values{}
 		q.Set("isSecure", strconv.FormatBool(secure))
 
-		endpoint, err := registry.ResolveRegistryEndpoint(registry.RegistryEndpointInput{
+		ep, err := endpoint.ResolveRegistry(endpoint.RegistryInput{
 			Scheme:   scheme,
 			BindAddr: bindAddr,
 			Endpoint: registryEndpoint,
@@ -70,8 +70,8 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 		if err != nil {
 			panic(fmt.Sprintf("resolve http registry endpoint: %v", err))
 		}
-		if endpoint != nil {
-			serverOpts = append(serverOpts, khttp.Endpoint(endpoint))
+		if ep != nil {
+			serverOpts = append(serverOpts, khttp.Endpoint(ep))
 		}
 	}
 

@@ -8,9 +8,8 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
-	endpointindex "github.com/Servora-Kit/servora/transport/client/internal/endpointindex"
-	normalize "github.com/Servora-Kit/servora/transport/internal/normalize"
-	tls "github.com/Servora-Kit/servora/transport/internal/tls"
+	svrtls "github.com/Servora-Kit/servora/security/tls"
+	"github.com/Servora-Kit/servora/transport/client/endpoint"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/registry"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
@@ -93,7 +92,7 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*gogrpc.ClientConn, e
 
 // BuildClientConfigIndex 预构建 gRPC 客户端配置索引，避免热路径重复遍历配置列表。
 func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
-	return endpointindex.BuildClientEndpointIndex(dataCfg, Type)
+	return endpoint.IndexByProtocol(dataCfg, Type)
 }
 
 func createConnection(
@@ -110,20 +109,20 @@ func createConnection(
 	}
 
 	defaultEndpoint := fmt.Sprintf("discovery:///%s", serviceName)
-	endpoint, timeout, tlsCfg, configured := resolveConnectionConfig(serviceName, grpcConfigs, defaultEndpoint, 5*time.Second)
+	ep, timeout, tlsCfg, configured := resolveConnectionConfig(serviceName, grpcConfigs, defaultEndpoint, 5*time.Second)
 	tlsEnabled := tlsCfg != nil && tlsCfg.GetEnable()
 	if configured && setupLogger != nil {
-		setupLogger.Infof("using configured endpoint: service_name=%s endpoint=%s tls=%t", serviceName, endpoint, tlsEnabled)
+		setupLogger.Infof("using configured endpoint: service_name=%s endpoint=%s tls=%t", serviceName, ep, tlsEnabled)
 	}
 
 	opts := []kgrpc.ClientOption{
-		kgrpc.WithEndpoint(endpoint),
+		kgrpc.WithEndpoint(ep),
 		kgrpc.WithTimeout(timeout),
 	}
 	if len(mds) > 0 {
 		opts = append(opts, kgrpc.WithMiddleware(mds...))
 	}
-	if endpoint == defaultEndpoint && discovery != nil {
+	if ep == defaultEndpoint && discovery != nil {
 		opts = append(opts, kgrpc.WithDiscovery(discovery))
 	}
 
@@ -136,7 +135,7 @@ func createConnection(
 	}
 
 	if setupLogger != nil {
-		setupLogger.Infof("successfully created grpc client: service_name=%s endpoint=%s timeout=%s tls=%t", serviceName, endpoint, timeout.String(), tlsEnabled)
+		setupLogger.Infof("successfully created grpc client: service_name=%s endpoint=%s timeout=%s tls=%t", serviceName, ep, timeout.String(), tlsEnabled)
 	}
 	return conn, nil
 }
@@ -146,7 +145,7 @@ func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf
 		return kgrpc.DialInsecure(ctx, opts...)
 	}
 
-	clientTLSCfg, err := tls.BuildClientTLS(tlsCfg)
+	clientTLSCfg, err := svrtls.BuildClientTLS(tlsCfg)
 	if err != nil {
 		return nil, fmt.Errorf("build grpc TLS config: %w", err)
 	}
@@ -162,20 +161,26 @@ func resolveConnectionConfig(
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
 ) (string, time.Duration, *conf.TLSConfig, bool) {
-	endpoint := defaultEndpoint
+	ep := defaultEndpoint
 	timeout := defaultTimeout
 	var tlsCfg *conf.TLSConfig
 
 	grpcCfg, ok := grpcConfigs[serviceName]
 	if !ok || grpcCfg == nil {
-		return endpoint, timeout, tlsCfg, false
+		return ep, timeout, tlsCfg, false
 	}
 
-	timeout = normalize.NormalizeDuration(grpcCfg.GetTimeout(), timeout)
-	endpoint = normalize.NormalizeEndpoint(grpcCfg.GetEndpoint(), endpoint)
+	if d := grpcCfg.GetTimeout(); d != nil {
+		if v := d.AsDuration(); v > 0 {
+			timeout = v
+		}
+	}
+	if v := strings.TrimSpace(grpcCfg.GetEndpoint()); v != "" {
+		ep = v
+	}
 	if configuredTLS := grpcCfg.GetTls(); configuredTLS != nil {
 		tlsCfg = configuredTLS
 	}
 
-	return endpoint, timeout, tlsCfg, true
+	return ep, timeout, tlsCfg, true
 }

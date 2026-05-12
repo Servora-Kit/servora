@@ -19,7 +19,7 @@
 ## 核心能力
 
 - **共享基础库**：认证、授权、审计、配置引导、消息代理、服务治理等开箱即用
-- **传输层简洁直接**：`transport/server` 和 `transport/client` 分别提供函数式选项构造，双向共享的工具（normalize / TLS builder）放 `transport/internal`，server/client 各自专属辅助在对应的 `internal/` 子树
+- **传输层简洁直接**：`transport/server` 和 `transport/client` 分别提供函数式选项构造；外部 transport 实现可复用 `transport/server/{endpoint,accept}` 与 `transport/client/endpoint`；TLS 配置构造归 `security/tls`
 - **Proto First**：框架级公共 proto 定义，通过 [BSR](https://buf.build/servora/servora) 发布
 - **自定义 protoc 插件**：`protoc-gen-servora-authz`、`protoc-gen-servora-audit`、`protoc-gen-servora-mapper`
 - **CLI 工具**：`svr` 命令行工具（GORM GEN 代码生成、OpenFGA 初始化与 model 管理）
@@ -120,11 +120,10 @@ if err != nil {
 │   └── protoc-gen-servora-mapper/   # 对象映射生成插件
 ├── core/                            # 框架横切协议 + 平台能力（bootstrap/config/registry/mapper/pagination）
 ├── transport/
-│   ├── client/                      # 客户端 Dialer（grpc/http/middleware）+ internal/endpointindex
-│   ├── server/                      # 服务端 NewServer（grpc/http/middleware）+ internal/{registry,accept}
-│   │                                # 其中 http/ 含 cors/swagger/health 子包
-│   └── internal/                    # 双向 shared：normalize/tls
-├── security/                        # 认证授权与 JWT/JWKS
+│   ├── client/                      # 客户端 Dialer（grpc/http/middleware）+ endpoint 索引
+│   └── server/                      # 服务端 NewServer（grpc/http/middleware）+ endpoint/accept
+│                                    # 其中 http/ 含 cors/swagger/health 子包
+├── security/                        # 认证授权与 JWT/JWKS；tls/ 提供 TLS 配置构造
 ├── obs/                             # 审计、日志、遥测
 ├── infra/                           # broker、db、k8s、redis
 ├── buf.yaml                         # Buf v2 workspace（公共 proto 发布到 buf.build/servora/servora）

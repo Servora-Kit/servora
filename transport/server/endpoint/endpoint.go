@@ -1,4 +1,4 @@
-package registry
+package endpoint
 
 import (
 	"fmt"
@@ -7,7 +7,8 @@ import (
 	"strings"
 )
 
-type RegistryEndpointInput struct {
+// RegistryInput 描述向服务注册中心宣告端点所需的输入参数。
+type RegistryInput struct {
 	Scheme   string
 	BindAddr string
 	Endpoint string
@@ -15,12 +16,12 @@ type RegistryEndpointInput struct {
 	Query    url.Values
 }
 
-// ResolveRegistryEndpoint 组装服务注册端点 URL。
+// ResolveRegistry 组装服务注册端点 URL。
 //
 // scheme 由调用方负责完整提供（含 TLS 升级，如 "grpcs"、"https"）。
 // query 会合并到结果 URL 的查询参数中，传 nil 表示无额外参数。
 // host 为空时返回 nil（不向注册中心注册端点）。
-func ResolveRegistryEndpoint(in RegistryEndpointInput) (*url.URL, error) {
+func ResolveRegistry(in RegistryInput) (*url.URL, error) {
 	if raw := strings.TrimSpace(in.Endpoint); raw != "" {
 		ep, err := url.Parse(raw)
 		if err != nil {

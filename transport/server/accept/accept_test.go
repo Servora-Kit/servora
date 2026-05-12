@@ -18,11 +18,11 @@ func (r *logRecorder) Log(_ log.Level, _ ...any) error {
 	return nil
 }
 
-func TestAcceptLoop_ReturnsOnClosedWithoutLogging(t *testing.T) {
+func TestLoop_ReturnsOnClosedWithoutLogging(t *testing.T) {
 	rec := &logRecorder{}
 	calls := 0
 
-	AcceptLoop(AcceptLoopConfig{Logger: rec}, func() error {
+	Loop(LoopConfig{Logger: rec}, func() error {
 		calls++
 		if calls == 1 {
 			return nil
@@ -38,12 +38,12 @@ func TestAcceptLoop_ReturnsOnClosedWithoutLogging(t *testing.T) {
 	}
 }
 
-func TestAcceptLoop_LogsAndReturnsOnError(t *testing.T) {
+func TestLoop_LogsAndReturnsOnError(t *testing.T) {
 	rec := &logRecorder{}
 	acceptErr := errors.New("accept failed")
 	calls := 0
 
-	AcceptLoop(AcceptLoopConfig{
+	Loop(LoopConfig{
 		Logger:     rec,
 		RetryDelay: time.Millisecond,
 	}, func() error {

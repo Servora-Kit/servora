@@ -9,8 +9,7 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
-	endpointindex "github.com/Servora-Kit/servora/transport/client/internal/endpointindex"
-	normalize "github.com/Servora-Kit/servora/transport/internal/normalize"
+	"github.com/Servora-Kit/servora/transport/client/endpoint"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/registry"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
@@ -90,27 +89,27 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*khttp.Client, error)
 	}
 
 	defaultEndpoint := resolveDefaultHTTPEndpoint(target)
-	endpoint, timeout, configured := resolveConnectionConfig(target, d.httpClients, defaultEndpoint, defaultTimeout)
-	if endpoint == "" {
+	ep, timeout, configured := resolveConnectionConfig(target, d.httpClients, defaultEndpoint, defaultTimeout)
+	if ep == "" {
 		return nil, fmt.Errorf("http endpoint not configured for target: %s", target)
 	}
 	if d.logger != nil {
 		helper := logger.NewHelper(d.logger)
 		if configured {
-			helper.Infof("using configured http endpoint: target=%s endpoint=%s", target, endpoint)
+			helper.Infof("using configured http endpoint: target=%s endpoint=%s", target, ep)
 		} else {
-			helper.Infof("using direct http endpoint: target=%s endpoint=%s", target, endpoint)
+			helper.Infof("using direct http endpoint: target=%s endpoint=%s", target, ep)
 		}
 	}
 
 	opts := []khttp.ClientOption{
-		khttp.WithEndpoint(endpoint),
+		khttp.WithEndpoint(ep),
 		khttp.WithTimeout(timeout),
 	}
 	if len(d.middleware) > 0 {
 		opts = append(opts, khttp.WithMiddleware(d.middleware...))
 	}
-	if strings.HasPrefix(endpoint, "discovery:///") && d.discovery != nil {
+	if strings.HasPrefix(ep, "discovery:///") && d.discovery != nil {
 		opts = append(opts, khttp.WithDiscovery(d.discovery))
 	}
 
@@ -123,7 +122,7 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*khttp.Client, error)
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。
 func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
-	return endpointindex.BuildClientEndpointIndex(dataCfg, Type)
+	return endpoint.IndexByProtocol(dataCfg, Type)
 }
 
 func resolveConnectionConfig(
@@ -132,18 +131,24 @@ func resolveConnectionConfig(
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
 ) (string, time.Duration, bool) {
-	endpoint := defaultEndpoint
+	ep := defaultEndpoint
 	timeout := defaultTimeout
 
 	httpCfg, ok := httpConfigs[serviceName]
 	if !ok || httpCfg == nil {
-		return endpoint, timeout, false
+		return ep, timeout, false
 	}
 
-	timeout = normalize.NormalizeDuration(httpCfg.GetTimeout(), defaultTimeout)
-	endpoint = normalize.NormalizeEndpoint(httpCfg.GetEndpoint(), defaultEndpoint)
+	if d := httpCfg.GetTimeout(); d != nil {
+		if v := d.AsDuration(); v > 0 {
+			timeout = v
+		}
+	}
+	if v := strings.TrimSpace(httpCfg.GetEndpoint()); v != "" {
+		ep = v
+	}
 
-	return endpoint, timeout, true
+	return ep, timeout, true
 }
 
 func resolveDefaultHTTPEndpoint(target string) string {
