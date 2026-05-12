@@ -5,8 +5,8 @@ import (
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
-	"github.com/Servora-Kit/servora/platform/health"
-	"github.com/Servora-Kit/servora/platform/swagger"
+	"github.com/Servora-Kit/servora/transport/server/http/health"
+	"github.com/Servora-Kit/servora/transport/server/http/swagger"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"

@@ -8,8 +8,8 @@ import (
 
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 
-	"github.com/Servora-Kit/servora/platform/swagger"
-	svrmw "github.com/Servora-Kit/servora/transport/server/middleware"
+	"github.com/Servora-Kit/servora/transport/server/http/cors"
+	"github.com/Servora-Kit/servora/transport/server/http/swagger"
 	sharedendpoint "github.com/Servora-Kit/servora/transport/shared/endpoint"
 	sharedtls "github.com/Servora-Kit/servora/transport/shared/tls"
 )
@@ -75,8 +75,8 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 		}
 	}
 
-	if svrmw.IsEnabled(o.cors) {
-		serverOpts = append(serverOpts, khttp.Filter(svrmw.Middleware(o.cors)))
+	if cors.IsEnabled(o.cors) {
+		serverOpts = append(serverOpts, khttp.Filter(cors.Middleware(o.cors)))
 	}
 
 	srv := khttp.NewServer(serverOpts...)

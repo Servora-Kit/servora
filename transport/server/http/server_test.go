@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	"github.com/Servora-Kit/servora/platform/health"
+	"github.com/Servora-Kit/servora/transport/server/http/health"
 )
 
 func TestNewServer_NoOptions(t *testing.T) {
