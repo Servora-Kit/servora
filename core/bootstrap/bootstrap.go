@@ -9,7 +9,7 @@ import (
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
 	"github.com/Servora-Kit/servora/obs/telemetry"
-	"github.com/Servora-Kit/servora/platform/bootstrap/config"
+	"github.com/Servora-Kit/servora/core/bootstrap/config"
 
 	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"

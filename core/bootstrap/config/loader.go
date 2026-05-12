@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	governanceConfig "github.com/Servora-Kit/servora/platform/config"
+	governanceConfig "github.com/Servora-Kit/servora/core/config"
 
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
