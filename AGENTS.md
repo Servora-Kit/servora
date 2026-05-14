@@ -10,10 +10,10 @@
 
 ### 版本管理与打 Tag 规则
 
-- **`make tag TAG=v0.x.y`** 仅打主模块 tag（`v0.x.y`）；proto/gen 有变更时额外执行 **`make tag.api TAG=v0.x.y`** 打 `api/gen/v0.x.y`
+- **`git tag v0.x.y`** 打主模块 tag；proto/gen 有变更时额外执行 **`make tag.api TAG=v0.x.y`** 打 `api/gen/v0.x.y`（前缀防呆）
 - **何时打 tag**：修改了 `core/`、`transport/`、`security/`、`obs/`、`infra/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
 - **何时不打 tag**：仅修改文档、Makefile、CI 配置、基础设施配置等
-- BSR label 与 Git tag 自动同步（`make buf-push` 自动检测 HEAD 上的 tag）
+- BSR label 与 Git tag 自动同步（`make bsr.push` 自动检测 HEAD 上的 tag）
 - tag 一旦推送到 remote 就不要移动
 
 ## Proto 开发规范
@@ -46,12 +46,12 @@
 
 ### 新增 Proto 流程
 
-1. 在 `api/protos/servora/<namespace>/v1/` 下创建 → 2. `make lint.proto` → 3. `make gen` → 4. `go build ./...` → 5. 提交打 tag → 6. `make buf-push`
+1. 在 `api/protos/servora/<namespace>/v1/` 下创建 → 2. `make lint.proto` → 3. `make gen` → 4. `go build ./...` → 5. 提交打 tag → 6. `make bsr.push`
 
 ### BSR 发布
 
 - 模块名：`buf.build/servora/servora`
-- `make buf-push`：自动检测 HEAD Git tag 作为 BSR label
+- `make bsr.push`：自动检测 HEAD Git tag 作为 BSR label
 - 业务仓库通过 `deps: - buf.build/servora/servora` 引用
 
 ### 业务仓库 Proto
@@ -71,8 +71,8 @@ make ci.lint              # CI 对齐 lint（GOWORK=off + proto lint）
 make lint.proto           # Proto lint
 make test                 # 运行测试
 make tidy                 # go mod tidy + go work sync
-make tag TAG=v0.x.y       # 打主模块 tag；proto 有变更时再 make tag.api TAG=v0.x.y
-make buf-push             # 推送 proto 到 BSR
+git tag v0.x.y            # 打主模块 tag；proto 有变更时再 make tag.api TAG=v0.x.y
+make bsr.push             # 推送 proto 到 BSR
 make clean                # 清理生成代码
 ```
 

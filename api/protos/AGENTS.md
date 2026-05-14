@@ -29,7 +29,7 @@ api/protos/
 # 在项目根目录
 make gen            # 生成 Go 代码
 make lint.proto     # Buf lint
-make buf-push       # 推送到 BSR（自动使用 Git tag 作为 label）
+make bsr.push       # 推送到 BSR（自动使用 Git tag 作为 label）
 ```
 
 ## 维护提示
