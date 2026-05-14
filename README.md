@@ -224,4 +224,4 @@ go build ./...
 
 ## License
 
-MIT，详见 `LICENSE`。
+Apache License 2.0，详见 [`LICENSE`](./LICENSE)。本仓库依赖的第三方组件版权声明见 [`THIRD_PARTY_LICENSES`](./THIRD_PARTY_LICENSES)。
