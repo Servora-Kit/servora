@@ -1,227 +1,329 @@
 # Servora
 
+> 声明是一切的契约
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/Servora-Kit/servora.svg)](https://pkg.go.dev/github.com/Servora-Kit/servora)
 [![GitHub release](https://img.shields.io/github/v/release/Servora-Kit/servora)](https://github.com/Servora-Kit/servora/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Servora-Kit/servora)](https://goreportcard.com/report/github.com/Servora-Kit/servora)
 [![License](https://img.shields.io/github/license/Servora-Kit/servora)](./LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Servora-Kit/servora)
 
-简体中文
+**Servora** 是一个以 ProtoBuf 为契约、高性能、模块化的 Go 快速开发框架。无论您想构建一个单体应用还是微服务项目，Servora 都将是您的不二之选。
 
-`servora` 是一个基于 Go Kratos 的微服务快速开发框架，采用 **Proto First** 开发方式，提供按域划分的框架能力（`core/`、`transport/`、`security/`、`obs/`、`infra/`）、自定义 protoc 插件与 CLI 工具（`cmd/`），以及框架级公共 Proto 定义（`api/protos/`）。
+## 快速开始🏃‍♂️
 
-本仓库是 [Servora-Kit](https://github.com/Servora-Kit) 组织的**核心框架库**，不包含具体业务微服务。业务微服务请参考：
+跑一对 master + worker 微服务，看看 servora 起一个项目长什么样。前置要求：Go 1.26.1+、Docker。
 
-- [servora-example](https://github.com/Servora-Kit/servora-example) — 基础的双微服务示例
-- [servora-platform](https://github.com/Servora-Kit/servora-platform) — 平台级基础服务（审计等）
-- [servora-iam](https://github.com/Servora-Kit/servora-iam) — 简单的 IAM 服务 停止维护
+```bash
+git clone https://github.com/Servora-Kit/servora-example
+cd servora-example
+make compose.up.infra            # 拉起 Consul / Jaeger / OTel Collector
 
-## 核心能力
+# 终端 A：worker
+cd app/worker/service && make run
 
-- **共享基础库**：认证、授权、审计、配置引导、消息代理、服务治理等开箱即用
-- **传输层简洁直接**：`transport/server` 和 `transport/client` 分别提供函数式选项构造；外部 transport 实现可复用 `transport/server/{endpoint,accept}` 与 `transport/client/endpoint`；TLS 配置构造归 `security/tls`
-- **Proto First**：框架级公共 proto 定义，通过 [BSR](https://buf.build/servora/servora) 发布
-- **自定义 protoc 插件**：`protoc-gen-servora-authz`、`protoc-gen-servora-audit`、`protoc-gen-servora-mapper`
-- **CLI 工具**：`svr` 命令行工具（GORM GEN 代码生成、OpenFGA 初始化与 model 管理）
-- **可插拔认证**：`security/authn` 接口驱动，内置 JWT 引擎与 Keycloak claims 映射
-- **细粒度授权**：`security/authz` 接口驱动，内置 OpenFGA 引擎
-- **全链路审计**：`obs/audit` 经 Kafka 投递审计事件
-- **服务治理**：注册发现、配置中心（支持重载）与基础遥测
+# 终端 B：master
+cd app/master/service && make run
 
+# 验证：HTTP 200 + {"reply":"master relay -> worker says hello, hi"}
+curl 'http://127.0.0.1:8001/v1/hello?greeting=hi'
+```
 
+> `make run` 直接 `go run` 启动；如需 air 热重载请改用 `make dev`（需先 `make init` 安装 air）。
 
-## Transport 快速示例
+完整流程（全容器化 / 热重载 / 端口约定 / 目录结构）见 [servora-example](https://github.com/Servora-Kit/servora-example)。
 
-### 构建 gRPC/HTTP Server
+## 特性✨
+
+### 服务端
+
+Servora 提供了极为方便的 HTTP、gRPC 服务端的浅层封装。`WithConfig` 直接接收从配置文件 scan 出来的 `corev1.Server`，无需手工拼端口/网络/超时等参数。
 
 ```go
-grpcSrv := transportgrpc.NewServer(
-    transportgrpc.WithConfig(c.Grpc),
-    transportgrpc.WithLogger(logger),
-    transportgrpc.WithMiddleware(mw...),
-    transportgrpc.WithServices(
-        transportgrpc.Registrar(func(s *kgrpc.Server) {
-            workerpb.RegisterWorkerServiceServer(s, workerSvc)
+import (
+    corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+    svrgrpc "github.com/Servora-Kit/servora/transport/server/grpc"
+    logger "github.com/Servora-Kit/servora/obs/logging"
+    pb "myapp/api/gen/go/myapp/user/v1"
+    kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+)
+
+func NewGRPCServer(c *corev1.Server, l logger.Logger, svc *UserService) *kgrpc.Server {
+    return svrgrpc.NewServer(
+        svrgrpc.WithConfig(c),
+        svrgrpc.WithLogger(l),
+        svrgrpc.WithServices(func(s *kgrpc.Server) {
+            pb.RegisterUserServiceServer(s, svc)
         }),
-    ),
-)
-
-httpSrv := transporthttp.NewServer(
-    transporthttp.WithConfig(c.Http),
-    transporthttp.WithLogger(logger),
-    transporthttp.WithMiddleware(mw...),
-    transporthttp.WithServices(
-        transporthttp.Registrar(func(s *khttp.Server) {
-            masterpb.RegisterMasterServiceHTTPServer(s, masterSvc)
-        }),
-    ),
-)
+    )
+}
 ```
 
-### 构建 Client 并发起 gRPC 调用
+### 客户端
+
+Servora 提供了极为方便的 HTTP、gRPC 客户端的浅层封装。`Dialer` 内部接管服务发现、负载均衡、连接池与中间件链，业务侧仅需 `Dial(ctx, "service.name")`。
 
 ```go
-dialer := transportgrpc.NewDialer(
-    transportgrpc.WithData(dataCfg),
-    transportgrpc.WithDiscovery(discovery),
-    transportgrpc.WithLogger(logger),
-    transportgrpc.WithMiddleware(mw...),
+import (
+    "context"
+    corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+    clgrpc "github.com/Servora-Kit/servora/transport/client/grpc"
+    logger "github.com/Servora-Kit/servora/obs/logging"
+    pb "myapp/api/gen/go/myapp/user/v1"
+    "github.com/go-kratos/kratos/v2/registry"
 )
 
-conn, err := dialer.Dial(ctx, "worker.service")
-if err != nil {
-    return err
-}
-
-_, err = workerpb.NewWorkerServiceClient(conn).Hello(ctx, req)
-if err != nil {
+func CallUser(ctx context.Context, l logger.Logger, data *corev1.Data, d registry.Discovery) error {
+    dialer := clgrpc.NewDialer(
+        clgrpc.WithData(data),
+        clgrpc.WithDiscovery(d),
+        clgrpc.WithLogger(l),
+    )
+    conn, err := dialer.Dial(ctx, "user.service")
+    if err != nil {
+        return err
+    }
+    _, err = pb.NewUserServiceClient(conn).GetProfile(ctx, &pb.GetProfileRequest{})
     return err
 }
 ```
 
-### 构建 HTTP Client
+### Proto 契约化⚖️
+
+配置文件、proto type<->go type映射、认证、授权、审计...在 Servora 的世界观下，这一切都可以从一个 proto 文件定义。Servora 提供了很多 protoc 插件来代码生成，以实现尽量以 proto 文件来规定除了普通接口请求以外的所有行为。
+
+以下是 Servora 提供的 Proto 插件，多数采用代码生成 + 运行时解析配合的方式工作。
+
+#### 配置文件
+
+通过 `(section)` 标记 message 在外部 yaml/json 配置中的定位键，通过 `(field)` 声明字段的默认值与必填语义。Plugin 自动生成 `SectionKey()` / `ApplyDefaults()` / `ValidateConf()`，配合 `bootstrap.ScanSections` 在 kratos config 中定向 scan。
+
+```proto
+import "servora/conf/v1/annotations.proto";
+import "google/protobuf/duration.proto";
+
+message Broker {
+  option (servora.conf.v1.section) = { key: "broker", optional: true };
+
+  string addr    = 1 [(servora.conf.v1.field) = { required: true }];
+  string network = 2 [(servora.conf.v1.field) = { default: "tcp" }];
+  google.protobuf.Duration timeout = 3 [(servora.conf.v1.field) = { default: "5s" }];
+}
+```
+
+运行时只需一行 `ScanSections`，配置文件中缺失的 section 静默跳过，已存在的字段经 `ApplyDefaults` 填默认值后再 `ValidateConf` 校验必填项：
 
 ```go
-dialer := transporthttp.NewDialer(
-    transporthttp.WithData(dataCfg),
-    transporthttp.WithDiscovery(discovery),
-    transporthttp.WithLogger(logger),
+import (
+    "github.com/Servora-Kit/servora/core/bootstrap"
+    confv1 "myapp/api/gen/go/myapp/conf/v1"
 )
 
-client, err := dialer.Dial(ctx, "master.service")
-if err != nil {
+brokerCfg := &confv1.Broker{}
+if err := bootstrap.ScanSections(runtime, brokerCfg); err != nil {
     return err
+}
+// brokerCfg 已自动填充默认值，并已通过必填校验
+```
+
+#### proto 类型映射
+
+通过 `(mapper)` 声明 message 参与 ORM 实体与 proto 之间的双向映射，`(mapper_field)` 控制单字段的重命名、内置 converter、自定义钩子或忽略策略。Plugin 生成 `<Msg>MapperPlan()` 声明式映射计划，运行时配合 `core/mapper` 的泛型 `CopierMapper[P, E]` 完成双向转换。
+
+```proto
+import "servora/mapper/v1/mapper.proto";
+import "google/protobuf/timestamp.proto";
+
+message User {
+  option (servora.mapper.v1.mapper) = { enabled: true };
+
+  string id = 1 [(servora.mapper.v1.mapper_field) = {
+    converter: CONVERTER_KIND_UUID_STRING
+  }];
+  google.protobuf.Timestamp created_at = 2 [(servora.mapper.v1.mapper_field) = {
+    converter: CONVERTER_KIND_TIMESTAMP_TIME
+  }];
+  string internal_secret = 3 [(servora.mapper.v1.mapper_field) = { ignore: true }];
 }
 ```
 
-## 技术栈
+运行时构造一个泛型 mapper，把 plugin 生成的 plan 应用上去，之后即可在 proto 与实体之间双向转换：
 
-- 框架：Kratos v2
-- API：Protobuf + Buf v2
-- DI：Google Wire
-- ORM：Ent（主）+ GORM GEN（并行）
-- 认证：Keycloak（OIDC）/ JWT / JWKS
-- 授权：OpenFGA
-- 存储：PostgreSQL + Redis
-- 消息：Kafka（franz-go）
-- 观测：OTel Collector / Jaeger / Loki / Prometheus / Grafana
+```go
+import (
+    "github.com/Servora-Kit/servora/core/mapper"
+    pb "myapp/api/gen/go/myapp/user/v1"
+    "myapp/internal/ent"
+)
 
-## 项目结构
+m := mapper.NewCopierMapper[pb.User, ent.User]()
+_ = mapper.ApplyPlan(pb.UserMapperPlan(), m, mapper.DefaultPresets(), mapper.NewHookRegistry())
 
-```text
-.
-├── api/
-│   ├── gen/go/                      # Go 生成代码（由 proto 生成，勿手改）
-│   └── protos/                      # 框架级公共 proto（conf、pagination、authz 注解、audit 注解、mapper 注解）
-├── cmd/
-│   ├── svr/                         # CLI 工具（svr gen gorm / svr openfga）
-│   ├── protoc-gen-servora-authz/    # AuthZ 规则生成插件
-│   ├── protoc-gen-servora-audit/    # Audit 注解生成插件
-│   └── protoc-gen-servora-mapper/   # 对象映射生成插件
-├── core/                            # 框架横切协议 + 平台能力（bootstrap/config/registry/mapper/pagination）
-├── transport/
-│   ├── client/                      # 客户端 Dialer（grpc/http/middleware）+ endpoint 索引
-│   └── server/                      # 服务端 NewServer（grpc/http/middleware）+ endpoint/accept
-│                                    # 其中 http/ 含 cors/swagger/health 子包
-├── security/                        # 认证授权与 JWT/JWKS；tls/ 提供 TLS 配置构造
-├── obs/                             # 审计、日志、遥测
-├── infra/                           # broker、db、k8s、redis
-├── buf.yaml                         # Buf v2 workspace（公共 proto 发布到 buf.build/servora/servora）
-├── buf.go.gen.yaml                  # Go 代码生成模板（含 authz / mapper / audit 等自定义插件）
-├── go.mod                           # Go module: github.com/Servora-Kit/servora
-└── Makefile                         # 框架构建入口
+proto, _ := m.ToProto(entity)
+entity2, _ := m.ToEntity(proto)
 ```
 
-## 安装与使用
+#### 认证
 
-### 作为 Go 依赖
+通过 `service_default` 声明服务级默认认证策略，方法级 `rule` 可整段覆盖。`schemes` 接受 jwt / apikey / mtls / aksk 等任意字符串，支持业务自定义引擎。Plugin 生成 `AuthnRules` 表，由 `authn.Server` 中间件运行时分发。
 
-```bash
-go get github.com/Servora-Kit/servora@latest
+```proto
+import "servora/authn/v1/annotations.proto";
+
+service UserService {
+  option (servora.authn.v1.service_default) = {
+    mode: MODE_REQUIRED
+    schemes: ["jwt"]
+  };
+
+  // 继承 service_default：要求 jwt 通过
+  rpc GetProfile(GetProfileRequest) returns (User);
+
+  // 方法级覆盖：完全公开
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (servora.authn.v1.rule) = { mode: MODE_PUBLIC };
+  }
+}
 ```
 
-### 安装 CLI 工具
+Plugin 生成 `AuthnRules()` 方法表，业务侧装一次中间件即可——`Multi + Named` 注册多种认证引擎，规则表由 `WithRulesFuncs` 注入：
 
-```bash
-go install github.com/Servora-Kit/servora/cmd/svr@latest
+```go
+import (
+    "github.com/Servora-Kit/servora/security/authn"
+    authjwt "github.com/Servora-Kit/servora/security/authn/jwt"
+    "github.com/Servora-Kit/servora/security/authn/apikey"
+    pb "myapp/api/gen/go/myapp/user/v1"
+)
+
+mw := authn.Server(
+    authn.Multi(
+        authn.Named(authjwt.Scheme, authjwt.NewAuthenticator(authjwt.WithVerifier(verifier))),
+        authn.Named(apikey.Scheme, apikey.NewAuthenticator(apikey.WithStore(keyStore))),
+    ),
+    authn.WithRulesFuncs(pb.AuthnRules),
+)
 ```
 
-### 安装自定义 protoc 插件
+#### 授权
 
-```bash
-go install github.com/Servora-Kit/servora/cmd/protoc-gen-servora-authz@latest
-go install github.com/Servora-Kit/servora/cmd/protoc-gen-servora-audit@latest
-go install github.com/Servora-Kit/servora/cmd/protoc-gen-servora-mapper@latest
+跟认证同构：`service_default` 声明服务级默认授权策略，方法级 `rule` 可整段覆盖。授权检查由 `action` × `resource_type` × `resource_id_field`（从请求消息中提取资源 ID）三元组定义。默认接入 OpenFGA，可替换为任意实现 `Authorizer` 接口的后端。
+
+```proto
+import "servora/authz/v1/authz.proto";
+
+service VideoService {
+  option (servora.authz.v1.service_default) = {
+    mode: AUTHZ_MODE_CHECK
+    action: "can_read"
+    resource_type: "video"
+    resource_id_field: "id"
+  };
+
+  // 继承 service_default：检查 can_read on video[req.id]
+  rpc GetVideo(GetVideoRequest) returns (Video);
+
+  // 方法级覆盖：换成 can_delete
+  rpc DeleteVideo(DeleteVideoRequest) returns (DeleteVideoResponse) {
+    option (servora.authz.v1.rule) = {
+      mode: AUTHZ_MODE_CHECK
+      action: "can_delete"
+      resource_type: "video"
+      resource_id_field: "id"
+    };
+  }
+
+  // 方法级覆盖：完全跳过授权
+  rpc ListPublicVideos(ListPublicVideosRequest) returns (ListPublicVideosResponse) {
+    option (servora.authz.v1.rule) = { mode: AUTHZ_MODE_NONE };
+  }
+}
 ```
 
-### 引用公共 Proto（BSR）
+Plugin 生成 `AuthzRules()` 规则表，业务侧把 `Engine` 实现（OpenFGA / 自研后端）连同规则表交给 `authz.Server` 即可：
 
-在业务仓库的 `buf.yaml` 中添加依赖：
+```go
+import (
+    "github.com/Servora-Kit/servora/security/authz"
+    "github.com/Servora-Kit/servora/security/authz/openfga"
+    pb "myapp/api/gen/go/myapp/video/v1"
+)
 
-```yaml
-deps:
-  - buf.build/servora/servora
+engine := openfga.NewEngine(openfga.WithStoreID("..."))
+mw := authz.Server(engine, authz.WithRulesFuncs(pb.AuthzRules))
 ```
 
-## 本地开发
+#### 审计
 
-### 前置要求
+通过 `audit_rule` 在方法上声明审计事件，事件以 [CloudEvents](https://cloudevents.io/) 格式投递（默认走 Kafka）。`extensions` 支持声明式地从请求/响应中提取任意 CloudEvents 扩展属性。
 
-- Go 1.26.1+
-- Make
-- Buf CLI
+```proto
+import "servora/audit/v1/annotations.proto";
 
-### 初始化开发环境
-
-```bash
-make init    # 安装 protoc 插件与 CLI 工具
-make gen     # 生成 proto Go 代码
+service ResourceService {
+  rpc CreateResource(CreateResourceRequest) returns (Resource) {
+    option (servora.audit.v1.audit_rule) = {
+      mode: AUDIT_MODE_ENABLED
+      event_type: "myapp.resource.created"
+      severity: "info"
+      target_id_field: "resp.id"
+      extensions: [
+        { name: "mutation"     literal: { ce_string: "CREATE" } },
+        { name: "resourcetype" literal: { ce_string: "resource" } }
+      ]
+    };
+  }
+}
 ```
 
-### 常用命令
+Plugin 生成 `AuditRules()` 编译后规则表（含 extension 提取闭包），业务侧把 `Auditor` 实现（默认 Kafka）跟规则表一起挂到 middleware：
 
-```bash
-make init          # 安装工具
-make gen           # 生成所有代码（api）
-make api           # 仅生成 proto Go 代码
-make lint          # Go lint
-make ci.lint       # CI 对齐 lint（GOWORK=off + proto lint）
-make lint.proto    # Proto lint
-make test          # 运行测试
-make tidy          # go mod tidy + go work sync
-make tag TAG=v0.x.y      # 自动打双 tag（v0.x.y + api/gen/v0.x.y）
-make buf-push      # 推送 proto 到 BSR（自动使用 Git tag 作为 label）
-make clean         # 清理生成代码
+```go
+import (
+    "github.com/Servora-Kit/servora/obs/audit"
+    pb "myapp/api/gen/go/myapp/resource/v1"
+)
+
+mw := audit.Middleware(auditor,
+    audit.WithRulesFuncs(pb.AuditRules),
+)
 ```
 
-### 多仓库联合开发
+### 服务治理
 
-框架与业务微服务采用独立仓库，本地开发时通过顶层 `go.work` 联合：
+Servora 复用 Kratos 的 `registry.Registrar` / `registry.Discovery` 接口，并在 `core/registry/` 与 `core/config/` 下内置了主流后端，可在 yaml 中按 key 切换：
 
-```bash
-cd /path/to/servora-kit
-# go.work 文件已配置 use 和 replace 指令
-go build ./...
-```
+| 能力 | 内置后端 |
+|---|---|
+| 服务注册与发现 | Consul / Etcd / Nacos / Kubernetes |
+| 配置中心 | Consul / Etcd / Nacos |
 
-## 质量约束
+配合 `bootstrap.ScanSections`，远端配置中心变更后可触发业务 message 自动重 scan + 校验 + 回调，实现**动态重载**。
 
-- 不要手动编辑生成代码：`api/gen/go/`
-- 修改 proto 后执行 `make gen`
-- 提交前通过 `make ci.lint`（避免本地 `go.work` 与 CI 环境不一致）
-- 推送/发版前建议额外执行 `GOWORK=off go test ./...`
+### 可观测性🔭
 
-## Star History
+Servora 默认接入 [OpenTelemetry](https://opentelemetry.io/) SDK，开箱即用：
+
+- **Metrics** — `obs/telemetry.NewMetrics` 通过 [Prometheus](https://prometheus.io/) exporter 暴露 `/metrics` endpoint；业务方拿到的 `*Metrics` 实例可直接 emit 自定义指标
+- **Tracing** — `obs/telemetry.InitTracerProvider` 通过 OTLP gRPC exporter 推送到 [OTel Collector](https://opentelemetry.io/docs/collector/)，再由 Collector 转发到 [Jaeger](https://www.jaegertracing.io/) / Tempo 等任意后端
+- **Logging** — `obs/logging` 提供结构化日志接口，内置 GORM 适配
+- **Audit** — 详见上文「Proto 契约化 → 审计」段，事件以 [CloudEvents](https://cloudevents.io/) 格式投递
+
+本地起一套 Prometheus + Jaeger UI + Grafana 即可看到全链路指标与 trace（参考 [servora-example](https://github.com/Servora-Kit/servora-example) 的 compose 配置）。
+
+## 星的轨迹⭐
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Servora-Kit/servora&type=Date)](https://star-history.com/#Servora-Kit/servora&Date)
 
-## Acknowledgements
+## 鸣谢🙏
 
-- Thanks to all users for suggestions and feedback.
-- Thanks to all contributors and supporters in the open-source community.
+- 特别感谢 [go-kratos](https://github.com/go-kratos/kratos)，为 servora 提供了核心能力的支撑。
+- 特别感谢 [go-wind-admin](https://github.com/tx7do/go-wind-admin)，为 servora 的组织架构提供了灵感。
+- 感谢所有用户的建议和反馈。  
+- 感谢开源社区的所有贡献者和支持者。
 
 [![Contributors](https://contrib.rocks/image?repo=Servora-Kit/servora)](https://github.com/Servora-Kit/servora/graphs/contributors)
 
-## License
+## 许可证🔐
 
 Apache License 2.0，详见 [`LICENSE`](./LICENSE)。本仓库依赖的第三方组件版权声明见 [`THIRD_PARTY_LICENSES`](./THIRD_PARTY_LICENSES)。
