@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package servora.extra.jwt.v1;
+
+import "servora/conf/v1/annotations.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/jwt/v1;jwtv1";
+
+// =============================================================================
+// JWT 配置（jwt section，IAM 兼容保留）
+// RS256 非对称签名；签发端配置 private_key_path 或 private_key_pem（path 优先）。
+// =============================================================================
+
+message Jwt {
+  option (servora.conf.v1.section) = { key: "jwt", optional: true };
+
+  string private_key_path = 1;
+  string private_key_pem = 2;
+  int32 access_expire = 3;
+  int32 refresh_expire = 4;
+  string issuer = 5;
+  string audience = 6;
+}

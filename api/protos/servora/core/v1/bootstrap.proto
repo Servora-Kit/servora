@@ -1,0 +1,204 @@
+syntax = "proto3";
+
+package servora.core.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "servora/conf/v1/annotations.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1;corev1";
+
+// =============================================================================
+// Bootstrap 启动必读配置
+// 缺失任一非可选字段时 framework 不应启动。
+// 辅助配置（broker / audit / cors / mail / jwt）已迁出 extra/<域>/v1/，
+// 业务通过 bootstrap.ScanSections 按需加载。
+// =============================================================================
+
+message Bootstrap {
+  App app = 1;
+  Server server = 2;
+  Data data = 3;
+  Registry registry = 4;
+  Discovery discovery = 5;
+  Config config = 6;
+  Trace trace = 7;
+  Metrics metrics = 8;
+}
+
+// 可复用的 TLS 配置
+message TLSConfig {
+  bool enable = 1;
+  string cert_path = 2;
+  string key_path = 3;
+  string ca_path = 4;
+}
+
+// 通信服务端配置
+message Server {
+  // 监听配置（面向 net.Listen 参数）
+  message Listen {
+    string network = 1 [(servora.conf.v1.field) = { default: "tcp" }];
+    string addr = 2 [(servora.conf.v1.field) = { required: true }];
+    google.protobuf.Duration timeout = 3;
+  }
+
+  // 服务注册端点覆盖（用于注册中心对外公布地址）
+  message Registry {
+    string endpoint = 1;
+    string host = 2;
+  }
+
+  message HTTP {
+    Listen listen = 1;
+    TLSConfig tls = 2;
+    Registry registry = 4;
+  }
+
+  message GRPC {
+    Listen listen = 1;
+    TLSConfig tls = 2;
+    Registry registry = 3;
+  }
+
+  HTTP http = 1;
+  GRPC grpc = 2;
+}
+
+// 数据源配置（仅保留 database / redis / client 三类通用数据源）
+message Data {
+  message Database {
+    string driver = 1;
+    string source = 2;
+  }
+
+  message Redis {
+    string network = 1;
+    string addr = 2;
+    string user_name = 3;
+    string password = 4;
+    int32 db = 5;
+    google.protobuf.Duration dial_timeout = 6;
+    google.protobuf.Duration read_timeout = 7;
+    google.protobuf.Duration write_timeout = 8;
+  }
+
+  message Client {
+    message Service {
+      string name = 1;
+      repeated Endpoint endpoints = 2;
+    }
+    message Endpoint {
+      string protocol = 1;
+      string endpoint = 2;
+      google.protobuf.Duration timeout = 3;
+      TLSConfig tls = 4;
+      google.protobuf.Struct options = 5;
+    }
+    repeated Service services = 1;
+  }
+
+  Database database = 1;
+  Redis redis = 2;
+  Client client = 3;
+}
+
+// 应用基础配置（剥离 jwt / audit / mail，由 extra/<域>/v1 持有）
+message App {
+  message Log {
+    int32 level = 1;
+    string filename = 2;
+    int32 max_size = 3;
+    int32 max_backups = 4;
+    int32 max_age = 5;
+    bool compress = 6;
+  }
+
+  string env = 1;
+  string name = 2;
+  string version = 3;
+  Log log = 5;
+  map<string, string> metadata = 6;
+  string external_url = 8;
+}
+
+// 注册中心配置
+message Registry {
+  oneof registry {
+    ConsulConfig consul = 1;
+    EtcdConfig etcd = 2;
+    NacosConfig nacos = 3;
+    KubernetesConfig kubernetes = 4;
+  }
+}
+
+// 服务发现配置
+message Discovery {
+  oneof discovery {
+    ConsulConfig consul = 1;
+    EtcdConfig etcd = 2;
+    NacosConfig nacos = 3;
+    KubernetesConfig kubernetes = 4;
+  }
+}
+
+// 配置中心配置
+message Config {
+  oneof config {
+    ConsulConfig consul = 1;
+    EtcdConfig etcd = 2;
+    NacosConfig nacos = 3;
+  }
+}
+
+// 通用 Consul 配置
+message ConsulConfig {
+  string addr = 1;
+  string scheme = 2;
+  string token = 3;
+  string datacenter = 4;
+  google.protobuf.Duration timeout = 5;
+  repeated string tags = 6;
+  string key = 7;
+}
+
+// 通用 Etcd 配置
+message EtcdConfig {
+  repeated string endpoints = 1;
+  string username = 2;
+  string password = 3;
+  google.protobuf.Duration timeout = 4;
+  string key = 5;
+  string namespace = 6;
+}
+
+// 通用 Nacos 配置
+message NacosConfig {
+  string addr = 1;
+  uint64 port = 2;
+  string namespace = 3;
+  string group = 4;
+  string username = 5;
+  string password = 6;
+  google.protobuf.Duration timeout = 7;
+  string data_id = 8;
+}
+
+// 通用 Kubernetes 配置
+message KubernetesConfig {
+  bool enable = 1;
+}
+
+// 链路追踪配置
+message Trace {
+  string endpoint = 1;
+  bool insecure = 2;
+  double sampling_ratio = 3;
+  string ca_path = 4;
+}
+
+// Metrics 配置
+message Metrics {
+  bool enable = 1;
+  string meter_name = 2;
+}

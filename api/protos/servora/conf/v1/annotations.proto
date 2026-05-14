@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package servora.conf.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1;conf";
+
+// =============================================================================
+// 配置 schema 注解扩展
+// 用法：在配置 message / field 上标注「section 定位」与「默认值 / 必填」语义，
+// 供 protoc-gen-servora-conf 消费，生成 SectionKey / ApplyDefaults / Validate。
+// =============================================================================
+
+// SectionRule 声明一个配置 message 在外部 yaml / json 配置中的定位键。
+// 应用方通过 bootstrap.ScanSections 按该 key 在 kratos config 中定向 scan。
+message SectionRule {
+  // 配置文件中的定位键（支持 dotted path，如 "audit" 或 "infra.broker"）。
+  // 不应留空。
+  string key = 1;
+
+  // 是否允许该 section 在配置中缺失而不报错。
+  // optional=true：缺失静默跳过 scan，但 message 仍会经 ApplyDefaults 填默认值；
+  // optional=false（默认）：缺失视为配置错误。
+  bool optional = 2;
+}
+
+// FieldRule 声明一个配置字段的默认值与必填语义。
+// default 与 required 互斥使用：required=true 表示用户必须显式提供（零值不接受），
+// default 表示用户未提供时填入字面量。
+message FieldRule {
+  // 字段默认值的字面量表达。
+  // - string 字段：直接字面量（如 "tcp"）；
+  // - 数字 / bool 字段：可解析为对应类型的字符串（如 "8080" / "true"）；
+  // - google.protobuf.Duration：Go duration 字符串（如 "24h" / "5s"）；
+  // - repeated 标量：逗号分隔（如 "GET,POST,OPTIONS"）。
+  string default = 1;
+
+  // 是否必填。若 true，由 plugin 生成 Validate() 在零值时返回 error。
+  bool required = 2;
+}
+
+// section 是 message 级别的扩展选项。
+// 使用示例:
+//   message Broker {
+//     option (servora.conf.v1.section) = { key: "broker", optional: true };
+//     // ...
+//   }
+extend google.protobuf.MessageOptions {
+  SectionRule section = 50400;
+}
+
+// field 是字段级别的扩展选项。
+// 使用示例:
+//   string addr = 1 [(servora.conf.v1.field) = { required: true }];
+//   string network = 2 [(servora.conf.v1.field) = { default: "tcp" }];
+extend google.protobuf.FieldOptions {
+  FieldRule field = 50401;
+}

@@ -75,6 +75,7 @@ plugin:
 	@go install ./cmd/protoc-gen-servora-audit
 	@go install ./cmd/protoc-gen-servora-mapper
 	@go install ./cmd/protoc-gen-servora-authn
+	@go install ./cmd/protoc-gen-servora-conf
 	@echo "$(GREEN)✓ Protoc plugins installed$(RESET)"
 
 cli:

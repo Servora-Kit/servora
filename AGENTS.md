@@ -37,8 +37,10 @@
 | `servora.authz.v1.service_default`（ServiceOptions） | 50201 | `protoc-gen-servora-authz` |
 | `servora.authn.v1.rule`（MethodOptions） | 50300 | `protoc-gen-servora-authn` |
 | `servora.authn.v1.service_default`（ServiceOptions） | 50301 | `protoc-gen-servora-authn` |
+| `servora.conf.v1.section`（MessageOptions） | 50400 | `protoc-gen-servora-conf` |
+| `servora.conf.v1.field`（FieldOptions） | 50401 | `protoc-gen-servora-conf` |
 
-号段约定：每命名空间 `5xx00` 起步，`+0` 给 method 级、`+1` 给 service 级默认；新增命名空间往后递推 `5xx00`。
+号段约定：每命名空间 `5xx00` 起步，`+0` 给 method 级 / message 级，`+1` 给 service 级默认 / field 级；新增命名空间往后递推 `5xx00`。
 
 服务级默认（`service_default`）与方法级注解的合并语义统一为：方法级显式字段覆盖服务级默认；未显式设置的字段继承服务级默认；零值与未设置在 proto3 标量字段下不可区分，因此应优先使用 enum / message 包装类型表达"未设置"。详细规则见各 plugin 文档与 `cmd/protoc-gen-servora-{audit,authz,authn}/` 测试套件。
 
