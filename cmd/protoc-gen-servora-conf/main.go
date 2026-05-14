@@ -5,7 +5,10 @@
 //   - SectionKey() string         // present when message has (section) annotation
 //   - SectionOptional() bool      // present when section { optional: true }
 //   - ApplyDefaults()             // present when any field has (field) { default: ... }
-//   - Validate() error            // present when any field has (field) { required: true }
+//   - ValidateConf() error        // present when any field has (field) { required: true }
+//
+// The method is named ValidateConf rather than Validate to avoid colliding
+// with protoc-gen-validate's generated Validate() method on the same types.
 //
 // Output file is co-located with the source proto's *.pb.go and shares its
 // Go package. Messages without any conf annotations are skipped so files with
@@ -366,10 +369,11 @@ func emitValidate(g *protogen.GeneratedFile, m *protogen.Message, fields []*prot
 		GoImportPath: "fmt",
 	})
 
-	g.P("// Validate reports the first required-but-missing field on ", goType, ".")
+	g.P("// ValidateConf reports the first required-but-missing field on ", goType, ".")
 	g.P("// Fields marked (servora.conf.v1.field) = { required: true } must have a")
-	g.P("// non-zero value once configuration loading completes.")
-	g.P("func (m *", goType, ") Validate() error {")
+	g.P("// non-zero value once configuration loading completes. Distinct from")
+	g.P("// protoc-gen-validate's Validate() which covers full schema rules.")
+	g.P("func (m *", goType, ") ValidateConf() error {")
 	g.P("	if m == nil {")
 	g.P(`		return `, fmtErrorf, `("`, m.Desc.FullName(), `: nil receiver")`)
 	g.P("	}")

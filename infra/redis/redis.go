@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/logging"
 	"github.com/redis/go-redis/v9"
 )
@@ -31,7 +31,7 @@ type Config struct {
 	WriteTimeout time.Duration
 }
 
-func NewConfigFromProto(cfg *conf.Data_Redis) *Config {
+func NewConfigFromProto(cfg *corev1.Data_Redis) *Config {
 	if cfg == nil {
 		return nil
 	}

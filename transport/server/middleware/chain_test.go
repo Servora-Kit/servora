@@ -7,7 +7,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"go.opentelemetry.io/otel/metric/noop"
 
-	"github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 )
 
@@ -33,7 +33,7 @@ func TestNewChainBuilder_BasicBuild(t *testing.T) {
 
 func TestChainBuilder_WithTrace_Enabled(t *testing.T) {
 	logger := log.DefaultLogger
-	trace := &conf.Trace{Endpoint: "http://jaeger:14268"}
+	trace := &corev1.Trace{Endpoint: "http://jaeger:14268"}
 
 	ms := NewChainBuilder(logger).WithTrace(trace).Build()
 
@@ -54,7 +54,7 @@ func TestChainBuilder_WithTrace_Skipped_NilTrace(t *testing.T) {
 
 func TestChainBuilder_WithTrace_Skipped_EmptyEndpoint(t *testing.T) {
 	logger := log.DefaultLogger
-	trace := &conf.Trace{Endpoint: ""}
+	trace := &corev1.Trace{Endpoint: ""}
 
 	ms := NewChainBuilder(logger).WithTrace(trace).Build()
 
@@ -96,7 +96,7 @@ func TestChainBuilder_WithoutRateLimit(t *testing.T) {
 
 func TestChainBuilder_FullChain(t *testing.T) {
 	logger := log.DefaultLogger
-	trace := &conf.Trace{Endpoint: "http://jaeger:14268"}
+	trace := &corev1.Trace{Endpoint: "http://jaeger:14268"}
 	mtc := createTestMetrics()
 
 	ms := NewChainBuilder(logger).

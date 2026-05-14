@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	config "github.com/Servora-Kit/servora/core/bootstrap/config"
 )
 
@@ -14,7 +14,7 @@ import (
 type ServiceConfig struct {
 	Name      string
 	Path      string
-	Bootstrap *conf.Bootstrap
+	Bootstrap *corev1.Bootstrap
 }
 
 // LoadServiceConfig loads the bootstrap config for the given service.
@@ -54,7 +54,7 @@ func ValidateConfigExists(serviceName string) error {
 }
 
 // ValidateDatabaseConfig checks that the bootstrap has a database config.
-func ValidateDatabaseConfig(bc *conf.Bootstrap) error {
+func ValidateDatabaseConfig(bc *corev1.Bootstrap) error {
 	if bc.GetData() == nil || bc.GetData().GetDatabase() == nil {
 		return fmt.Errorf("no database config found")
 	}

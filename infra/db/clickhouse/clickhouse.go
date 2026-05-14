@@ -21,48 +21,64 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"github.com/Servora-Kit/servora/obs/logging"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 )
 
-// NewConnOptional opens a ClickHouse connection from the Data config.
+// Config carries the minimum knobs NewConnOptional needs to open a ClickHouse
+// connection. It is defined locally (not borrowed from any proto) because
+// ClickHouse-specific configuration lives in consumer-side proto (e.g.
+// servora-platform/audit) and the framework no longer owns those fields.
+type Config struct {
+	Addrs           []string
+	Database        string
+	Username        string
+	Password        string
+	DialTimeout     time.Duration
+	ReadTimeout     time.Duration
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	TLS             bool
+	TLSSkipVerify   bool
+	Compress        string // "" | "none" | "lz4" | "zstd"
+}
+
+// NewConnOptional opens a ClickHouse connection from the supplied Config.
 //
 // Return semantics:
-//   - (nil, nil)  — ClickHouse is not configured (Data.ClickHouse absent or no addrs).
+//   - (nil, nil)  — ClickHouse is not configured (cfg nil or no addrs).
 //   - (nil, err)  — configured but connection/ping failed; callers can fail-fast or degrade.
 //   - (conn, nil) — connected successfully.
 //
 // The caller is responsible for closing the connection via conn.Close().
-func NewConnOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) (driver.Conn, error) {
+func NewConnOptional(ctx context.Context, cfg *Config, l logger.Logger) (driver.Conn, error) {
 	log := logger.For(l, "clickhouse/db/infra")
 
-	if cfg == nil || cfg.Clickhouse == nil || len(cfg.Clickhouse.Addrs) == 0 {
+	if cfg == nil || len(cfg.Addrs) == 0 {
 		log.Info("ClickHouse not configured")
 		return nil, nil
 	}
 
-	chCfg := cfg.Clickhouse
-
-	dialTimeout := durationOrDefault(chCfg.DialTimeout, 10*time.Second, "dial_timeout", log)
-	readTimeout := durationOrDefault(chCfg.ReadTimeout, 30*time.Second, "read_timeout", log)
-	connMaxLifetime := durationOrDefault(chCfg.ConnMaxLifetime, 5*time.Minute, "conn_max_lifetime", log)
+	dialTimeout := durationOrDefault(cfg.DialTimeout, 10*time.Second, "dial_timeout", log)
+	readTimeout := durationOrDefault(cfg.ReadTimeout, 30*time.Second, "read_timeout", log)
+	connMaxLifetime := durationOrDefault(cfg.ConnMaxLifetime, 5*time.Minute, "conn_max_lifetime", log)
 
 	maxOpenConns := 10
-	if chCfg.MaxOpenConns > 0 {
-		maxOpenConns = int(chCfg.MaxOpenConns)
+	if cfg.MaxOpenConns > 0 {
+		maxOpenConns = cfg.MaxOpenConns
 	}
 	maxIdleConns := 5
-	if chCfg.MaxIdleConns > 0 {
-		maxIdleConns = int(chCfg.MaxIdleConns)
+	if cfg.MaxIdleConns > 0 {
+		maxIdleConns = cfg.MaxIdleConns
 	}
 
 	opts := &clickhouse.Options{
-		Addr: chCfg.Addrs,
+		Addr: cfg.Addrs,
 		Auth: clickhouse.Auth{
-			Database: chCfg.Database,
-			Username: chCfg.Username,
-			Password: chCfg.Password,
+			Database: cfg.Database,
+			Username: cfg.Username,
+			Password: cfg.Password,
 		},
 		DialTimeout:      dialTimeout,
 		ReadTimeout:      readTimeout,
@@ -72,9 +88,9 @@ func NewConnOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) (driv
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 	}
 
-	if chCfg.Tls {
+	if cfg.TLS {
 		tlsCfg, err := svrtls.NewClientConfig(svrtls.ClientConfigOptions{
-			InsecureSkipVerify: chCfg.TlsSkipVerify,
+			InsecureSkipVerify: cfg.TLSSkipVerify,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("build ClickHouse TLS config: %w", err)
@@ -82,7 +98,7 @@ func NewConnOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) (driv
 		opts.TLS = tlsCfg
 	}
 
-	applyCompression(opts, chCfg.Compress, log)
+	applyCompression(opts, cfg.Compress, log)
 
 	conn, err := clickhouse.Open(opts)
 	if err != nil {
@@ -100,17 +116,15 @@ func NewConnOptional(ctx context.Context, cfg *conf.Data, l logger.Logger) (driv
 	return conn, nil
 }
 
-// durationOrDefault extracts a proto Duration, falling back to def when nil or <= 0.
-func durationOrDefault(d interface{ AsDuration() time.Duration }, def time.Duration, name string, log *logger.Helper) time.Duration {
-	if d == nil {
+// durationOrDefault returns d when positive, otherwise def (with a warn log).
+func durationOrDefault(d time.Duration, def time.Duration, name string, log *logger.Helper) time.Duration {
+	if d <= 0 {
+		if d < 0 {
+			log.Warnf("%s=%v is non-positive, using default %v", name, d, def)
+		}
 		return def
 	}
-	v := d.AsDuration()
-	if v <= 0 {
-		log.Warnf("%s=%v is non-positive, using default %v", name, v, def)
-		return def
-	}
-	return v
+	return d
 }
 
 // applyCompression normalises the compress string and sets the appropriate

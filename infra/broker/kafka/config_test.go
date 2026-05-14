@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	brokerv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/broker/v1"
 	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
@@ -31,7 +31,7 @@ func (l *captureLogger) contains(substr string) bool {
 func TestNewBrokerOptional_ReturnsNilAndLogsInfoWhenKafkaNotConfigured(t *testing.T) {
 	log := &captureLogger{}
 
-	b := NewBrokerOptional(context.Background(), &conf.Data{}, log)
+	b := NewBrokerOptional(context.Background(), &brokerv1.Broker{}, log)
 	if b != nil {
 		t.Fatal("expected nil broker when kafka is not configured")
 	}
@@ -43,7 +43,8 @@ func TestNewBrokerOptional_ReturnsNilAndLogsInfoWhenKafkaNotConfigured(t *testin
 func TestNewBrokerOptional_ReturnsNilAndLogsInfoWhenBrokersEmpty(t *testing.T) {
 	log := &captureLogger{}
 
-	b := NewBrokerOptional(context.Background(), &conf.Data{Kafka: &conf.Data_Kafka{}}, log)
+	cfg := &brokerv1.Broker{Backend: &brokerv1.Broker_Kafka{Kafka: &brokerv1.Kafka{}}}
+	b := NewBrokerOptional(context.Background(), cfg, log)
 	if b != nil {
 		t.Fatal("expected nil broker when kafka brokers are empty")
 	}
@@ -54,13 +55,15 @@ func TestNewBrokerOptional_ReturnsNilAndLogsInfoWhenBrokersEmpty(t *testing.T) {
 
 func TestNewBrokerOptional_ReturnsNilInsteadOfPanickingOnInvalidConfig(t *testing.T) {
 	log := &captureLogger{}
-	cfg := &conf.Data{
-		Kafka: &conf.Data_Kafka{
-			Brokers: []string{"127.0.0.1:9092"},
-			Sasl: &conf.Data_Kafka_SASL{
-				Mechanism: "INVALID",
-				Username:  "u",
-				Password:  "p",
+	cfg := &brokerv1.Broker{
+		Backend: &brokerv1.Broker_Kafka{
+			Kafka: &brokerv1.Kafka{
+				Brokers: []string{"127.0.0.1:9092"},
+				Sasl: &brokerv1.Kafka_SASL{
+					Mechanism: "INVALID",
+					Username:  "u",
+					Password:  "p",
+				},
 			},
 		},
 	}

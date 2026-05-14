@@ -7,11 +7,11 @@ import (
 	"github.com/go-kratos/kratos/contrib/config/consul/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/hashicorp/consul/api"
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 // NewConsulConfigSource 创建 Consul 配置源
-func NewConsulConfigSource(c *conf.ConsulConfig) config.Source {
+func NewConsulConfigSource(c *corev1.ConsulConfig) config.Source {
 	if c == nil {
 		return nil
 	}

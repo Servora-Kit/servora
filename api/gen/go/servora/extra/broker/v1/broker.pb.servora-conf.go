@@ -27,10 +27,11 @@ func (m *Kafka) ApplyDefaults() {
 	}
 }
 
-// Validate reports the first required-but-missing field on Kafka.
+// ValidateConf reports the first required-but-missing field on Kafka.
 // Fields marked (servora.conf.v1.field) = { required: true } must have a
-// non-zero value once configuration loading completes.
-func (m *Kafka) Validate() error {
+// non-zero value once configuration loading completes. Distinct from
+// protoc-gen-validate's Validate() which covers full schema rules.
+func (m *Kafka) ValidateConf() error {
 	if m == nil {
 		return fmt.Errorf("servora.extra.broker.v1.Kafka: nil receiver")
 	}

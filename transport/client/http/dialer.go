@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -20,13 +20,13 @@ const Type = "http"
 type Option func(*dialerOptions)
 
 type dialerOptions struct {
-	data       *conf.Data
+	data       *corev1.Data
 	discovery  registry.Discovery
 	middleware []middleware.Middleware
 	logger     logger.Logger
 }
 
-func WithData(data *conf.Data) Option {
+func WithData(data *corev1.Data) Option {
 	return func(o *dialerOptions) {
 		o.data = data
 	}
@@ -51,7 +51,7 @@ func WithLogger(l logger.Logger) Option {
 }
 
 type Dialer struct {
-	httpClients map[string]*conf.Data_Client_Endpoint
+	httpClients map[string]*corev1.Data_Client_Endpoint
 	discovery   registry.Discovery
 	middleware  []middleware.Middleware
 	logger      logger.Logger
@@ -121,13 +121,13 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*khttp.Client, error)
 }
 
 // BuildClientConfigIndex 预构建 HTTP 客户端配置索引，避免热路径重复遍历配置列表。
-func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
+func BuildClientConfigIndex(dataCfg *corev1.Data) (map[string]*corev1.Data_Client_Endpoint, error) {
 	return endpoint.IndexByProtocol(dataCfg, Type)
 }
 
 func resolveConnectionConfig(
 	serviceName string,
-	httpConfigs map[string]*conf.Data_Client_Endpoint,
+	httpConfigs map[string]*corev1.Data_Client_Endpoint,
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
 ) (string, time.Duration, bool) {

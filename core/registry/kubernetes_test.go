@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ func TestNewKubernetesRegistry(t *testing.T) {
 	})
 
 	t.Run("enable false returns nil", func(t *testing.T) {
-		cfg := &conf.KubernetesConfig{Enable: false}
+		cfg := &corev1.KubernetesConfig{Enable: false}
 		reg := NewKubernetesRegistry(cfg)
 		assert.Nil(t, reg)
 	})
@@ -29,7 +29,7 @@ func TestNewKubernetesRegistry(t *testing.T) {
 			t.Skip("set RUN_K8S_INTEGRATION_TESTS=1 to run kubernetes integration test")
 		}
 
-		cfg := &conf.KubernetesConfig{Enable: true}
+		cfg := &corev1.KubernetesConfig{Enable: true}
 
 		defer func() {
 			if r := recover(); r != nil {
@@ -49,7 +49,7 @@ func TestNewKubernetesDiscovery(t *testing.T) {
 	})
 
 	t.Run("enable false returns nil", func(t *testing.T) {
-		cfg := &conf.KubernetesConfig{Enable: false}
+		cfg := &corev1.KubernetesConfig{Enable: false}
 		disc := NewKubernetesDiscovery(cfg)
 		assert.Nil(t, disc)
 	})
@@ -59,7 +59,7 @@ func TestNewKubernetesDiscovery(t *testing.T) {
 			t.Skip("set RUN_K8S_INTEGRATION_TESTS=1 to run kubernetes integration test")
 		}
 
-		cfg := &conf.KubernetesConfig{Enable: true}
+		cfg := &corev1.KubernetesConfig{Enable: true}
 
 		defer func() {
 			if r := recover(); r != nil {

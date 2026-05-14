@@ -9,7 +9,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"go.uber.org/zap"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 // NewDriver creates an ent SQL driver from the shared data configuration.
@@ -18,7 +18,7 @@ import (
 //	_ "github.com/go-sql-driver/mysql"
 //	_ "github.com/lib/pq"
 //	_ "github.com/mattn/go-sqlite3"
-func NewDriver(cfg *conf.Data) (*entsql.Driver, error) {
+func NewDriver(cfg *corev1.Data) (*entsql.Driver, error) {
 	var driverName string
 	var entDialect string
 
@@ -48,7 +48,7 @@ func NewDriver(cfg *conf.Data) (*entsql.Driver, error) {
 // tracing decorator. Pass the zap logger from your obs/logging.ZapLogger:
 //
 //	drv, err := ent.NewDriverWithTracing(cfg, zapLogger.Zap())
-func NewDriverWithTracing(cfg *conf.Data, log *zap.Logger) (dialect.Driver, error) {
+func NewDriverWithTracing(cfg *corev1.Data, log *zap.Logger) (dialect.Driver, error) {
 	inner, err := NewDriver(cfg)
 	if err != nil {
 		return nil, err

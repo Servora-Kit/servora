@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
@@ -12,13 +12,13 @@ type Registrar func(*kgrpc.Server)
 type ServerOption func(*serverOptions)
 
 type serverOptions struct {
-	conf       *conf.Server_GRPC
+	conf       *corev1.Server_GRPC
 	logger     log.Logger
 	middleware []middleware.Middleware
 	registrars []Registrar
 }
 
-func WithConfig(c *conf.Server_GRPC) ServerOption {
+func WithConfig(c *corev1.Server_GRPC) ServerOption {
 	return func(o *serverOptions) {
 		o.conf = c
 	}

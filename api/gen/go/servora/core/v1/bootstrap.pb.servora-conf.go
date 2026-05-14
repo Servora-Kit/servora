@@ -18,10 +18,11 @@ func (m *Server_Listen) ApplyDefaults() {
 	}
 }
 
-// Validate reports the first required-but-missing field on Server_Listen.
+// ValidateConf reports the first required-but-missing field on Server_Listen.
 // Fields marked (servora.conf.v1.field) = { required: true } must have a
-// non-zero value once configuration loading completes.
-func (m *Server_Listen) Validate() error {
+// non-zero value once configuration loading completes. Distinct from
+// protoc-gen-validate's Validate() which covers full schema rules.
+func (m *Server_Listen) ValidateConf() error {
 	if m == nil {
 		return fmt.Errorf("servora.core.v1.Server.Listen: nil receiver")
 	}

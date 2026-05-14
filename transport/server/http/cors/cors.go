@@ -4,80 +4,22 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
 )
 
-// options 包含 CORS 中间件的内部配置选项
-type options struct {
-	AllowedOrigins   []string
-	AllowedMethods   []string
-	AllowedHeaders   []string
-	ExposedHeaders   []string
-	AllowCredentials bool
-	MaxAge           time.Duration
-}
-
-// defaultOptions 返回默认的 CORS 配置
-func defaultOptions() options {
-	return options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposedHeaders:   []string{},
-		AllowCredentials: false,
-		MaxAge:           24 * time.Hour,
-	}
-}
-
-// parseConfig 将 conf.CORS 转换为内部 options，处理空字段和默认值
-func parseConfig(corsConfig *conf.CORS) options {
-	if corsConfig == nil || !corsConfig.GetEnable() {
-		return options{} // 返回空配置表示禁用 CORS
-	}
-
-	opts := defaultOptions()
-
-	if len(corsConfig.GetAllowedOrigins()) > 0 {
-		opts.AllowedOrigins = corsConfig.GetAllowedOrigins()
-	}
-	if len(corsConfig.GetAllowedMethods()) > 0 {
-		opts.AllowedMethods = corsConfig.GetAllowedMethods()
-	}
-	if len(corsConfig.GetAllowedHeaders()) > 0 {
-		opts.AllowedHeaders = corsConfig.GetAllowedHeaders()
-	}
-	if len(corsConfig.GetExposedHeaders()) > 0 {
-		opts.ExposedHeaders = corsConfig.GetExposedHeaders()
-	}
-
-	opts.AllowCredentials = corsConfig.GetAllowCredentials()
-
-	if corsConfig.MaxAge != nil {
-		opts.MaxAge = corsConfig.MaxAge.AsDuration()
-	}
-
-	return opts
-}
-
-// Middleware 创建 CORS 中间件，直接接受 conf.CORS 配置
-// 如果 corsConfig 为 nil 或 Enable 为 false，返回透传中间件
-func Middleware(corsConfig *conf.CORS) func(http.Handler) http.Handler {
-	opts := parseConfig(corsConfig)
-
+// Middleware 创建 CORS 中间件。
+// corsConfig 应已经过 corsv1.CORS.ApplyDefaults()（由业务方在
+// bootstrap.ScanSections 时自动完成），本函数不再回填默认值。
+// 当 corsConfig 为 nil 或 Enable=false 时返回透传中间件。
+func Middleware(corsConfig *corsv1.CORS) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
+		if corsConfig == nil || !corsConfig.GetEnable() {
+			return next
+		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// 如果 CORS 禁用（AllowedOrigins 为空），直接透传
-			if len(opts.AllowedOrigins) == 0 {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			origin := r.Header.Get("Origin")
-			// 设置响应头
-			setCORSHeaders(w, opts, origin)
-			// 处理预检请求
+			setCORSHeaders(w, corsConfig, origin)
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusNoContent)
 				return
@@ -87,71 +29,51 @@ func Middleware(corsConfig *conf.CORS) func(http.Handler) http.Handler {
 	}
 }
 
-// IsEnabled 检查 CORS 配置是否启用（用于日志等场景）
-func IsEnabled(corsConfig *conf.CORS) bool {
-	if corsConfig == nil || !corsConfig.GetEnable() {
-		return false
-	}
-	opts := parseConfig(corsConfig)
-	return len(opts.AllowedOrigins) > 0
+// IsEnabled reports whether the supplied CORS configuration is active.
+func IsEnabled(corsConfig *corsv1.CORS) bool {
+	return corsConfig != nil && corsConfig.GetEnable() && len(corsConfig.GetAllowedOrigins()) > 0
 }
 
-// GetAllowedOrigins 获取配置的允许源列表（用于日志等场景）
-func GetAllowedOrigins(corsConfig *conf.CORS) []string {
-	opts := parseConfig(corsConfig)
-	return opts.AllowedOrigins
+// GetAllowedOrigins exposes the configured origin list for logging.
+func GetAllowedOrigins(corsConfig *corsv1.CORS) []string {
+	if corsConfig == nil {
+		return nil
+	}
+	return corsConfig.GetAllowedOrigins()
 }
 
-// setCORSHeaders 设置 CORS 响应头
-func setCORSHeaders(w http.ResponseWriter, opts options, origin string) {
-	// 检查源是否被允许
-	allowedOrigin := ""
-	if isOriginAllowed(origin, opts.AllowedOrigins) {
-		allowedOrigin = origin
+func setCORSHeaders(w http.ResponseWriter, c *corsv1.CORS, origin string) {
+	if isOriginAllowed(origin, c.GetAllowedOrigins()) {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
 	}
-	if allowedOrigin != "" {
-		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+	if methods := c.GetAllowedMethods(); len(methods) > 0 {
+		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", "))
 	}
-	// 设置允许的方法
-	if len(opts.AllowedMethods) > 0 {
-		w.Header().Set("Access-Control-Allow-Methods", strings.Join(opts.AllowedMethods, ", "))
+	if headers := c.GetAllowedHeaders(); len(headers) > 0 {
+		w.Header().Set("Access-Control-Allow-Headers", strings.Join(headers, ", "))
 	}
-	// 设置允许的头部
-	if len(opts.AllowedHeaders) > 0 {
-		w.Header().Set("Access-Control-Allow-Headers", strings.Join(opts.AllowedHeaders, ", "))
+	if exposed := c.GetExposedHeaders(); len(exposed) > 0 {
+		w.Header().Set("Access-Control-Expose-Headers", strings.Join(exposed, ", "))
 	}
-	// 设置暴露的头部
-	if len(opts.ExposedHeaders) > 0 {
-		w.Header().Set("Access-Control-Expose-Headers", strings.Join(opts.ExposedHeaders, ", "))
-	}
-	// 设置是否允许凭证
-	if opts.AllowCredentials {
+	if c.GetAllowCredentials() {
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
-	// 设置预检请求缓存时间
-	if opts.MaxAge > 0 {
-		w.Header().Set("Access-Control-Max-Age", fmt.Sprintf("%d", int64(opts.MaxAge.Seconds())))
+	if d := c.GetMaxAge(); d != nil && d.AsDuration() > 0 {
+		w.Header().Set("Access-Control-Max-Age", fmt.Sprintf("%d", int64(d.AsDuration().Seconds())))
 	}
 }
 
-// isOriginAllowed 检查源是否被允许
 func isOriginAllowed(origin string, allowedOrigins []string) bool {
 	if origin == "" {
 		return false
 	}
-
-	for _, allowedOrigin := range allowedOrigins {
-		if allowedOrigin == "*" {
+	for _, allowed := range allowedOrigins {
+		if allowed == "*" || allowed == origin {
 			return true
 		}
-		if allowedOrigin == origin {
-			return true
-		}
-		// 支持通配符匹配，如 *.example.com
-		if strings.HasPrefix(allowedOrigin, "*.") {
-			suffix := strings.TrimPrefix(allowedOrigin, "*.")
+		if strings.HasPrefix(allowed, "*.") {
+			suffix := strings.TrimPrefix(allowed, "*.")
 			if strings.HasSuffix(origin, suffix) {
-				// 检查是否只有一个点，防止匹配过长
 				parts := strings.Split(strings.TrimSuffix(origin, suffix), ".")
 				if len(parts) == 2 {
 					return true
@@ -159,6 +81,5 @@ func isOriginAllowed(origin string, allowedOrigins []string) bool {
 			}
 		}
 	}
-
 	return false
 }

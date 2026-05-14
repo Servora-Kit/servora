@@ -11,7 +11,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 
-	"github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 )
 
@@ -54,7 +54,7 @@ import (
 //   - 如果需要完全自定义中间件顺序，请不要使用此 Builder，手动构建切片
 type ChainBuilder struct {
 	logger    log.Logger
-	trace     *conf.Trace
+	trace     *corev1.Trace
 	metrics   *telemetry.Metrics
 	rateLimit bool // 默认 true
 }
@@ -75,7 +75,7 @@ func NewChainBuilder(l log.Logger) *ChainBuilder {
 //
 // 如果 t 为 nil 或 t.Endpoint 为空，则跳过 tracing 中间件。
 // 这允许在未配置 trace endpoint 的环境中优雅降级。
-func (b *ChainBuilder) WithTrace(t *conf.Trace) *ChainBuilder {
+func (b *ChainBuilder) WithTrace(t *corev1.Trace) *ChainBuilder {
 	b.trace = t
 	return b
 }

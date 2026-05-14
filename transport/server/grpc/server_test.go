@@ -18,7 +18,7 @@ import (
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 func TestNewServer_NoOptions(t *testing.T) {
@@ -29,8 +29,8 @@ func TestNewServer_NoOptions(t *testing.T) {
 }
 
 func TestNewServer_WithConfig(t *testing.T) {
-	cfg := &conf.Server_GRPC{
-		Listen: &conf.Server_Listen{
+	cfg := &corev1.Server_GRPC{
+		Listen: &corev1.Server_Listen{
 			Network: "tcp4",
 			Addr:    ":9000",
 			Timeout: durationpb.New(30 * time.Second),
@@ -108,8 +108,8 @@ func TestNewServer_WithMultipleServices(t *testing.T) {
 }
 
 func TestNewServer_FullOptions(t *testing.T) {
-	cfg := &conf.Server_GRPC{
-		Listen: &conf.Server_Listen{
+	cfg := &corev1.Server_GRPC{
+		Listen: &corev1.Server_Listen{
 			Addr:    ":9000",
 			Timeout: durationpb.New(10 * time.Second),
 		},
@@ -128,9 +128,9 @@ func TestNewServer_WithTLSConfig_EndpointUsesGRPCS(t *testing.T) {
 	tmp := t.TempDir()
 	certPath, keyPath := writeSelfSignedPair(t, tmp)
 
-	cfg := &conf.Server_GRPC{
-		Listen: &conf.Server_Listen{Addr: ":0"},
-		Tls: &conf.TLSConfig{
+	cfg := &corev1.Server_GRPC{
+		Listen: &corev1.Server_Listen{Addr: ":0"},
+		Tls: &corev1.TLSConfig{
 			Enable:   true,
 			CertPath: certPath,
 			KeyPath:  keyPath,
@@ -152,9 +152,9 @@ func TestNewServer_WithTLSConfig_EndpointUsesGRPCS(t *testing.T) {
 }
 
 func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
-	cfg := &conf.Server_GRPC{
-		Listen:   &conf.Server_Listen{Addr: "0.0.0.0:0"},
-		Registry: &conf.Server_Registry{Host: "host.docker.internal"},
+	cfg := &corev1.Server_GRPC{
+		Listen:   &corev1.Server_Listen{Addr: "0.0.0.0:0"},
+		Registry: &corev1.Server_Registry{Host: "host.docker.internal"},
 	}
 
 	srv := NewServer(WithConfig(cfg))
@@ -178,9 +178,9 @@ func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
 }
 
 func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) {
-	cfg := &conf.Server_GRPC{
-		Listen:   &conf.Server_Listen{Addr: ":0"},
-		Registry: &conf.Server_Registry{Endpoint: "grpc://example.internal:18011?isSecure=false"},
+	cfg := &corev1.Server_GRPC{
+		Listen:   &corev1.Server_Listen{Addr: ":0"},
+		Registry: &corev1.Server_Registry{Endpoint: "grpc://example.internal:18011?isSecure=false"},
 	}
 
 	srv := NewServer(WithConfig(cfg))

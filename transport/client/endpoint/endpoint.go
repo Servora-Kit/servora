@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 // IndexByProtocol 按协议类型构建 service -> endpoint 配置索引。
-func IndexByProtocol(dataCfg *conf.Data, protocol string) (map[string]*conf.Data_Client_Endpoint, error) {
+func IndexByProtocol(dataCfg *corev1.Data, protocol string) (map[string]*corev1.Data_Client_Endpoint, error) {
 	if dataCfg == nil || dataCfg.Client == nil {
 		return nil, nil
 	}
@@ -23,7 +23,7 @@ func IndexByProtocol(dataCfg *conf.Data, protocol string) (map[string]*conf.Data
 		return nil, nil
 	}
 
-	index := make(map[string]*conf.Data_Client_Endpoint, len(services))
+	index := make(map[string]*corev1.Data_Client_Endpoint, len(services))
 	for serviceIdx, serviceCfg := range services {
 		if serviceCfg == nil {
 			continue

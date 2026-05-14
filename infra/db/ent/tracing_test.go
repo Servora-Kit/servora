@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	servoraent "github.com/Servora-Kit/servora/infra/db/ent"
 )
 
@@ -184,8 +184,8 @@ func TestWrapWithTracing_TxQueryEmitsTraceLog(t *testing.T) {
 }
 
 func TestNewDriverWithTracing_WrapsTransparently(t *testing.T) {
-	cfg := &conf.Data{
-		Database: &conf.Data_Database{Driver: "sqlite", Source: ":memory:"},
+	cfg := &corev1.Data{
+		Database: &corev1.Data_Database{Driver: "sqlite", Source: ":memory:"},
 	}
 	core, recorded := observer.New(zapcore.DebugLevel)
 

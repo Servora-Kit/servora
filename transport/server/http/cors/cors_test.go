@@ -6,31 +6,31 @@ import (
 	"testing"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func TestDefaultOptions(t *testing.T) {
-	opts := defaultOptions()
+// TestApplyDefaults_PluginGenerated verifies the proto-sourced defaults
+// supplied by protoc-gen-servora-conf on extra/cors/v1/cors.proto, which
+// replaces the prior hand-coded defaultOptions().
+func TestApplyDefaults_PluginGenerated(t *testing.T) {
+	c := &corsv1.CORS{}
+	c.ApplyDefaults()
 
-	if len(opts.AllowedOrigins) != 1 || opts.AllowedOrigins[0] != "*" {
-		t.Errorf("Expected default allowed origins to be ['*'], got %v", opts.AllowedOrigins)
+	if len(c.AllowedOrigins) != 1 || c.AllowedOrigins[0] != "*" {
+		t.Errorf("default allowed origins = %v, want [\"*\"]", c.AllowedOrigins)
 	}
-
-	if len(opts.AllowedMethods) != 5 {
-		t.Errorf("Expected 5 default allowed methods, got %d", len(opts.AllowedMethods))
+	want := map[string]bool{"GET": true, "POST": true, "PUT": true, "DELETE": true, "OPTIONS": true}
+	if len(c.AllowedMethods) != len(want) {
+		t.Errorf("default allowed methods count = %d, want %d", len(c.AllowedMethods), len(want))
 	}
-
-	if !contains(opts.AllowedMethods, "GET") || !contains(opts.AllowedMethods, "POST") {
-		t.Errorf("Expected GET and POST in default allowed methods, got %v", opts.AllowedMethods)
+	for _, m := range c.AllowedMethods {
+		if !want[m] {
+			t.Errorf("unexpected default method %q", m)
+		}
 	}
-
-	if opts.AllowCredentials {
-		t.Error("Expected default allow credentials to be false")
-	}
-
-	if opts.MaxAge != 24*time.Hour {
-		t.Errorf("Expected default max age to be 24h, got %v", opts.MaxAge)
+	if c.MaxAge == nil || c.MaxAge.AsDuration() != 24*time.Hour {
+		t.Errorf("default max age = %v, want 24h", c.MaxAge)
 	}
 }
 
@@ -44,17 +44,15 @@ func TestMiddleware_NilConfig(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
-	res := w.Result()
-	if res.Header.Get("Access-Control-Allow-Origin") != "" {
-		t.Error("Expected no CORS headers when config is nil")
+	if w.Result().Header.Get("Access-Control-Allow-Origin") != "" {
+		t.Error("nil config should not emit CORS headers")
 	}
 }
 
 func TestMiddleware_Disabled(t *testing.T) {
-	corsConfig := &conf.CORS{Enable: false}
+	corsConfig := &corsv1.CORS{Enable: false}
 	corsMiddleware := Middleware(corsConfig)
 
 	req := httptest.NewRequest("GET", "http://example.com", nil)
@@ -64,17 +62,16 @@ func TestMiddleware_Disabled(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
-	res := w.Result()
-	if res.Header.Get("Access-Control-Allow-Origin") != "" {
-		t.Error("Expected no CORS headers when disabled")
+	if w.Result().Header.Get("Access-Control-Allow-Origin") != "" {
+		t.Error("disabled config should not emit CORS headers")
 	}
 }
 
 func TestMiddleware_EnabledWithDefaults(t *testing.T) {
-	corsConfig := &conf.CORS{Enable: true}
+	corsConfig := &corsv1.CORS{Enable: true}
+	corsConfig.ApplyDefaults() // caller is expected to apply defaults before passing in
 	corsMiddleware := Middleware(corsConfig)
 
 	req := httptest.NewRequest("GET", "http://example.com", nil)
@@ -84,17 +81,15 @@ func TestMiddleware_EnabledWithDefaults(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
-	res := w.Result()
-	if res.Header.Get("Access-Control-Allow-Origin") != "https://example.com" {
-		t.Errorf("Expected 'https://example.com' in Access-Control-Allow-Origin, got %s", res.Header.Get("Access-Control-Allow-Origin"))
+	if got := w.Result().Header.Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://example.com")
 	}
 }
 
 func TestMiddleware_SimpleRequest(t *testing.T) {
-	corsConfig := &conf.CORS{
+	corsConfig := &corsv1.CORS{
 		Enable:           true,
 		AllowedOrigins:   []string{"https://example.com"},
 		AllowedMethods:   []string{"GET", "POST"},
@@ -112,25 +107,22 @@ func TestMiddleware_SimpleRequest(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
 	res := w.Result()
-	if res.Header.Get("Access-Control-Allow-Origin") != "https://example.com" {
-		t.Errorf("Expected 'https://example.com' in Access-Control-Allow-Origin, got %s", res.Header.Get("Access-Control-Allow-Origin"))
+	if got := res.Header.Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://example.com")
 	}
-
-	if res.Header.Get("Access-Control-Allow-Methods") != "GET, POST" {
-		t.Errorf("Expected 'GET, POST' in Access-Control-Allow-Methods, got %s", res.Header.Get("Access-Control-Allow-Methods"))
+	if got := res.Header.Get("Access-Control-Allow-Methods"); got != "GET, POST" {
+		t.Errorf("Access-Control-Allow-Methods = %q, want %q", got, "GET, POST")
 	}
-
 	if res.Header.Get("Access-Control-Allow-Credentials") == "true" {
-		t.Error("Expected no Access-Control-Allow-Credentials header")
+		t.Error("expected no Access-Control-Allow-Credentials header")
 	}
 }
 
 func TestMiddleware_PreflightRequest(t *testing.T) {
-	corsConfig := &conf.CORS{
+	corsConfig := &corsv1.CORS{
 		Enable:           true,
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT"},
@@ -150,25 +142,22 @@ func TestMiddleware_PreflightRequest(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
 	res := w.Result()
 	if res.StatusCode != http.StatusNoContent {
-		t.Errorf("Expected status 204 for preflight request, got %d", res.StatusCode)
+		t.Errorf("preflight status = %d, want %d", res.StatusCode, http.StatusNoContent)
 	}
-
-	if res.Header.Get("Access-Control-Allow-Origin") != "https://example.com" {
-		t.Errorf("Expected 'https://example.com' in Access-Control-Allow-Origin, got %s", res.Header.Get("Access-Control-Allow-Origin"))
+	if got := res.Header.Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, "https://example.com")
 	}
-
-	if res.Header.Get("Access-Control-Max-Age") != "3600" {
-		t.Errorf("Expected '3600' in Access-Control-Max-Age, got %s", res.Header.Get("Access-Control-Max-Age"))
+	if got := res.Header.Get("Access-Control-Max-Age"); got != "3600" {
+		t.Errorf("Access-Control-Max-Age = %q, want %q", got, "3600")
 	}
 }
 
 func TestMiddleware_OriginNotAllowed(t *testing.T) {
-	corsConfig := &conf.CORS{
+	corsConfig := &corsv1.CORS{
 		Enable:         true,
 		AllowedOrigins: []string{"https://allowed.com"},
 		AllowedMethods: []string{"GET"},
@@ -184,17 +173,15 @@ func TestMiddleware_OriginNotAllowed(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
-	res := w.Result()
-	if res.Header.Get("Access-Control-Allow-Origin") != "" {
-		t.Error("Expected no Access-Control-Allow-Origin header when origin is not allowed")
+	if w.Result().Header.Get("Access-Control-Allow-Origin") != "" {
+		t.Error("expected no Access-Control-Allow-Origin header for disallowed origin")
 	}
 }
 
 func TestMiddleware_WithCredentials(t *testing.T) {
-	corsConfig := &conf.CORS{
+	corsConfig := &corsv1.CORS{
 		Enable:           true,
 		AllowedOrigins:   []string{"https://example.com"},
 		AllowCredentials: true,
@@ -209,59 +196,61 @@ func TestMiddleware_WithCredentials(t *testing.T) {
 	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-
 	handler.ServeHTTP(w, req)
 
-	res := w.Result()
-	if res.Header.Get("Access-Control-Allow-Credentials") != "true" {
-		t.Error("Expected Access-Control-Allow-Credentials to be 'true'")
+	if got := w.Result().Header.Get("Access-Control-Allow-Credentials"); got != "true" {
+		t.Errorf("Access-Control-Allow-Credentials = %q, want %q", got, "true")
 	}
 }
 
 func TestIsEnabled(t *testing.T) {
+	withDefaults := &corsv1.CORS{Enable: true}
+	withDefaults.ApplyDefaults()
 	tests := []struct {
 		name     string
-		config   *conf.CORS
+		config   *corsv1.CORS
 		expected bool
 	}{
 		{"nil config", nil, false},
-		{"disabled", &conf.CORS{Enable: false}, false},
-		{"enabled with defaults", &conf.CORS{Enable: true}, true},
-		{"enabled with origins", &conf.CORS{Enable: true, AllowedOrigins: []string{"https://example.com"}}, true},
+		{"disabled", &corsv1.CORS{Enable: false}, false},
+		{"enabled but no origins", &corsv1.CORS{Enable: true}, false}, // defaults not applied
+		{"enabled with defaults", withDefaults, true},
+		{"enabled with origins", &corsv1.CORS{Enable: true, AllowedOrigins: []string{"https://example.com"}}, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsEnabled(tt.config)
-			if result != tt.expected {
-				t.Errorf("Expected %v, got %v", tt.expected, result)
+			if got := IsEnabled(tt.config); got != tt.expected {
+				t.Errorf("IsEnabled() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
 }
 
 func TestGetAllowedOrigins(t *testing.T) {
+	withDefaults := &corsv1.CORS{Enable: true}
+	withDefaults.ApplyDefaults()
 	tests := []struct {
 		name     string
-		config   *conf.CORS
+		config   *corsv1.CORS
 		expected []string
 	}{
 		{"nil config", nil, nil},
-		{"disabled", &conf.CORS{Enable: false}, nil},
-		{"enabled with defaults", &conf.CORS{Enable: true}, []string{"*"}},
-		{"custom origins", &conf.CORS{Enable: true, AllowedOrigins: []string{"https://a.com", "https://b.com"}}, []string{"https://a.com", "https://b.com"}},
+		{"disabled returns empty list", &corsv1.CORS{Enable: false}, nil},
+		{"enabled with defaults applied", withDefaults, []string{"*"}},
+		{"custom origins", &corsv1.CORS{Enable: true, AllowedOrigins: []string{"https://a.com", "https://b.com"}}, []string{"https://a.com", "https://b.com"}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetAllowedOrigins(tt.config)
-			if len(result) != len(tt.expected) {
-				t.Errorf("Expected %v, got %v", tt.expected, result)
+			got := GetAllowedOrigins(tt.config)
+			if len(got) != len(tt.expected) {
+				t.Errorf("GetAllowedOrigins() = %v, want %v", got, tt.expected)
 				return
 			}
-			for i, v := range result {
+			for i, v := range got {
 				if v != tt.expected[i] {
-					t.Errorf("Expected %v, got %v", tt.expected, result)
+					t.Errorf("GetAllowedOrigins() = %v, want %v", got, tt.expected)
 					return
 				}
 			}
@@ -287,19 +276,9 @@ func TestIsOriginAllowed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isOriginAllowed(tt.origin, tt.allowedOrigin)
-			if result != tt.expected {
-				t.Errorf("Expected %v for origin %s in %v, got %v", tt.expected, tt.origin, tt.allowedOrigin, result)
+			if got := isOriginAllowed(tt.origin, tt.allowedOrigin); got != tt.expected {
+				t.Errorf("isOriginAllowed(%q, %v) = %v, want %v", tt.origin, tt.allowedOrigin, got, tt.expected)
 			}
 		})
 	}
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }

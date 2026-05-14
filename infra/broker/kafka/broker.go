@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	brokerv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/broker/v1"
 	"github.com/Servora-Kit/servora/infra/broker"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/plain"
@@ -22,7 +22,7 @@ var _ broker.Broker = (*kafkaBroker)(nil)
 
 // kafkaBroker implements broker.Broker backed by franz-go.
 type kafkaBroker struct {
-	cfg    *conf.Data_Kafka
+	cfg    *brokerv1.Kafka
 	zap    *zap.Logger
 	client *kgo.Client
 
@@ -31,7 +31,7 @@ type kafkaBroker struct {
 }
 
 // NewBroker creates a kafkaBroker from proto config. Connect() must be called before use.
-func NewBroker(cfg *conf.Data_Kafka, zapLogger *zap.Logger) (*kafkaBroker, error) {
+func NewBroker(cfg *brokerv1.Kafka, zapLogger *zap.Logger) (*kafkaBroker, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("kafka: config must not be nil")
 	}
@@ -194,7 +194,7 @@ func (b *kafkaBroker) buildOpts() ([]kgo.Opt, error) {
 }
 
 // buildSASL maps proto SASL config to a kgo SASL mechanism option.
-func buildSASL(sasl *conf.Data_Kafka_SASL) (kgo.Opt, error) {
+func buildSASL(sasl *brokerv1.Kafka_SASL) (kgo.Opt, error) {
 	switch strings.ToUpper(sasl.GetMechanism()) {
 	case "PLAIN":
 		return kgo.SASL(plain.Auth{
