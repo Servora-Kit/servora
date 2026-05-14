@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -195,7 +195,7 @@ func TestNewEtcdConfigSource(t *testing.T) {
 		t.Skip("set RUN_ETCD_INTEGRATION_TESTS=1 to run etcd integration tests")
 	}
 
-	config := &conf.EtcdConfig{
+	config := &corev1.EtcdConfig{
 		Endpoints: []string{"127.0.0.1:2379"},
 		Key:       "/test/config",
 	}

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	governanceConfig "github.com/Servora-Kit/servora/core/config"
 
 	kconfig "github.com/go-kratos/kratos/v2/config"
@@ -18,7 +18,7 @@ import (
 // LoadBootstrap 加载服务启动配置，并返回可持续 watch 的 Kratos 配置实例。
 // useEnvPrefix 为 true 时根据 serviceName 推导环境变量前缀（如 iam.service → IAM_），
 // 仅读取带前缀的环境变量覆盖配置；为 false 时读取所有无前缀的环境变量。
-func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*conf.Bootstrap, kconfig.Config, error) {
+func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*corev1.Bootstrap, kconfig.Config, error) {
 	var envPrefix string
 	if useEnvPrefix {
 		envPrefix = strings.ToUpper(strings.TrimSuffix(serviceName, ".service")) + "_"
@@ -36,7 +36,7 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 		return nil, nil, err
 	}
 
-	var bc conf.Bootstrap
+	var bc corev1.Bootstrap
 	if err := tempConfig.Scan(&bc); err != nil {
 		_ = tempConfig.Close()
 		return nil, nil, err
@@ -45,11 +45,11 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 	var configCenterSource kconfig.Source
 	if cfg := bc.Config; cfg != nil {
 		switch v := cfg.Config.(type) {
-		case *conf.Config_Nacos:
+		case *corev1.Config_Nacos:
 			configCenterSource = governanceConfig.NewNacosConfigSource(v.Nacos)
-		case *conf.Config_Consul:
+		case *corev1.Config_Consul:
 			configCenterSource = governanceConfig.NewConsulConfigSource(v.Consul)
-		case *conf.Config_Etcd:
+		case *corev1.Config_Etcd:
 			configCenterSource = governanceConfig.NewEtcdConfigSource(v.Etcd)
 		}
 	}

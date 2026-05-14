@@ -3,7 +3,7 @@ package logger
 import (
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 func TestNew_NilSafe(t *testing.T) {
@@ -17,9 +17,9 @@ func TestNew_NilSafe(t *testing.T) {
 }
 
 func TestNew_WithConfig(t *testing.T) {
-	app := &conf.App{
+	app := &corev1.App{
 		Env: "test",
-		Log: &conf.App_Log{Filename: "/tmp/test-logger.log"},
+		Log: &corev1.App_Log{Filename: "/tmp/test-logger.log"},
 	}
 	l := New(app)
 	if l == nil {
@@ -30,7 +30,7 @@ func TestNew_WithConfig(t *testing.T) {
 func TestNew_DefaultFilename(t *testing.T) {
 	// When filename is empty, New picks the default internally (not mutating proto).
 	// We just verify it does not panic and returns a usable logger.
-	app := &conf.App{Env: "test", Log: &conf.App_Log{}}
+	app := &corev1.App{Env: "test", Log: &corev1.App_Log{}}
 	l := New(app)
 	if l == nil {
 		t.Fatal("expected non-nil logger")

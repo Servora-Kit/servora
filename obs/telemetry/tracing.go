@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 
 	"go.opentelemetry.io/otel"
@@ -33,7 +33,7 @@ type traceRuntimeConfig struct {
 }
 
 // InitTracerProvider 初始化 OpenTelemetry Trace Provider，并返回关闭回调。
-func InitTracerProvider(c *conf.Trace, serviceName, env string) (func(), error) {
+func InitTracerProvider(c *corev1.Trace, serviceName, env string) (func(), error) {
 	runtimeCfg := resolveTraceRuntimeConfig(c, env)
 	if runtimeCfg.endpoint == "" {
 		return func() {}, nil
@@ -82,7 +82,7 @@ func InitTracerProvider(c *conf.Trace, serviceName, env string) (func(), error) 
 }
 
 // resolveTraceRuntimeConfig 将配置文件与环境默认值归一化为运行时追踪配置。
-func resolveTraceRuntimeConfig(c *conf.Trace, env string) traceRuntimeConfig {
+func resolveTraceRuntimeConfig(c *corev1.Trace, env string) traceRuntimeConfig {
 	runtimeCfg := traceRuntimeConfig{
 		samplingRatio: defaultTraceSamplingRatio(env),
 	}

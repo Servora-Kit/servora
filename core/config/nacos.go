@@ -5,7 +5,7 @@ import (
 
 	nacosCfg "github.com/go-kratos/kratos/contrib/config/nacos/v2"
 	"github.com/go-kratos/kratos/v2/config"
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
@@ -13,7 +13,7 @@ import (
 )
 
 // NewNacosConfigSource 创建 Nacos 配置源
-func NewNacosConfigSource(c *conf.NacosConfig) config.Source {
+func NewNacosConfigSource(c *corev1.NacosConfig) config.Source {
 	if c == nil {
 		return nil
 	}

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -26,9 +26,9 @@ type ZapLogger struct {
 
 // New creates a ZapLogger from a proto App config. nil-safe: returns a dev
 // console logger when app is nil or app.Log is nil.
-func New(app *conf.App) *ZapLogger {
+func New(app *corev1.App) *ZapLogger {
 	env := "dev"
-	var logCfg *conf.App_Log
+	var logCfg *corev1.App_Log
 	if app != nil {
 		env = app.GetEnv()
 		logCfg = app.GetLog()

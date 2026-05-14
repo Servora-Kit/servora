@@ -3,17 +3,17 @@ package endpoint
 import (
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 func TestIndexByProtocol_FilterByProtocol(t *testing.T) {
-	dataCfg := &conf.Data{
-		Client: &conf.Data_Client{
-			Services: []*conf.Data_Client_Service{
+	dataCfg := &corev1.Data{
+		Client: &corev1.Data_Client{
+			Services: []*corev1.Data_Client_Service{
 				nil,
 				{
 					Name: " user ",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						nil,
 						{Protocol: "grpc", Endpoint: "grpc://first"},
 						{Protocol: "http", Endpoint: "http://user"},
@@ -21,7 +21,7 @@ func TestIndexByProtocol_FilterByProtocol(t *testing.T) {
 				},
 				{
 					Name: "auth",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						{Protocol: "grpc", Endpoint: "grpc://auth"},
 					},
 				},
@@ -48,19 +48,19 @@ func TestIndexByProtocol_EmptyInputs(t *testing.T) {
 	if got, err := IndexByProtocol(nil, "grpc"); err != nil || got != nil {
 		t.Fatalf("expected nil for nil data, got %#v", got)
 	}
-	if got, err := IndexByProtocol(&conf.Data{Client: &conf.Data_Client{}}, "grpc"); err != nil || got != nil {
+	if got, err := IndexByProtocol(&corev1.Data{Client: &corev1.Data_Client{}}, "grpc"); err != nil || got != nil {
 		t.Fatalf("expected nil for empty services, got %#v", got)
 	}
-	if _, err := IndexByProtocol(&conf.Data{Client: &conf.Data_Client{}}, " "); err == nil {
+	if _, err := IndexByProtocol(&corev1.Data{Client: &corev1.Data_Client{}}, " "); err == nil {
 		t.Fatal("expected error for blank protocol")
 	}
 }
 
 func TestIndexByProtocol_EmptyServiceName(t *testing.T) {
-	dataCfg := &conf.Data{
-		Client: &conf.Data_Client{
-			Services: []*conf.Data_Client_Service{
-				{Name: " ", Endpoints: []*conf.Data_Client_Endpoint{{Protocol: "grpc", Endpoint: "grpc://a"}}},
+	dataCfg := &corev1.Data{
+		Client: &corev1.Data_Client{
+			Services: []*corev1.Data_Client_Service{
+				{Name: " ", Endpoints: []*corev1.Data_Client_Endpoint{{Protocol: "grpc", Endpoint: "grpc://a"}}},
 			},
 		},
 	}
@@ -71,12 +71,12 @@ func TestIndexByProtocol_EmptyServiceName(t *testing.T) {
 }
 
 func TestIndexByProtocol_DuplicateServiceProtocol(t *testing.T) {
-	dataCfg := &conf.Data{
-		Client: &conf.Data_Client{
-			Services: []*conf.Data_Client_Service{
+	dataCfg := &corev1.Data{
+		Client: &corev1.Data_Client{
+			Services: []*corev1.Data_Client_Service{
 				{
 					Name: "user",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						{Protocol: "grpc", Endpoint: "grpc://a"},
 						{Protocol: "grpc", Endpoint: "grpc://b"},
 					},
@@ -91,12 +91,12 @@ func TestIndexByProtocol_DuplicateServiceProtocol(t *testing.T) {
 }
 
 func TestIndexByProtocol_EmptyEndpointProtocol(t *testing.T) {
-	dataCfg := &conf.Data{
-		Client: &conf.Data_Client{
-			Services: []*conf.Data_Client_Service{
+	dataCfg := &corev1.Data{
+		Client: &corev1.Data_Client{
+			Services: []*corev1.Data_Client_Service{
 				{
 					Name: "user",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						{Protocol: "", Endpoint: "grpc://a"},
 					},
 				},

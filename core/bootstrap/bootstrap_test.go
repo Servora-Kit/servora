@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
 )
 
 func TestResolveServiceIdentity_UseConfigValues(t *testing.T) {
-	app := &conf.App{
+	app := &corev1.App{
 		Name:     "custom.service",
 		Version:  "v9.9.9",
 		Metadata: map[string]string{"zone": "cn-east"},
@@ -34,7 +34,7 @@ func TestResolveServiceIdentity_UseConfigValues(t *testing.T) {
 }
 
 func TestResolveServiceIdentity_DefaultsAndMutatesApp(t *testing.T) {
-	app := &conf.App{}
+	app := &corev1.App{}
 
 	meta := resolveServiceIdentity("default.service", "v1.0.0", "node-b", app)
 

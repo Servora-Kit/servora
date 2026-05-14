@@ -4,18 +4,18 @@ import (
 	"testing"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func TestBuildGRPCClientConfigIndex(t *testing.T) {
-	dataCfg := &conf.Data{
-		Client: &conf.Data_Client{
-			Services: []*conf.Data_Client_Service{
+	dataCfg := &corev1.Data{
+		Client: &corev1.Data_Client{
+			Services: []*corev1.Data_Client_Service{
 				nil,
 				{
 					Name: " user ",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						nil,
 						{Protocol: "grpc", Endpoint: "grpc://first"},
 						{Protocol: "http", Endpoint: "http://user"},
@@ -23,7 +23,7 @@ func TestBuildGRPCClientConfigIndex(t *testing.T) {
 				},
 				{
 					Name: "auth",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						{Protocol: "grpc", Endpoint: "grpc://auth"},
 					},
 				},
@@ -58,12 +58,12 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 
 	endpoint, timeout, tlsCfg, configured := resolveConnectionConfig(
 		"user.service",
-		map[string]*conf.Data_Client_Endpoint{
+		map[string]*corev1.Data_Client_Endpoint{
 			"user.service": {
 				Protocol: "grpc",
 				Endpoint: "dns:///user.internal:9000",
 				Timeout:  durationpb.New(12 * time.Second),
-				Tls: &conf.TLSConfig{
+				Tls: &corev1.TLSConfig{
 					Enable: true,
 				},
 			},
@@ -87,7 +87,7 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 
 	endpoint, timeout, tlsCfg, configured = resolveConnectionConfig(
 		"missing.service",
-		map[string]*conf.Data_Client_Endpoint{
+		map[string]*corev1.Data_Client_Endpoint{
 			"user.service": {Protocol: "grpc"},
 		},
 		defaultEndpoint,

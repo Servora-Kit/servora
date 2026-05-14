@@ -9,7 +9,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/go-kratos/kratos/v2/registry"
-	"github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 func shouldRunEtcdIntegration() bool {
@@ -134,7 +134,7 @@ func TestEtcdConfigConversion(t *testing.T) {
 	}
 
 	// 创建测试配置
-	cfg := &conf.EtcdConfig{
+	cfg := &corev1.EtcdConfig{
 		Endpoints: []string{"127.0.0.1:2379", "127.0.0.1:2380"},
 		Username:  "testuser",
 		Password:  "testpass",

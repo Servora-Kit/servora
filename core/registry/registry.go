@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 
 	"github.com/go-kratos/kratos/v2/registry"
 )
 
-func NewRegistrar(cfg *conf.Registry) registry.Registrar {
+func NewRegistrar(cfg *corev1.Registry) registry.Registrar {
 	if cfg == nil {
 		return nil
 	}
 
 	switch c := cfg.Registry.(type) {
-	case *conf.Registry_Consul:
+	case *corev1.Registry_Consul:
 		return NewConsulRegistry(c.Consul)
-	case *conf.Registry_Etcd:
+	case *corev1.Registry_Etcd:
 		var opts []Option
 		if c.Etcd.Namespace != "" {
 			opts = append(opts, Namespace(c.Etcd.Namespace))
@@ -28,9 +28,9 @@ func NewRegistrar(cfg *conf.Registry) registry.Registrar {
 			panic(fmt.Sprintf("failed to create etcd registry: %v", err))
 		}
 		return registrar
-	case *conf.Registry_Nacos:
+	case *corev1.Registry_Nacos:
 		return NewNacosRegistry(c.Nacos)
-	case *conf.Registry_Kubernetes:
+	case *corev1.Registry_Kubernetes:
 		return NewKubernetesRegistry(c.Kubernetes)
 	default:
 		return nil
@@ -38,15 +38,15 @@ func NewRegistrar(cfg *conf.Registry) registry.Registrar {
 }
 
 // NewDiscovery 根据配置创建服务发现客户端
-func NewDiscovery(cfg *conf.Discovery) registry.Discovery {
+func NewDiscovery(cfg *corev1.Discovery) registry.Discovery {
 	if cfg == nil {
 		return nil
 	}
 
 	switch c := cfg.Discovery.(type) {
-	case *conf.Discovery_Consul:
+	case *corev1.Discovery_Consul:
 		return NewConsulDiscovery(c.Consul)
-	case *conf.Discovery_Etcd:
+	case *corev1.Discovery_Etcd:
 		var opts []Option
 		if c.Etcd.Namespace != "" {
 			opts = append(opts, Namespace(c.Etcd.Namespace))
@@ -57,9 +57,9 @@ func NewDiscovery(cfg *conf.Discovery) registry.Discovery {
 			panic(fmt.Sprintf("failed to create etcd discovery: %v", err))
 		}
 		return discovery
-	case *conf.Discovery_Nacos:
+	case *corev1.Discovery_Nacos:
 		return NewNacosDiscovery(c.Nacos)
-	case *conf.Discovery_Kubernetes:
+	case *corev1.Discovery_Kubernetes:
 		return NewKubernetesDiscovery(c.Kubernetes)
 	default:
 		return nil

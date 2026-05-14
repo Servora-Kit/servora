@@ -11,7 +11,7 @@ import (
 	"gorm.io/gen"
 	"gorm.io/gorm"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/cmd/svr/internal/ux"
 )
 
@@ -19,7 +19,7 @@ import (
 type GormGenerator struct {
 	ServiceName string
 	ServicePath string
-	DatabaseCfg *conf.Data_Database
+	DatabaseCfg *corev1.Data_Database
 	DryRun      bool
 }
 

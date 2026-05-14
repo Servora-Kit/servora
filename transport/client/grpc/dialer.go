@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
@@ -21,13 +21,13 @@ const Type = "grpc"
 type Option func(*dialerOptions)
 
 type dialerOptions struct {
-	data       *conf.Data
+	data       *corev1.Data
 	discovery  registry.Discovery
 	logger     logger.Logger
 	middleware []middleware.Middleware
 }
 
-func WithData(data *conf.Data) Option {
+func WithData(data *corev1.Data) Option {
 	return func(o *dialerOptions) {
 		o.data = data
 	}
@@ -52,7 +52,7 @@ func WithMiddleware(mw ...middleware.Middleware) Option {
 }
 
 type Dialer struct {
-	grpcClients map[string]*conf.Data_Client_Endpoint
+	grpcClients map[string]*corev1.Data_Client_Endpoint
 	discovery   registry.Discovery
 	logger      logger.Logger
 	middleware  []middleware.Middleware
@@ -91,14 +91,14 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*gogrpc.ClientConn, e
 }
 
 // BuildClientConfigIndex 预构建 gRPC 客户端配置索引，避免热路径重复遍历配置列表。
-func BuildClientConfigIndex(dataCfg *conf.Data) (map[string]*conf.Data_Client_Endpoint, error) {
+func BuildClientConfigIndex(dataCfg *corev1.Data) (map[string]*corev1.Data_Client_Endpoint, error) {
 	return endpoint.IndexByProtocol(dataCfg, Type)
 }
 
 func createConnection(
 	ctx context.Context,
 	serviceName string,
-	grpcConfigs map[string]*conf.Data_Client_Endpoint,
+	grpcConfigs map[string]*corev1.Data_Client_Endpoint,
 	discovery registry.Discovery,
 	l logger.Logger,
 	mds []middleware.Middleware,
@@ -140,7 +140,7 @@ func createConnection(
 	return conn, nil
 }
 
-func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf.TLSConfig) (*gogrpc.ClientConn, error) {
+func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *corev1.TLSConfig) (*gogrpc.ClientConn, error) {
 	if tlsCfg == nil || !tlsCfg.GetEnable() {
 		return kgrpc.DialInsecure(ctx, opts...)
 	}
@@ -157,13 +157,13 @@ func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *conf
 // resolveConnectionConfig 根据服务名解析连接配置，并在缺省时回落到默认端点与超时。
 func resolveConnectionConfig(
 	serviceName string,
-	grpcConfigs map[string]*conf.Data_Client_Endpoint,
+	grpcConfigs map[string]*corev1.Data_Client_Endpoint,
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
-) (string, time.Duration, *conf.TLSConfig, bool) {
+) (string, time.Duration, *corev1.TLSConfig, bool) {
 	ep := defaultEndpoint
 	timeout := defaultTimeout
-	var tlsCfg *conf.TLSConfig
+	var tlsCfg *corev1.TLSConfig
 
 	grpcCfg, ok := grpcConfigs[serviceName]
 	if !ok || grpcCfg == nil {

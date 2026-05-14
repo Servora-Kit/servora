@@ -3,17 +3,17 @@ package http
 import (
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 func TestBuildHTTPClientConfigIndex(t *testing.T) {
-	dataCfg := &conf.Data{
-		Client: &conf.Data_Client{
-			Services: []*conf.Data_Client_Service{
+	dataCfg := &corev1.Data{
+		Client: &corev1.Data_Client{
+			Services: []*corev1.Data_Client_Service{
 				nil,
 				{
 					Name: " master ",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						nil,
 						{Protocol: "http", Endpoint: "http://first"},
 						{Protocol: "grpc", Endpoint: "grpc://master"},
@@ -21,7 +21,7 @@ func TestBuildHTTPClientConfigIndex(t *testing.T) {
 				},
 				{
 					Name: "worker",
-					Endpoints: []*conf.Data_Client_Endpoint{
+					Endpoints: []*corev1.Data_Client_Endpoint{
 						{Protocol: "http", Endpoint: "http://worker"},
 					},
 				},

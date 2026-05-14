@@ -3,7 +3,8 @@ package http
 import (
 	"net/http"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 	"github.com/Servora-Kit/servora/transport/server/http/swagger"
@@ -17,10 +18,10 @@ type Registrar func(*khttp.Server)
 type ServerOption func(*serverOptions)
 
 type serverOptions struct {
-	conf           *conf.Server_HTTP
+	conf           *corev1.Server_HTTP
 	logger         log.Logger
 	middleware     []middleware.Middleware
-	cors           *conf.CORS
+	cors           *corsv1.CORS
 	metricsHandler http.Handler
 	registrars     []Registrar
 	healthHandler  *health.Handler
@@ -28,7 +29,7 @@ type serverOptions struct {
 	swaggerOpts    []swagger.Option
 }
 
-func WithConfig(c *conf.Server_HTTP) ServerOption {
+func WithConfig(c *corev1.Server_HTTP) ServerOption {
 	return func(o *serverOptions) {
 		o.conf = c
 	}
@@ -46,7 +47,7 @@ func WithMiddleware(mw ...middleware.Middleware) ServerOption {
 	}
 }
 
-func WithCORS(c *conf.CORS) ServerOption {
+func WithCORS(c *corsv1.CORS) ServerOption {
 	return func(o *serverOptions) {
 		o.cors = c
 	}

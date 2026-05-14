@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/security/authn/jwt"
 	"github.com/go-kratos/kratos/v2/log"
@@ -34,7 +34,7 @@ func TestNewChainBuilder_BasicBuild(t *testing.T) {
 }
 
 func TestChainBuilder_WithTrace_Enabled(t *testing.T) {
-	trace := &conf.Trace{Endpoint: "http://otel:4317"}
+	trace := &corev1.Trace{Endpoint: "http://otel:4317"}
 	ms := NewChainBuilder(log.DefaultLogger).WithTrace(trace).Build()
 	if len(ms) != 4 {
 		t.Errorf("expected 4 middlewares with tracing, got %d", len(ms))

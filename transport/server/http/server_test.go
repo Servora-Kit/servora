@@ -9,7 +9,8 @@ import (
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 )
 
@@ -21,8 +22,8 @@ func TestNewServer_NoOptions(t *testing.T) {
 }
 
 func TestNewServer_WithConfig(t *testing.T) {
-	cfg := &conf.Server_HTTP{
-		Listen: &conf.Server_Listen{
+	cfg := &corev1.Server_HTTP{
+		Listen: &corev1.Server_Listen{
 			Network: "tcp4",
 			Addr:    ":8080",
 			Timeout: durationpb.New(30 * time.Second),
@@ -71,7 +72,7 @@ func TestNewServer_WithEmptyMiddleware(t *testing.T) {
 }
 
 func TestNewServer_WithCORS(t *testing.T) {
-	corsConf := &conf.CORS{
+	corsConf := &corsv1.CORS{
 		Enable:         true,
 		AllowedOrigins: []string{"*"},
 	}
@@ -82,7 +83,7 @@ func TestNewServer_WithCORS(t *testing.T) {
 }
 
 func TestNewServer_WithCORSDisabled(t *testing.T) {
-	corsConf := &conf.CORS{Enable: false}
+	corsConf := &corsv1.CORS{Enable: false}
 	srv := NewServer(WithCORS(corsConf))
 	if srv == nil {
 		t.Fatal("expected non-nil server with disabled CORS")
@@ -126,13 +127,13 @@ func TestNewServer_WithMultipleServices(t *testing.T) {
 }
 
 func TestNewServer_FullOptions(t *testing.T) {
-	cfg := &conf.Server_HTTP{
-		Listen: &conf.Server_Listen{
+	cfg := &corev1.Server_HTTP{
+		Listen: &corev1.Server_Listen{
 			Addr:    ":8080",
 			Timeout: durationpb.New(10 * time.Second),
 		},
 	}
-	corsConf := &conf.CORS{
+	corsConf := &corsv1.CORS{
 		Enable:         true,
 		AllowedOrigins: []string{"http://localhost"},
 	}
@@ -163,9 +164,9 @@ func TestNewServer_WithNilHealthCheck(t *testing.T) {
 }
 
 func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
-	cfg := &conf.Server_HTTP{
-		Listen:   &conf.Server_Listen{Addr: "0.0.0.0:0"},
-		Registry: &conf.Server_Registry{Host: "host.docker.internal"},
+	cfg := &corev1.Server_HTTP{
+		Listen:   &corev1.Server_Listen{Addr: "0.0.0.0:0"},
+		Registry: &corev1.Server_Registry{Host: "host.docker.internal"},
 	}
 
 	srv := NewServer(WithConfig(cfg))
@@ -186,9 +187,9 @@ func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
 }
 
 func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) {
-	cfg := &conf.Server_HTTP{
-		Listen:   &conf.Server_Listen{Addr: ":0"},
-		Registry: &conf.Server_Registry{Endpoint: "https://example.internal:18443?isSecure=true"},
+	cfg := &corev1.Server_HTTP{
+		Listen:   &corev1.Server_Listen{Addr: ":0"},
+		Registry: &corev1.Server_Registry{Endpoint: "https://example.internal:18443?isSecure=true"},
 	}
 
 	srv := NewServer(WithConfig(cfg))

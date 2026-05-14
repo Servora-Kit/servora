@@ -5,11 +5,11 @@ import (
 
 	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
 	"github.com/go-kratos/kratos/v2/registry"
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/infra/k8s"
 )
 
-func NewKubernetesRegistry(c *conf.KubernetesConfig) registry.Registrar {
+func NewKubernetesRegistry(c *corev1.KubernetesConfig) registry.Registrar {
 	if c == nil || !c.Enable {
 		return nil
 	}
@@ -24,7 +24,7 @@ func NewKubernetesRegistry(c *conf.KubernetesConfig) registry.Registrar {
 	return reg
 }
 
-func NewKubernetesDiscovery(c *conf.KubernetesConfig) registry.Discovery {
+func NewKubernetesDiscovery(c *corev1.KubernetesConfig) registry.Discovery {
 	if c == nil || !c.Enable {
 		return nil
 	}

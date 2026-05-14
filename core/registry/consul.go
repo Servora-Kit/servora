@@ -7,11 +7,11 @@ import (
 	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/hashicorp/consul/api"
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 // NewConsulRegistry 创建 Consul 统一注册中心客户端（支持注册和发现）
-func NewConsulRegistry(c *conf.ConsulConfig) registry.Registrar {
+func NewConsulRegistry(c *corev1.ConsulConfig) registry.Registrar {
 	if c == nil {
 		return nil
 	}
@@ -52,7 +52,7 @@ func NewConsulRegistry(c *conf.ConsulConfig) registry.Registrar {
 }
 
 // NewConsulDiscovery 创建 Consul 服务发现客户端
-func NewConsulDiscovery(c *conf.ConsulConfig) registry.Discovery {
+func NewConsulDiscovery(c *corev1.ConsulConfig) registry.Discovery {
 	if c == nil {
 		return nil
 	}
@@ -85,6 +85,6 @@ func NewConsulDiscovery(c *conf.ConsulConfig) registry.Discovery {
 
 // NewConsulRegistrar 创建 Consul 注册中心客户端
 // Deprecated: 使用 NewConsulRegistry 替代
-func NewConsulRegistrar(c *conf.ConsulConfig) registry.Registrar {
+func NewConsulRegistrar(c *corev1.ConsulConfig) registry.Registrar {
 	return NewConsulRegistry(c)
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	logger "github.com/Servora-Kit/servora/obs/logging"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/core/bootstrap/config"
@@ -27,7 +27,7 @@ type SvcIdentity struct {
 
 // Runtime 聚合启动阶段产物与资源清理句柄。
 type Runtime struct {
-	Bootstrap *conf.Bootstrap
+	Bootstrap *corev1.Bootstrap
 	Config    kconfig.Config
 	Identity  SvcIdentity
 	Logger    log.Logger
@@ -90,7 +90,7 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	}
 
 	if bc.App == nil {
-		bc.App = &conf.App{}
+		bc.App = &corev1.App{}
 	}
 
 	hostname, _ := os.Hostname()
@@ -232,7 +232,7 @@ func logStage(l log.Logger, stage string, keyvals ...any) {
 }
 
 // resolveServiceIdentity 解析并回填服务身份默认值。
-func resolveServiceIdentity(defaultName, defaultVersion, hostname string, app *conf.App) SvcIdentity {
+func resolveServiceIdentity(defaultName, defaultVersion, hostname string, app *corev1.App) SvcIdentity {
 	name := defaultName
 	version := defaultVersion
 	metadata := make(map[string]string)

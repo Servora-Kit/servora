@@ -3,13 +3,13 @@ package telemetry
 import (
 	"testing"
 
-	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
 func TestResolveTraceRuntimeConfig(t *testing.T) {
 	tests := []struct {
 		name string
-		cfg  *conf.Trace
+		cfg  *corev1.Trace
 		env  string
 		want traceRuntimeConfig
 	}{
@@ -26,7 +26,7 @@ func TestResolveTraceRuntimeConfig(t *testing.T) {
 		{
 			name: "uses explicit values",
 			env:  "prod",
-			cfg: &conf.Trace{
+			cfg: &corev1.Trace{
 				Endpoint:      "otel.example.internal:4317",
 				Insecure:      true,
 				SamplingRatio: 0.25,
@@ -42,7 +42,7 @@ func TestResolveTraceRuntimeConfig(t *testing.T) {
 		{
 			name: "falls back when sampling ratio invalid",
 			env:  "production",
-			cfg: &conf.Trace{
+			cfg: &corev1.Trace{
 				SamplingRatio: 1.5,
 			},
 			want: traceRuntimeConfig{samplingRatio: defaultProdSamplingRatio},
