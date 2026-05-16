@@ -7,7 +7,7 @@ require (
 	github.com/Servora-Kit/servora v0.5.0
 	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/menta2k/protoc-gen-redact/v3 v3.0.0-20260213125431-7688a38967d4
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 )
 
