@@ -20,8 +20,8 @@ func TestContextHandler_InjectsTraceSpan(t *testing.T) {
 	slog.New(h).InfoContext(ctx, "hi")
 	var m map[string]any
 	_ = json.Unmarshal(buf.Bytes(), &m)
-	if m["trace_id"] != tid.String() || m["span_id"] != sid.String() {
-		t.Fatalf("got trace=%v span=%v", m["trace_id"], m["span_id"])
+	if m[TraceIDKey] != tid.String() || m[SpanIDKey] != sid.String() {
+		t.Fatalf("got trace=%v span=%v", m[TraceIDKey], m[SpanIDKey])
 	}
 }
 
@@ -33,7 +33,7 @@ func TestContextHandler_NoSpanIsSafe(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &m); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := m["trace_id"]; ok {
+	if _, ok := m[TraceIDKey]; ok {
 		t.Fatal("trace_id should be absent without span")
 	}
 }
