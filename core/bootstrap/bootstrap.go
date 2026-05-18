@@ -3,13 +3,15 @@ package bootstrap
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	logger "github.com/Servora-Kit/servora/obs/logging"
-	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/core/bootstrap/config"
+	logger "github.com/Servora-Kit/servora/obs/logger"
+	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
+	"github.com/Servora-Kit/servora/obs/telemetry"
 
 	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"
@@ -27,10 +29,11 @@ type SvcIdentity struct {
 
 // Runtime 聚合启动阶段产物与资源清理句柄。
 type Runtime struct {
-	Bootstrap *corev1.Bootstrap
-	Config    kconfig.Config
-	Identity  SvcIdentity
-	Logger    log.Logger
+	Bootstrap    *corev1.Bootstrap
+	Config       kconfig.Config
+	Identity     SvcIdentity
+	Logger       *slog.Logger
+	KratosLogger log.Logger
 
 	configCloser func()
 	traceCloser  func()
@@ -96,9 +99,10 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	hostname, _ := os.Hostname()
 	identity := resolveServiceIdentity(name, version, hostname, bc.App)
 
-	zapLogger := logger.New(bc.App)
-	appLogger := log.With(
-		zapLogger,
+	h := logger.NewHandler(bc.App)
+	slogger := slog.New(h).With("service", identity.Name)
+	kratosLogger := log.With(
+		kratosv2.Logger(h),
 		"service", identity.Name,
 		"trace_id", tracing.TraceID(),
 		"span_id", tracing.SpanID(),
@@ -111,10 +115,11 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	}
 
 	return &Runtime{
-		Bootstrap: bc,
-		Config:    c,
-		Identity:  identity,
-		Logger:    appLogger,
+		Bootstrap:    bc,
+		Config:       c,
+		Identity:     identity,
+		Logger:       slogger,
+		KratosLogger: kratosLogger,
 		configCloser: func() {
 			_ = c.Close()
 		},
@@ -134,6 +139,8 @@ func (r *Runtime) Close() {
 	if r.configCloser != nil {
 		r.configCloser()
 	}
+	// macOS 下 stdout 的 ioctl flush 错误是良性的，忽略即可，绝不向上传播。
+	_ = logger.Sync()
 }
 
 // ScanConf 从 Runtime 的合并配置中扫描配置。
@@ -220,15 +227,11 @@ func (r runner) bootstrapAndRun(configPath, name, version string, builder appBui
 	return nil
 }
 
-func logStage(l log.Logger, stage string, keyvals ...any) {
+func logStage(l *slog.Logger, stage string, keyvals ...any) {
 	if l == nil {
 		return
 	}
-	fields := []any{"stage", stage}
-	if len(keyvals) > 0 {
-		fields = append(fields, keyvals...)
-	}
-	_ = l.Log(log.LevelInfo, fields...)
+	l.Info(stage, keyvals...)
 }
 
 // resolveServiceIdentity 解析并回填服务身份默认值。

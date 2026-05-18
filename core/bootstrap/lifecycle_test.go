@@ -1,11 +1,12 @@
 package bootstrap
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"testing"
 
 	"github.com/go-kratos/kratos/v2"
-	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
 func TestRunWithRuntime_ValidateInput(t *testing.T) {
@@ -112,7 +113,7 @@ func TestNewRunner_UsesDefaultWhenNil(t *testing.T) {
 func TestBootstrapAndRun_EmitStageLogs(t *testing.T) {
 	cl := &captureLogger{}
 	runner := newRunner(func(_, _, _ string, _ bootstrapOptions) (*Runtime, error) {
-		return &Runtime{Logger: cl}, nil
+		return &Runtime{Logger: slog.New(cl)}, nil
 	}, func(_ *kratos.App) error { return nil })
 
 	err := runner.bootstrapAndRun("/tmp/configs", "svc", "v1", func(_ *Runtime) (app *kratos.App, cleanup func(), err error) {
@@ -136,27 +137,26 @@ func TestBootstrapAndRun_EmitStageLogs(t *testing.T) {
 	}
 }
 
+// captureLogger 是一个最小 slog.Handler，记录每条日志的 message（即 stage 名）。
 type captureLogger struct {
-	entries [][]any
+	stages []string
 }
 
-func (c *captureLogger) Log(_ kratoslog.Level, keyvals ...any) error {
-	cp := make([]any, len(keyvals))
-	copy(cp, keyvals)
-	c.entries = append(c.entries, cp)
+func (c *captureLogger) Enabled(context.Context, slog.Level) bool { return true }
+
+func (c *captureLogger) Handle(_ context.Context, r slog.Record) error {
+	c.stages = append(c.stages, r.Message)
 	return nil
 }
 
+func (c *captureLogger) WithAttrs([]slog.Attr) slog.Handler { return c }
+
+func (c *captureLogger) WithGroup(string) slog.Handler { return c }
+
 func (c *captureLogger) hasStage(stage string) bool {
-	for _, kvs := range c.entries {
-		for i := 0; i+1 < len(kvs); i += 2 {
-			key, ok := kvs[i].(string)
-			if !ok || key != "stage" {
-				continue
-			}
-			if val, ok := kvs[i+1].(string); ok && val == stage {
-				return true
-			}
+	for _, s := range c.stages {
+		if s == stage {
+			return true
 		}
 	}
 	return false
