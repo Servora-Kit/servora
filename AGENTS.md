@@ -11,6 +11,7 @@
 ### 版本管理与打 Tag 规则
 
 - **`git tag v0.x.y`** 打主模块 tag；proto/gen 有变更时额外执行 **`make tag.api TAG=v0.x.y`** 打 `api/gen/v0.x.y`（前缀防呆）
+- **生成器边角**：生成器（`cmd/protoc-gen-servora-*` plugin）变更导致 `api/gen/` 产物变更时，**即便 `.proto` 未变，仍需 `make tag.api`**——下游 `go get …/api/gen@…` 才能拿到新生成码
 - **何时打 tag**：修改了 `core/`、`transport/`、`security/`、`obs/`、`infra/`、`cmd/`、`api/protos/` 中的代码时（影响 `go get` 或 `buf dep update` 的使用者）
 - **何时不打 tag**：仅修改文档、Makefile、CI 配置、基础设施配置等
 - BSR label 与 Git tag 自动同步（`make bsr.push` 自动检测 HEAD 上的 tag）

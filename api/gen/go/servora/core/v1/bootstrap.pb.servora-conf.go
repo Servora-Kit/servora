@@ -7,8 +7,65 @@ import (
 	fmt "fmt"
 )
 
+// ApplyDefaults populates zero-valued fields on Bootstrap with the literal
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
+func (m *Bootstrap) ApplyDefaults() {
+	if m == nil {
+		return
+	}
+	if m.Server == nil {
+		m.Server = &Server{}
+	}
+	m.Server.ApplyDefaults()
+}
+
+// ApplyDefaults populates zero-valued fields on Server with the literal
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
+func (m *Server) ApplyDefaults() {
+	if m == nil {
+		return
+	}
+	if m.Http == nil {
+		m.Http = &Server_HTTP{}
+	}
+	m.Http.ApplyDefaults()
+	if m.Grpc == nil {
+		m.Grpc = &Server_GRPC{}
+	}
+	m.Grpc.ApplyDefaults()
+}
+
+// ApplyDefaults populates zero-valued fields on Server_GRPC with the literal
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
+func (m *Server_GRPC) ApplyDefaults() {
+	if m == nil {
+		return
+	}
+	if m.Listen == nil {
+		m.Listen = &Server_Listen{}
+	}
+	m.Listen.ApplyDefaults()
+}
+
+// ApplyDefaults populates zero-valued fields on Server_HTTP with the literal
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
+func (m *Server_HTTP) ApplyDefaults() {
+	if m == nil {
+		return
+	}
+	if m.Listen == nil {
+		m.Listen = &Server_Listen{}
+	}
+	m.Listen.ApplyDefaults()
+}
+
 // ApplyDefaults populates zero-valued fields on Server_Listen with the literal
-// defaults declared via (servora.conf.v1.field) annotations.
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
 func (m *Server_Listen) ApplyDefaults() {
 	if m == nil {
 		return

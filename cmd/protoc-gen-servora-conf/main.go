@@ -4,7 +4,9 @@
 //
 //   - SectionKey() string         // present when message has (section) annotation
 //   - SectionOptional() bool      // present when section { optional: true }
-//   - ApplyDefaults()             // present when any field has (field) { default: ... }
+//   - ApplyDefaults()             // present when a field has (field) { default: ... },
+//                                 //   or the message transitively reaches one via a
+//                                 //   singular message-typed field (cascade container)
 //   - ValidateConf() error        // present when any field has (field) { required: true }
 //
 // The method is named ValidateConf rather than Validate to avoid colliding
@@ -25,6 +27,7 @@ import (
 	"unicode"
 
 	confv1 "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	defaultcascade "github.com/Servora-Kit/servora/cmd/internal/defaultcascade"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -71,12 +74,13 @@ func generate(gen *protogen.Plugin) error {
 	return nil
 }
 
-// collectAnnotatedMessages flattens nested messages and keeps only those with
-// at least one servora.conf.v1 annotation (section or any field-level rule).
+// collectAnnotatedMessages flattens nested messages and keeps those with at
+// least one servora.conf.v1 annotation (section or any field-level rule), or
+// that transitively need ApplyDefaults per defaultcascade.NeedsApplyDefaults.
 func collectAnnotatedMessages(in []*protogen.Message) []*protogen.Message {
 	var out []*protogen.Message
 	for _, m := range in {
-		if messageHasAnnotations(m) {
+		if messageHasAnnotations(m) || defaultcascade.NeedsApplyDefaults(m.Desc, map[protoreflect.FullName]bool{}) {
 			out = append(out, m)
 		}
 		out = append(out, collectAnnotatedMessages(m.Messages)...)
@@ -144,8 +148,9 @@ func emitForMessage(g *protogen.GeneratedFile, m *protogen.Message) error {
 	}
 
 	defaultsFields := collectDefaultFields(m)
-	if len(defaultsFields) > 0 {
-		if err := emitApplyDefaults(g, m, defaultsFields); err != nil {
+	cascade := cascadeChildren(m)
+	if len(defaultsFields) > 0 || len(cascade) > 0 {
+		if err := emitApplyDefaults(g, m, defaultsFields, cascade); err != nil {
 			return err
 		}
 	}
@@ -186,10 +191,38 @@ func collectRequiredFields(m *protogen.Message) []*protogen.Field {
 	return out
 }
 
-func emitApplyDefaults(g *protogen.GeneratedFile, m *protogen.Message, entries []defaultEntry) error {
+// cascadeChildren returns singular message-typed fields whose message
+// transitively needs ApplyDefaults — the allocate-then-default targets.
+// Well-known types, lists, maps and oneof members are never cascade
+// targets (a oneof admits at most one set case, so the loader must not
+// pre-allocate one).
+func cascadeChildren(m *protogen.Message) []*protogen.Field {
+	var out []*protogen.Field
+	for _, f := range m.Fields {
+		if f.Desc.Kind() != protoreflect.MessageKind || f.Desc.IsList() || f.Desc.IsMap() {
+			continue
+		}
+		if f.Desc.ContainingOneof() != nil {
+			continue
+		}
+		if f.Message == nil {
+			continue
+		}
+		if strings.HasPrefix(string(f.Message.Desc.FullName()), "google.protobuf.") {
+			continue
+		}
+		if defaultcascade.NeedsApplyDefaults(f.Message.Desc, map[protoreflect.FullName]bool{}) {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+func emitApplyDefaults(g *protogen.GeneratedFile, m *protogen.Message, entries []defaultEntry, cascade []*protogen.Field) error {
 	goType := m.GoIdent.GoName
 	g.P("// ApplyDefaults populates zero-valued fields on ", goType, " with the literal")
-	g.P("// defaults declared via (servora.conf.v1.field) annotations.")
+	g.P("// defaults declared via (servora.conf.v1.field) annotations, then cascades")
+	g.P("// into nested messages that themselves declare defaults.")
 	g.P("func (m *", goType, ") ApplyDefaults() {")
 	g.P("	if m == nil {")
 	g.P("		return")
@@ -198,6 +231,13 @@ func emitApplyDefaults(g *protogen.GeneratedFile, m *protogen.Message, entries [
 		if err := emitDefaultAssignment(g, e.field, e.rule.GetDefault()); err != nil {
 			return fmt.Errorf("field %s: %w", e.field.Desc.FullName(), err)
 		}
+	}
+	for _, f := range cascade {
+		childType := f.Message.GoIdent.GoName
+		g.P("	if m.", f.GoName, " == nil {")
+		g.P("		m.", f.GoName, " = &", childType, "{}")
+		g.P("	}")
+		g.P("	m.", f.GoName, ".ApplyDefaults()")
 	}
 	g.P("}")
 	g.P()

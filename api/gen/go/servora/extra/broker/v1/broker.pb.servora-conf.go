@@ -14,7 +14,8 @@ func (*Broker) SectionKey() string { return "broker" }
 func (*Broker) SectionOptional() bool { return true }
 
 // ApplyDefaults populates zero-valued fields on Kafka with the literal
-// defaults declared via (servora.conf.v1.field) annotations.
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
 func (m *Kafka) ApplyDefaults() {
 	if m == nil {
 		return

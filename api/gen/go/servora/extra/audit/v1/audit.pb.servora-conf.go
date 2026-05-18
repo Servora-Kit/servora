@@ -7,7 +7,8 @@ package auditv1
 func (*AuditContract) SectionKey() string { return "audit" }
 
 // ApplyDefaults populates zero-valued fields on AuditContract with the literal
-// defaults declared via (servora.conf.v1.field) annotations.
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
 func (m *AuditContract) ApplyDefaults() {
 	if m == nil {
 		return

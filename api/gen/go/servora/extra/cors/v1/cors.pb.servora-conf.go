@@ -14,7 +14,8 @@ func (*CORS) SectionKey() string { return "cors" }
 func (*CORS) SectionOptional() bool { return true }
 
 // ApplyDefaults populates zero-valued fields on CORS with the literal
-// defaults declared via (servora.conf.v1.field) annotations.
+// defaults declared via (servora.conf.v1.field) annotations, then cascades
+// into nested messages that themselves declare defaults.
 func (m *CORS) ApplyDefaults() {
 	if m == nil {
 		return
