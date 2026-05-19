@@ -96,7 +96,7 @@ func CallUser(ctx context.Context, l logger.Logger, data *corev1.Data, d registr
 
 #### 配置文件
 
-通过 `(section)` 标记 message 在外部 yaml/json 配置中的定位键，通过 `(field)` 声明字段的默认值与必填语义。Plugin 自动生成 `SectionKey()` / `ApplyDefaults()` / `ValidateConf()`，配合 `bootstrap.ScanSections` 在 kratos config 中定向 scan。
+通过 `(section)` 标记 message 在外部 yaml/json 配置中的定位键，通过 `(field)` 声明字段的默认值与必填语义。Plugin 自动生成 `SectionKey()` / `ApplyDefaults()` / `CheckRequired()` / `ApplyConf()`，配合 `bootstrap.ScanSections` 在 kratos config 中定向 scan。
 
 ```proto
 import "servora/conf/v1/annotations.proto";
@@ -111,7 +111,7 @@ message Broker {
 }
 ```
 
-运行时只需一行 `ScanSections`，配置文件中缺失的 section 静默跳过，已存在的字段经 `ApplyDefaults` 填默认值后再 `ValidateConf` 校验必填项：
+运行时只需一行 `ScanSections`，配置文件中缺失的 section 静默跳过，`ApplyConf` 自动完成必填校验 + 默认值填充：
 
 ```go
 import (
@@ -123,7 +123,7 @@ brokerCfg := &confv1.Broker{}
 if err := bootstrap.ScanSections(runtime, brokerCfg); err != nil {
     return err
 }
-// brokerCfg 已自动填充默认值，并已通过必填校验
+// brokerCfg 已通过必填校验并自动填充默认值（由 ApplyConf 编排）
 ```
 
 #### proto 类型映射

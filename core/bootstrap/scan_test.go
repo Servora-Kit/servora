@@ -40,10 +40,17 @@ type stubSection struct {
 	validateResult error
 }
 
-func (s *stubSection) SectionKey() string     { return s.key }
-func (s *stubSection) SectionOptional() bool  { return s.optional }
-func (s *stubSection) ApplyDefaults()         { s.applyCalls++; if s.Name == "" { s.Name = "filled-default" } }
-func (s *stubSection) ValidateConf() error    { s.validateCalls++; return s.validateResult }
+func (s *stubSection) SectionKey() string    { return s.key }
+func (s *stubSection) SectionOptional() bool { return s.optional }
+func (s *stubSection) ApplyDefaults()        { s.applyCalls++; if s.Name == "" { s.Name = "filled-default" } }
+func (s *stubSection) CheckRequired() error  { s.validateCalls++; return s.validateResult }
+func (s *stubSection) ApplyConf() error {
+	if err := s.CheckRequired(); err != nil {
+		return err
+	}
+	s.ApplyDefaults()
+	return nil
+}
 
 // minimalSection has SectionKey only (no optional / defaulter / validator).
 type minimalSection struct {
@@ -86,7 +93,7 @@ biz:
 		t.Fatalf("ApplyDefaults called %d times, want 1", s.applyCalls)
 	}
 	if s.validateCalls != 1 {
-		t.Fatalf("Validate called %d times, want 1", s.validateCalls)
+		t.Fatalf("CheckRequired called %d times, want 1", s.validateCalls)
 	}
 }
 
@@ -112,7 +119,7 @@ func TestScanSections_RequiredMissing(t *testing.T) {
 	}
 }
 
-func TestScanSections_ValidatorFailFast(t *testing.T) {
+func TestScanSections_RequiredCheckerFailFast(t *testing.T) {
 	rt := &Runtime{Config: loadKratosConfig(t, `
 a: { name: "ok" }
 b: { name: "ok" }
@@ -124,7 +131,7 @@ b: { name: "ok" }
 		t.Fatalf("error = %v, want section %q wrap", err, "a")
 	}
 	if first.validateCalls != 1 {
-		t.Fatalf("first.Validate calls = %d, want 1", first.validateCalls)
+		t.Fatalf("first.CheckRequired calls = %d, want 1", first.validateCalls)
 	}
 	if second.validateCalls != 0 {
 		t.Fatalf("second should not be processed, got %d calls", second.validateCalls)
@@ -147,7 +154,7 @@ infra:
 	}
 }
 
-func TestScanSections_MinimalNoOptionsOrValidate(t *testing.T) {
+func TestScanSections_MinimalNoOptionsOrCheckRequired(t *testing.T) {
 	rt := &Runtime{Config: loadKratosConfig(t, `
 hello:
   greeting: "hi"

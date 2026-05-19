@@ -76,9 +76,10 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 		return nil, nil, err
 	}
 
-	// 契约边界：load 出来即已填默认。复用生成的级联 ApplyDefaults，
-	// 覆盖所有 LoadBootstrap 调用方。
-	bc.ApplyDefaults()
+	if err := bc.ApplyConf(); err != nil {
+		_ = c.Close()
+		return nil, nil, err
+	}
 
 	return &bc, c, nil
 }

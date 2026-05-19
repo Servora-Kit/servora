@@ -6,11 +6,13 @@
 //   - SectionOptional() bool      // present when section { optional: true }
 //   - ApplyDefaults()             // present when a field has (field) { default: ... },
 //                                 //   or the message transitively reaches one via a
-//                                 //   singular message-typed field (cascade container)
-//   - ValidateConf() error        // present when any field has (field) { required: true }
-//
-// The method is named ValidateConf rather than Validate to avoid colliding
-// with protoc-gen-validate's generated Validate() method on the same types.
+//                                 //   singular message-typed field (cascade container);
+//                                 //   oneof members use default-if-set (no allocation)
+//   - CheckRequired() error       // present when any field has (field) { required: true },
+//                                 //   or the message transitively reaches one (cascade);
+//                                 //   oneof members are checked if set
+//   - ApplyConf() error           // composite: CheckRequired → ApplyDefaults in canonical
+//                                 //   order; runtime calls this single method via ConfApplier
 //
 // Output file is co-located with the source proto's *.pb.go and shares its
 // Go package. Messages without any conf annotations are skipped so files with
@@ -27,7 +29,7 @@ import (
 	"unicode"
 
 	confv1 "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
-	defaultcascade "github.com/Servora-Kit/servora/cmd/internal/defaultcascade"
+	"github.com/Servora-Kit/servora/cmd/internal/protoreach"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -76,11 +78,13 @@ func generate(gen *protogen.Plugin) error {
 
 // collectAnnotatedMessages flattens nested messages and keeps those with at
 // least one servora.conf.v1 annotation (section or any field-level rule), or
-// that transitively need ApplyDefaults per defaultcascade.NeedsApplyDefaults.
+// that transitively need a cascade method (ApplyDefaults or CheckRequired).
 func collectAnnotatedMessages(in []*protogen.Message) []*protogen.Message {
 	var out []*protogen.Message
 	for _, m := range in {
-		if messageHasAnnotations(m) || defaultcascade.NeedsApplyDefaults(m.Desc, map[protoreflect.FullName]bool{}) {
+		if messageHasAnnotations(m) ||
+			protoreach.NeedsCascade(m.Desc, fieldHasDefault, map[protoreflect.FullName]bool{}) ||
+			protoreach.NeedsCascade(m.Desc, fieldHasRequired, map[protoreflect.FullName]bool{}) {
 			out = append(out, m)
 		}
 		out = append(out, collectAnnotatedMessages(m.Messages)...)
@@ -98,6 +102,28 @@ func messageHasAnnotations(m *protogen.Message) bool {
 		}
 	}
 	return false
+}
+
+// fieldHasDefault is the leaf predicate for ApplyDefaults cascade: true when
+// the field carries a non-empty (servora.conf.v1.field) { default: ... }.
+func fieldHasDefault(fd protoreflect.FieldDescriptor) bool {
+	opts := fd.Options()
+	if opts == nil || !proto.HasExtension(opts, confv1.E_Field) {
+		return false
+	}
+	r, _ := proto.GetExtension(opts, confv1.E_Field).(*confv1.FieldRule)
+	return r != nil && r.GetDefault() != ""
+}
+
+// fieldHasRequired is the leaf predicate for CheckRequired cascade: true when
+// the field carries (servora.conf.v1.field) { required: true }.
+func fieldHasRequired(fd protoreflect.FieldDescriptor) bool {
+	opts := fd.Options()
+	if opts == nil || !proto.HasExtension(opts, confv1.E_Field) {
+		return false
+	}
+	r, _ := proto.GetExtension(opts, confv1.E_Field).(*confv1.FieldRule)
+	return r != nil && r.GetRequired()
 }
 
 func sectionRule(m *protogen.Message) *confv1.SectionRule {
@@ -148,16 +174,23 @@ func emitForMessage(g *protogen.GeneratedFile, m *protogen.Message) error {
 	}
 
 	defaultsFields := collectDefaultFields(m)
-	cascade := cascadeChildren(m)
-	if len(defaultsFields) > 0 || len(cascade) > 0 {
-		if err := emitApplyDefaults(g, m, defaultsFields, cascade); err != nil {
+	defRegular, defOneof := cascadeChildren(m, fieldHasDefault)
+	hasDefaults := len(defaultsFields) > 0 || len(defRegular) > 0 || len(defOneof) > 0
+	if hasDefaults {
+		if err := emitApplyDefaults(g, m, defaultsFields, defRegular, defOneof); err != nil {
 			return err
 		}
 	}
 
 	requiredFields := collectRequiredFields(m)
-	if len(requiredFields) > 0 {
-		emitValidate(g, m, requiredFields)
+	reqRegular, reqOneof := cascadeChildren(m, fieldHasRequired)
+	hasRequired := len(requiredFields) > 0 || len(reqRegular) > 0 || len(reqOneof) > 0
+	if hasRequired {
+		emitCheckRequired(g, m, requiredFields, reqRegular, reqOneof)
+	}
+
+	if hasDefaults || hasRequired {
+		emitApplyConf(g, m, hasRequired, hasDefaults)
 	}
 	return nil
 }
@@ -192,33 +225,34 @@ func collectRequiredFields(m *protogen.Message) []*protogen.Field {
 }
 
 // cascadeChildren returns singular message-typed fields whose message
-// transitively needs ApplyDefaults — the allocate-then-default targets.
-// Well-known types, lists, maps and oneof members are never cascade
-// targets (a oneof admits at most one set case, so the loader must not
-// pre-allocate one).
-func cascadeChildren(m *protogen.Message) []*protogen.Field {
-	var out []*protogen.Field
+// transitively satisfies pred. Fields are split into regular (non-oneof)
+// and oneof groups — emitters use different patterns for each:
+//   - regular: allocate-then-recurse (ApplyDefaults) or check-if-non-nil (CheckRequired)
+//   - oneof:   recurse-if-set only (never allocate, would violate at-most-one-case)
+func cascadeChildren(m *protogen.Message, pred func(protoreflect.FieldDescriptor) bool) (regular, oneof []*protogen.Field) {
 	for _, f := range m.Fields {
 		if f.Desc.Kind() != protoreflect.MessageKind || f.Desc.IsList() || f.Desc.IsMap() {
-			continue
-		}
-		if f.Desc.ContainingOneof() != nil {
 			continue
 		}
 		if f.Message == nil {
 			continue
 		}
-		if strings.HasPrefix(string(f.Message.Desc.FullName()), "google.protobuf.") {
+		if protoreach.IsWellKnown(f.Message.Desc) {
 			continue
 		}
-		if defaultcascade.NeedsApplyDefaults(f.Message.Desc, map[protoreflect.FullName]bool{}) {
-			out = append(out, f)
+		if !protoreach.NeedsCascade(f.Message.Desc, pred, map[protoreflect.FullName]bool{}) {
+			continue
+		}
+		if f.Desc.ContainingOneof() != nil {
+			oneof = append(oneof, f)
+		} else {
+			regular = append(regular, f)
 		}
 	}
-	return out
+	return
 }
 
-func emitApplyDefaults(g *protogen.GeneratedFile, m *protogen.Message, entries []defaultEntry, cascade []*protogen.Field) error {
+func emitApplyDefaults(g *protogen.GeneratedFile, m *protogen.Message, entries []defaultEntry, regular, oneof []*protogen.Field) error {
 	goType := m.GoIdent.GoName
 	g.P("// ApplyDefaults populates zero-valued fields on ", goType, " with the literal")
 	g.P("// defaults declared via (servora.conf.v1.field) annotations, then cascades")
@@ -232,12 +266,17 @@ func emitApplyDefaults(g *protogen.GeneratedFile, m *protogen.Message, entries [
 			return fmt.Errorf("field %s: %w", e.field.Desc.FullName(), err)
 		}
 	}
-	for _, f := range cascade {
+	for _, f := range regular {
 		childType := f.Message.GoIdent.GoName
 		g.P("	if m.", f.GoName, " == nil {")
 		g.P("		m.", f.GoName, " = &", childType, "{}")
 		g.P("	}")
 		g.P("	m.", f.GoName, ".ApplyDefaults()")
+	}
+	for _, f := range oneof {
+		g.P("	if v := m.Get", f.GoName, "(); v != nil {")
+		g.P("		v.ApplyDefaults()")
+		g.P("	}")
 	}
 	g.P("}")
 	g.P()
@@ -402,33 +441,56 @@ func isScalarKind(k protoreflect.Kind) bool {
 	return false
 }
 
-func emitValidate(g *protogen.GeneratedFile, m *protogen.Message, fields []*protogen.Field) {
+// emitCheckRequired generates the CheckRequired() error method. For messages
+// with direct required fields it checks zero-values; for cascade containers
+// it recurses into children. Oneof children use getter access (m.GetX()).
+//
+// Nil semantics: messages with direct required fields return error on nil
+// receiver (caller should have allocated); cascade-only containers return nil.
+func emitCheckRequired(g *protogen.GeneratedFile, m *protogen.Message, fields []*protogen.Field, regular, oneof []*protogen.Field) {
 	goType := m.GoIdent.GoName
+	hasDirectRequired := len(fields) > 0
 	fmtErrorf := g.QualifiedGoIdent(protogen.GoIdent{
 		GoName:       "Errorf",
 		GoImportPath: "fmt",
 	})
 
-	g.P("// ValidateConf reports the first required-but-missing field on ", goType, ".")
+	g.P("// CheckRequired reports the first required-but-missing field on ", goType, ".")
 	g.P("// Fields marked (servora.conf.v1.field) = { required: true } must have a")
-	g.P("// non-zero value once configuration loading completes. Distinct from")
-	g.P("// protoc-gen-validate's Validate() which covers full schema rules.")
-	g.P("func (m *", goType, ") ValidateConf() error {")
-	g.P("	if m == nil {")
-	g.P(`		return `, fmtErrorf, `("`, m.Desc.FullName(), `: nil receiver")`)
-	g.P("	}")
+	g.P("// non-zero value once configuration loading completes.")
+	g.P("func (m *", goType, ") CheckRequired() error {")
+	if hasDirectRequired {
+		g.P("	if m == nil {")
+		g.P(`		return `, fmtErrorf, `("`, m.Desc.FullName(), `: nil receiver")`)
+		g.P("	}")
+	} else {
+		g.P("	if m == nil {")
+		g.P("		return nil")
+		g.P("	}")
+	}
 	for _, f := range fields {
 		errPath := strings.ToLower(string(m.Desc.FullName())) + "." + jsonNameOrSnake(f)
 		predicate, ok := zeroPredicate(f)
 		if !ok {
-			// Unsupported required field kind: skip with a comment so the
-			// plugin output stays valid Go and the proto author gets a
-			// signal via lint.
 			g.P("	// (skipped: kind ", f.Desc.Kind(), " not supported for required)")
 			continue
 		}
 		g.P("	if ", predicate, " {")
 		g.P(`		return `, fmtErrorf, `("`, errPath, ` is required")`)
+		g.P("	}")
+	}
+	for _, f := range regular {
+		g.P("	if m.", f.GoName, " != nil {")
+		g.P("		if err := m.", f.GoName, ".CheckRequired(); err != nil {")
+		g.P("			return err")
+		g.P("		}")
+		g.P("	}")
+	}
+	for _, f := range oneof {
+		g.P("	if v := m.Get", f.GoName, "(); v != nil {")
+		g.P("		if err := v.CheckRequired(); err != nil {")
+		g.P("			return err")
+		g.P("		}")
 		g.P("	}")
 	}
 	g.P("	return nil")
@@ -476,6 +538,28 @@ func camelToSnake(s string) string {
 		b.WriteRune(unicode.ToLower(r))
 	}
 	return b.String()
+}
+
+// emitApplyConf generates the composite ApplyConf() error method that
+// orchestrates all conf-plugin contracts in the canonical order. The runtime
+// calls this single method via the ConfApplier interface; adding future
+// capabilities only requires updating this emitter, not the runtime.
+func emitApplyConf(g *protogen.GeneratedFile, m *protogen.Message, hasRequired, hasDefaults bool) {
+	goType := m.GoIdent.GoName
+	g.P("// ApplyConf runs the full post-scan conf contract sequence on ", goType, ".")
+	g.P("// Generated by protoc-gen-servora-conf; the runtime calls this via ConfApplier.")
+	g.P("func (m *", goType, ") ApplyConf() error {")
+	if hasRequired {
+		g.P("	if err := m.CheckRequired(); err != nil {")
+		g.P("		return err")
+		g.P("	}")
+	}
+	if hasDefaults {
+		g.P("	m.ApplyDefaults()")
+	}
+	g.P("	return nil")
+	g.P("}")
+	g.P()
 }
 
 // Ensure the file path helper compiles even if unused in some build flavors.

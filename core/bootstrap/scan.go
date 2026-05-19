@@ -32,14 +32,19 @@ type Defaulter interface {
 	ApplyDefaults()
 }
 
-// Validator is the contract for messages that carry required-field rules. The
-// returned error is propagated verbatim from ScanSections — fail-fast on the
-// first failing section, no further sections are processed.
-//
-// The method is named ValidateConf (not Validate) to avoid colliding with the
-// Validate() method that protoc-gen-validate generates on every message.
-type Validator interface {
-	ValidateConf() error
+// RequiredChecker is the contract for messages that carry required-field rules.
+// Typically consumed via ConfApplier; exposed for testing and direct use.
+type RequiredChecker interface {
+	CheckRequired() error
+}
+
+// ConfApplier is the composite contract for messages processed by
+// protoc-gen-servora-conf. It runs the full post-scan sequence
+// (currently CheckRequired → ApplyDefaults) in a single call.
+// The method is generated; the runtime does not encode capability
+// knowledge — future plugin capabilities are automatically included.
+type ConfApplier interface {
+	ApplyConf() error
 }
 
 // ScanSections loads every provided section from the runtime's merged kratos
@@ -47,12 +52,10 @@ type Validator interface {
 //
 //  1. If section implements OptionalSection and the key is missing, skip the
 //     Value(key).Scan call. Otherwise scan; an error here is fatal.
-//  2. If section implements Defaulter, call ApplyDefaults (even when scan was
-//     skipped, so optional-missing still gets literal defaults).
-//  3. If section implements Validator, call Validate. The first non-nil error
-//     stops the iteration.
+//  2. If section implements ConfApplier, call ApplyConf (the generated
+//     composite that runs CheckRequired → ApplyDefaults in canonical order).
 //
-// Returns nil when every section completed steps 1-3 without error.
+// Returns nil when every section completed steps 1-2 without error.
 func ScanSections(rt *Runtime, sections ...Section) error {
 	if rt == nil || rt.Config == nil {
 		return errors.New("runtime config is nil")
@@ -68,11 +71,8 @@ func ScanSections(rt *Runtime, sections ...Section) error {
 		if err := scanOneSection(rt.Config, s, key); err != nil {
 			return err
 		}
-		if d, ok := s.(Defaulter); ok {
-			d.ApplyDefaults()
-		}
-		if v, ok := s.(Validator); ok {
-			if err := v.ValidateConf(); err != nil {
+		if a, ok := s.(ConfApplier); ok {
+			if err := a.ApplyConf(); err != nil {
 				return fmt.Errorf("section %q: %w", key, err)
 			}
 		}

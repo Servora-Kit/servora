@@ -77,7 +77,7 @@ plugins:
       out: api/gen/go
       opt: paths=source_relative
 
-    # generate conf SectionKey/ApplyDefaults/Validate from proto annotations
+    # generate conf SectionKey/ApplyDefaults/CheckRequired/ApplyConf from proto annotations
     - local: protoc-gen-servora-conf
       out: api/gen/go
       opt: paths=source_relative
