@@ -283,6 +283,7 @@ func TestServer_CheckMode_Allowed(t *testing.T) {
 	req := fa.lastRequest()
 	if req == nil {
 		t.Fatal("authorizer.Check was not called")
+		return
 	}
 	if req.Subject != "user:alice" {
 		t.Errorf("Subject = %q, want user:alice", req.Subject)
