@@ -8,6 +8,9 @@ import (
 
 func newTestClient(t *testing.T) *Client {
 	t.Helper()
+	if testing.Short() {
+		t.Skip("skipping: requires Redis")
+	}
 	cfg := &Config{Addr: "localhost:6379", DB: 15}
 	c, cleanup, err := NewClient(cfg, testLogger{})
 	if err != nil {

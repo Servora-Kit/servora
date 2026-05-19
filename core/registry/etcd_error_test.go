@@ -54,8 +54,8 @@ func TestEtcdErrorHandling(t *testing.T) {
 
 // TestEtcdBoundaryConditions 测试边界条件
 func TestEtcdBoundaryConditions(t *testing.T) {
-	if !shouldRunEtcdIntegration() {
-		t.Skip("set RUN_ETCD_INTEGRATION_TESTS=1 to run etcd integration tests")
+	if testing.Short() {
+		t.Skip("skipping: requires Etcd")
 	}
 
 	// 只在有 etcd 服务器时运行
@@ -214,8 +214,8 @@ func TestEtcdBoundaryConditions(t *testing.T) {
 
 // TestEtcdWatcherResilience 测试监听器的恢复能力
 func TestEtcdWatcherResilience(t *testing.T) {
-	if !shouldRunEtcdIntegration() {
-		t.Skip("set RUN_ETCD_INTEGRATION_TESTS=1 to run etcd integration tests")
+	if testing.Short() {
+		t.Skip("skipping: requires Etcd")
 	}
 
 	client, err := clientv3.New(clientv3.Config{

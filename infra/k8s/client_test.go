@@ -9,6 +9,9 @@ import (
 
 func TestNewClientset(t *testing.T) {
 	t.Run("creates clientset with available config", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("skipping: requires Kubernetes")
+		}
 		clientset, err := NewClientset()
 		if err != nil {
 			t.Skipf("unable to create clientset (expected when no kubeconfig available): %v", err)

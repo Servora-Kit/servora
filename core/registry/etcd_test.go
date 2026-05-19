@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -12,14 +11,10 @@ import (
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
-func shouldRunEtcdIntegration() bool {
-	return os.Getenv("RUN_ETCD_INTEGRATION_TESTS") == "1"
-}
-
 // TestEtcdRegistryAndDiscovery 测试 etcd 注册和发现功能
 func TestEtcdRegistryAndDiscovery(t *testing.T) {
-	if !shouldRunEtcdIntegration() {
-		t.Skip("set RUN_ETCD_INTEGRATION_TESTS=1 to run etcd integration tests")
+	if testing.Short() {
+		t.Skip("skipping: requires Etcd")
 	}
 
 	// 创建 etcd 客户端
@@ -129,8 +124,8 @@ func TestEtcdRegistryAndDiscovery(t *testing.T) {
 
 // TestEtcdConfigConversion 测试配置转换
 func TestEtcdConfigConversion(t *testing.T) {
-	if !shouldRunEtcdIntegration() {
-		t.Skip("set RUN_ETCD_INTEGRATION_TESTS=1 to run etcd integration tests")
+	if testing.Short() {
+		t.Skip("skipping: requires Etcd")
 	}
 
 	// 创建测试配置
@@ -176,8 +171,8 @@ func TestEtcdConfigConversion(t *testing.T) {
 
 // BenchmarkEtcdServiceDiscovery 性能基准测试
 func BenchmarkEtcdServiceDiscovery(b *testing.B) {
-	if !shouldRunEtcdIntegration() {
-		b.Skip("set RUN_ETCD_INTEGRATION_TESTS=1 to run etcd integration benchmark")
+	if testing.Short() {
+		b.Skip("skipping: requires Etcd")
 	}
 
 	// 创建 etcd 客户端
