@@ -26,6 +26,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Setup multi-module workspace
+        run: go work init . ./api/gen
+
       - uses: golangci/golangci-lint-action@v9
 
       - uses: bufbuild/buf-action@v1
@@ -42,6 +45,9 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+
+      - name: Setup multi-module workspace
+        run: go work init . ./api/gen
 
       - run: go build ./...
 
