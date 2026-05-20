@@ -31,12 +31,6 @@ jobs:
 
       - uses: golangci/golangci-lint-action@v9
 
-      - uses: bufbuild/buf-action@v1
-        with:
-          setup_only: true
-
-      - run: buf lint
-
   test:
     runs-on: ubuntu-latest
     steps:

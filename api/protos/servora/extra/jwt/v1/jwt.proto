@@ -12,7 +12,10 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/jwt
 // =============================================================================
 
 message Jwt {
-  option (servora.conf.v1.section) = { key: "jwt", optional: true };
+  option (servora.conf.v1.section) = {
+    key: "jwt"
+    optional: true
+  };
 
   string private_key_path = 1;
   string private_key_pem = 2;

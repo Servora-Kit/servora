@@ -14,7 +14,10 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/bro
 // =============================================================================
 
 message Broker {
-  option (servora.conf.v1.section) = { key: "broker", optional: true };
+  option (servora.conf.v1.section) = {
+    key: "broker"
+    optional: true
+  };
 
   oneof backend {
     Kafka kafka = 1;
@@ -23,16 +26,16 @@ message Broker {
 
 // Kafka 消息代理配置（用于审计事件等异步管线）
 message Kafka {
-  repeated string brokers = 1 [(servora.conf.v1.field) = { required: true }];
+  repeated string brokers = 1 [(servora.conf.v1.field) = {required: true}];
   string client_id = 2;
   string consumer_group = 3;
   int32 required_acks = 4;
-  int32 retry_max = 5 [(servora.conf.v1.field) = { default: "3" }];
+  int32 retry_max = 5 [(servora.conf.v1.field) = {default: "3"}];
   google.protobuf.Duration retry_backoff = 6;
   google.protobuf.Duration dial_timeout = 7;
   google.protobuf.Duration read_timeout = 8;
   google.protobuf.Duration write_timeout = 9;
-  string compression = 10 [(servora.conf.v1.field) = { default: "none" }];
+  string compression = 10 [(servora.conf.v1.field) = {default: "none"}];
 
   // SASL 认证配置（可选）
   message SASL {

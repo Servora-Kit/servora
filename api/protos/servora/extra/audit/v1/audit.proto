@@ -15,10 +15,10 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/aud
 // AuditContract 仅承载 framework 侧 audit 注入所需契约字段。
 // 该 section 非 optional：业务一旦启用 audit middleware，必须显式提供。
 message AuditContract {
-  option (servora.conf.v1.section) = { key: "audit" };
+  option (servora.conf.v1.section) = {key: "audit"};
 
   bool enabled = 1;
-  string emitter_type = 2 [(servora.conf.v1.field) = { default: "noop" }];
-  string topic = 3 [(servora.conf.v1.field) = { default: "servora.audit.events" }];
+  string emitter_type = 2 [(servora.conf.v1.field) = {default: "noop"}];
+  string topic = 3 [(servora.conf.v1.field) = {default: "servora.audit.events"}];
   string service_name = 4;
 }

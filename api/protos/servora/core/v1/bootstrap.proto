@@ -39,8 +39,8 @@ message TLSConfig {
 message Server {
   // 监听配置（面向 net.Listen 参数）
   message Listen {
-    string network = 1 [(servora.conf.v1.field) = { default: "tcp" }];
-    string addr = 2 [(servora.conf.v1.field) = { required: true }];
+    string network = 1 [(servora.conf.v1.field) = {default: "tcp"}];
+    string addr = 2 [(servora.conf.v1.field) = {required: true}];
     google.protobuf.Duration timeout = 3;
   }
 

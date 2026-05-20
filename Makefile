@@ -162,6 +162,11 @@ lint.proto: ## Run buf lint
 	@buf lint
 	@echo "✓ Proto lint passed"
 
+.PHONY: fmt.proto
+fmt.proto: ## Format proto files (buf format -w)
+	@buf format -w
+	@echo "✓ Proto formatted"
+
 # CI-equivalent path: disable Go workspace, then lint Go + proto.
 .PHONY: ci.lint
 ci.lint: LINT_GOWORK=off
@@ -181,7 +186,8 @@ endif
 	@echo "✓ Tagged api/gen/$(TAG) (run 'git push --tags' to push)"
 
 .PHONY: bsr.push
-bsr.push: ## Push proto to BSR (auto-labels with Git tag if present)
+# 日常 BSR 推送已交给 .github/workflows/buf-ci.yml；此 target 仅作本地预演/应急使用
+bsr.push: ## Push proto to BSR (local fallback; CI handles daily pushes via buf-ci.yml)
 	@GIT_TAG=$$(git tag --points-at HEAD 2>/dev/null | grep -E '^v[0-9]' | head -1); \
 	if [ -n "$$GIT_TAG" ]; then \
 		echo "==> Pushing to BSR with labels: $$GIT_TAG, main"; \

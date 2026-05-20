@@ -12,7 +12,10 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/mai
 // =============================================================================
 
 message Mail {
-  option (servora.conf.v1.section) = { key: "mail", optional: true };
+  option (servora.conf.v1.section) = {
+    key: "mail"
+    optional: true
+  };
 
   Smtp smtp = 1;
   MailFrom from = 2;

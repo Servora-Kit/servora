@@ -16,7 +16,6 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/cloudevents/v1;cev1";
 
 message CloudEvent {
-
   // -- CloudEvent Context Attributes
 
   // Required Attributes
@@ -29,7 +28,7 @@ message CloudEvent {
   map<string, CloudEventAttributeValue> attributes = 5;
 
   // -- CloudEvent Data (Bytes, Text, or Proto)
-  oneof  data {
+  oneof data {
     bytes binary_data = 6;
     string text_data = 7;
     google.protobuf.Any proto_data = 8;
@@ -37,7 +36,6 @@ message CloudEvent {
 
   // The CloudEvent specification defines seven attribute value types.
   message CloudEventAttributeValue {
-
     oneof attr {
       bool ce_boolean = 1;
       int32 ce_integer = 2;
