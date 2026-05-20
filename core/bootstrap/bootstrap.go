@@ -1,20 +1,22 @@
 package bootstrap
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	logger "github.com/Servora-Kit/servora/obs/logging"
-	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/core/bootstrap/config"
+	slogger "github.com/Servora-Kit/servora/obs/logger"
+	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
+	"github.com/Servora-Kit/servora/obs/telemetry"
 
 	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
 // SvcIdentity 定义服务实例身份信息。
@@ -27,13 +29,15 @@ type SvcIdentity struct {
 
 // Runtime 聚合启动阶段产物与资源清理句柄。
 type Runtime struct {
-	Bootstrap *corev1.Bootstrap
-	Config    kconfig.Config
-	Identity  SvcIdentity
-	Logger    log.Logger
+	Bootstrap    *corev1.Bootstrap
+	Config       kconfig.Config
+	Identity     SvcIdentity
+	Logger       *slog.Logger
+	KratosLogger kratoslog.Logger
 
 	configCloser func()
 	traceCloser  func()
+	logCloser    func(context.Context) error
 }
 
 // appBuilder 负责基于 Runtime 构造应用并返回清理函数。
@@ -43,15 +47,19 @@ type appBuilder func(runtime *Runtime) (app *kratos.App, cleanup func(), err err
 type BootstrapOption func(*bootstrapOptions)
 
 type bootstrapOptions struct {
-	envPrefix bool
+	envPrefix      bool
+	logHandlerFunc slogger.LogHandlerFunc
 }
 
 // WithEnvPrefix 启用环境变量前缀。
-// 启用后，配置加载器会根据服务名推导前缀（如 iam.service → IAM_），
-// 仅读取带前缀的环境变量覆盖配置。
-// 默认不使用前缀，直接读取无前缀的环境变量。
 func WithEnvPrefix() BootstrapOption {
 	return func(o *bootstrapOptions) { o.envPrefix = true }
+}
+
+// WithLogHandlerFunc 替换默认 zerolog 编码引擎。
+// 工厂函数对每个本地后端（stdout/file）调一次，servora 提供 io.Writer。
+func WithLogHandlerFunc(f slogger.LogHandlerFunc) BootstrapOption {
+	return func(o *bootstrapOptions) { o.logHandlerFunc = f }
 }
 
 // runtimeFactory 负责创建 Runtime。
@@ -96,29 +104,32 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	hostname, _ := os.Hostname()
 	identity := resolveServiceIdentity(name, version, hostname, bc.App)
 
-	zapLogger := logger.New(bc.App)
-	appLogger := log.With(
-		zapLogger,
-		"service", identity.Name,
-		"trace_id", tracing.TraceID(),
-		"span_id", tracing.SpanID(),
-	)
+	var lopts []slogger.Option
+	if opts.logHandlerFunc != nil {
+		lopts = append(lopts, slogger.WithLogHandlerFunc(opts.logHandlerFunc))
+	}
+	sl, logCloser := slogger.New(bc, lopts...)
+	appLogger := sl.With("service", identity.Name)
+	kl := kratosv2.Wrap(appLogger)
 
 	traceCleanup, err := telemetry.InitTracerProvider(bc.Trace, identity.Name, bc.App.Env)
 	if err != nil {
+		_ = logCloser(context.Background())
 		_ = c.Close()
 		return nil, err
 	}
 
 	return &Runtime{
-		Bootstrap: bc,
-		Config:    c,
-		Identity:  identity,
-		Logger:    appLogger,
+		Bootstrap:    bc,
+		Config:       c,
+		Identity:     identity,
+		Logger:       appLogger,
+		KratosLogger: kl,
 		configCloser: func() {
 			_ = c.Close()
 		},
 		traceCloser: traceCleanup,
+		logCloser:   logCloser,
 	}, nil
 }
 
@@ -127,9 +138,11 @@ func (r *Runtime) Close() {
 	if r == nil {
 		return
 	}
-	// 先关闭 tracer，确保 trace 在底层资源关闭前完成 flush。
 	if r.traceCloser != nil {
 		r.traceCloser()
+	}
+	if r.logCloser != nil {
+		_ = r.logCloser(context.Background())
 	}
 	if r.configCloser != nil {
 		r.configCloser()
@@ -220,15 +233,11 @@ func (r runner) bootstrapAndRun(configPath, name, version string, builder appBui
 	return nil
 }
 
-func logStage(l log.Logger, stage string, keyvals ...any) {
+func logStage(l *slog.Logger, stage string, keyvals ...any) {
 	if l == nil {
 		return
 	}
-	fields := []any{"stage", stage}
-	if len(keyvals) > 0 {
-		fields = append(fields, keyvals...)
-	}
-	_ = l.Log(log.LevelInfo, fields...)
+	l.Info(stage, keyvals...)
 }
 
 // resolveServiceIdentity 解析并回填服务身份默认值。

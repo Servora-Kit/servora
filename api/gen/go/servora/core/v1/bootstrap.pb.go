@@ -24,6 +24,159 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Log_LogLevel int32
+
+const (
+	Log_LOG_LEVEL_UNSPECIFIED Log_LogLevel = 0
+	Log_LOG_LEVEL_DEBUG       Log_LogLevel = 1
+	Log_LOG_LEVEL_INFO        Log_LogLevel = 2
+	Log_LOG_LEVEL_WARN        Log_LogLevel = 3
+	Log_LOG_LEVEL_ERROR       Log_LogLevel = 4
+)
+
+// Enum value maps for Log_LogLevel.
+var (
+	Log_LogLevel_name = map[int32]string{
+		0: "LOG_LEVEL_UNSPECIFIED",
+		1: "LOG_LEVEL_DEBUG",
+		2: "LOG_LEVEL_INFO",
+		3: "LOG_LEVEL_WARN",
+		4: "LOG_LEVEL_ERROR",
+	}
+	Log_LogLevel_value = map[string]int32{
+		"LOG_LEVEL_UNSPECIFIED": 0,
+		"LOG_LEVEL_DEBUG":       1,
+		"LOG_LEVEL_INFO":        2,
+		"LOG_LEVEL_WARN":        3,
+		"LOG_LEVEL_ERROR":       4,
+	}
+)
+
+func (x Log_LogLevel) Enum() *Log_LogLevel {
+	p := new(Log_LogLevel)
+	*p = x
+	return p
+}
+
+func (x Log_LogLevel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Log_LogLevel) Descriptor() protoreflect.EnumDescriptor {
+	return file_servora_core_v1_bootstrap_proto_enumTypes[0].Descriptor()
+}
+
+func (Log_LogLevel) Type() protoreflect.EnumType {
+	return &file_servora_core_v1_bootstrap_proto_enumTypes[0]
+}
+
+func (x Log_LogLevel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Log_LogLevel.Descriptor instead.
+func (Log_LogLevel) EnumDescriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 0}
+}
+
+type Log_LogFormat int32
+
+const (
+	Log_LOG_FORMAT_UNSPECIFIED Log_LogFormat = 0
+	Log_LOG_FORMAT_JSON        Log_LogFormat = 1
+	Log_LOG_FORMAT_TEXT        Log_LogFormat = 2
+)
+
+// Enum value maps for Log_LogFormat.
+var (
+	Log_LogFormat_name = map[int32]string{
+		0: "LOG_FORMAT_UNSPECIFIED",
+		1: "LOG_FORMAT_JSON",
+		2: "LOG_FORMAT_TEXT",
+	}
+	Log_LogFormat_value = map[string]int32{
+		"LOG_FORMAT_UNSPECIFIED": 0,
+		"LOG_FORMAT_JSON":        1,
+		"LOG_FORMAT_TEXT":        2,
+	}
+)
+
+func (x Log_LogFormat) Enum() *Log_LogFormat {
+	p := new(Log_LogFormat)
+	*p = x
+	return p
+}
+
+func (x Log_LogFormat) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Log_LogFormat) Descriptor() protoreflect.EnumDescriptor {
+	return file_servora_core_v1_bootstrap_proto_enumTypes[1].Descriptor()
+}
+
+func (Log_LogFormat) Type() protoreflect.EnumType {
+	return &file_servora_core_v1_bootstrap_proto_enumTypes[1]
+}
+
+func (x Log_LogFormat) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Log_LogFormat.Descriptor instead.
+func (Log_LogFormat) EnumDescriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 1}
+}
+
+type Log_OtelProtocol int32
+
+const (
+	Log_OTEL_PROTOCOL_UNSPECIFIED   Log_OtelProtocol = 0
+	Log_OTEL_PROTOCOL_GRPC          Log_OtelProtocol = 1
+	Log_OTEL_PROTOCOL_HTTP_PROTOBUF Log_OtelProtocol = 2
+)
+
+// Enum value maps for Log_OtelProtocol.
+var (
+	Log_OtelProtocol_name = map[int32]string{
+		0: "OTEL_PROTOCOL_UNSPECIFIED",
+		1: "OTEL_PROTOCOL_GRPC",
+		2: "OTEL_PROTOCOL_HTTP_PROTOBUF",
+	}
+	Log_OtelProtocol_value = map[string]int32{
+		"OTEL_PROTOCOL_UNSPECIFIED":   0,
+		"OTEL_PROTOCOL_GRPC":          1,
+		"OTEL_PROTOCOL_HTTP_PROTOBUF": 2,
+	}
+)
+
+func (x Log_OtelProtocol) Enum() *Log_OtelProtocol {
+	p := new(Log_OtelProtocol)
+	*p = x
+	return p
+}
+
+func (x Log_OtelProtocol) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Log_OtelProtocol) Descriptor() protoreflect.EnumDescriptor {
+	return file_servora_core_v1_bootstrap_proto_enumTypes[2].Descriptor()
+}
+
+func (Log_OtelProtocol) Type() protoreflect.EnumType {
+	return &file_servora_core_v1_bootstrap_proto_enumTypes[2]
+}
+
+func (x Log_OtelProtocol) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Log_OtelProtocol.Descriptor instead.
+func (Log_OtelProtocol) EnumDescriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 2}
+}
+
 type Bootstrap struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	App           *App                   `protobuf:"bytes,1,opt,name=app,proto3" json:"app,omitempty"`
@@ -34,6 +187,7 @@ type Bootstrap struct {
 	Config        *Config                `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
 	Trace         *Trace                 `protobuf:"bytes,7,opt,name=trace,proto3" json:"trace,omitempty"`
 	Metrics       *Metrics               `protobuf:"bytes,8,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	Log           *Log                   `protobuf:"bytes,9,opt,name=log,proto3" json:"log,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -120,6 +274,13 @@ func (x *Bootstrap) GetTrace() *Trace {
 func (x *Bootstrap) GetMetrics() *Metrics {
 	if x != nil {
 		return x.Metrics
+	}
+	return nil
+}
+
+func (x *Bootstrap) GetLog() *Log {
+	if x != nil {
+		return x.Log
 	}
 	return nil
 }
@@ -309,13 +470,13 @@ func (x *Data) GetClient() *Data_Client {
 
 // 应用基础配置（剥离 jwt / audit / mail，由 extra/<域>/v1 持有）
 type App struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Env           string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Version       string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
-	Log           *App_Log               `protobuf:"bytes,5,opt,name=log,proto3" json:"log,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ExternalUrl   string                 `protobuf:"bytes,8,opt,name=external_url,json=externalUrl,proto3" json:"external_url,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Env     string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	Name    string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Version string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	// field 5 reserved (was App.Log, moved to Bootstrap.log)
+	Metadata      map[string]string `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ExternalUrl   string            `protobuf:"bytes,8,opt,name=external_url,json=externalUrl,proto3" json:"external_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -369,13 +530,6 @@ func (x *App) GetVersion() string {
 		return x.Version
 	}
 	return ""
-}
-
-func (x *App) GetLog() *App_Log {
-	if x != nil {
-		return x.Log
-	}
-	return nil
 }
 
 func (x *App) GetMetadata() map[string]string {
@@ -1167,6 +1321,59 @@ func (x *Metrics) GetMeterName() string {
 	return ""
 }
 
+// 日志配置（与 App 同级，所有 message/enum nested）
+type Log struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Level         Log_LogLevel           `protobuf:"varint,1,opt,name=level,proto3,enum=servora.core.v1.Log_LogLevel" json:"level,omitempty"`
+	Backends      []*Log_LogBackend      `protobuf:"bytes,2,rep,name=backends,proto3" json:"backends,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Log) Reset() {
+	*x = Log{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Log) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Log) ProtoMessage() {}
+
+func (x *Log) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Log.ProtoReflect.Descriptor instead.
+func (*Log) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *Log) GetLevel() Log_LogLevel {
+	if x != nil {
+		return x.Level
+	}
+	return Log_LOG_LEVEL_UNSPECIFIED
+}
+
+func (x *Log) GetBackends() []*Log_LogBackend {
+	if x != nil {
+		return x.Backends
+	}
+	return nil
+}
+
 // 监听配置（面向 net.Listen 参数）
 type Server_Listen struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1179,7 +1386,7 @@ type Server_Listen struct {
 
 func (x *Server_Listen) Reset() {
 	*x = Server_Listen{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1191,7 +1398,7 @@ func (x *Server_Listen) String() string {
 func (*Server_Listen) ProtoMessage() {}
 
 func (x *Server_Listen) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1239,7 +1446,7 @@ type Server_Registry struct {
 
 func (x *Server_Registry) Reset() {
 	*x = Server_Registry{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1251,7 +1458,7 @@ func (x *Server_Registry) String() string {
 func (*Server_Registry) ProtoMessage() {}
 
 func (x *Server_Registry) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1292,7 +1499,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1304,7 +1511,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1352,7 +1559,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1364,7 +1571,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1411,7 +1618,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1423,7 +1630,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1469,7 +1676,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1481,7 +1688,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1562,7 +1769,7 @@ type Data_Client struct {
 
 func (x *Data_Client) Reset() {
 	*x = Data_Client{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1574,7 +1781,7 @@ func (x *Data_Client) String() string {
 func (*Data_Client) ProtoMessage() {}
 
 func (x *Data_Client) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1607,7 +1814,7 @@ type Data_Client_Service struct {
 
 func (x *Data_Client_Service) Reset() {
 	*x = Data_Client_Service{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1619,7 +1826,7 @@ func (x *Data_Client_Service) String() string {
 func (*Data_Client_Service) ProtoMessage() {}
 
 func (x *Data_Client_Service) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1662,7 +1869,7 @@ type Data_Client_Endpoint struct {
 
 func (x *Data_Client_Endpoint) Reset() {
 	*x = Data_Client_Endpoint{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[22]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1674,7 +1881,7 @@ func (x *Data_Client_Endpoint) String() string {
 func (*Data_Client_Endpoint) ProtoMessage() {}
 
 func (x *Data_Client_Endpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[22]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1725,33 +1932,34 @@ func (x *Data_Client_Endpoint) GetOptions() *structpb.Struct {
 	return nil
 }
 
-type App_Log struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Level         int32                  `protobuf:"varint,1,opt,name=level,proto3" json:"level,omitempty"`
-	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
-	MaxSize       int32                  `protobuf:"varint,3,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
-	MaxBackups    int32                  `protobuf:"varint,4,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
-	MaxAge        int32                  `protobuf:"varint,5,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
-	Compress      bool                   `protobuf:"varint,6,opt,name=compress,proto3" json:"compress,omitempty"`
+type Log_LogBackend struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Backend:
+	//
+	//	*Log_LogBackend_Stdout
+	//	*Log_LogBackend_File
+	//	*Log_LogBackend_Otel
+	//	*Log_LogBackend_Noop
+	Backend       isLog_LogBackend_Backend `protobuf_oneof:"backend"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *App_Log) Reset() {
-	*x = App_Log{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
+func (x *Log_LogBackend) Reset() {
+	*x = Log_LogBackend{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *App_Log) String() string {
+func (x *Log_LogBackend) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*App_Log) ProtoMessage() {}
+func (*Log_LogBackend) ProtoMessage() {}
 
-func (x *App_Log) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
+func (x *Log_LogBackend) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1762,58 +1970,311 @@ func (x *App_Log) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use App_Log.ProtoReflect.Descriptor instead.
-func (*App_Log) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{4, 0}
+// Deprecated: Use Log_LogBackend.ProtoReflect.Descriptor instead.
+func (*Log_LogBackend) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 0}
 }
 
-func (x *App_Log) GetLevel() int32 {
+func (x *Log_LogBackend) GetBackend() isLog_LogBackend_Backend {
 	if x != nil {
-		return x.Level
+		return x.Backend
 	}
-	return 0
+	return nil
 }
 
-func (x *App_Log) GetFilename() string {
+func (x *Log_LogBackend) GetStdout() *Log_StdoutBackend {
 	if x != nil {
-		return x.Filename
+		if x, ok := x.Backend.(*Log_LogBackend_Stdout); ok {
+			return x.Stdout
+		}
+	}
+	return nil
+}
+
+func (x *Log_LogBackend) GetFile() *Log_FileBackend {
+	if x != nil {
+		if x, ok := x.Backend.(*Log_LogBackend_File); ok {
+			return x.File
+		}
+	}
+	return nil
+}
+
+func (x *Log_LogBackend) GetOtel() *Log_OtelBackend {
+	if x != nil {
+		if x, ok := x.Backend.(*Log_LogBackend_Otel); ok {
+			return x.Otel
+		}
+	}
+	return nil
+}
+
+func (x *Log_LogBackend) GetNoop() *Log_NoopBackend {
+	if x != nil {
+		if x, ok := x.Backend.(*Log_LogBackend_Noop); ok {
+			return x.Noop
+		}
+	}
+	return nil
+}
+
+type isLog_LogBackend_Backend interface {
+	isLog_LogBackend_Backend()
+}
+
+type Log_LogBackend_Stdout struct {
+	Stdout *Log_StdoutBackend `protobuf:"bytes,1,opt,name=stdout,proto3,oneof"`
+}
+
+type Log_LogBackend_File struct {
+	File *Log_FileBackend `protobuf:"bytes,2,opt,name=file,proto3,oneof"`
+}
+
+type Log_LogBackend_Otel struct {
+	Otel *Log_OtelBackend `protobuf:"bytes,3,opt,name=otel,proto3,oneof"`
+}
+
+type Log_LogBackend_Noop struct {
+	Noop *Log_NoopBackend `protobuf:"bytes,4,opt,name=noop,proto3,oneof"`
+}
+
+func (*Log_LogBackend_Stdout) isLog_LogBackend_Backend() {}
+
+func (*Log_LogBackend_File) isLog_LogBackend_Backend() {}
+
+func (*Log_LogBackend_Otel) isLog_LogBackend_Backend() {}
+
+func (*Log_LogBackend_Noop) isLog_LogBackend_Backend() {}
+
+type Log_StdoutBackend struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Format        Log_LogFormat          `protobuf:"varint,1,opt,name=format,proto3,enum=servora.core.v1.Log_LogFormat" json:"format,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Log_StdoutBackend) Reset() {
+	*x = Log_StdoutBackend{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Log_StdoutBackend) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Log_StdoutBackend) ProtoMessage() {}
+
+func (x *Log_StdoutBackend) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Log_StdoutBackend.ProtoReflect.Descriptor instead.
+func (*Log_StdoutBackend) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 1}
+}
+
+func (x *Log_StdoutBackend) GetFormat() Log_LogFormat {
+	if x != nil {
+		return x.Format
+	}
+	return Log_LOG_FORMAT_UNSPECIFIED
+}
+
+type Log_FileBackend struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	MaxSize       int32                  `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	MaxBackups    int32                  `protobuf:"varint,3,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
+	MaxAge        int32                  `protobuf:"varint,4,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	Compress      bool                   `protobuf:"varint,5,opt,name=compress,proto3" json:"compress,omitempty"`
+	Format        Log_LogFormat          `protobuf:"varint,6,opt,name=format,proto3,enum=servora.core.v1.Log_LogFormat" json:"format,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Log_FileBackend) Reset() {
+	*x = Log_FileBackend{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Log_FileBackend) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Log_FileBackend) ProtoMessage() {}
+
+func (x *Log_FileBackend) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Log_FileBackend.ProtoReflect.Descriptor instead.
+func (*Log_FileBackend) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 2}
+}
+
+func (x *Log_FileBackend) GetPath() string {
+	if x != nil {
+		return x.Path
 	}
 	return ""
 }
 
-func (x *App_Log) GetMaxSize() int32 {
+func (x *Log_FileBackend) GetMaxSize() int32 {
 	if x != nil {
 		return x.MaxSize
 	}
 	return 0
 }
 
-func (x *App_Log) GetMaxBackups() int32 {
+func (x *Log_FileBackend) GetMaxBackups() int32 {
 	if x != nil {
 		return x.MaxBackups
 	}
 	return 0
 }
 
-func (x *App_Log) GetMaxAge() int32 {
+func (x *Log_FileBackend) GetMaxAge() int32 {
 	if x != nil {
 		return x.MaxAge
 	}
 	return 0
 }
 
-func (x *App_Log) GetCompress() bool {
+func (x *Log_FileBackend) GetCompress() bool {
 	if x != nil {
 		return x.Compress
 	}
 	return false
 }
 
+func (x *Log_FileBackend) GetFormat() Log_LogFormat {
+	if x != nil {
+		return x.Format
+	}
+	return Log_LOG_FORMAT_UNSPECIFIED
+}
+
+type Log_OtelBackend struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Protocol      Log_OtelProtocol       `protobuf:"varint,2,opt,name=protocol,proto3,enum=servora.core.v1.Log_OtelProtocol" json:"protocol,omitempty"`
+	Insecure      bool                   `protobuf:"varint,3,opt,name=insecure,proto3" json:"insecure,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Log_OtelBackend) Reset() {
+	*x = Log_OtelBackend{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Log_OtelBackend) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Log_OtelBackend) ProtoMessage() {}
+
+func (x *Log_OtelBackend) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Log_OtelBackend.ProtoReflect.Descriptor instead.
+func (*Log_OtelBackend) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 3}
+}
+
+func (x *Log_OtelBackend) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *Log_OtelBackend) GetProtocol() Log_OtelProtocol {
+	if x != nil {
+		return x.Protocol
+	}
+	return Log_OTEL_PROTOCOL_UNSPECIFIED
+}
+
+func (x *Log_OtelBackend) GetInsecure() bool {
+	if x != nil {
+		return x.Insecure
+	}
+	return false
+}
+
+type Log_NoopBackend struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Log_NoopBackend) Reset() {
+	*x = Log_NoopBackend{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Log_NoopBackend) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Log_NoopBackend) ProtoMessage() {}
+
+func (x *Log_NoopBackend) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Log_NoopBackend.ProtoReflect.Descriptor instead.
+func (*Log_NoopBackend) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 4}
+}
+
 var File_servora_core_v1_bootstrap_proto protoreflect.FileDescriptor
 
 const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x1fservora/core/v1/bootstrap.proto\x12\x0fservora.core.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\"\x93\x03\n" +
+	"\x1fservora/core/v1/bootstrap.proto\x12\x0fservora.core.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\"\xbb\x03\n" +
 	"\tBootstrap\x12&\n" +
 	"\x03app\x18\x01 \x01(\v2\x14.servora.core.v1.AppR\x03app\x12/\n" +
 	"\x06server\x18\x02 \x01(\v2\x17.servora.core.v1.ServerR\x06server\x12)\n" +
@@ -1822,7 +2283,8 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\tdiscovery\x18\x05 \x01(\v2\x1a.servora.core.v1.DiscoveryR\tdiscovery\x12/\n" +
 	"\x06config\x18\x06 \x01(\v2\x17.servora.core.v1.ConfigR\x06config\x12,\n" +
 	"\x05trace\x18\a \x01(\v2\x16.servora.core.v1.TraceR\x05trace\x122\n" +
-	"\ametrics\x18\b \x01(\v2\x18.servora.core.v1.MetricsR\ametrics\"t\n" +
+	"\ametrics\x18\b \x01(\v2\x18.servora.core.v1.MetricsR\ametrics\x12&\n" +
+	"\x03log\x18\t \x01(\v2\x14.servora.core.v1.LogR\x03log\"t\n" +
 	"\tTLSConfig\x12\x16\n" +
 	"\x06enable\x18\x01 \x01(\bR\x06enable\x12\x1b\n" +
 	"\tcert_path\x18\x02 \x01(\tR\bcertPath\x12\x19\n" +
@@ -1873,22 +2335,13 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
 	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12,\n" +
 	"\x03tls\x18\x04 \x01(\v2\x1a.servora.core.v1.TLSConfigR\x03tls\x121\n" +
-	"\aoptions\x18\x05 \x01(\v2\x17.google.protobuf.StructR\aoptions\"\xbc\x03\n" +
+	"\aoptions\x18\x05 \x01(\v2\x17.google.protobuf.StructR\aoptions\"\xe5\x01\n" +
 	"\x03App\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\aversion\x18\x03 \x01(\tR\aversion\x12*\n" +
-	"\x03log\x18\x05 \x01(\v2\x18.servora.core.v1.App.LogR\x03log\x12>\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12>\n" +
 	"\bmetadata\x18\x06 \x03(\v2\".servora.core.v1.App.MetadataEntryR\bmetadata\x12!\n" +
-	"\fexternal_url\x18\b \x01(\tR\vexternalUrl\x1a\xa8\x01\n" +
-	"\x03Log\x12\x14\n" +
-	"\x05level\x18\x01 \x01(\x05R\x05level\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x19\n" +
-	"\bmax_size\x18\x03 \x01(\x05R\amaxSize\x12\x1f\n" +
-	"\vmax_backups\x18\x04 \x01(\x05R\n" +
-	"maxBackups\x12\x17\n" +
-	"\amax_age\x18\x05 \x01(\x05R\x06maxAge\x12\x1a\n" +
-	"\bcompress\x18\x06 \x01(\bR\bcompress\x1a;\n" +
+	"\fexternal_url\x18\b \x01(\tR\vexternalUrl\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfd\x01\n" +
@@ -1951,7 +2404,47 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\aMetrics\x12\x16\n" +
 	"\x06enable\x18\x01 \x01(\bR\x06enable\x12\x1d\n" +
 	"\n" +
-	"meter_name\x18\x02 \x01(\tR\tmeterNameB\xc5\x01\n" +
+	"meter_name\x18\x02 \x01(\tR\tmeterName\"\xf2\b\n" +
+	"\x03Log\x123\n" +
+	"\x05level\x18\x01 \x01(\x0e2\x1d.servora.core.v1.Log.LogLevelR\x05level\x12;\n" +
+	"\bbackends\x18\x02 \x03(\v2\x1f.servora.core.v1.Log.LogBackendR\bbackends\x1a\xfd\x01\n" +
+	"\n" +
+	"LogBackend\x12<\n" +
+	"\x06stdout\x18\x01 \x01(\v2\".servora.core.v1.Log.StdoutBackendH\x00R\x06stdout\x126\n" +
+	"\x04file\x18\x02 \x01(\v2 .servora.core.v1.Log.FileBackendH\x00R\x04file\x126\n" +
+	"\x04otel\x18\x03 \x01(\v2 .servora.core.v1.Log.OtelBackendH\x00R\x04otel\x126\n" +
+	"\x04noop\x18\x04 \x01(\v2 .servora.core.v1.Log.NoopBackendH\x00R\x04noopB\t\n" +
+	"\abackend\x1aG\n" +
+	"\rStdoutBackend\x126\n" +
+	"\x06format\x18\x01 \x01(\x0e2\x1e.servora.core.v1.Log.LogFormatR\x06format\x1a\xdd\x01\n" +
+	"\vFileBackend\x12\x1a\n" +
+	"\x04path\x18\x01 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\x04path\x12$\n" +
+	"\bmax_size\x18\x02 \x01(\x05B\t\x8a\xce\x18\x05\n" +
+	"\x03100R\amaxSize\x12\x1f\n" +
+	"\vmax_backups\x18\x03 \x01(\x05R\n" +
+	"maxBackups\x12\x17\n" +
+	"\amax_age\x18\x04 \x01(\x05R\x06maxAge\x12\x1a\n" +
+	"\bcompress\x18\x05 \x01(\bR\bcompress\x126\n" +
+	"\x06format\x18\x06 \x01(\x0e2\x1e.servora.core.v1.Log.LogFormatR\x06format\x1a\x8c\x01\n" +
+	"\vOtelBackend\x12\"\n" +
+	"\bendpoint\x18\x01 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\bendpoint\x12=\n" +
+	"\bprotocol\x18\x02 \x01(\x0e2!.servora.core.v1.Log.OtelProtocolR\bprotocol\x12\x1a\n" +
+	"\binsecure\x18\x03 \x01(\bR\binsecure\x1a\r\n" +
+	"\vNoopBackend\"w\n" +
+	"\bLogLevel\x12\x19\n" +
+	"\x15LOG_LEVEL_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fLOG_LEVEL_DEBUG\x10\x01\x12\x12\n" +
+	"\x0eLOG_LEVEL_INFO\x10\x02\x12\x12\n" +
+	"\x0eLOG_LEVEL_WARN\x10\x03\x12\x13\n" +
+	"\x0fLOG_LEVEL_ERROR\x10\x04\"Q\n" +
+	"\tLogFormat\x12\x1a\n" +
+	"\x16LOG_FORMAT_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fLOG_FORMAT_JSON\x10\x01\x12\x13\n" +
+	"\x0fLOG_FORMAT_TEXT\x10\x02\"f\n" +
+	"\fOtelProtocol\x12\x1d\n" +
+	"\x19OTEL_PROTOCOL_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12OTEL_PROTOCOL_GRPC\x10\x01\x12\x1f\n" +
+	"\x1bOTEL_PROTOCOL_HTTP_PROTOBUF\x10\x02B\xc5\x01\n" +
 	"\x13com.servora.core.v1B\x0eBootstrapProtoP\x01Z@github.com/Servora-Kit/servora/api/gen/go/servora/core/v1;corev1\xa2\x02\x03SCX\xaa\x02\x0fServora.Core.V1\xca\x02\x0fServora\\Core\\V1\xe2\x02\x1bServora\\Core\\V1\\GPBMetadata\xea\x02\x11Servora::Core::V1b\x06proto3"
 
 var (
@@ -1966,86 +2459,104 @@ func file_servora_core_v1_bootstrap_proto_rawDescGZIP() []byte {
 	return file_servora_core_v1_bootstrap_proto_rawDescData
 }
 
-var file_servora_core_v1_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_servora_core_v1_bootstrap_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_servora_core_v1_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_servora_core_v1_bootstrap_proto_goTypes = []any{
-	(*Bootstrap)(nil),            // 0: servora.core.v1.Bootstrap
-	(*TLSConfig)(nil),            // 1: servora.core.v1.TLSConfig
-	(*Server)(nil),               // 2: servora.core.v1.Server
-	(*Data)(nil),                 // 3: servora.core.v1.Data
-	(*App)(nil),                  // 4: servora.core.v1.App
-	(*Registry)(nil),             // 5: servora.core.v1.Registry
-	(*Discovery)(nil),            // 6: servora.core.v1.Discovery
-	(*Config)(nil),               // 7: servora.core.v1.Config
-	(*ConsulConfig)(nil),         // 8: servora.core.v1.ConsulConfig
-	(*EtcdConfig)(nil),           // 9: servora.core.v1.EtcdConfig
-	(*NacosConfig)(nil),          // 10: servora.core.v1.NacosConfig
-	(*KubernetesConfig)(nil),     // 11: servora.core.v1.KubernetesConfig
-	(*Trace)(nil),                // 12: servora.core.v1.Trace
-	(*Metrics)(nil),              // 13: servora.core.v1.Metrics
-	(*Server_Listen)(nil),        // 14: servora.core.v1.Server.Listen
-	(*Server_Registry)(nil),      // 15: servora.core.v1.Server.Registry
-	(*Server_HTTP)(nil),          // 16: servora.core.v1.Server.HTTP
-	(*Server_GRPC)(nil),          // 17: servora.core.v1.Server.GRPC
-	(*Data_Database)(nil),        // 18: servora.core.v1.Data.Database
-	(*Data_Redis)(nil),           // 19: servora.core.v1.Data.Redis
-	(*Data_Client)(nil),          // 20: servora.core.v1.Data.Client
-	(*Data_Client_Service)(nil),  // 21: servora.core.v1.Data.Client.Service
-	(*Data_Client_Endpoint)(nil), // 22: servora.core.v1.Data.Client.Endpoint
-	(*App_Log)(nil),              // 23: servora.core.v1.App.Log
-	nil,                          // 24: servora.core.v1.App.MetadataEntry
-	(*durationpb.Duration)(nil),  // 25: google.protobuf.Duration
-	(*structpb.Struct)(nil),      // 26: google.protobuf.Struct
+	(Log_LogLevel)(0),            // 0: servora.core.v1.Log.LogLevel
+	(Log_LogFormat)(0),           // 1: servora.core.v1.Log.LogFormat
+	(Log_OtelProtocol)(0),        // 2: servora.core.v1.Log.OtelProtocol
+	(*Bootstrap)(nil),            // 3: servora.core.v1.Bootstrap
+	(*TLSConfig)(nil),            // 4: servora.core.v1.TLSConfig
+	(*Server)(nil),               // 5: servora.core.v1.Server
+	(*Data)(nil),                 // 6: servora.core.v1.Data
+	(*App)(nil),                  // 7: servora.core.v1.App
+	(*Registry)(nil),             // 8: servora.core.v1.Registry
+	(*Discovery)(nil),            // 9: servora.core.v1.Discovery
+	(*Config)(nil),               // 10: servora.core.v1.Config
+	(*ConsulConfig)(nil),         // 11: servora.core.v1.ConsulConfig
+	(*EtcdConfig)(nil),           // 12: servora.core.v1.EtcdConfig
+	(*NacosConfig)(nil),          // 13: servora.core.v1.NacosConfig
+	(*KubernetesConfig)(nil),     // 14: servora.core.v1.KubernetesConfig
+	(*Trace)(nil),                // 15: servora.core.v1.Trace
+	(*Metrics)(nil),              // 16: servora.core.v1.Metrics
+	(*Log)(nil),                  // 17: servora.core.v1.Log
+	(*Server_Listen)(nil),        // 18: servora.core.v1.Server.Listen
+	(*Server_Registry)(nil),      // 19: servora.core.v1.Server.Registry
+	(*Server_HTTP)(nil),          // 20: servora.core.v1.Server.HTTP
+	(*Server_GRPC)(nil),          // 21: servora.core.v1.Server.GRPC
+	(*Data_Database)(nil),        // 22: servora.core.v1.Data.Database
+	(*Data_Redis)(nil),           // 23: servora.core.v1.Data.Redis
+	(*Data_Client)(nil),          // 24: servora.core.v1.Data.Client
+	(*Data_Client_Service)(nil),  // 25: servora.core.v1.Data.Client.Service
+	(*Data_Client_Endpoint)(nil), // 26: servora.core.v1.Data.Client.Endpoint
+	nil,                          // 27: servora.core.v1.App.MetadataEntry
+	(*Log_LogBackend)(nil),       // 28: servora.core.v1.Log.LogBackend
+	(*Log_StdoutBackend)(nil),    // 29: servora.core.v1.Log.StdoutBackend
+	(*Log_FileBackend)(nil),      // 30: servora.core.v1.Log.FileBackend
+	(*Log_OtelBackend)(nil),      // 31: servora.core.v1.Log.OtelBackend
+	(*Log_NoopBackend)(nil),      // 32: servora.core.v1.Log.NoopBackend
+	(*durationpb.Duration)(nil),  // 33: google.protobuf.Duration
+	(*structpb.Struct)(nil),      // 34: google.protobuf.Struct
 }
 var file_servora_core_v1_bootstrap_proto_depIdxs = []int32{
-	4,  // 0: servora.core.v1.Bootstrap.app:type_name -> servora.core.v1.App
-	2,  // 1: servora.core.v1.Bootstrap.server:type_name -> servora.core.v1.Server
-	3,  // 2: servora.core.v1.Bootstrap.data:type_name -> servora.core.v1.Data
-	5,  // 3: servora.core.v1.Bootstrap.registry:type_name -> servora.core.v1.Registry
-	6,  // 4: servora.core.v1.Bootstrap.discovery:type_name -> servora.core.v1.Discovery
-	7,  // 5: servora.core.v1.Bootstrap.config:type_name -> servora.core.v1.Config
-	12, // 6: servora.core.v1.Bootstrap.trace:type_name -> servora.core.v1.Trace
-	13, // 7: servora.core.v1.Bootstrap.metrics:type_name -> servora.core.v1.Metrics
-	16, // 8: servora.core.v1.Server.http:type_name -> servora.core.v1.Server.HTTP
-	17, // 9: servora.core.v1.Server.grpc:type_name -> servora.core.v1.Server.GRPC
-	18, // 10: servora.core.v1.Data.database:type_name -> servora.core.v1.Data.Database
-	19, // 11: servora.core.v1.Data.redis:type_name -> servora.core.v1.Data.Redis
-	20, // 12: servora.core.v1.Data.client:type_name -> servora.core.v1.Data.Client
-	23, // 13: servora.core.v1.App.log:type_name -> servora.core.v1.App.Log
-	24, // 14: servora.core.v1.App.metadata:type_name -> servora.core.v1.App.MetadataEntry
-	8,  // 15: servora.core.v1.Registry.consul:type_name -> servora.core.v1.ConsulConfig
-	9,  // 16: servora.core.v1.Registry.etcd:type_name -> servora.core.v1.EtcdConfig
-	10, // 17: servora.core.v1.Registry.nacos:type_name -> servora.core.v1.NacosConfig
-	11, // 18: servora.core.v1.Registry.kubernetes:type_name -> servora.core.v1.KubernetesConfig
-	8,  // 19: servora.core.v1.Discovery.consul:type_name -> servora.core.v1.ConsulConfig
-	9,  // 20: servora.core.v1.Discovery.etcd:type_name -> servora.core.v1.EtcdConfig
-	10, // 21: servora.core.v1.Discovery.nacos:type_name -> servora.core.v1.NacosConfig
-	11, // 22: servora.core.v1.Discovery.kubernetes:type_name -> servora.core.v1.KubernetesConfig
-	8,  // 23: servora.core.v1.Config.consul:type_name -> servora.core.v1.ConsulConfig
-	9,  // 24: servora.core.v1.Config.etcd:type_name -> servora.core.v1.EtcdConfig
-	10, // 25: servora.core.v1.Config.nacos:type_name -> servora.core.v1.NacosConfig
-	25, // 26: servora.core.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
-	25, // 27: servora.core.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
-	25, // 28: servora.core.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
-	25, // 29: servora.core.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
-	14, // 30: servora.core.v1.Server.HTTP.listen:type_name -> servora.core.v1.Server.Listen
-	1,  // 31: servora.core.v1.Server.HTTP.tls:type_name -> servora.core.v1.TLSConfig
-	15, // 32: servora.core.v1.Server.HTTP.registry:type_name -> servora.core.v1.Server.Registry
-	14, // 33: servora.core.v1.Server.GRPC.listen:type_name -> servora.core.v1.Server.Listen
-	1,  // 34: servora.core.v1.Server.GRPC.tls:type_name -> servora.core.v1.TLSConfig
-	15, // 35: servora.core.v1.Server.GRPC.registry:type_name -> servora.core.v1.Server.Registry
-	25, // 36: servora.core.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
-	25, // 37: servora.core.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	25, // 38: servora.core.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	21, // 39: servora.core.v1.Data.Client.services:type_name -> servora.core.v1.Data.Client.Service
-	22, // 40: servora.core.v1.Data.Client.Service.endpoints:type_name -> servora.core.v1.Data.Client.Endpoint
-	25, // 41: servora.core.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
-	1,  // 42: servora.core.v1.Data.Client.Endpoint.tls:type_name -> servora.core.v1.TLSConfig
-	26, // 43: servora.core.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
-	44, // [44:44] is the sub-list for method output_type
-	44, // [44:44] is the sub-list for method input_type
-	44, // [44:44] is the sub-list for extension type_name
-	44, // [44:44] is the sub-list for extension extendee
-	0,  // [0:44] is the sub-list for field type_name
+	7,  // 0: servora.core.v1.Bootstrap.app:type_name -> servora.core.v1.App
+	5,  // 1: servora.core.v1.Bootstrap.server:type_name -> servora.core.v1.Server
+	6,  // 2: servora.core.v1.Bootstrap.data:type_name -> servora.core.v1.Data
+	8,  // 3: servora.core.v1.Bootstrap.registry:type_name -> servora.core.v1.Registry
+	9,  // 4: servora.core.v1.Bootstrap.discovery:type_name -> servora.core.v1.Discovery
+	10, // 5: servora.core.v1.Bootstrap.config:type_name -> servora.core.v1.Config
+	15, // 6: servora.core.v1.Bootstrap.trace:type_name -> servora.core.v1.Trace
+	16, // 7: servora.core.v1.Bootstrap.metrics:type_name -> servora.core.v1.Metrics
+	17, // 8: servora.core.v1.Bootstrap.log:type_name -> servora.core.v1.Log
+	20, // 9: servora.core.v1.Server.http:type_name -> servora.core.v1.Server.HTTP
+	21, // 10: servora.core.v1.Server.grpc:type_name -> servora.core.v1.Server.GRPC
+	22, // 11: servora.core.v1.Data.database:type_name -> servora.core.v1.Data.Database
+	23, // 12: servora.core.v1.Data.redis:type_name -> servora.core.v1.Data.Redis
+	24, // 13: servora.core.v1.Data.client:type_name -> servora.core.v1.Data.Client
+	27, // 14: servora.core.v1.App.metadata:type_name -> servora.core.v1.App.MetadataEntry
+	11, // 15: servora.core.v1.Registry.consul:type_name -> servora.core.v1.ConsulConfig
+	12, // 16: servora.core.v1.Registry.etcd:type_name -> servora.core.v1.EtcdConfig
+	13, // 17: servora.core.v1.Registry.nacos:type_name -> servora.core.v1.NacosConfig
+	14, // 18: servora.core.v1.Registry.kubernetes:type_name -> servora.core.v1.KubernetesConfig
+	11, // 19: servora.core.v1.Discovery.consul:type_name -> servora.core.v1.ConsulConfig
+	12, // 20: servora.core.v1.Discovery.etcd:type_name -> servora.core.v1.EtcdConfig
+	13, // 21: servora.core.v1.Discovery.nacos:type_name -> servora.core.v1.NacosConfig
+	14, // 22: servora.core.v1.Discovery.kubernetes:type_name -> servora.core.v1.KubernetesConfig
+	11, // 23: servora.core.v1.Config.consul:type_name -> servora.core.v1.ConsulConfig
+	12, // 24: servora.core.v1.Config.etcd:type_name -> servora.core.v1.EtcdConfig
+	13, // 25: servora.core.v1.Config.nacos:type_name -> servora.core.v1.NacosConfig
+	33, // 26: servora.core.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
+	33, // 27: servora.core.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
+	33, // 28: servora.core.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
+	0,  // 29: servora.core.v1.Log.level:type_name -> servora.core.v1.Log.LogLevel
+	28, // 30: servora.core.v1.Log.backends:type_name -> servora.core.v1.Log.LogBackend
+	33, // 31: servora.core.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
+	18, // 32: servora.core.v1.Server.HTTP.listen:type_name -> servora.core.v1.Server.Listen
+	4,  // 33: servora.core.v1.Server.HTTP.tls:type_name -> servora.core.v1.TLSConfig
+	19, // 34: servora.core.v1.Server.HTTP.registry:type_name -> servora.core.v1.Server.Registry
+	18, // 35: servora.core.v1.Server.GRPC.listen:type_name -> servora.core.v1.Server.Listen
+	4,  // 36: servora.core.v1.Server.GRPC.tls:type_name -> servora.core.v1.TLSConfig
+	19, // 37: servora.core.v1.Server.GRPC.registry:type_name -> servora.core.v1.Server.Registry
+	33, // 38: servora.core.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
+	33, // 39: servora.core.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	33, // 40: servora.core.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	25, // 41: servora.core.v1.Data.Client.services:type_name -> servora.core.v1.Data.Client.Service
+	26, // 42: servora.core.v1.Data.Client.Service.endpoints:type_name -> servora.core.v1.Data.Client.Endpoint
+	33, // 43: servora.core.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
+	4,  // 44: servora.core.v1.Data.Client.Endpoint.tls:type_name -> servora.core.v1.TLSConfig
+	34, // 45: servora.core.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
+	29, // 46: servora.core.v1.Log.LogBackend.stdout:type_name -> servora.core.v1.Log.StdoutBackend
+	30, // 47: servora.core.v1.Log.LogBackend.file:type_name -> servora.core.v1.Log.FileBackend
+	31, // 48: servora.core.v1.Log.LogBackend.otel:type_name -> servora.core.v1.Log.OtelBackend
+	32, // 49: servora.core.v1.Log.LogBackend.noop:type_name -> servora.core.v1.Log.NoopBackend
+	1,  // 50: servora.core.v1.Log.StdoutBackend.format:type_name -> servora.core.v1.Log.LogFormat
+	1,  // 51: servora.core.v1.Log.FileBackend.format:type_name -> servora.core.v1.Log.LogFormat
+	2,  // 52: servora.core.v1.Log.OtelBackend.protocol:type_name -> servora.core.v1.Log.OtelProtocol
+	53, // [53:53] is the sub-list for method output_type
+	53, // [53:53] is the sub-list for method input_type
+	53, // [53:53] is the sub-list for extension type_name
+	53, // [53:53] is the sub-list for extension extendee
+	0,  // [0:53] is the sub-list for field type_name
 }
 
 func init() { file_servora_core_v1_bootstrap_proto_init() }
@@ -2070,18 +2581,25 @@ func file_servora_core_v1_bootstrap_proto_init() {
 		(*Config_Etcd)(nil),
 		(*Config_Nacos)(nil),
 	}
+	file_servora_core_v1_bootstrap_proto_msgTypes[25].OneofWrappers = []any{
+		(*Log_LogBackend_Stdout)(nil),
+		(*Log_LogBackend_File)(nil),
+		(*Log_LogBackend_Otel)(nil),
+		(*Log_LogBackend_Noop)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_core_v1_bootstrap_proto_rawDesc), len(file_servora_core_v1_bootstrap_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   25,
+			NumEnums:      3,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_servora_core_v1_bootstrap_proto_goTypes,
 		DependencyIndexes: file_servora_core_v1_bootstrap_proto_depIdxs,
+		EnumInfos:         file_servora_core_v1_bootstrap_proto_enumTypes,
 		MessageInfos:      file_servora_core_v1_bootstrap_proto_msgTypes,
 	}.Build()
 	File_servora_core_v1_bootstrap_proto = out.File

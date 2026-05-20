@@ -47,6 +47,8 @@ func (x *Bootstrap) Redact() string {
 	// Safe field: Trace
 
 	// Safe field: Metrics
+
+	// Safe field: Log
 	return x.String()
 }
 
@@ -103,8 +105,6 @@ func (x *App) Redact() string {
 	// Safe field: Name
 
 	// Safe field: Version
-
-	// Safe field: Log
 
 	// Safe field: Metadata
 
@@ -240,6 +240,18 @@ func (x *Metrics) Redact() string {
 	return x.String()
 }
 
+// Redact method implementation for Log
+func (x *Log) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Level
+
+	// Safe field: Backends
+	return x.String()
+}
+
 // Redact method implementation for Server_Listen
 func (x *Server_Listen) Redact() string {
 	if x == nil {
@@ -370,15 +382,31 @@ func (x *Data_Client_Endpoint) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for App_Log
-func (x *App_Log) Redact() string {
+// Redact method implementation for Log_LogBackend
+func (x *Log_LogBackend) Redact() string {
+	if x == nil {
+		return ""
+	}
+	return x.String()
+}
+
+// Redact method implementation for Log_StdoutBackend
+func (x *Log_StdoutBackend) Redact() string {
 	if x == nil {
 		return ""
 	}
 
-	// Safe field: Level
+	// Safe field: Format
+	return x.String()
+}
 
-	// Safe field: Filename
+// Redact method implementation for Log_FileBackend
+func (x *Log_FileBackend) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Path
 
 	// Safe field: MaxSize
 
@@ -387,5 +415,29 @@ func (x *App_Log) Redact() string {
 	// Safe field: MaxAge
 
 	// Safe field: Compress
+
+	// Safe field: Format
+	return x.String()
+}
+
+// Redact method implementation for Log_OtelBackend
+func (x *Log_OtelBackend) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Endpoint
+
+	// Safe field: Protocol
+
+	// Safe field: Insecure
+	return x.String()
+}
+
+// Redact method implementation for Log_NoopBackend
+func (x *Log_NoopBackend) Redact() string {
+	if x == nil {
+		return ""
+	}
 	return x.String()
 }

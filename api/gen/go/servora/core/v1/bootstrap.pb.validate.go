@@ -289,6 +289,35 @@ func (m *Bootstrap) validate(all bool) error {
 		}
 	}
 
+	if all {
+		switch v := interface{}(m.GetLog()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, BootstrapValidationError{
+					field:  "Log",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, BootstrapValidationError{
+					field:  "Log",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetLog()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return BootstrapValidationError{
+				field:  "Log",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return BootstrapMultiError(errors)
 	}
@@ -840,35 +869,6 @@ func (m *App) validate(all bool) error {
 	// no validation rules for Name
 
 	// no validation rules for Version
-
-	if all {
-		switch v := interface{}(m.GetLog()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, AppValidationError{
-					field:  "Log",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, AppValidationError{
-					field:  "Log",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetLog()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return AppValidationError{
-				field:  "Log",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
 	// no validation rules for Metadata
 
@@ -2439,6 +2439,140 @@ var _ interface {
 	ErrorName() string
 } = MetricsValidationError{}
 
+// Validate checks the field values on Log with the rules defined in the proto
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
+func (m *Log) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Log with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in LogMultiError, or nil if none found.
+func (m *Log) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Log) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Level
+
+	for idx, item := range m.GetBackends() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, LogValidationError{
+						field:  fmt.Sprintf("Backends[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, LogValidationError{
+						field:  fmt.Sprintf("Backends[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return LogValidationError{
+					field:  fmt.Sprintf("Backends[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return LogMultiError(errors)
+	}
+
+	return nil
+}
+
+// LogMultiError is an error wrapping multiple validation errors returned by
+// Log.ValidateAll() if the designated constraints aren't met.
+type LogMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LogMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LogMultiError) AllErrors() []error { return m }
+
+// LogValidationError is the validation error returned by Log.Validate if the
+// designated constraints aren't met.
+type LogValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LogValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LogValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LogValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LogValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LogValidationError) ErrorName() string { return "LogValidationError" }
+
+// Error satisfies the builtin error interface
+func (e LogValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLog.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LogValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LogValidationError{}
+
 // Validate checks the field values on Server_Listen with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -3812,52 +3946,211 @@ var _ interface {
 	ErrorName() string
 } = Data_Client_EndpointValidationError{}
 
-// Validate checks the field values on App_Log with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on Log_LogBackend with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *App_Log) Validate() error {
+func (m *Log_LogBackend) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on App_Log with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in App_LogMultiError, or nil if none found.
-func (m *App_Log) ValidateAll() error {
+// ValidateAll checks the field values on Log_LogBackend with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Log_LogBackendMultiError,
+// or nil if none found.
+func (m *Log_LogBackend) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *App_Log) validate(all bool) error {
+func (m *Log_LogBackend) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Level
+	switch v := m.Backend.(type) {
+	case *Log_LogBackend_Stdout:
+		if v == nil {
+			err := Log_LogBackendValidationError{
+				field:  "Backend",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
-	// no validation rules for Filename
+		if all {
+			switch v := interface{}(m.GetStdout()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "Stdout",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "Stdout",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetStdout()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Log_LogBackendValidationError{
+					field:  "Stdout",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
 
-	// no validation rules for MaxSize
+	case *Log_LogBackend_File:
+		if v == nil {
+			err := Log_LogBackendValidationError{
+				field:  "Backend",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
-	// no validation rules for MaxBackups
+		if all {
+			switch v := interface{}(m.GetFile()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "File",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "File",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetFile()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Log_LogBackendValidationError{
+					field:  "File",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
 
-	// no validation rules for MaxAge
+	case *Log_LogBackend_Otel:
+		if v == nil {
+			err := Log_LogBackendValidationError{
+				field:  "Backend",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
-	// no validation rules for Compress
+		if all {
+			switch v := interface{}(m.GetOtel()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "Otel",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "Otel",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetOtel()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Log_LogBackendValidationError{
+					field:  "Otel",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Log_LogBackend_Noop:
+		if v == nil {
+			err := Log_LogBackendValidationError{
+				field:  "Backend",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetNoop()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "Noop",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Log_LogBackendValidationError{
+						field:  "Noop",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetNoop()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Log_LogBackendValidationError{
+					field:  "Noop",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		_ = v // ensures v is used
+	}
 
 	if len(errors) > 0 {
-		return App_LogMultiError(errors)
+		return Log_LogBackendMultiError(errors)
 	}
 
 	return nil
 }
 
-// App_LogMultiError is an error wrapping multiple validation errors returned
-// by App_Log.ValidateAll() if the designated constraints aren't met.
-type App_LogMultiError []error
+// Log_LogBackendMultiError is an error wrapping multiple validation errors
+// returned by Log_LogBackend.ValidateAll() if the designated constraints
+// aren't met.
+type Log_LogBackendMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m App_LogMultiError) Error() string {
+func (m Log_LogBackendMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3866,11 +4159,11 @@ func (m App_LogMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m App_LogMultiError) AllErrors() []error { return m }
+func (m Log_LogBackendMultiError) AllErrors() []error { return m }
 
-// App_LogValidationError is the validation error returned by App_Log.Validate
-// if the designated constraints aren't met.
-type App_LogValidationError struct {
+// Log_LogBackendValidationError is the validation error returned by
+// Log_LogBackend.Validate if the designated constraints aren't met.
+type Log_LogBackendValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3878,22 +4171,22 @@ type App_LogValidationError struct {
 }
 
 // Field function returns field value.
-func (e App_LogValidationError) Field() string { return e.field }
+func (e Log_LogBackendValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e App_LogValidationError) Reason() string { return e.reason }
+func (e Log_LogBackendValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e App_LogValidationError) Cause() error { return e.cause }
+func (e Log_LogBackendValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e App_LogValidationError) Key() bool { return e.key }
+func (e Log_LogBackendValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e App_LogValidationError) ErrorName() string { return "App_LogValidationError" }
+func (e Log_LogBackendValidationError) ErrorName() string { return "Log_LogBackendValidationError" }
 
 // Error satisfies the builtin error interface
-func (e App_LogValidationError) Error() string {
+func (e Log_LogBackendValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3905,14 +4198,14 @@ func (e App_LogValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sApp_Log.%s: %s%s",
+		"invalid %sLog_LogBackend.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = App_LogValidationError{}
+var _ error = Log_LogBackendValidationError{}
 
 var _ interface {
 	Field() string
@@ -3920,4 +4213,426 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = App_LogValidationError{}
+} = Log_LogBackendValidationError{}
+
+// Validate checks the field values on Log_StdoutBackend with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Log_StdoutBackend) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Log_StdoutBackend with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Log_StdoutBackendMultiError, or nil if none found.
+func (m *Log_StdoutBackend) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Log_StdoutBackend) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Format
+
+	if len(errors) > 0 {
+		return Log_StdoutBackendMultiError(errors)
+	}
+
+	return nil
+}
+
+// Log_StdoutBackendMultiError is an error wrapping multiple validation errors
+// returned by Log_StdoutBackend.ValidateAll() if the designated constraints
+// aren't met.
+type Log_StdoutBackendMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Log_StdoutBackendMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Log_StdoutBackendMultiError) AllErrors() []error { return m }
+
+// Log_StdoutBackendValidationError is the validation error returned by
+// Log_StdoutBackend.Validate if the designated constraints aren't met.
+type Log_StdoutBackendValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Log_StdoutBackendValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Log_StdoutBackendValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Log_StdoutBackendValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Log_StdoutBackendValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Log_StdoutBackendValidationError) ErrorName() string {
+	return "Log_StdoutBackendValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Log_StdoutBackendValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLog_StdoutBackend.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Log_StdoutBackendValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Log_StdoutBackendValidationError{}
+
+// Validate checks the field values on Log_FileBackend with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Log_FileBackend) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Log_FileBackend with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Log_FileBackendMultiError, or nil if none found.
+func (m *Log_FileBackend) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Log_FileBackend) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Path
+
+	// no validation rules for MaxSize
+
+	// no validation rules for MaxBackups
+
+	// no validation rules for MaxAge
+
+	// no validation rules for Compress
+
+	// no validation rules for Format
+
+	if len(errors) > 0 {
+		return Log_FileBackendMultiError(errors)
+	}
+
+	return nil
+}
+
+// Log_FileBackendMultiError is an error wrapping multiple validation errors
+// returned by Log_FileBackend.ValidateAll() if the designated constraints
+// aren't met.
+type Log_FileBackendMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Log_FileBackendMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Log_FileBackendMultiError) AllErrors() []error { return m }
+
+// Log_FileBackendValidationError is the validation error returned by
+// Log_FileBackend.Validate if the designated constraints aren't met.
+type Log_FileBackendValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Log_FileBackendValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Log_FileBackendValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Log_FileBackendValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Log_FileBackendValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Log_FileBackendValidationError) ErrorName() string { return "Log_FileBackendValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Log_FileBackendValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLog_FileBackend.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Log_FileBackendValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Log_FileBackendValidationError{}
+
+// Validate checks the field values on Log_OtelBackend with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Log_OtelBackend) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Log_OtelBackend with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Log_OtelBackendMultiError, or nil if none found.
+func (m *Log_OtelBackend) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Log_OtelBackend) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Endpoint
+
+	// no validation rules for Protocol
+
+	// no validation rules for Insecure
+
+	if len(errors) > 0 {
+		return Log_OtelBackendMultiError(errors)
+	}
+
+	return nil
+}
+
+// Log_OtelBackendMultiError is an error wrapping multiple validation errors
+// returned by Log_OtelBackend.ValidateAll() if the designated constraints
+// aren't met.
+type Log_OtelBackendMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Log_OtelBackendMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Log_OtelBackendMultiError) AllErrors() []error { return m }
+
+// Log_OtelBackendValidationError is the validation error returned by
+// Log_OtelBackend.Validate if the designated constraints aren't met.
+type Log_OtelBackendValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Log_OtelBackendValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Log_OtelBackendValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Log_OtelBackendValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Log_OtelBackendValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Log_OtelBackendValidationError) ErrorName() string { return "Log_OtelBackendValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Log_OtelBackendValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLog_OtelBackend.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Log_OtelBackendValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Log_OtelBackendValidationError{}
+
+// Validate checks the field values on Log_NoopBackend with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Log_NoopBackend) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Log_NoopBackend with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Log_NoopBackendMultiError, or nil if none found.
+func (m *Log_NoopBackend) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Log_NoopBackend) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return Log_NoopBackendMultiError(errors)
+	}
+
+	return nil
+}
+
+// Log_NoopBackendMultiError is an error wrapping multiple validation errors
+// returned by Log_NoopBackend.ValidateAll() if the designated constraints
+// aren't met.
+type Log_NoopBackendMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Log_NoopBackendMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Log_NoopBackendMultiError) AllErrors() []error { return m }
+
+// Log_NoopBackendValidationError is the validation error returned by
+// Log_NoopBackend.Validate if the designated constraints aren't met.
+type Log_NoopBackendValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Log_NoopBackendValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Log_NoopBackendValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Log_NoopBackendValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Log_NoopBackendValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Log_NoopBackendValidationError) ErrorName() string { return "Log_NoopBackendValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Log_NoopBackendValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLog_NoopBackend.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Log_NoopBackendValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Log_NoopBackendValidationError{}

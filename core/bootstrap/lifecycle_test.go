@@ -1,11 +1,13 @@
 package bootstrap
 
 import (
+	"bytes"
 	"errors"
+	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/go-kratos/kratos/v2"
-	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
 func TestRunWithRuntime_ValidateInput(t *testing.T) {
@@ -110,9 +112,10 @@ func TestNewRunner_UsesDefaultWhenNil(t *testing.T) {
 }
 
 func TestBootstrapAndRun_EmitStageLogs(t *testing.T) {
-	cl := &captureLogger{}
+	var buf bytes.Buffer
+	sl := slog.New(slog.NewTextHandler(&buf, nil))
 	runner := newRunner(func(_, _, _ string, _ bootstrapOptions) (*Runtime, error) {
-		return &Runtime{Logger: cl}, nil
+		return &Runtime{Logger: sl}, nil
 	}, func(_ *kratos.App) error { return nil })
 
 	err := runner.bootstrapAndRun("/tmp/configs", "svc", "v1", func(_ *Runtime) (app *kratos.App, cleanup func(), err error) {
@@ -122,42 +125,10 @@ func TestBootstrapAndRun_EmitStageLogs(t *testing.T) {
 		t.Fatalf("bootstrapAndRun error = %v", err)
 	}
 
-	if !cl.hasStage("bootstrap_start") {
-		t.Fatal("missing bootstrap_start stage log")
-	}
-	if !cl.hasStage("run_with_runtime_start") {
-		t.Fatal("missing run_with_runtime_start stage log")
-	}
-	if !cl.hasStage("run_with_runtime_done") {
-		t.Fatal("missing run_with_runtime_done stage log")
-	}
-	if !cl.hasStage("bootstrap_done") {
-		t.Fatal("missing bootstrap_done stage log")
-	}
-}
-
-type captureLogger struct {
-	entries [][]any
-}
-
-func (c *captureLogger) Log(_ kratoslog.Level, keyvals ...any) error {
-	cp := make([]any, len(keyvals))
-	copy(cp, keyvals)
-	c.entries = append(c.entries, cp)
-	return nil
-}
-
-func (c *captureLogger) hasStage(stage string) bool {
-	for _, kvs := range c.entries {
-		for i := 0; i+1 < len(kvs); i += 2 {
-			key, ok := kvs[i].(string)
-			if !ok || key != "stage" {
-				continue
-			}
-			if val, ok := kvs[i+1].(string); ok && val == stage {
-				return true
-			}
+	output := buf.String()
+	for _, stage := range []string{"bootstrap_start", "run_with_runtime_start", "run_with_runtime_done", "bootstrap_done"} {
+		if !strings.Contains(output, stage) {
+			t.Fatalf("missing stage log: %s\noutput: %s", stage, output)
 		}
 	}
-	return false
 }

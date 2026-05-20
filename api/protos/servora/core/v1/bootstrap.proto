@@ -24,6 +24,7 @@ message Bootstrap {
   Config config = 6;
   Trace trace = 7;
   Metrics metrics = 8;
+  Log log = 9;
 }
 
 // 可复用的 TLS 配置
@@ -105,19 +106,10 @@ message Data {
 
 // 应用基础配置（剥离 jwt / audit / mail，由 extra/<域>/v1 持有）
 message App {
-  message Log {
-    int32 level = 1;
-    string filename = 2;
-    int32 max_size = 3;
-    int32 max_backups = 4;
-    int32 max_age = 5;
-    bool compress = 6;
-  }
-
   string env = 1;
   string name = 2;
   string version = 3;
-  Log log = 5;
+  // field 5 reserved (was App.Log, moved to Bootstrap.log)
   map<string, string> metadata = 6;
   string external_url = 8;
 }
@@ -201,4 +193,60 @@ message Trace {
 message Metrics {
   bool enable = 1;
   string meter_name = 2;
+}
+
+// 日志配置（与 App 同级，所有 message/enum nested）
+message Log {
+  LogLevel level = 1;
+  repeated LogBackend backends = 2;
+
+  message LogBackend {
+    oneof backend {
+      StdoutBackend stdout = 1;
+      FileBackend file = 2;
+      OtelBackend otel = 3;
+      NoopBackend noop = 4;
+    }
+  }
+
+  message StdoutBackend {
+    LogFormat format = 1;
+  }
+
+  message FileBackend {
+    string path = 1 [(servora.conf.v1.field) = {required: true}];
+    int32 max_size = 2 [(servora.conf.v1.field) = {default: "100"}];
+    int32 max_backups = 3;
+    int32 max_age = 4;
+    bool compress = 5;
+    LogFormat format = 6;
+  }
+
+  message OtelBackend {
+    string endpoint = 1 [(servora.conf.v1.field) = {required: true}];
+    OtelProtocol protocol = 2;
+    bool insecure = 3;
+  }
+
+  message NoopBackend {}
+
+  enum LogLevel {
+    LOG_LEVEL_UNSPECIFIED = 0;
+    LOG_LEVEL_DEBUG = 1;
+    LOG_LEVEL_INFO = 2;
+    LOG_LEVEL_WARN = 3;
+    LOG_LEVEL_ERROR = 4;
+  }
+
+  enum LogFormat {
+    LOG_FORMAT_UNSPECIFIED = 0;
+    LOG_FORMAT_JSON = 1;
+    LOG_FORMAT_TEXT = 2;
+  }
+
+  enum OtelProtocol {
+    OTEL_PROTOCOL_UNSPECIFIED = 0;
+    OTEL_PROTOCOL_GRPC = 1;
+    OTEL_PROTOCOL_HTTP_PROTOBUF = 2;
+  }
 }

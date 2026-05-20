@@ -1,10 +1,10 @@
 package telemetry
 
 import (
+	"log/slog"
 	"net/http"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/Servora-Kit/servora/obs/logging"
 	"github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -18,9 +18,11 @@ type Metrics struct {
 	Handler  http.Handler
 }
 
-func NewMetrics(c *corev1.Metrics, app *corev1.App, l logger.Logger) (*Metrics, error) {
+func NewMetrics(c *corev1.Metrics, app *corev1.App, l *slog.Logger) (*Metrics, error) {
 	if c == nil || !c.Enable {
-		logger.For(l, "metrics/telemetry").Info("metrics config is empty, skip metrics init")
+		if l != nil {
+			l.With("scope", "metrics/telemetry").Info("metrics config is empty, skip metrics init")
+		}
 		return nil, nil
 	}
 
