@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log/slog"
 	"net/http"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
@@ -8,7 +9,6 @@ import (
 	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 	"github.com/Servora-Kit/servora/transport/server/http/swagger"
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 )
@@ -19,7 +19,7 @@ type ServerOption func(*serverOptions)
 
 type serverOptions struct {
 	conf           *corev1.Server_HTTP
-	logger         log.Logger
+	logger         *slog.Logger
 	middleware     []middleware.Middleware
 	cors           *corsv1.CORS
 	metricsHandler http.Handler
@@ -35,7 +35,7 @@ func WithConfig(c *corev1.Server_HTTP) ServerOption {
 	}
 }
 
-func WithLogger(l log.Logger) ServerOption {
+func WithLogger(l *slog.Logger) ServerOption {
 	return func(o *serverOptions) {
 		o.logger = l
 	}

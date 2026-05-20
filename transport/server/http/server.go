@@ -8,6 +8,7 @@ import (
 
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 
+	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 	"github.com/Servora-Kit/servora/transport/server/endpoint"
 	"github.com/Servora-Kit/servora/transport/server/http/cors"
@@ -23,7 +24,7 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 	var serverOpts []khttp.ServerOption
 
 	if o.logger != nil {
-		serverOpts = append(serverOpts, khttp.Logger(o.logger))
+		serverOpts = append(serverOpts, khttp.Logger(kratosv2.Wrap(o.logger)))
 	}
 	if len(o.middleware) > 0 {
 		serverOpts = append(serverOpts, khttp.Middleware(o.middleware...))

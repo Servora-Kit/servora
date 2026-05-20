@@ -2,8 +2,9 @@
 package middleware
 
 import (
+	"log/slog"
+
 	"github.com/go-kratos/kratos/contrib/middleware/validate/v2"
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/middleware/metrics"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 )
 
@@ -53,7 +55,7 @@ import (
 //   - 返回的切片可以通过 builtin `append` 追加业务特定的中间件（如 authn / authz / selector）；ChainBuilder 不提供 fluent `Append` 方法
 //   - 如果需要完全自定义中间件顺序，请不要使用此 Builder，手动构建切片
 type ChainBuilder struct {
-	logger    log.Logger
+	logger    *slog.Logger
 	trace     *corev1.Trace
 	metrics   *telemetry.Metrics
 	rateLimit bool // 默认 true
@@ -64,7 +66,7 @@ type ChainBuilder struct {
 // logger 参数是必须的，用于 logging 中间件。
 // 建议使用 logger.With(l, "http/server/xxx") 或
 // logger.With(l, "grpc/server/xxx") 来区分协议。
-func NewChainBuilder(l log.Logger) *ChainBuilder {
+func NewChainBuilder(l *slog.Logger) *ChainBuilder {
 	return &ChainBuilder{
 		logger:    l,
 		rateLimit: true, // 默认启用限流
@@ -125,7 +127,7 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 	}
 
 	// 3. Logging - 必须
-	ms = append(ms, logging.Server(b.logger))
+	ms = append(ms, logging.Server(kratosv2.Wrap(b.logger)))
 
 	// 4. RateLimit - 默认启用
 	if b.rateLimit {

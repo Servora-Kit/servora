@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	logger "github.com/Servora-Kit/servora/obs/logging"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/registry"
@@ -23,7 +24,7 @@ type dialerOptions struct {
 	data       *corev1.Data
 	discovery  registry.Discovery
 	middleware []middleware.Middleware
-	logger     logger.Logger
+	logger     *slog.Logger
 }
 
 func WithData(data *corev1.Data) Option {
@@ -44,7 +45,7 @@ func WithMiddleware(mw ...middleware.Middleware) Option {
 	}
 }
 
-func WithLogger(l logger.Logger) Option {
+func WithLogger(l *slog.Logger) Option {
 	return func(o *dialerOptions) {
 		o.logger = l
 	}
@@ -54,7 +55,7 @@ type Dialer struct {
 	httpClients map[string]*corev1.Data_Client_Endpoint
 	discovery   registry.Discovery
 	middleware  []middleware.Middleware
-	logger      logger.Logger
+	logger      *slog.Logger
 }
 
 func NewDialer(opts ...Option) *Dialer {
@@ -94,11 +95,10 @@ func (d *Dialer) Dial(ctx context.Context, target string) (*khttp.Client, error)
 		return nil, fmt.Errorf("http endpoint not configured for target: %s", target)
 	}
 	if d.logger != nil {
-		helper := logger.NewHelper(d.logger)
 		if configured {
-			helper.Infof("using configured http endpoint: target=%s endpoint=%s", target, ep)
+			d.logger.Info("using configured http endpoint", "target", target, "endpoint", ep)
 		} else {
-			helper.Infof("using direct http endpoint: target=%s endpoint=%s", target, ep)
+			d.logger.Info("using direct http endpoint", "target", target, "endpoint", ep)
 		}
 	}
 

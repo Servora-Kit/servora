@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/go-kratos/kratos/v2/log"
+	"log/slog"
 	"go.opentelemetry.io/otel/metric/noop"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
@@ -23,7 +23,7 @@ func createTestMetrics() *telemetry.Metrics {
 }
 
 func TestNewChainBuilder_BasicBuild(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	ms := NewChainBuilder(logger).Build()
 
 	if len(ms) != 4 {
@@ -32,7 +32,7 @@ func TestNewChainBuilder_BasicBuild(t *testing.T) {
 }
 
 func TestChainBuilder_WithTrace_Enabled(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	trace := &corev1.Trace{Endpoint: "http://jaeger:14268"}
 
 	ms := NewChainBuilder(logger).WithTrace(trace).Build()
@@ -43,7 +43,7 @@ func TestChainBuilder_WithTrace_Enabled(t *testing.T) {
 }
 
 func TestChainBuilder_WithTrace_Skipped_NilTrace(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 
 	ms := NewChainBuilder(logger).WithTrace(nil).Build()
 
@@ -53,7 +53,7 @@ func TestChainBuilder_WithTrace_Skipped_NilTrace(t *testing.T) {
 }
 
 func TestChainBuilder_WithTrace_Skipped_EmptyEndpoint(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	trace := &corev1.Trace{Endpoint: ""}
 
 	ms := NewChainBuilder(logger).WithTrace(trace).Build()
@@ -64,7 +64,7 @@ func TestChainBuilder_WithTrace_Skipped_EmptyEndpoint(t *testing.T) {
 }
 
 func TestChainBuilder_WithMetrics_Enabled(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	mtc := createTestMetrics()
 
 	ms := NewChainBuilder(logger).WithMetrics(mtc).Build()
@@ -75,7 +75,7 @@ func TestChainBuilder_WithMetrics_Enabled(t *testing.T) {
 }
 
 func TestChainBuilder_WithMetrics_Skipped(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 
 	ms := NewChainBuilder(logger).WithMetrics(nil).Build()
 
@@ -85,7 +85,7 @@ func TestChainBuilder_WithMetrics_Skipped(t *testing.T) {
 }
 
 func TestChainBuilder_WithoutRateLimit(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 
 	ms := NewChainBuilder(logger).WithoutRateLimit().Build()
 
@@ -95,7 +95,7 @@ func TestChainBuilder_WithoutRateLimit(t *testing.T) {
 }
 
 func TestChainBuilder_FullChain(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	trace := &corev1.Trace{Endpoint: "http://jaeger:14268"}
 	mtc := createTestMetrics()
 
@@ -110,7 +110,7 @@ func TestChainBuilder_FullChain(t *testing.T) {
 }
 
 func TestChainBuilder_MinimalChain(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 
 	ms := NewChainBuilder(logger).
 		WithoutRateLimit().
@@ -122,7 +122,7 @@ func TestChainBuilder_MinimalChain(t *testing.T) {
 }
 
 func TestChainBuilder_Appendable(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 
 	ms := NewChainBuilder(logger).Build()
 	originalLen := len(ms)
@@ -134,7 +134,7 @@ func TestChainBuilder_Appendable(t *testing.T) {
 }
 
 func TestChainBuilder_BuildIdempotent(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	b := NewChainBuilder(logger)
 	ms1 := b.Build()
 	ms2 := b.Build()

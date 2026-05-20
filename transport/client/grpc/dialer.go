@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	logger "github.com/Servora-Kit/servora/obs/logging"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -23,7 +24,7 @@ type Option func(*dialerOptions)
 type dialerOptions struct {
 	data       *corev1.Data
 	discovery  registry.Discovery
-	logger     logger.Logger
+	logger     *slog.Logger
 	middleware []middleware.Middleware
 }
 
@@ -39,7 +40,7 @@ func WithDiscovery(discovery registry.Discovery) Option {
 	}
 }
 
-func WithLogger(l logger.Logger) Option {
+func WithLogger(l *slog.Logger) Option {
 	return func(o *dialerOptions) {
 		o.logger = l
 	}
@@ -54,7 +55,7 @@ func WithMiddleware(mw ...middleware.Middleware) Option {
 type Dialer struct {
 	grpcClients map[string]*corev1.Data_Client_Endpoint
 	discovery   registry.Discovery
-	logger      logger.Logger
+	logger      *slog.Logger
 	middleware  []middleware.Middleware
 }
 
@@ -100,19 +101,14 @@ func createConnection(
 	serviceName string,
 	grpcConfigs map[string]*corev1.Data_Client_Endpoint,
 	discovery registry.Discovery,
-	l logger.Logger,
+	l *slog.Logger,
 	mds []middleware.Middleware,
 ) (*gogrpc.ClientConn, error) {
-	var setupLogger *logger.Helper
-	if l != nil {
-		setupLogger = logger.NewHelper(l, logger.WithField("operation", "createGrpcConnection"))
-	}
-
 	defaultEndpoint := fmt.Sprintf("discovery:///%s", serviceName)
 	ep, timeout, tlsCfg, configured := resolveConnectionConfig(serviceName, grpcConfigs, defaultEndpoint, 5*time.Second)
 	tlsEnabled := tlsCfg != nil && tlsCfg.GetEnable()
-	if configured && setupLogger != nil {
-		setupLogger.Infof("using configured endpoint: service_name=%s endpoint=%s tls=%t", serviceName, ep, tlsEnabled)
+	if configured && l != nil {
+		l.Info("using configured endpoint", "service", serviceName, "endpoint", ep, "tls", tlsEnabled)
 	}
 
 	opts := []kgrpc.ClientOption{
@@ -128,14 +124,14 @@ func createConnection(
 
 	conn, err := dialConnection(ctx, opts, tlsCfg)
 	if err != nil {
-		if setupLogger != nil {
-			setupLogger.Errorf("failed to create grpc client: service_name=%s error=%v", serviceName, err)
+		if l != nil {
+			l.Error("failed to create grpc client", "service", serviceName, "err", err)
 		}
 		return nil, fmt.Errorf("failed to create grpc client for service %s: %w", serviceName, err)
 	}
 
-	if setupLogger != nil {
-		setupLogger.Infof("successfully created grpc client: service_name=%s endpoint=%s timeout=%s tls=%t", serviceName, ep, timeout.String(), tlsEnabled)
+	if l != nil {
+		l.Info("grpc client created", "service", serviceName, "endpoint", ep, "timeout", timeout, "tls", tlsEnabled)
 	}
 	return conn, nil
 }

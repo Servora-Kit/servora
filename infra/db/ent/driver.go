@@ -45,9 +45,9 @@ func NewDriver(cfg *corev1.Data) (*entsql.Driver, error) {
 }
 
 // NewDriverWithTracing creates a driver via NewDriver and wraps it with the
-// tracing decorator. Pass the zap logger from your obs/logging.ZapLogger:
+// tracing decorator.
 //
-//	drv, err := ent.NewDriverWithTracing(cfg, zapLogger.Zap())
+//	drv, err := ent.NewDriverWithTracing(cfg, zapLogger)
 func NewDriverWithTracing(cfg *corev1.Data, log *zap.Logger) (dialect.Driver, error) {
 	inner, err := NewDriver(cfg)
 	if err != nil {

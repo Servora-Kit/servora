@@ -2,15 +2,14 @@ package accept
 
 import (
 	"errors"
+	"log/slog"
 	"net"
 	"time"
-
-	"github.com/go-kratos/kratos/v2/log"
 )
 
 // LoopConfig 控制 Loop 的 logger 和重试参数。
 type LoopConfig struct {
-	Logger     log.Logger
+	Logger     *slog.Logger
 	RetryDelay time.Duration
 }
 
@@ -31,7 +30,7 @@ func Loop(cfg LoopConfig, accept func() error) {
 			return
 		}
 		if cfg.Logger != nil {
-			_ = cfg.Logger.Log(log.LevelError, "msg", "tcp accept failed", "err", err)
+			cfg.Logger.Error("tcp accept failed", "err", err)
 		}
 		time.Sleep(retryDelay)
 		return

@@ -1,28 +1,21 @@
 package accept
 
 import (
+	"bytes"
 	"errors"
+	"log/slog"
 	"net"
+	"strings"
 	"testing"
 	"time"
-
-	"github.com/go-kratos/kratos/v2/log"
 )
 
-type logRecorder struct {
-	calls int
-}
-
-func (r *logRecorder) Log(_ log.Level, _ ...any) error {
-	r.calls++
-	return nil
-}
-
 func TestLoop_ReturnsOnClosedWithoutLogging(t *testing.T) {
-	rec := &logRecorder{}
+	var buf bytes.Buffer
+	l := slog.New(slog.NewTextHandler(&buf, nil))
 	calls := 0
 
-	Loop(LoopConfig{Logger: rec}, func() error {
+	Loop(LoopConfig{Logger: l}, func() error {
 		calls++
 		if calls == 1 {
 			return nil
@@ -33,18 +26,19 @@ func TestLoop_ReturnsOnClosedWithoutLogging(t *testing.T) {
 	if calls != 2 {
 		t.Fatalf("accept calls = %d, want 2", calls)
 	}
-	if rec.calls != 0 {
-		t.Fatalf("logger calls = %d, want 0", rec.calls)
+	if buf.Len() != 0 {
+		t.Fatalf("expected no log output, got: %s", buf.String())
 	}
 }
 
 func TestLoop_LogsAndReturnsOnError(t *testing.T) {
-	rec := &logRecorder{}
+	var buf bytes.Buffer
+	l := slog.New(slog.NewTextHandler(&buf, nil))
 	acceptErr := errors.New("accept failed")
 	calls := 0
 
 	Loop(LoopConfig{
-		Logger:     rec,
+		Logger:     l,
 		RetryDelay: time.Millisecond,
 	}, func() error {
 		calls++
@@ -54,7 +48,7 @@ func TestLoop_LogsAndReturnsOnError(t *testing.T) {
 	if calls != 1 {
 		t.Fatalf("accept calls = %d, want 1", calls)
 	}
-	if rec.calls != 1 {
-		t.Fatalf("logger calls = %d, want 1", rec.calls)
+	if !strings.Contains(buf.String(), "tcp accept failed") {
+		t.Fatalf("expected error log, got: %s", buf.String())
 	}
 }

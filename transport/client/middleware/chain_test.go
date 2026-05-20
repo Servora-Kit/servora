@@ -10,7 +10,7 @@ import (
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/telemetry"
 	"github.com/Servora-Kit/servora/security/authn/jwt"
-	"github.com/go-kratos/kratos/v2/log"
+	"log/slog"
 	"github.com/go-kratos/kratos/v2/transport"
 	"go.opentelemetry.io/otel/metric/noop"
 )
@@ -27,7 +27,7 @@ func createTestMetrics() *telemetry.Metrics {
 }
 
 func TestNewChainBuilder_BasicBuild(t *testing.T) {
-	ms := NewChainBuilder(log.DefaultLogger).Build()
+	ms := NewChainBuilder(slog.Default()).Build()
 	if len(ms) != 3 {
 		t.Errorf("expected 3 middlewares (recovery,logging,circuit), got %d", len(ms))
 	}
@@ -35,7 +35,7 @@ func TestNewChainBuilder_BasicBuild(t *testing.T) {
 
 func TestChainBuilder_WithTrace_Enabled(t *testing.T) {
 	trace := &corev1.Trace{Endpoint: "http://otel:4317"}
-	ms := NewChainBuilder(log.DefaultLogger).WithTrace(trace).Build()
+	ms := NewChainBuilder(slog.Default()).WithTrace(trace).Build()
 	if len(ms) != 4 {
 		t.Errorf("expected 4 middlewares with tracing, got %d", len(ms))
 	}
@@ -43,14 +43,14 @@ func TestChainBuilder_WithTrace_Enabled(t *testing.T) {
 
 func TestChainBuilder_WithMetrics_Enabled(t *testing.T) {
 	mtc := createTestMetrics()
-	ms := NewChainBuilder(log.DefaultLogger).WithMetrics(mtc).Build()
+	ms := NewChainBuilder(slog.Default()).WithMetrics(mtc).Build()
 	if len(ms) != 4 {
 		t.Errorf("expected 4 middlewares with metrics, got %d", len(ms))
 	}
 }
 
 func TestChainBuilder_WithoutCircuitBreaker(t *testing.T) {
-	ms := NewChainBuilder(log.DefaultLogger).WithoutCircuitBreaker().Build()
+	ms := NewChainBuilder(slog.Default()).WithoutCircuitBreaker().Build()
 	if len(ms) != 2 {
 		t.Errorf("expected 2 middlewares without circuitbreaker, got %d", len(ms))
 	}
@@ -128,7 +128,7 @@ func TestChain_DefaultDoesNotPropagateJWTToken(t *testing.T) {
 	ctx := transport.NewClientContext(context.Background(), tr)
 	ctx = jwt.WithToken(ctx, "should-not-be-propagated")
 
-	ms := NewChainBuilder(log.DefaultLogger).Build()
+	ms := NewChainBuilder(slog.Default()).Build()
 
 	// Compose the chain right-to-left around a leaf handler.
 	handler := func(_ context.Context, _ any) (any, error) {

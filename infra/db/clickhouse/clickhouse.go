@@ -19,9 +19,10 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/Servora-Kit/servora/obs/logging"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 )
 
@@ -52,8 +53,8 @@ type Config struct {
 //   - (conn, nil) — connected successfully.
 //
 // The caller is responsible for closing the connection via conn.Close().
-func NewConnOptional(ctx context.Context, cfg *Config, l logger.Logger) (driver.Conn, error) {
-	log := logger.For(l, "clickhouse/db/infra")
+func NewConnOptional(ctx context.Context, cfg *Config, l *slog.Logger) (driver.Conn, error) {
+	log := l.With("scope", "clickhouse/db/infra")
 
 	if cfg == nil || len(cfg.Addrs) == 0 {
 		log.Info("ClickHouse not configured")
@@ -117,10 +118,10 @@ func NewConnOptional(ctx context.Context, cfg *Config, l logger.Logger) (driver.
 }
 
 // durationOrDefault returns d when positive, otherwise def (with a warn log).
-func durationOrDefault(d time.Duration, def time.Duration, name string, log *logger.Helper) time.Duration {
+func durationOrDefault(d time.Duration, def time.Duration, name string, log *slog.Logger) time.Duration {
 	if d <= 0 {
 		if d < 0 {
-			log.Warnf("%s=%v is non-positive, using default %v", name, d, def)
+			log.Warn("non-positive duration, using default", "param", name, "value", d, "default", def)
 		}
 		return def
 	}
@@ -129,7 +130,7 @@ func durationOrDefault(d time.Duration, def time.Duration, name string, log *log
 
 // applyCompression normalises the compress string and sets the appropriate
 // compression option. Warns on unrecognised values.
-func applyCompression(opts *clickhouse.Options, raw string, log *logger.Helper) {
+func applyCompression(opts *clickhouse.Options, raw string, log *slog.Logger) {
 	v := strings.TrimSpace(strings.ToLower(raw))
 	switch v {
 	case "", "none":
@@ -139,6 +140,6 @@ func applyCompression(opts *clickhouse.Options, raw string, log *logger.Helper) 
 	case "zstd":
 		opts.Compression = &clickhouse.Compression{Method: clickhouse.CompressionZSTD}
 	default:
-		log.Warnf("unknown compress value %q, falling back to no compression (valid: lz4, zstd, none)", raw)
+		log.Warn("unknown compress value, falling back to no compression", "value", raw)
 	}
 }

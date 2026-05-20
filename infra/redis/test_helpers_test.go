@@ -1,9 +1,10 @@
 package redis
 
 import (
-	"github.com/go-kratos/kratos/v2/log"
+	"log/slog"
+	"os"
 )
 
-type testLogger struct{}
-
-func (testLogger) Log(_ log.Level, _ ...interface{}) error { return nil }
+func testSlogLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stderr, nil))
+}

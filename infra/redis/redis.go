@@ -3,10 +3,10 @@ package redis
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/Servora-Kit/servora/obs/logging"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -18,7 +18,7 @@ const (
 
 type Client struct {
 	rdb *redis.Client
-	log *logger.Helper
+	log *slog.Logger
 }
 
 type Config struct {
@@ -64,7 +64,7 @@ func NewConfigFromProto(cfg *corev1.Data_Redis) *Config {
 	return config
 }
 
-func NewClient(cfg *Config, l logger.Logger) (*Client, func(), error) {
+func NewClient(cfg *Config, l *slog.Logger) (*Client, func(), error) {
 	if cfg == nil {
 		return nil, nil, errors.New("redis config is nil")
 	}
@@ -82,9 +82,7 @@ func NewClient(cfg *Config, l logger.Logger) (*Client, func(), error) {
 		writeTimeout = DefaultWriteTimeout
 	}
 
-	baseLogger := logger.With(l, "redis/infra")
-	setupLog := logger.NewHelper(baseLogger, logger.WithField("operation", "NewClient"))
-	cleanupLog := logger.NewHelper(baseLogger, logger.WithField("operation", "cleanup"))
+	log := l.With("scope", "redis/infra")
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         cfg.Addr,
@@ -96,23 +94,22 @@ func NewClient(cfg *Config, l logger.Logger) (*Client, func(), error) {
 		WriteTimeout: writeTimeout,
 	})
 
-	// 使用带超时的 context 进行连接测试
 	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		setupLog.Errorf("redis ping failed: %v", err)
+		log.Error("redis ping failed", "err", err)
 		return nil, nil, err
 	}
-	setupLog.Infof("redis client initialized")
+	log.Info("redis client initialized")
 
 	cleanup := func() {
-		cleanupLog.Infof("closing redis connection")
+		log.Info("closing redis connection")
 		_ = rdb.Close()
 	}
 
 	return &Client{
 		rdb: rdb,
-		log: logger.NewHelper(baseLogger),
+		log: log,
 	}, cleanup, nil
 }
 

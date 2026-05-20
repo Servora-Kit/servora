@@ -12,7 +12,7 @@ func newTestClient(t *testing.T) *Client {
 		t.Skip("skipping: requires Redis")
 	}
 	cfg := &Config{Addr: "localhost:6379", DB: 15}
-	c, cleanup, err := NewClient(cfg, testLogger{})
+	c, cleanup, err := NewClient(cfg, testSlogLogger())
 	if err != nil {
 		t.Skipf("redis not available: %v", err)
 	}

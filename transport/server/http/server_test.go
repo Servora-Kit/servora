@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/log"
+	"log/slog"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -43,7 +43,7 @@ func TestNewServer_WithNilConfig(t *testing.T) {
 }
 
 func TestNewServer_WithLogger(t *testing.T) {
-	logger := log.DefaultLogger
+	logger := slog.Default()
 	srv := NewServer(WithLogger(logger))
 	if srv == nil {
 		t.Fatal("expected non-nil server")
@@ -139,7 +139,7 @@ func TestNewServer_FullOptions(t *testing.T) {
 	}
 	srv := NewServer(
 		WithConfig(cfg),
-		WithLogger(log.DefaultLogger),
+		WithLogger(slog.Default()),
 		WithMiddleware(recovery.Recovery()),
 		WithCORS(corsConf),
 	)

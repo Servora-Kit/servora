@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"log/slog"
+
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	"github.com/Servora-Kit/servora/obs/telemetry"
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/circuitbreaker"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
@@ -18,14 +20,14 @@ import (
 // 转发到下游，调用方需显式 append `security/authn/jwt.Client()`，详见该
 // sub-package godoc 与 design.md Decision 5。
 type ChainBuilder struct {
-	logger  log.Logger
+	logger  *slog.Logger
 	trace   *corev1.Trace
 	metrics *telemetry.Metrics
 	circuit bool
 }
 
 // NewChainBuilder 创建 client 中间件链构建器。
-func NewChainBuilder(l log.Logger) *ChainBuilder {
+func NewChainBuilder(l *slog.Logger) *ChainBuilder {
 	return &ChainBuilder{
 		logger:  l,
 		circuit: true,
@@ -59,7 +61,7 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 		ms = append(ms, tracing.Client())
 	}
 
-	ms = append(ms, logging.Client(b.logger))
+	ms = append(ms, logging.Client(kratosv2.Wrap(b.logger)))
 
 	if b.circuit {
 		ms = append(ms, circuitbreaker.Client())

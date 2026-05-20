@@ -1,60 +1,47 @@
 package kafka
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 
 	brokerv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/broker/v1"
-	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
-type captureLogger struct {
-	entries []string
-}
-
-func (l *captureLogger) Log(_ kratoslog.Level, keyvals ...any) error {
-	l.entries = append(l.entries, fmt.Sprint(keyvals...))
-	return nil
-}
-
-func (l *captureLogger) contains(substr string) bool {
-	for _, entry := range l.entries {
-		if strings.Contains(entry, substr) {
-			return true
-		}
-	}
-	return false
+func testLogger() (*slog.Logger, *bytes.Buffer) {
+	var buf bytes.Buffer
+	return slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})), &buf
 }
 
 func TestNewBrokerOptional_ReturnsNilAndLogsInfoWhenKafkaNotConfigured(t *testing.T) {
-	log := &captureLogger{}
+	log, buf := testLogger()
 
 	b := NewBrokerOptional(context.Background(), &brokerv1.Broker{}, log)
 	if b != nil {
 		t.Fatal("expected nil broker when kafka is not configured")
 	}
-	if !log.contains("Kafka not configured, broker disabled") {
-		t.Fatal("expected info log when kafka is not configured")
+	if !strings.Contains(buf.String(), "Kafka not configured") {
+		t.Fatalf("expected info log, got: %s", buf.String())
 	}
 }
 
 func TestNewBrokerOptional_ReturnsNilAndLogsInfoWhenBrokersEmpty(t *testing.T) {
-	log := &captureLogger{}
+	log, buf := testLogger()
 
 	cfg := &brokerv1.Broker{Backend: &brokerv1.Broker_Kafka{Kafka: &brokerv1.Kafka{}}}
 	b := NewBrokerOptional(context.Background(), cfg, log)
 	if b != nil {
 		t.Fatal("expected nil broker when kafka brokers are empty")
 	}
-	if !log.contains("Kafka not configured, broker disabled") {
-		t.Fatal("expected info log when kafka brokers are empty")
+	if !strings.Contains(buf.String(), "Kafka not configured") {
+		t.Fatalf("expected info log, got: %s", buf.String())
 	}
 }
 
 func TestNewBrokerOptional_ReturnsNilInsteadOfPanickingOnInvalidConfig(t *testing.T) {
-	log := &captureLogger{}
+	log, buf := testLogger()
 	cfg := &brokerv1.Broker{
 		Backend: &brokerv1.Broker_Kafka{
 			Kafka: &brokerv1.Kafka{
@@ -78,7 +65,8 @@ func TestNewBrokerOptional_ReturnsNilInsteadOfPanickingOnInvalidConfig(t *testin
 	if b != nil {
 		t.Fatal("expected nil broker when kafka config is invalid")
 	}
-	if !log.contains("failed to create Kafka broker") && !log.contains("failed to connect Kafka broker") {
-		t.Fatal("expected warning log when kafka config is invalid")
+	output := buf.String()
+	if !strings.Contains(output, "failed to create Kafka broker") && !strings.Contains(output, "failed to connect Kafka broker") {
+		t.Fatalf("expected warning log, got: %s", output)
 	}
 }
