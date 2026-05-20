@@ -139,8 +139,12 @@ vet: ## Run go vet across modules
 	@$(foreach mod,$(GO_WORKSPACE_MODULES),(cd $(ROOT_DIR)$(mod) && go vet ./...) && ) true
 
 .PHONY: test
-test: ## Run tests across modules
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Testing $(mod)..." && (cd $(ROOT_DIR)$(mod) && go test ./...) && ) true
+test: ## Run unit tests across modules (-short, no external deps)
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Testing $(mod)..." && (cd $(ROOT_DIR)$(mod) && go test -short ./...) && ) true
+
+.PHONY: test.all
+test.all: ## Run all tests including integration (needs Redis, etc.)
+	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Testing $(mod) (all)..." && (cd $(ROOT_DIR)$(mod) && go test ./...) && ) true
 
 .PHONY: cover
 cover: ## Run tests with coverage profile
