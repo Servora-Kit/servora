@@ -174,7 +174,7 @@ func (r runner) runWithRuntime(runtime *Runtime, builder appBuilder) error {
 		return errors.New("runtime is nil")
 	}
 
-	logStage(runtime.Logger, "run_with_runtime_start", "service", runtime.Identity.Name, "version", runtime.Identity.Version)
+	logStage(runtime.Logger, "run_with_runtime_start", "version", runtime.Identity.Version)
 	startedAt := time.Now()
 	if builder == nil {
 		return errors.New("app builder is nil")
@@ -220,7 +220,7 @@ func (r runner) bootstrapAndRun(configPath, name, version string, builder appBui
 		return err
 	}
 	defer runtime.Close()
-	logStage(runtime.Logger, "bootstrap_start", "service", runtime.Identity.Name, "version", runtime.Identity.Version)
+	logStage(runtime.Logger, "bootstrap_start", "version", runtime.Identity.Version)
 	startedAt := time.Now()
 
 	err = r.runWithRuntime(runtime, builder)

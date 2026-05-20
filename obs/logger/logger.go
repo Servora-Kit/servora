@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 	"golang.org/x/term"
@@ -107,7 +108,7 @@ func defaultStdoutHandler(cfg *corev1.Log_StdoutBackend, env string, lvl slog.Le
 		return zerolog.NewSlogHandler(zl)
 	}
 	useColor := isTerminal(os.Stdout.Fd())
-	cw := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: !useColor}
+	cw := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: !useColor, TimeFormat: time.TimeOnly}
 	zl := zerolog.New(cw).Level(zerologLevel(lvl)).With().Timestamp().Logger()
 	return zerolog.NewSlogHandler(zl)
 }
