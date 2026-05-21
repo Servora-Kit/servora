@@ -9,7 +9,7 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/bro
 
 // =============================================================================
 // 消息中间件配置（broker section）
-// 业务侧通过 bootstrap.ScanSections(rt, &broker) 加载；section optional：
+// 业务侧通过 bootstrap.Scan(rt, &broker) 加载；section optional：
 // 业务不消费 broker 时缺失即静默跳过。
 // =============================================================================
 

@@ -23,7 +23,7 @@ const (
 )
 
 // SectionRule 声明一个配置 message 在外部 yaml / json 配置中的定位键。
-// 应用方通过 bootstrap.ScanSections 按该 key 在 kratos config 中定向 scan。
+// 应用方通过 bootstrap.Scan 按该 key 在 kratos config 中定向 scan。
 type SectionRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 配置文件中的定位键（支持 dotted path，如 "audit" 或 "infra.broker"）。
