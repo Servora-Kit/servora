@@ -9,8 +9,8 @@ import (
 )
 
 // Section is the contract implemented by configuration messages that opt into
-// keyed scanning via bootstrap.ScanSections. Implementations are typically
-// produced by protoc-gen-servora-conf from `(servora.conf.v1.section)`.
+// keyed scanning via bootstrap.Scan. Implementations are typically produced by
+// protoc-gen-servora-conf from `(servora.conf.v1.section)`.
 type Section interface {
 	// SectionKey returns the dotted key under which the section lives in the
 	// merged kratos config (e.g. "broker", "audit", "data.kafka").
@@ -18,16 +18,14 @@ type Section interface {
 }
 
 // OptionalSection marks a Section whose absence from the config source is
-// non-fatal. When SectionOptional() reports true and the key is missing,
-// ScanSections skips Value(key).Scan but still invokes Defaulter so the
-// receiver ends up populated with literal defaults.
+// non-fatal. When SectionOptional reports true and the key is missing, Scan
+// skips both Value(key).Scan and ApplyConf for that target.
 type OptionalSection interface {
 	SectionOptional() bool
 }
 
 // Defaulter is the contract for messages that carry literal defaults declared
-// via `(servora.conf.v1.field) = { default: ... }`. ScanSections invokes it
-// after a successful (or skipped-optional) Value(key).Scan.
+// via `(servora.conf.v1.field) = { default: ... }`.
 type Defaulter interface {
 	ApplyDefaults()
 }
@@ -39,62 +37,70 @@ type RequiredChecker interface {
 }
 
 // ConfApplier is the composite contract for messages processed by
-// protoc-gen-servora-conf. It runs the full post-scan sequence
-// (currently CheckRequired → ApplyDefaults) in a single call.
-// The method is generated; the runtime does not encode capability
-// knowledge — future plugin capabilities are automatically included.
+// protoc-gen-servora-conf. It runs the full post-scan sequence in a single call.
 type ConfApplier interface {
 	ApplyConf() error
 }
 
-// ScanSections loads every provided section from the runtime's merged kratos
-// config. For each section the sequence is:
-//
-//  1. If section implements OptionalSection and the key is missing, skip the
-//     Value(key).Scan call. Otherwise scan; an error here is fatal.
-//  2. If section implements ConfApplier, call ApplyConf (the generated
-//     composite that runs CheckRequired → ApplyDefaults in canonical order).
-//
-// Returns nil when every section completed steps 1-2 without error.
-func ScanSections(rt *Runtime, sections ...Section) error {
-	if rt == nil || rt.Config == nil {
-		return errors.New("runtime config is nil")
+// Scan loads every target from the runtime's merged kratos config. Targets that
+// implement Section are scanned from Value(SectionKey()); all others are scanned
+// from the whole config. ApplyConf runs only after a successful scan.
+func Scan(rt *Runtime, targets ...any) error {
+	if rt == nil {
+		return errors.New("bootstrap: scan: nil runtime")
 	}
-	for _, s := range sections {
-		if isNilSection(s) {
-			return errors.New("nil section in ScanSections")
+	if rt.Config == nil {
+		return errors.New("bootstrap: scan: nil config")
+	}
+	for i, target := range targets {
+		if target == nil {
+			return fmt.Errorf("bootstrap: scan target[%d]: nil", i)
 		}
-		key := s.SectionKey()
-		if key == "" {
-			return fmt.Errorf("section %T returned empty SectionKey", s)
+		if isTypedNil(target) {
+			return fmt.Errorf("bootstrap: scan target[%d]: typed nil %T", i, target)
 		}
-		if err := scanOneSection(rt.Config, s, key); err != nil {
-			return err
-		}
-		if a, ok := s.(ConfApplier); ok {
-			if err := a.ApplyConf(); err != nil {
-				return fmt.Errorf("section %q: %w", key, err)
+		if section, ok := target.(Section); ok {
+			if err := scanSectionTarget(rt.Config, i, target, section); err != nil {
+				return err
 			}
+			continue
+		}
+		if err := scanConfigTarget(rt.Config, i, target); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// scanOneSection performs the Value(key).Scan step, honouring OptionalSection
-// semantics for missing keys.
-func scanOneSection(cfg kconfig.Config, s Section, key string) error {
-	val := cfg.Value(key)
-	// kratos config returns a non-nil Value even for missing keys; the load
-	// failure surfaces via Load() on the returned errValue. We detect that
-	// by attempting Scan first, then deciding based on optional-ness.
-	err := val.Scan(s)
-	if err == nil {
-		return nil
+func scanConfigTarget(cfg kconfig.Config, index int, target any) error {
+	if err := cfg.Scan(target); err != nil {
+		return fmt.Errorf("bootstrap: scan target[%d] config: %w", index, err)
 	}
-	if isOptional(s) && isKeyMissing(err) {
-		return nil
+	if applier, ok := target.(ConfApplier); ok {
+		if err := applier.ApplyConf(); err != nil {
+			return fmt.Errorf("bootstrap: apply target[%d] config: %w", index, err)
+		}
 	}
-	return fmt.Errorf("scan section %q: %w", key, err)
+	return nil
+}
+
+func scanSectionTarget(cfg kconfig.Config, index int, target any, section Section) error {
+	key := section.SectionKey()
+	if key == "" {
+		return fmt.Errorf("bootstrap: scan target[%d]: empty section key", index)
+	}
+	if err := cfg.Value(key).Scan(target); err != nil {
+		if isOptional(section) && isKeyMissing(err) {
+			return nil
+		}
+		return fmt.Errorf("bootstrap: scan target[%d] section %q: %w", index, key, err)
+	}
+	if applier, ok := target.(ConfApplier); ok {
+		if err := applier.ApplyConf(); err != nil {
+			return fmt.Errorf("bootstrap: apply target[%d] section %q: %w", index, key, err)
+		}
+	}
+	return nil
 }
 
 func isOptional(s Section) bool {
@@ -104,14 +110,14 @@ func isOptional(s Section) bool {
 	return false
 }
 
-// isNilSection covers both the bare nil interface and a typed-nil pointer
-// (the classic Go interface-nil pitfall).
-func isNilSection(s Section) bool {
-	if s == nil {
-		return true
+func isTypedNil(v any) bool {
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return rv.IsNil()
+	default:
+		return false
 	}
-	v := reflect.ValueOf(s)
-	return v.Kind() == reflect.Pointer && v.IsNil()
 }
 
 // isKeyMissing recognises the error kratos returns when a config key is not
