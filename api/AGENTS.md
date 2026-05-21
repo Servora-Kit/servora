@@ -1,16 +1,16 @@
 # AGENTS.md - api/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
+<!-- Updated: 2026-05-21 -->
 
 ## 目录职责
 
-`api/` 承载三类内容：
-- 共享 proto 模块：`api/protos/`
-- 统一生成产物：`api/gen/`（Go 在 `go/`，TypeScript 在 `ts/`）
-- pnpm workspace 包锚点：`api/ts-client/`
+`api/` 只承载本框架的公共 proto contract 与 Go 生成模块：
 
-仓库已迁移到 **Buf v2 workspace**：根目录 `buf.yaml` 同时纳管 `api/protos/`、`app/iam/service/api/protos/`、`app/sayhello/service/api/protos/`。
+- `api/protos/`：发布到 BSR 的公共 proto 源。
+- `api/gen/`：`make gen` 生成的独立 Go module。
+
+当前仓库没有 TypeScript client 或 OpenAPI 生成工作流；不要把旧业务仓库结构写回本仓。
 
 ## 当前结构
 
@@ -18,58 +18,41 @@
 api/
 ├── AGENTS.md
 ├── gen/
-│   ├── go.mod        # Go 生成代码独立模块
-│   ├── go/           # Go 生成代码（make api 输出）
-│   └── ts/           # TypeScript 生成代码（make api-ts 输出，禁止手改）
-│       ├── iam/service/v1/
-│       ├── authn/service/v1/
-│       ├── organization/service/v1/
-│       ├── pagination/v1/
-│       └── ...
-├── ts-client/
-│   └── package.json  # pnpm workspace 包 @servora/api-client（仅此一个文件）
+│   ├── go.mod
+│   └── go/                 # buf.go.gen.yaml 输出，禁止手改
 └── protos/
-    ├── buf.yaml
-    ├── buf.lock
-    ├── conf/
-    └── pagination/
+    ├── AGENTS.md
+    ├── README.md           # BSR 展示用
+    └── servora/            # package root
 ```
 
-## 生成规则
+Buf 配置在仓库根：`buf.yaml`、`buf.lock`、`buf.go.gen.yaml`。`api/protos/` 下没有独立 `buf.yaml` 或 `buf.lock`。
 
-| 命令 | 模板 | 输出 | clean |
-|------|------|------|-------|
-| `make api` | `buf.go.gen.yaml`（含 authz + mapper + audit 插件） | `api/gen/go/` | true |
-| `make api-ts`（共享） | `buf.typescript.gen.yaml` | `api/gen/ts/` | true（每次重建） |
-| `make api-ts`（各服务） | `app/*/service/api/buf.typescript.gen.yaml` | `api/gen/ts/` | false（追加） |
-| `make openapi` | 各服务 `api/buf.openapi.gen.yaml` | 各服务目录 | — |
+## 生成与发布
 
-> **注意**：共享模板 `clean: true` 先清空 `api/gen/ts/`，服务模板 `clean: false` 追加各自命名空间，因此 `make api-ts` 必须按此顺序执行（Makefile 已保证）。
+| 命令 | 作用 |
+| --- | --- |
+| `make gen` | 执行 `buf generate --template buf.go.gen.yaml`，增量生成 Go 代码 |
+| `make gen.fresh` | 删除 `api/gen/go` 后重新生成；删除/重命名 proto 或移除 plugin 时使用 |
+| `make lint.proto` | Buf lint |
+| `make fmt.proto` | Buf format |
+| `make bsr.update` | `buf dep update` |
+| `make tag.api TAG=v0.x.y` | 创建 `api/gen/v0.x.y` tag |
+| `make bsr.push` | 推送 `buf.build/servora/servora`，HEAD 有主 tag 时附加 tag label |
 
-## 关键文件
-
-- `../buf.yaml`：Buf v2 workspace 配置
-- `../buf.go.gen.yaml`：Go 代码生成模板
-- `../buf.typescript.gen.yaml`：共享 TS 生成模板（pagination 等）
-- `protos/buf.yaml`：共享 proto module 的 lint / breaking 配置
-- `ts-client/package.json`：pnpm workspace 包 `@servora/api-client` 的定义文件
+修改 proto 或生成器导致 `api/gen/go` 变化时，先 `make lint.proto && make gen`，再按根文档的主 tag + `make tag.api` 规则发布。
 
 ## 开发约定
 
-- 共享配置 proto 与跨服务公共 proto 放在 `api/protos/`
-- 服务专属业务 proto 放在对应服务的 `app/{service}/service/api/protos/`
-- 修改 proto 后运行根目录 `make gen`（Go）或 `make api-ts`（TypeScript）
-- **禁止手动编辑** `api/gen/go/` 和 `api/gen/ts/`
-- `api/ts-client/` 只有 `package.json`，不要在此存放任何生成或手写代码
-- `api/protos/servora/template/service/v1/` 包含 `svr new api` 使用的 proto 模板
+- **禁止手动编辑** `api/gen/go/`。
+- 公共 proto 放在 `api/protos/servora/<namespace>/v1/`。
+- 业务仓库 proto 不放进本仓；各业务服务自行管理自己的 `api/protos/`。
+- `api/gen/go.mod` 是独立 module；根 `go.work`/Makefile 同时覆盖 `.` 与 `api/gen`。
+- 生成器输出 shape 改动时，同步检查 `cmd/protoc-gen-servora-*` 测试、`api/gen/go` diff 和下游示例。
 
-## 常用命令
+## 常见反模式
 
-```bash
-make api          # 生成 Go 代码 + AuthZ 规则
-make api-ts       # 生成所有 TypeScript 客户端（共享 + 各服务）
-make openapi      # 生成各服务 OpenAPI 文档
-cd api/protos && buf lint
-cd api/protos && buf format -w
-cd api/protos && buf breaking --against '.git#branch=main'
-```
+- 恢复旧的 TS/OpenAPI 生成目录或命令。
+- 在 `api/protos/` 下新增模块级 Buf 配置绕过根 `buf.yaml`。
+- 只改 proto 不运行 `make gen`。
+- 删除/重命名 proto 后仍用增量 `make gen` 留下陈旧生成文件。
