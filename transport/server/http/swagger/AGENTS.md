@@ -1,7 +1,7 @@
 # AGENTS.md - transport/server/http/swagger/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
+<!-- Updated: 2026-05-21 -->
 
 ## 模块目的
 
@@ -21,7 +21,7 @@
 
 ## 边界约束
 
-- OpenAPI 产物生成在根目录 `make openapi` / 生成链路，不在本包
+- OpenAPI 产物由调用方准备；本包只负责把已有 spec 暴露给 HTTP 服务
 - 不在这里加入业务鉴权、API 网关或静态站点编排逻辑
 - 不把 UI 模板与服务私有 branding 深度耦合到共享包
 
