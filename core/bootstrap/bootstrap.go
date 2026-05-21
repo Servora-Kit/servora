@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"time"
+	"sync"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/core/bootstrap/config"
@@ -19,80 +19,57 @@ import (
 	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
-// SvcIdentity 定义服务实例身份信息。
-type SvcIdentity struct {
-	Name     string
-	Version  string
-	ID       string
-	Metadata map[string]string
-}
-
-// Runtime 聚合启动阶段产物与资源清理句柄。
+// Runtime 聚合启动阶段产物与 runtime 级资源清理句柄。
 type Runtime struct {
-	Bootstrap    *corev1.Bootstrap
-	Config       kconfig.Config
-	Identity     SvcIdentity
-	Logger       *slog.Logger
-	KratosLogger kratoslog.Logger
+	Bootstrap *corev1.Bootstrap
+	Config    kconfig.Config
+	Logger    *slog.Logger
 
-	configCloser func()
-	traceCloser  func()
-	logCloser    func(context.Context) error
+	serviceID    string
+	kratosLogger kratoslog.Logger
+
+	closeOnce sync.Once
+	closeErr  error
+	cleanups  []func(context.Context) error
 }
 
-// appBuilder 负责基于 Runtime 构造应用并返回清理函数。
-type appBuilder func(runtime *Runtime) (app *kratos.App, cleanup func(), err error)
+// Option 配置 Runtime 创建行为。
+type Option func(*options)
 
-// BootstrapOption 配置启动行为的可选项。
-type BootstrapOption func(*bootstrapOptions)
-
-type bootstrapOptions struct {
-	envPrefix      bool
-	logHandlerFunc slogger.LogHandlerFunc
+type options struct {
+	name      string
+	version   string
+	envPrefix bool
 }
 
-// WithEnvPrefix 启用环境变量前缀。
-func WithEnvPrefix() BootstrapOption {
-	return func(o *bootstrapOptions) { o.envPrefix = true }
+// Name 设置配置加载前的服务名默认值。
+func Name(name string) Option {
+	return func(o *options) { o.name = name }
 }
 
-// WithLogHandlerFunc 替换默认 zerolog 编码引擎。
-// 工厂函数对每个本地后端（stdout/file）调一次，servora 提供 io.Writer。
-func WithLogHandlerFunc(f slogger.LogHandlerFunc) BootstrapOption {
-	return func(o *bootstrapOptions) { o.logHandlerFunc = f }
+// Version 设置配置加载前的服务版本默认值。
+func Version(version string) Option {
+	return func(o *options) { o.version = version }
 }
 
-// runtimeFactory 负责创建 Runtime。
-type runtimeFactory func(configPath, name, version string, opts bootstrapOptions) (*Runtime, error)
-
-// appRunner 负责运行应用主循环。
-type appRunner func(app *kratos.App) error
-
-// runner 封装启动链路中的可替换依赖。
-type runner struct {
-	newRuntime runtimeFactory
-	runApp     appRunner
+// WithEnvPrefix 启用基于 Name option 的环境变量前缀。
+func WithEnvPrefix() Option {
+	return func(o *options) { o.envPrefix = true }
 }
 
-var (
-	// 通过默认 runner 注入依赖，便于单测替换而不污染全局状态。
-	defaultRunner = newRunner(newRuntime, run)
-)
+var hostnameFn = os.Hostname
 
-// newRunner 创建 runner，空依赖会回退到默认实现。
-func newRunner(runtimeFactory runtimeFactory, appRunner appRunner) runner {
-	if runtimeFactory == nil {
-		runtimeFactory = newRuntime
+// NewRuntime 加载配置并初始化日志、追踪与 Kratos 应用默认项。
+func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
+	var o options
+	for _, fn := range opts {
+		fn(&o)
 	}
-	if appRunner == nil {
-		appRunner = run
+	if o.envPrefix && o.name == "" {
+		return nil, errors.New("bootstrap: WithEnvPrefix requires Name option")
 	}
-	return runner{newRuntime: runtimeFactory, runApp: appRunner}
-}
 
-// newRuntime 加载配置并初始化日志、追踪与身份信息。
-func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runtime, error) {
-	bc, c, err := config.LoadBootstrap(configPath, name, opts.envPrefix)
+	bc, c, err := config.LoadBootstrap(configPath, o.name, o.envPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -100,19 +77,23 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	if bc.App == nil {
 		bc.App = &corev1.App{}
 	}
-
-	hostname, _ := os.Hostname()
-	identity := resolveServiceIdentity(name, version, hostname, bc.App)
-
-	var lopts []slogger.Option
-	if opts.logHandlerFunc != nil {
-		lopts = append(lopts, slogger.WithLogHandlerFunc(opts.logHandlerFunc))
+	if err := resolveAppIdentity(bc.App, o.name, o.version); err != nil {
+		_ = c.Close()
+		return nil, err
 	}
-	sl, logCloser := slogger.New(bc, lopts...)
-	appLogger := sl.With("service", identity.Name)
+
+	hostname, err := hostnameFn()
+	if err != nil {
+		_ = c.Close()
+		return nil, fmt.Errorf("bootstrap: hostname: %w", err)
+	}
+	serviceID := fmt.Sprintf("%s-%s", bc.App.Name, hostname)
+
+	sl, logCloser := slogger.New(bc)
+	appLogger := sl.With("service", bc.App.Name)
 	kl := kratosv2.Wrap(appLogger)
 
-	traceCleanup, err := telemetry.InitTracerProvider(bc.Trace, identity.Name, bc.App.Env)
+	traceCleanup, err := telemetry.InitTracerProvider(bc.Trace, bc.App.Name, bc.App.Env)
 	if err != nil {
 		_ = logCloser(context.Background())
 		_ = c.Close()
@@ -122,154 +103,94 @@ func newRuntime(configPath, name, version string, opts bootstrapOptions) (*Runti
 	return &Runtime{
 		Bootstrap:    bc,
 		Config:       c,
-		Identity:     identity,
 		Logger:       appLogger,
-		KratosLogger: kl,
-		configCloser: func() {
-			_ = c.Close()
+		serviceID:    serviceID,
+		kratosLogger: kl,
+		cleanups: []func(context.Context) error{
+			func(context.Context) error { return c.Close() },
+			logCloser,
+			func(context.Context) error { traceCleanup(); return nil },
 		},
-		traceCloser: traceCleanup,
-		logCloser:   logCloser,
 	}, nil
 }
 
-// Close 释放 Runtime 关联的外部资源。
-func (r *Runtime) Close() {
-	if r == nil {
-		return
+// NewApp 使用 Runtime 默认项构造 Kratos 应用。
+func (r *Runtime) NewApp(opts ...kratos.Option) *kratos.App {
+	appOpts := []kratos.Option{
+		kratos.ID(r.serviceID),
+		kratos.Name(r.Bootstrap.App.Name),
+		kratos.Version(r.Bootstrap.App.Version),
+		kratos.Metadata(r.Bootstrap.App.Metadata),
+		kratos.Logger(r.kratosLogger),
 	}
-	if r.traceCloser != nil {
-		r.traceCloser()
-	}
-	if r.logCloser != nil {
-		_ = r.logCloser(context.Background())
-	}
-	if r.configCloser != nil {
-		r.configCloser()
-	}
+	appOpts = append(appOpts, opts...)
+	return kratos.New(appOpts...)
 }
 
-// ScanConf 从 Runtime 的合并配置中扫描配置。
-// 泛型参数 T 可为业务 conf protobuf message 或任意可反序列化结构体。
-func ScanConf[T any](rt *Runtime) (*T, error) {
-	if rt == nil || rt.Config == nil {
-		return nil, errors.New("runtime config is nil")
-	}
+// Run 构建并运行 Kratos 应用，确保业务 cleanup 先于 Runtime 资源关闭。
+func (r *Runtime) Run(build func() (*kratos.App, func(), error)) (err error) {
+	defer func() {
+		err = errors.Join(err, r.Close(context.Background()))
+	}()
 
-	cfg := new(T)
-	if err := rt.Config.Scan(cfg); err != nil {
-		return nil, fmt.Errorf("scan config: %w", err)
-	}
-	return cfg, nil
-}
-
-// run 执行 kratos 应用。
-func run(app *kratos.App) error {
-	return app.Run()
-}
-
-// runWithRuntime 在已构造 Runtime 的前提下装配并运行应用。
-func (r runner) runWithRuntime(runtime *Runtime, builder appBuilder) error {
-	if runtime == nil {
-		return errors.New("runtime is nil")
-	}
-
-	logStage(runtime.Logger, "run_with_runtime_start", "version", runtime.Identity.Version)
-	startedAt := time.Now()
-	if builder == nil {
-		return errors.New("app builder is nil")
-	}
-
-	app, cleanup, err := builder(runtime)
+	app, cleanup, err := build()
 	if err != nil {
-		logStage(runtime.Logger, "run_with_runtime_failed", "reason", "build_app", "error", err.Error())
 		return err
-	}
-	if app == nil {
-		// app 为空说明启动装配链路异常，直接失败避免后续 panic。
-		logStage(runtime.Logger, "run_with_runtime_failed", "reason", "nil_app")
-		return errors.New("app is nil")
 	}
 	if cleanup != nil {
 		defer cleanup()
 	}
+	return app.Run()
+}
 
-	err = r.runApp(app)
-	if err != nil {
-		logStage(runtime.Logger, "run_with_runtime_failed", "reason", "run_app", "error", err.Error())
-		return err
+// Close 释放 Runtime 创建的资源。重复调用返回第一次关闭得到的同一个错误。
+func (r *Runtime) Close(ctx context.Context) error {
+	if r == nil {
+		return nil
 	}
+	r.closeOnce.Do(func() {
+		var joined error
+		for i := len(r.cleanups) - 1; i >= 0; i-- {
+			joined = errors.Join(joined, runCleanup(ctx, r.cleanups[i]))
+			if i > 0 {
+				if err := ctx.Err(); err != nil {
+					joined = errors.Join(joined, err)
+					break
+				}
+			}
+		}
+		r.closeErr = joined
+	})
+	return r.closeErr
+}
 
-	logStage(runtime.Logger, "run_with_runtime_done", "duration", time.Since(startedAt).String())
+func runCleanup(ctx context.Context, cleanup func(context.Context) error) (err error) {
+	if cleanup == nil {
+		return nil
+	}
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = errors.Join(err, fmt.Errorf("panic: %v", recovered))
+		}
+	}()
+	return cleanup(ctx)
+}
+
+func resolveAppIdentity(app *corev1.App, defaultName, defaultVersion string) error {
+	if app.Name == "" {
+		app.Name = defaultName
+	}
+	if app.Version == "" {
+		app.Version = defaultVersion
+	}
+	if app.Name == "" {
+		return errors.New("bootstrap: app name is required")
+	}
+	if app.Version == "" {
+		return errors.New("bootstrap: app version is required")
+	}
+	if app.Metadata == nil {
+		app.Metadata = make(map[string]string)
+	}
 	return nil
-}
-
-// BootstrapAndRun 对外暴露统一启动入口。
-func BootstrapAndRun(configPath, name, version string, builder appBuilder, opts ...BootstrapOption) error {
-	return defaultRunner.bootstrapAndRun(configPath, name, version, builder, opts...)
-}
-
-// bootstrapAndRun 执行完整启动链路：构造 Runtime、运行应用、回收资源。
-func (r runner) bootstrapAndRun(configPath, name, version string, builder appBuilder, opts ...BootstrapOption) error {
-	var o bootstrapOptions
-	for _, fn := range opts {
-		fn(&o)
-	}
-	runtime, err := r.newRuntime(configPath, name, version, o)
-	if err != nil {
-		return err
-	}
-	defer runtime.Close()
-	logStage(runtime.Logger, "bootstrap_start", "version", runtime.Identity.Version)
-	startedAt := time.Now()
-
-	err = r.runWithRuntime(runtime, builder)
-	if err != nil {
-		logStage(runtime.Logger, "bootstrap_failed", "error", err.Error())
-		return err
-	}
-
-	logStage(runtime.Logger, "bootstrap_done", "duration", time.Since(startedAt).String())
-	return nil
-}
-
-func logStage(l *slog.Logger, stage string, keyvals ...any) {
-	if l == nil {
-		return
-	}
-	l.Info(stage, keyvals...)
-}
-
-// resolveServiceIdentity 解析并回填服务身份默认值。
-func resolveServiceIdentity(defaultName, defaultVersion, hostname string, app *corev1.App) SvcIdentity {
-	name := defaultName
-	version := defaultVersion
-	metadata := make(map[string]string)
-
-	if app != nil {
-		// 将默认身份信息回填到 app，保证下游 provider 读取到一致值。
-		if app.Name != "" {
-			name = app.Name
-		} else {
-			app.Name = name
-		}
-		if app.Version != "" {
-			version = app.Version
-		} else {
-			app.Version = version
-		}
-		if app.Metadata == nil {
-			app.Metadata = metadata
-		} else {
-			metadata = app.Metadata
-		}
-	}
-
-	id := fmt.Sprintf("%s-%s", name, hostname)
-	return SvcIdentity{
-		Name:     name,
-		Version:  version,
-		ID:       id,
-		Metadata: metadata,
-	}
 }

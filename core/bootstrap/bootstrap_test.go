@@ -1,52 +1,43 @@
 package bootstrap
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	kconfig "github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/file"
 )
 
-func TestResolveServiceIdentity_UseConfigValues(t *testing.T) {
+func TestResolveAppIdentity_ConfigValuesWin(t *testing.T) {
 	app := &corev1.App{
 		Name:     "custom.service",
 		Version:  "v9.9.9",
 		Metadata: map[string]string{"zone": "cn-east"},
 	}
 
-	meta := resolveServiceIdentity("default.service", "v1.0.0", "node-a", app)
+	if err := resolveAppIdentity(app, "default.service", "v1.0.0"); err != nil {
+		t.Fatalf("resolveAppIdentity() error = %v", err)
+	}
 
-	if meta.Name != "custom.service" {
-		t.Fatalf("name = %q, want %q", meta.Name, "custom.service")
+	if app.Name != "custom.service" {
+		t.Fatalf("app.name = %q, want %q", app.Name, "custom.service")
 	}
-	if meta.Version != "v9.9.9" {
-		t.Fatalf("version = %q, want %q", meta.Version, "v9.9.9")
+	if app.Version != "v9.9.9" {
+		t.Fatalf("app.version = %q, want %q", app.Version, "v9.9.9")
 	}
-	if meta.ID != "custom.service-node-a" {
-		t.Fatalf("id = %q, want %q", meta.ID, "custom.service-node-a")
-	}
-	if meta.Metadata["zone"] != "cn-east" {
-		t.Fatalf("metadata[zone] = %q, want %q", meta.Metadata["zone"], "cn-east")
+	if app.Metadata["zone"] != "cn-east" {
+		t.Fatalf("metadata[zone] = %q, want %q", app.Metadata["zone"], "cn-east")
 	}
 }
 
-func TestResolveServiceIdentity_DefaultsAndMutatesApp(t *testing.T) {
+func TestResolveAppIdentity_OptionsFillEmptyValues(t *testing.T) {
 	app := &corev1.App{}
 
-	meta := resolveServiceIdentity("default.service", "v1.0.0", "node-b", app)
+	if err := resolveAppIdentity(app, "default.service", "v1.0.0"); err != nil {
+		t.Fatalf("resolveAppIdentity() error = %v", err)
+	}
 
-	if meta.Name != "default.service" {
-		t.Fatalf("name = %q, want %q", meta.Name, "default.service")
-	}
-	if meta.Version != "v1.0.0" {
-		t.Fatalf("version = %q, want %q", meta.Version, "v1.0.0")
-	}
-	if meta.ID != "default.service-node-b" {
-		t.Fatalf("id = %q, want %q", meta.ID, "default.service-node-b")
-	}
 	if app.Name != "default.service" {
 		t.Fatalf("app.name = %q, want %q", app.Name, "default.service")
 	}
@@ -58,44 +49,109 @@ func TestResolveServiceIdentity_DefaultsAndMutatesApp(t *testing.T) {
 	}
 }
 
-func TestScanConf(t *testing.T) {
-	configFile := filepath.Join(t.TempDir(), "bootstrap.yaml")
-	content := []byte(`
-seed:
-  admin_name: "root-admin"
-`)
-	if err := os.WriteFile(configFile, content, 0o600); err != nil {
-		t.Fatalf("write config file: %v", err)
-	}
+func TestResolveAppIdentity_RequiresNameAndVersion(t *testing.T) {
+	t.Run("missing name", func(t *testing.T) {
+		err := resolveAppIdentity(&corev1.App{Version: "v1"}, "", "")
+		if err == nil || err.Error() != "bootstrap: app name is required" {
+			t.Fatalf("error = %v, want app name required", err)
+		}
+	})
 
-	cfg := kconfig.New(
-		kconfig.WithSource(file.NewSource(configFile)),
-		kconfig.WithResolveActualTypes(true),
-	)
-	if err := cfg.Load(); err != nil {
-		t.Fatalf("load config: %v", err)
-	}
-	t.Cleanup(func() { _ = cfg.Close() })
+	t.Run("missing version", func(t *testing.T) {
+		err := resolveAppIdentity(&corev1.App{Name: "svc"}, "", "")
+		if err == nil || err.Error() != "bootstrap: app version is required" {
+			t.Fatalf("error = %v, want app version required", err)
+		}
+	})
+}
 
-	rt := &Runtime{Config: cfg}
+func TestNewRuntime_OptionsFillConfigAndServiceID(t *testing.T) {
+	configFile := writeBootstrapConfig(t, "app:\n  env: dev\n")
+	withHostname(t, "node-a", nil)
 
-	type Biz struct {
-		Seed struct {
-			AdminName string `json:"admin_name"`
-		} `json:"seed"`
-	}
-	biz, err := ScanConf[Biz](rt)
+	rt, err := NewRuntime(configFile, Name("default.service"), Version("v1.0.0"))
 	if err != nil {
-		t.Fatalf("ScanConf failed: %v", err)
+		t.Fatalf("NewRuntime() error = %v", err)
 	}
-	if biz.Seed.AdminName != "root-admin" {
-		t.Fatalf("admin_name = %q, want %q", biz.Seed.AdminName, "root-admin")
+	defer func() { _ = rt.Close(t.Context()) }()
+
+	if rt.Bootstrap.App.Name != "default.service" {
+		t.Fatalf("app.name = %q, want default.service", rt.Bootstrap.App.Name)
+	}
+	if rt.Bootstrap.App.Version != "v1.0.0" {
+		t.Fatalf("app.version = %q, want v1.0.0", rt.Bootstrap.App.Version)
+	}
+	if rt.serviceID != "default.service-node-a" {
+		t.Fatalf("serviceID = %q, want default.service-node-a", rt.serviceID)
+	}
+	if rt.Bootstrap.App.Metadata == nil {
+		t.Fatal("app.metadata should be initialized")
+	}
+	if rt.Logger == nil {
+		t.Fatal("Logger should be initialized")
+	}
+	if rt.kratosLogger == nil {
+		t.Fatal("kratosLogger should be initialized")
+	}
+	if len(rt.cleanups) != 3 {
+		t.Fatalf("cleanups = %d, want 3", len(rt.cleanups))
 	}
 }
 
-func TestScanConf_NilRuntime(t *testing.T) {
-	type Any struct{}
-	if _, err := ScanConf[Any](nil); err == nil {
-		t.Fatal("ScanConf() error = nil, want error")
+func TestNewRuntime_ConfigValuesWinOverOptions(t *testing.T) {
+	configFile := writeBootstrapConfig(t, "app:\n  name: config.service\n  version: v2.0.0\n")
+	withHostname(t, "node-b", nil)
+
+	rt, err := NewRuntime(configFile, Name("default.service"), Version("v1.0.0"))
+	if err != nil {
+		t.Fatalf("NewRuntime() error = %v", err)
 	}
+	defer func() { _ = rt.Close(t.Context()) }()
+
+	if rt.Bootstrap.App.Name != "config.service" {
+		t.Fatalf("app.name = %q, want config.service", rt.Bootstrap.App.Name)
+	}
+	if rt.Bootstrap.App.Version != "v2.0.0" {
+		t.Fatalf("app.version = %q, want v2.0.0", rt.Bootstrap.App.Version)
+	}
+	if rt.serviceID != "config.service-node-b" {
+		t.Fatalf("serviceID = %q, want config.service-node-b", rt.serviceID)
+	}
+}
+
+func TestNewRuntime_WithEnvPrefixRequiresName(t *testing.T) {
+	_, err := NewRuntime("does-not-matter.yaml", WithEnvPrefix())
+	if err == nil || err.Error() != "bootstrap: WithEnvPrefix requires Name option" {
+		t.Fatalf("error = %v, want WithEnvPrefix requires Name option", err)
+	}
+}
+
+func TestNewRuntime_HostnameError(t *testing.T) {
+	configFile := writeBootstrapConfig(t, "app:\n  name: svc.service\n  version: v1\n")
+	want := errors.New("boom")
+	withHostname(t, "", want)
+
+	_, err := NewRuntime(configFile)
+	if !errors.Is(err, want) {
+		t.Fatalf("error = %v, want wrapping %v", err, want)
+	}
+	if err == nil || err.Error() != "bootstrap: hostname: boom" {
+		t.Fatalf("error = %v, want hostname wrap", err)
+	}
+}
+
+func writeBootstrapConfig(t *testing.T, content string) string {
+	t.Helper()
+	configFile := filepath.Join(t.TempDir(), "bootstrap.yaml")
+	if err := os.WriteFile(configFile, []byte(content), 0o600); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+	return configFile
+}
+
+func withHostname(t *testing.T, hostname string, err error) {
+	t.Helper()
+	old := hostnameFn
+	hostnameFn = func() (string, error) { return hostname, err }
+	t.Cleanup(func() { hostnameFn = old })
 }
