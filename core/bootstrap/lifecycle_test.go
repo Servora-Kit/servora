@@ -3,14 +3,12 @@ package bootstrap
 import (
 	"context"
 	"errors"
-	"io"
 	"reflect"
 	"testing"
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/go-kratos/kratos/v2"
-	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
 func TestRuntimeClose_LIFOOnceAndSameError(t *testing.T) {
@@ -84,8 +82,7 @@ func TestRuntimeNewApp_DefaultsAndCallerOverrides(t *testing.T) {
 			Version:  "v1.0.0",
 			Metadata: metadata,
 		}},
-		serviceID:    "svc.service-node-a",
-		kratosLogger: kratoslog.NewStdLogger(io.Discard),
+		serviceID: "svc.service-node-a",
 	}
 
 	app := rt.NewApp(kratos.Name("override.service"))
@@ -130,8 +127,7 @@ func TestRuntimeRun_CleanupBeforeRuntimeClose(t *testing.T) {
 			Version:  "v1.0.0",
 			Metadata: map[string]string{},
 		}},
-		serviceID:    "svc.service-node-a",
-		kratosLogger: kratoslog.NewStdLogger(io.Discard),
+		serviceID: "svc.service-node-a",
 		cleanups: []func(context.Context) error{
 			func(context.Context) error { order = append(order, "runtime"); return nil },
 		},

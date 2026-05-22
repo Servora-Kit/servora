@@ -90,9 +90,6 @@ func TestNewRuntime_OptionsFillConfigAndServiceID(t *testing.T) {
 	if rt.Logger == nil {
 		t.Fatal("Logger should be initialized")
 	}
-	if rt.kratosLogger == nil {
-		t.Fatal("kratosLogger should be initialized")
-	}
 	if len(rt.cleanups) != 3 {
 		t.Fatalf("cleanups = %d, want 3", len(rt.cleanups))
 	}

@@ -16,7 +16,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"
-	kratoslog "github.com/go-kratos/kratos/v2/log"
 )
 
 // Runtime 聚合启动阶段产物与 runtime 级资源清理句柄。
@@ -25,8 +24,7 @@ type Runtime struct {
 	Config    kconfig.Config
 	Logger    *slog.Logger
 
-	serviceID    string
-	kratosLogger kratoslog.Logger
+	serviceID string
 
 	closeOnce sync.Once
 	closeErr  error
@@ -91,7 +89,7 @@ func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
 
 	sl, logCloser := slogger.New(bc)
 	appLogger := sl.With("service", bc.App.Name)
-	kl := kratosv2.Wrap(appLogger)
+	kratosv2.SetDefault(appLogger)
 
 	traceCleanup, err := telemetry.InitTracerProvider(bc.Trace, bc.App.Name, bc.App.Env)
 	if err != nil {
@@ -101,11 +99,10 @@ func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
 	}
 
 	return &Runtime{
-		Bootstrap:    bc,
-		Config:       c,
-		Logger:       appLogger,
-		serviceID:    serviceID,
-		kratosLogger: kl,
+		Bootstrap: bc,
+		Config:    c,
+		Logger:    appLogger,
+		serviceID: serviceID,
 		cleanups: []func(context.Context) error{
 			func(context.Context) error { return c.Close() },
 			logCloser,
@@ -121,7 +118,6 @@ func (r *Runtime) NewApp(opts ...kratos.Option) *kratos.App {
 		kratos.Name(r.Bootstrap.App.Name),
 		kratos.Version(r.Bootstrap.App.Version),
 		kratos.Metadata(r.Bootstrap.App.Metadata),
-		kratos.Logger(r.kratosLogger),
 	}
 	appOpts = append(appOpts, opts...)
 	return kratos.New(appOpts...)
