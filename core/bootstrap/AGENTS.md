@@ -50,11 +50,11 @@ type ConfApplier interface { ApplyConf() error }
 
 ## 生命周期语义
 
-- `NewRuntime` 负责加载 config、初始化 logger/Kratos logger/tracer、解析 app name/version/metadata/serviceID，并登记 runtime 自有 cleanups。
+- `NewRuntime` 负责加载 config、初始化 logger、绑定 Kratos v2 全局代理 delegate、初始化 tracer、解析 app name/version/metadata/serviceID，并登记 runtime 自有 cleanups。
 - `Runtime.Run(build)` 负责执行 `wireApp` 闭包、运行 Kratos App，并保证业务 Wire cleanup 先于 runtime 资源关闭。
 - `Runtime.Close(ctx)` 只关闭 runtime 创建的资源；业务 Wire cleanup 不注册进 runtime cleanups。
 - cleanup 顺序遵循 LIFO；新增启动期资源时必须明确 close 顺序。
-- `Runtime.NewApp` 默认注入 Kratos `ID/Name/Version/Metadata/Logger`，业务继续传 server、registrar 与 lifecycle hooks。
+- `Runtime.NewApp` 默认只注入 Kratos `ID/Name/Version/Metadata`，不注入 `kratos.Logger(...)`；业务继续传 server、registrar 与 lifecycle hooks。
 - `Scan` 对非 `Section` target 扫描整份 config，对 `Section` target 扫描对应 section；扫描成功后才调用 `ApplyConf()`。
 - Optional section 缺失时跳过 scan 与 `ApplyConf()`；非 optional 缺失或解码失败返回带 target index 与 section key 的错误。
 
@@ -78,4 +78,4 @@ type ConfApplier interface { ApplyConf() error }
 go test ./core/bootstrap/...
 ```
 
-重点覆盖：config loader、`NewRuntime` name/version/env prefix、`Runtime.NewApp` 默认注入、`Runtime.Run` cleanup 顺序、`Runtime.Close` LIFO/idempotent/error join，以及 `Scan` whole-config/section/optional/apply 语义。
+重点覆盖：config loader、`NewRuntime` name/version/env prefix、Kratos v2 logger delegate 绑定、`Runtime.NewApp` identity 默认注入且不写全局 logger、`Runtime.Run` cleanup 顺序、`Runtime.Close` LIFO/idempotent/error join，以及 `Scan` whole-config/section/optional/apply 语义。

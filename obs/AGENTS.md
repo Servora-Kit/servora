@@ -12,7 +12,7 @@
 | 目录 | 职责 |
 | --- | --- |
 | `logger/` | 从 Bootstrap proto 构建 `*slog.Logger`，支持 stdout/file/OTel fanout 与 Kratos adapter |
-| `logger/kratosv2/` | `slog` 到 Kratos logger 的适配 |
+| `logger/kratosv2/` | `slog` 到 Kratos v2 logger 的实例级适配，并通过一次性全局代理 + atomic delegate 承接 Kratos v2 内部日志 |
 | `telemetry/` | OTel trace provider 与 Prometheus metrics 构造 |
 | `audit/` | CloudEvents 审计事件、middleware 与后端 auditor |
 
