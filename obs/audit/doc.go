@@ -1,6 +1,6 @@
 // Package audit provides engine-agnostic audit event emission using CloudEvents
 // as the envelope format. It defines the Auditor contract and ships MVP backends
-// (noop, stdout, kafka, multi) plus a Kratos middleware that intercepts RPC
+// (noop, stdout, log, kafka, multi) plus a Kratos middleware that intercepts RPC
 // calls and emits structured audit events.
 //
 // # Architecture
@@ -15,6 +15,7 @@
 //
 //   - obs/audit/noop   — discards all events (testing / disabled mode)
 //   - obs/audit/stdout — JSON-encodes events to stdout (local dev)
+//   - obs/audit/log    — emits structured slog records (local dev / demos)
 //   - obs/audit/kafka  — delivers events to Kafka via CloudEvents binding (stub)
 //   - obs/audit/multi  — fans out to multiple auditors
 //

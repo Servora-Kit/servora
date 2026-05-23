@@ -5,7 +5,7 @@
 
 ## 模块定位
 
-`obs/audit` 提供 CloudEvents 审计事件运行时能力：`Auditor` 抽象、CloudEvents extension helpers、Kratos middleware、multi/noop/stdout/kafka 后端。
+`obs/audit` 提供 CloudEvents 审计事件运行时能力：`Auditor` 抽象、CloudEvents extension helpers、Kratos middleware、multi/noop/stdout/log/kafka 后端。
 
 核心契约：
 
@@ -62,6 +62,7 @@ Servora audit extensions 定义在 `extensions.go`：`authid`、`authtype`、`tr
 
 - `noop/`：禁用或测试。
 - `stdout/`：本地开发 JSON 输出。
+- `log/`：本地/demo 的人类可读结构化 slog 输出。
 - `kafka/`：CloudEvents Kafka 发送 stub/适配，不等同于 `infra/broker/kafka`。
 - `multi/`：fanout 多个 auditor；单个后端失败不应改变业务返回。
 
@@ -78,4 +79,4 @@ Servora audit extensions 定义在 `extensions.go`：`authid`、`authtype`、`tr
 go test ./obs/audit/...
 ```
 
-重点覆盖：rule merge、handler 后 emit、auth metadata extensions、emit 失败不阻断、multi/noop/stdout/kafka 后端、CloudEvents attribute helpers。
+重点覆盖：rule merge、handler 后 emit、auth metadata extensions、emit 失败不阻断、multi/noop/stdout/log/kafka 后端、CloudEvents attribute helpers。
