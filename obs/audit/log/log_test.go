@@ -12,9 +12,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
-func TestNewAuditor_ImplementsInterface(t *testing.T) {
-	var _ audit.Auditor = NewAuditor(slog.New(slog.NewJSONHandler(&bytes.Buffer{}, nil)))
-}
+var _ audit.Auditor = (*auditorImpl)(nil)
 
 func TestAuditor_EmitMapsCloudEventFields(t *testing.T) {
 	var buf bytes.Buffer
