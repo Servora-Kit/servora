@@ -1,7 +1,7 @@
 # AGENTS.md - security/authn/apikey/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Updated: 2026-05-21 -->
+<!-- Updated: 2026-05-24 -->
 
 ## 子包定位
 
@@ -36,10 +36,10 @@ func SubjectFrom(ctx context.Context) (string, bool)
 
 ## 执行语义
 
-- 无 server transport、缺 `X-API-Key`、header 空值：返回包含 `missing X-API-Key` 的错误。
+- 无 server transport、缺 `X-API-Key`、header 空值：返回匹配 `authn.ErrNoCredentials` 且包含 `missing X-API-Key` 的错误。
 - 有 key：逐字调用 `Store.Lookup(ctx, key)`。
 - Lookup 成功：写入 `WithKeyMeta(ctx, meta)`，再写入 `authn.WithAuthType(ctx, "api_key")`，返回 enriched ctx。
-- Lookup 失败：错误原样返回，让 `Multi` 继续尝试其他 engine 或聚合失败。
+- Lookup 失败：错误原样返回，`Multi` 视为无效凭据/后端失败并 fail-fast。
 - `SubjectFrom` 读取 `KeyMeta.OwnerID`；`KeyID` 是 key 标识，不是 secret。
 - 错误信息可能进入失败 audit CloudEvents，必须避免泄漏 key 原文或 PII。
 

@@ -1,7 +1,7 @@
 # AGENTS.md - api/protos/
 
 <!-- Parent: ../../AGENTS.md -->
-<!-- Updated: 2026-05-21 -->
+<!-- Updated: 2026-05-24 -->
 
 ## 当前定位
 
@@ -41,6 +41,7 @@ import "servora/audit/v1/annotations.proto";
 - `go_package` 使用 `github.com/Servora-Kit/servora/api/gen/go/servora/<ns>/v1;<alias>`。
 - 新 annotation extension 号段遵守根 `AGENTS.md` 的 `5xx00` 规划。
 - `service_default` 合并语义必须与生成器测试一致：方法级显式字段覆盖服务级默认，未显式字段继承。
+- 第一方 backend 配置 proto 必须用 `servora.conf.v1.section` / `field` 表达 section、默认值和必填项；不要让 runtime 包重复维护默认值或 required 判断。
 
 ## 生成与校验
 

@@ -2,6 +2,8 @@ package openfga
 
 import (
 	"testing"
+
+	openfgaconfpb "github.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1"
 )
 
 func TestWithComputedRelations(t *testing.T) {
@@ -28,5 +30,12 @@ func TestNewClient_NilConfig(t *testing.T) {
 	_, err := NewClient(nil)
 	if err == nil {
 		t.Fatal("expected error for nil config")
+	}
+}
+
+func TestNewClient_UsesGeneratedRequiredChecks(t *testing.T) {
+	_, err := NewClient(&openfgaconfpb.Config{StoreId: "store"})
+	if err == nil {
+		t.Fatal("expected missing api_url error")
 	}
 }

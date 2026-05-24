@@ -41,7 +41,7 @@ import (
 //	    WithMetrics(mtc).
 //	    Build()
 //	// 业务通过 builtin append 追加 authn/authz/audit wrapper
-//	ms = append(ms, jwt.Server(jwt.WithVerifier(v)), authz.Server(fgaAuth))
+//	ms = append(ms, authn.Server(authn.Multi(authn.Named(jwt.Scheme, jwt.NewAuthenticator(jwt.WithVerifier(v))))), authz.Server(fgaAuth))
 //
 // 自实现 Authenticator 的高级用法（非 jwt 载体或自定义引擎）：
 //

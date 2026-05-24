@@ -7,6 +7,7 @@
 package openfgaconfpb
 
 import (
+	_ "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -94,12 +95,13 @@ var File_servora_security_authz_openfga_v1_config_proto protoreflect.FileDescrip
 
 const file_servora_security_authz_openfga_v1_config_proto_rawDesc = "" +
 	"\n" +
-	".servora/security/authz/openfga/v1/config.proto\x12!servora.security.authz.openfga.v1\"t\n" +
-	"\x06Config\x12\x17\n" +
-	"\aapi_url\x18\x01 \x01(\tR\x06apiUrl\x12\x19\n" +
-	"\bstore_id\x18\x02 \x01(\tR\astoreId\x12\x19\n" +
+	".servora/security/authz/openfga/v1/config.proto\x12!servora.security.authz.openfga.v1\x1a!servora/conf/v1/annotations.proto\"\x9b\x01\n" +
+	"\x06Config\x12\x1f\n" +
+	"\aapi_url\x18\x01 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\x06apiUrl\x12!\n" +
+	"\bstore_id\x18\x02 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\astoreId\x12\x19\n" +
 	"\bmodel_id\x18\x03 \x01(\tR\amodelId\x12\x1b\n" +
-	"\tapi_token\x18\x04 \x01(\tR\bapiTokenB\xb8\x02\n" +
+	"\tapi_token\x18\x04 \x01(\tR\bapiToken:\x15\x82\xce\x18\x11\n" +
+	"\rauthz.openfga\x10\x01B\xb8\x02\n" +
 	"%com.servora.security.authz.openfga.v1B\vConfigProtoP\x01ZYgithub.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1;openfgaconfpb\xa2\x02\x04SSAO\xaa\x02!Servora.Security.Authz.Openfga.V1\xca\x02!Servora\\Security\\Authz\\Openfga\\V1\xe2\x02-Servora\\Security\\Authz\\Openfga\\V1\\GPBMetadata\xea\x02%Servora::Security::Authz::Openfga::V1b\x06proto3"
 
 var (

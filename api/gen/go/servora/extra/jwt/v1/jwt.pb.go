@@ -110,12 +110,15 @@ var File_servora_extra_jwt_v1_jwt_proto protoreflect.FileDescriptor
 
 const file_servora_extra_jwt_v1_jwt_proto_rawDesc = "" +
 	"\n" +
-	"\x1eservora/extra/jwt/v1/jwt.proto\x12\x14servora.extra.jwt.v1\x1a!servora/conf/v1/annotations.proto\"\xe4\x01\n" +
+	"\x1eservora/extra/jwt/v1/jwt.proto\x12\x14servora.extra.jwt.v1\x1a!servora/conf/v1/annotations.proto\"\xfe\x01\n" +
 	"\x03Jwt\x12(\n" +
 	"\x10private_key_path\x18\x01 \x01(\tR\x0eprivateKeyPath\x12&\n" +
-	"\x0fprivate_key_pem\x18\x02 \x01(\tR\rprivateKeyPem\x12#\n" +
-	"\raccess_expire\x18\x03 \x01(\x05R\faccessExpire\x12%\n" +
-	"\x0erefresh_expire\x18\x04 \x01(\x05R\rrefreshExpire\x12\x16\n" +
+	"\x0fprivate_key_pem\x18\x02 \x01(\tR\rprivateKeyPem\x12/\n" +
+	"\raccess_expire\x18\x03 \x01(\x05B\n" +
+	"\x8a\xce\x18\x06\n" +
+	"\x043600R\faccessExpire\x123\n" +
+	"\x0erefresh_expire\x18\x04 \x01(\x05B\f\x8a\xce\x18\b\n" +
+	"\x06604800R\rrefreshExpire\x12\x16\n" +
 	"\x06issuer\x18\x05 \x01(\tR\x06issuer\x12\x1a\n" +
 	"\baudience\x18\x06 \x01(\tR\baudience:\v\x82\xce\x18\a\n" +
 	"\x03jwt\x10\x01B\xdd\x01\n" +

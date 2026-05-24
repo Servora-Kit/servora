@@ -252,13 +252,20 @@ Plugin 生成 `AuthzRules()` 规则表，业务侧把 `Engine` 实现（OpenFGA 
 
 ```go
 import (
+    openfgaconfpb "github.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1"
     "github.com/Servora-Kit/servora/security/authz"
     "github.com/Servora-Kit/servora/security/authz/openfga"
     pb "myapp/api/gen/go/myapp/video/v1"
 )
 
-engine := openfga.NewEngine(openfga.WithStoreID("..."))
-mw := authz.Server(engine, authz.WithRulesFuncs(pb.AuthzRules))
+client, err := openfga.NewClient(&openfgaconfpb.Config{
+    ApiUrl:  "http://openfga:8080",
+    StoreId: "store-id",
+})
+if err != nil {
+    return err
+}
+mw := authz.Server(openfga.NewAuthorizer(client), authz.WithRulesFuncs(pb.AuthzRules))
 ```
 
 #### 审计

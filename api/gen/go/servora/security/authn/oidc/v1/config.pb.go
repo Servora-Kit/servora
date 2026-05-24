@@ -7,6 +7,7 @@
 package oidcconfpb
 
 import (
+	_ "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -94,13 +95,17 @@ var File_servora_security_authn_oidc_v1_config_proto protoreflect.FileDescriptor
 
 const file_servora_security_authn_oidc_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"+servora/security/authn/oidc/v1/config.proto\x12\x1eservora.security.authn.oidc.v1\"\xc5\x01\n" +
-	"\x06Config\x12\x1d\n" +
+	"+servora/security/authn/oidc/v1/config.proto\x12\x1eservora.security.authn.oidc.v1\x1a!servora/conf/v1/annotations.proto\"\xff\x01\n" +
+	"\x06Config\x12%\n" +
 	"\n" +
-	"crypto_key\x18\x01 \x01(\tR\tcryptoKey\x127\n" +
-	"\x18grant_type_refresh_token\x18\x02 \x01(\bR\x15grantTypeRefreshToken\x12=\n" +
-	"\x1bdefault_logout_redirect_uri\x18\x03 \x01(\tR\x18defaultLogoutRedirectUri\x12$\n" +
-	"\x0elogin_base_url\x18\x04 \x01(\tR\floginBaseUrlB\xa3\x02\n" +
+	"crypto_key\x18\x01 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\tcryptoKey\x12D\n" +
+	"\x18grant_type_refresh_token\x18\x02 \x01(\bB\v\x8a\xce\x18\a\n" +
+	"\x05falseR\x15grantTypeRefreshToken\x12F\n" +
+	"\x1bdefault_logout_redirect_uri\x18\x03 \x01(\tB\a\x8a\xce\x18\x03\n" +
+	"\x01/R\x18defaultLogoutRedirectUri\x12,\n" +
+	"\x0elogin_base_url\x18\x04 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\floginBaseUrl:\x12\x82\xce\x18\x0e\n" +
+	"\n" +
+	"authn.oidc\x10\x01B\xa3\x02\n" +
 	"\"com.servora.security.authn.oidc.v1B\vConfigProtoP\x01ZSgithub.com/Servora-Kit/servora/api/gen/go/servora/security/authn/oidc/v1;oidcconfpb\xa2\x02\x04SSAO\xaa\x02\x1eServora.Security.Authn.Oidc.V1\xca\x02\x1eServora\\Security\\Authn\\Oidc\\V1\xe2\x02*Servora\\Security\\Authn\\Oidc\\V1\\GPBMetadata\xea\x02\"Servora::Security::Authn::Oidc::V1b\x06proto3"
 
 var (

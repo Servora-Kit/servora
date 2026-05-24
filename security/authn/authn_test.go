@@ -3,6 +3,7 @@ package authn
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -192,9 +193,6 @@ func TestServer_UnannotatedPath_AllowedNil(t *testing.T) {
 	if allowed := allowedSchemesFrom(capturedCtx); allowed != nil {
 		t.Errorf("allowed = %v, want nil (fail-open)", allowed)
 	}
-	if h := schemeHolderFrom(capturedCtx); h == nil {
-		t.Error("schemeHolder should be installed even on fail-open path")
-	}
 }
 
 // ---------------------------------------------------------------------------
@@ -260,8 +258,8 @@ func TestServer_SingleFailure_ReturnsUnauthorized(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestServer_MultiFailure_AggregatesReason(t *testing.T) {
-	jwtAuth := &fakeAuthenticator{returnErr: errors.New("jwt verify failed")}
-	apikeyAuth := &fakeAuthenticator{returnErr: errors.New("missing X-API-Key")}
+	jwtAuth := &fakeAuthenticator{returnErr: ErrNoCredentials}
+	apikeyAuth := &fakeAuthenticator{returnErr: ErrNoCredentials}
 
 	auth := Multi(
 		Named("jwt", jwtAuth),
@@ -294,11 +292,14 @@ func TestServer_MultiFailure_AggregatesReason(t *testing.T) {
 		t.Errorf("err type = %T, want SchemeAttemptsErr", err)
 	}
 	errStr := err.Error()
-	if !strings.Contains(errStr, "jwt: jwt verify failed") {
+	if !strings.Contains(errStr, "jwt: authn: no credentials") {
 		t.Errorf("err = %q, missing jwt attempt", errStr)
 	}
-	if !strings.Contains(errStr, "apikey: missing X-API-Key") {
+	if !strings.Contains(errStr, "apikey: authn: no credentials") {
 		t.Errorf("err = %q, missing apikey attempt", errStr)
+	}
+	if !errors.Is(err, ErrNoCredentials) {
+		t.Errorf("err = %v, want ErrNoCredentials", err)
 	}
 }
 
@@ -476,7 +477,7 @@ func TestMulti_FirstSuccessWins(t *testing.T) {
 		Named("apikey", second),
 	)
 
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
+	ctx := withAllowedSchemes(context.Background(), nil)
 	resultCtx, err := auth.Authenticate(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -507,7 +508,7 @@ func TestMulti_AllowedFilter_SkipsNonMatching(t *testing.T) {
 	)
 
 	allowed := map[string]struct{}{"jwt": {}}
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), allowed))
+	ctx := withAllowedSchemes(context.Background(), allowed)
 
 	if _, err := auth.Authenticate(ctx); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -530,7 +531,7 @@ func TestMulti_EmptyIntersection_ReturnsErrSchemesEmpty(t *testing.T) {
 	auth := Multi(Named("jwt", jwtAuth))
 
 	allowed := map[string]struct{}{"mtls": {}}
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), allowed))
+	ctx := withAllowedSchemes(context.Background(), allowed)
 
 	_, err := auth.Authenticate(ctx)
 	if !errors.Is(err, errSchemesEmpty) {
@@ -542,49 +543,25 @@ func TestMulti_EmptyIntersection_ReturnsErrSchemesEmpty(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Multi: writes scheme to holder on success
+// Multi: all no credentials aggregate into SchemeAttemptsErr and ErrNoCredentials
 // ---------------------------------------------------------------------------
 
-func TestMulti_WritesSchemeToHolderOnSuccess(t *testing.T) {
-	first := &fakeAuthenticator{returnErr: errors.New("first failed")}
-	second := &fakeAuthenticator{} // success
-
-	auth := Multi(
-		Named("jwt", first),
-		Named("apikey", second),
-	)
-
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
-	if _, err := auth.Authenticate(ctx); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	holder := schemeHolderFrom(ctx)
-	if holder == nil {
-		t.Fatal("holder must be present")
-	}
-	if got := holder.get(); got != "apikey" {
-		t.Errorf("holder.get() = %q, want apikey", got)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Multi: aggregates failures into SchemeAttemptsErr
-// ---------------------------------------------------------------------------
-
-func TestMulti_AllFailed_AggregatesIntoSchemeAttemptsErr(t *testing.T) {
-	jwtAuth := &fakeAuthenticator{returnErr: errors.New("jwt verify failed")}
-	apikeyAuth := &fakeAuthenticator{returnErr: errors.New("missing X-API-Key")}
+func TestMulti_AllNoCredentials_AggregatesIntoSchemeAttemptsErr(t *testing.T) {
+	jwtAuth := &fakeAuthenticator{returnErr: ErrNoCredentials}
+	apikeyAuth := &fakeAuthenticator{returnErr: fmt.Errorf("apikey: %w", ErrNoCredentials)}
 
 	auth := Multi(
 		Named("jwt", jwtAuth),
 		Named("apikey", apikeyAuth),
 	)
 
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), nil))
+	ctx := withAllowedSchemes(context.Background(), nil)
 	_, err := auth.Authenticate(ctx)
 	if err == nil {
 		t.Fatal("expected aggregated error")
+	}
+	if !errors.Is(err, ErrNoCredentials) {
+		t.Fatalf("err = %v, want ErrNoCredentials", err)
 	}
 
 	as, ok := err.(SchemeAttemptsErr)
@@ -595,11 +572,32 @@ func TestMulti_AllFailed_AggregatesIntoSchemeAttemptsErr(t *testing.T) {
 	if len(attempts) != 2 {
 		t.Fatalf("attempts len = %d, want 2", len(attempts))
 	}
-	if attempts[0].Scheme != "jwt" || attempts[0].Reason != "jwt verify failed" {
-		t.Errorf("attempts[0] = %+v, want {jwt, jwt verify failed}", attempts[0])
+	if attempts[0].Scheme != "jwt" || attempts[0].Reason != "authn: no credentials" {
+		t.Errorf("attempts[0] = %+v, want {jwt, authn: no credentials}", attempts[0])
 	}
-	if attempts[1].Scheme != "apikey" || attempts[1].Reason != "missing X-API-Key" {
-		t.Errorf("attempts[1] = %+v, want {apikey, missing X-API-Key}", attempts[1])
+	if attempts[1].Scheme != "apikey" || attempts[1].Reason != "apikey: authn: no credentials" {
+		t.Errorf("attempts[1] = %+v, want {apikey, apikey: authn: no credentials}", attempts[1])
+	}
+}
+
+func TestMulti_InvalidCredentialFailsFast(t *testing.T) {
+	jwtAuth := &fakeAuthenticator{returnErr: errors.New("jwt verify failed")}
+	apikeyAuth := &fakeAuthenticator{}
+
+	auth := Multi(
+		Named("jwt", jwtAuth),
+		Named("apikey", apikeyAuth),
+	)
+
+	_, err := auth.Authenticate(withAllowedSchemes(context.Background(), nil))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if errors.Is(err, ErrNoCredentials) {
+		t.Fatalf("err = %v, must not match ErrNoCredentials", err)
+	}
+	if apikeyAuth.called != 0 {
+		t.Fatalf("apikeyAuth.called = %d, want 0", apikeyAuth.called)
 	}
 }
 
@@ -631,8 +629,8 @@ func TestSchemeAttemptsErr_InterfaceAssertion(t *testing.T) {
 
 func TestMulti_IterationFollowsInjectionOrderNotAllowedOrder(t *testing.T) {
 	var callOrder []string
-	jwtAuth := &fakeAuthenticator{returnErr: errors.New("jwt failed")}
-	apikeyAuth := &fakeAuthenticator{returnErr: errors.New("apikey failed")}
+	jwtAuth := &fakeAuthenticator{returnErr: ErrNoCredentials}
+	apikeyAuth := &fakeAuthenticator{returnErr: ErrNoCredentials}
 
 	// Wrap each fake so we can observe call order.
 	tracedJWT := authenticatorFunc(func(ctx context.Context) (context.Context, error) {
@@ -653,7 +651,7 @@ func TestMulti_IterationFollowsInjectionOrderNotAllowedOrder(t *testing.T) {
 	// Allowed map iteration is not ordered, but the injection order should
 	// be the observable iteration order.
 	allowed := map[string]struct{}{"apikey": {}, "jwt": {}}
-	ctx := installSchemeHolder(withAllowedSchemes(context.Background(), allowed))
+	ctx := withAllowedSchemes(context.Background(), allowed)
 
 	_, _ = auth.Authenticate(ctx)
 
@@ -681,6 +679,46 @@ func TestWithMethod_Removed(t *testing.T) {
 	if strings.Contains(body, "func WithMethod(") {
 		t.Error("authn.go MUST NOT define WithMethod after Multi/Named refactor")
 	}
+}
+
+func TestNamed_ValidationPanics(t *testing.T) {
+	assertPanic(t, func() { Named("", &fakeAuthenticator{}) })
+	assertPanic(t, func() { Named("jwt", nil) })
+}
+
+func TestMulti_ValidationPanics(t *testing.T) {
+	assertPanic(t, func() { Multi() })
+	assertPanic(t, func() {
+		Multi(
+			Named("jwt", &fakeAuthenticator{}),
+			Named("jwt", &fakeAuthenticator{}),
+		)
+	})
+	assertPanic(t, func() {
+		Multi(NamedAuthenticator{scheme: "jwt"})
+	})
+	assertPanic(t, func() {
+		Multi(NamedAuthenticator{inner: &fakeAuthenticator{}})
+	})
+}
+
+func TestSuccessfulSchemeHolder_Removed(t *testing.T) {
+	body := mustReadFile(t, "context.go")
+	for _, needle := range []string{"successfulSchemeKey", "schemeHolder", "installSchemeHolder"} {
+		if strings.Contains(body, needle) {
+			t.Errorf("context.go MUST NOT contain %s", needle)
+		}
+	}
+}
+
+func assertPanic(t *testing.T, fn func()) {
+	t.Helper()
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic")
+		}
+	}()
+	fn()
 }
 
 func mustReadFile(t *testing.T, path string) string {

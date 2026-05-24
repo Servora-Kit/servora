@@ -2,12 +2,19 @@ syntax = "proto3";
 
 package servora.security.authz.openfga.v1;
 
+import "servora/conf/v1/annotations.proto";
+
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1;openfgaconfpb";
 
 // OpenFGA 引擎配置（由 security/authz/openfga 子包消费）
 message Config {
-  string api_url = 1; // OpenFGA HTTP API 地址
-  string store_id = 2; // Store ID
+  option (servora.conf.v1.section) = {
+    key: "authz.openfga"
+    optional: true
+  };
+
+  string api_url = 1 [(servora.conf.v1.field) = { required: true }]; // OpenFGA HTTP API 地址
+  string store_id = 2 [(servora.conf.v1.field) = { required: true }]; // Store ID
   string model_id = 3; // Authorization Model ID
   string api_token = 4; // API Token（可选，生产环境使用）
 }

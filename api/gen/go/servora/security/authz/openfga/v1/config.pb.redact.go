@@ -5,6 +5,7 @@ package openfgaconfpb
 
 import (
 	context "context"
+	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	redact "github.com/menta2k/protoc-gen-redact/v3/redact/v3"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -18,6 +19,7 @@ var (
 	_ redact.Redactor
 	_ codes.Code
 	_ status.Status
+	_ conf.SectionRule
 )
 
 // Redact method implementation for Config

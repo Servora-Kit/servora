@@ -15,9 +15,8 @@ import "strings"
 // framework main package no longer hosts credential-carrier parsing because
 // "Bearer" is a jwt-shaped concept (mTLS reads peer certs, API-Key reads a
 // different header, etc.). Lowercase first letter — package-private.
-// Business code MUST NOT call this directly; if you want to extract a token,
-// use the inbound [Server] middleware which calls this internally and stores
-// the result via [WithToken].
+// Business code MUST NOT call this directly; [NewAuthenticator] calls it
+// internally and stores the result via [WithToken].
 func extractBearerToken(header string) string {
 	if header == "" {
 		return ""

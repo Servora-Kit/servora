@@ -236,7 +236,7 @@ type CloudEvent_CloudEventAttributeValue struct {
 
 func (x *CloudEvent_CloudEventAttributeValue) Reset() {
 	*x = CloudEvent_CloudEventAttributeValue{}
-	mi := &file_servora_cloudevents_v1_cloudevents_proto_msgTypes[2]
+	mi := &file_servora_cloudevents_v1_cloudevents_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -248,7 +248,7 @@ func (x *CloudEvent_CloudEventAttributeValue) String() string {
 func (*CloudEvent_CloudEventAttributeValue) ProtoMessage() {}
 
 func (x *CloudEvent_CloudEventAttributeValue) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_cloudevents_v1_cloudevents_proto_msgTypes[2]
+	mi := &file_servora_cloudevents_v1_cloudevents_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -261,7 +261,7 @@ func (x *CloudEvent_CloudEventAttributeValue) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use CloudEvent_CloudEventAttributeValue.ProtoReflect.Descriptor instead.
 func (*CloudEvent_CloudEventAttributeValue) Descriptor() ([]byte, []int) {
-	return file_servora_cloudevents_v1_cloudevents_proto_rawDescGZIP(), []int{0, 0}
+	return file_servora_cloudevents_v1_cloudevents_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *CloudEvent_CloudEventAttributeValue) GetAttr() isCloudEvent_CloudEventAttributeValue_Attr {
@@ -399,7 +399,10 @@ const file_servora_cloudevents_v1_cloudevents_proto_rawDesc = "" +
 	"binaryData\x12\x1d\n" +
 	"\ttext_data\x18\a \x01(\tH\x00R\btextData\x125\n" +
 	"\n" +
-	"proto_data\x18\b \x01(\v2\x14.google.protobuf.AnyH\x00R\tprotoData\x1a\x9a\x02\n" +
+	"proto_data\x18\b \x01(\v2\x14.google.protobuf.AnyH\x00R\tprotoData\x1az\n" +
+	"\x0fAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12Q\n" +
+	"\x05value\x18\x02 \x01(\v2;.servora.cloudevents.v1.CloudEvent.CloudEventAttributeValueR\x05value:\x028\x01\x1a\x9a\x02\n" +
 	"\x18CloudEventAttributeValue\x12\x1f\n" +
 	"\n" +
 	"ce_boolean\x18\x01 \x01(\bH\x00R\tceBoolean\x12\x1f\n" +
@@ -411,10 +414,7 @@ const file_servora_cloudevents_v1_cloudevents_proto_rawDesc = "" +
 	"\n" +
 	"ce_uri_ref\x18\x06 \x01(\tH\x00R\bceUriRef\x12?\n" +
 	"\fce_timestamp\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x00R\vceTimestampB\x06\n" +
-	"\x04attr\x1az\n" +
-	"\x0fAttributesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12Q\n" +
-	"\x05value\x18\x02 \x01(\v2;.servora.cloudevents.v1.CloudEvent.CloudEventAttributeValueR\x05value:\x028\x01B\x06\n" +
+	"\x04attrB\x06\n" +
 	"\x04data\"M\n" +
 	"\x0fCloudEventBatch\x12:\n" +
 	"\x06events\x18\x01 \x03(\v2\".servora.cloudevents.v1.CloudEventR\x06eventsB\xef\x01\n" +
@@ -434,19 +434,19 @@ func file_servora_cloudevents_v1_cloudevents_proto_rawDescGZIP() []byte {
 
 var file_servora_cloudevents_v1_cloudevents_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_servora_cloudevents_v1_cloudevents_proto_goTypes = []any{
-	(*CloudEvent)(nil),                          // 0: servora.cloudevents.v1.CloudEvent
-	(*CloudEventBatch)(nil),                     // 1: servora.cloudevents.v1.CloudEventBatch
-	(*CloudEvent_CloudEventAttributeValue)(nil), // 2: servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue
-	nil,                           // 3: servora.cloudevents.v1.CloudEvent.AttributesEntry
+	(*CloudEvent)(nil),      // 0: servora.cloudevents.v1.CloudEvent
+	(*CloudEventBatch)(nil), // 1: servora.cloudevents.v1.CloudEventBatch
+	nil,                     // 2: servora.cloudevents.v1.CloudEvent.AttributesEntry
+	(*CloudEvent_CloudEventAttributeValue)(nil), // 3: servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue
 	(*anypb.Any)(nil),             // 4: google.protobuf.Any
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_servora_cloudevents_v1_cloudevents_proto_depIdxs = []int32{
-	3, // 0: servora.cloudevents.v1.CloudEvent.attributes:type_name -> servora.cloudevents.v1.CloudEvent.AttributesEntry
+	2, // 0: servora.cloudevents.v1.CloudEvent.attributes:type_name -> servora.cloudevents.v1.CloudEvent.AttributesEntry
 	4, // 1: servora.cloudevents.v1.CloudEvent.proto_data:type_name -> google.protobuf.Any
 	0, // 2: servora.cloudevents.v1.CloudEventBatch.events:type_name -> servora.cloudevents.v1.CloudEvent
-	5, // 3: servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue.ce_timestamp:type_name -> google.protobuf.Timestamp
-	2, // 4: servora.cloudevents.v1.CloudEvent.AttributesEntry.value:type_name -> servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue
+	3, // 3: servora.cloudevents.v1.CloudEvent.AttributesEntry.value:type_name -> servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue
+	5, // 4: servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue.ce_timestamp:type_name -> google.protobuf.Timestamp
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -464,7 +464,7 @@ func file_servora_cloudevents_v1_cloudevents_proto_init() {
 		(*CloudEvent_TextData)(nil),
 		(*CloudEvent_ProtoData)(nil),
 	}
-	file_servora_cloudevents_v1_cloudevents_proto_msgTypes[2].OneofWrappers = []any{
+	file_servora_cloudevents_v1_cloudevents_proto_msgTypes[3].OneofWrappers = []any{
 		(*CloudEvent_CloudEventAttributeValue_CeBoolean)(nil),
 		(*CloudEvent_CloudEventAttributeValue_CeInteger)(nil),
 		(*CloudEvent_CloudEventAttributeValue_CeString)(nil),

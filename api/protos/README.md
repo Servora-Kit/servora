@@ -23,7 +23,9 @@ Proto files are organized in four top-level groups under `servora/`:
 | `servora.extra.audit.v1` | Audit emitter contract (`AuditContract`); section key `audit`. |
 | `servora.extra.cors.v1` | HTTP CORS middleware configuration; section key `cors` (optional). Defaults sourced from the proto annotation, applied via generated `ApplyDefaults()`. |
 | `servora.extra.mail.v1` | SMTP / mail configuration retained for IAM compatibility; section key `mail` (optional). |
-| `servora.extra.jwt.v1` | JWT issuer / verifier configuration retained for IAM compatibility; section key `jwt` (optional). |
+| `servora.extra.jwt.v1` | JWT issuer / verifier configuration retained for IAM compatibility; section key `jwt` (optional), generated defaults for `access_expire=3600` and `refresh_expire=604800`. |
+| `servora.security.authn.oidc.v1` | OIDC authn backend public config; section key `authn.oidc` (optional), generated required checks for `crypto_key` / `login_base_url` and defaults for refresh-token/logout fields. |
+| `servora.security.authz.openfga.v1` | OpenFGA authz backend public config; section key `authz.openfga` (optional), generated required checks for `api_url` / `store_id`. |
 | `servora.pagination.v1` | Pagination request/response messages. |
 | `servora.mapper.v1` | Object mapping annotation extensions for `protoc-gen-servora-mapper` (extension numbers `5000x`). |
 | `servora.audit.v1` | Audit annotation extensions for `protoc-gen-servora-audit` (extension `5010x`, supports service-level `service_default` + three-state `AuditMode` / `ErrorRecordMode` enums). |

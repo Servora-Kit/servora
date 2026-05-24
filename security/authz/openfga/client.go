@@ -33,8 +33,8 @@ func NewClient(cfg *openfgaconfpb.Config, opts ...ClientOption) (*Client, error)
 	if cfg == nil {
 		return nil, fmt.Errorf("openfga: nil config")
 	}
-	if cfg.ApiUrl == "" || cfg.StoreId == "" {
-		return nil, fmt.Errorf("openfga: api_url and store_id are required")
+	if err := cfg.ApplyConf(); err != nil {
+		return nil, fmt.Errorf("openfga: config: %w", err)
 	}
 
 	cc := &fgaclient.ClientConfiguration{

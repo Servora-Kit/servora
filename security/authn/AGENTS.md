@@ -1,7 +1,7 @@
 # AGENTS.md - security/authn/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Updated: 2026-05-21 -->
+<!-- Updated: 2026-05-24 -->
 
 ## 模块定位
 
@@ -10,7 +10,7 @@
 主包只负责：
 
 - 根据生成的 `Rules` 区分 public RPC、required RPC 与未注解 fail-open RPC。
-- 在调用 engine 前安装包私 `allowedSchemes` 与 successful scheme holder。
+- 在调用 engine 前安装包私 `allowedSchemes`。
 - 调用单方法 `Authenticator.Authenticate(ctx)`，接收 engine 返回的 enriched context。
 - 认证失败时返回 401 或调用 `WithErrorHandler`。
 - 配置了 `WithAuditOnFailure(audit.Auditor)` 时直接发 CloudEvents 失败事件。
@@ -33,6 +33,7 @@ func WithErrorHandler(h func(context.Context, error) error) Option
 func WithAuditOnFailure(a audit.Auditor) Option
 func Named(scheme string, a Authenticator) NamedAuthenticator
 func Multi(named ...NamedAuthenticator) Authenticator
+var ErrNoCredentials error
 
 func WithAuthType(ctx context.Context, authType string) context.Context
 func AuthTypeFrom(ctx context.Context) (string, bool)
@@ -47,8 +48,10 @@ func SubjectFromAny(fns ...func(context.Context) (string, bool)) func(context.Co
 - `Rules.MethodSchemes` 命中：allowed schemes 进入包私 ctx，`Multi` 只遍历匹配 scheme。
 - 未注解 RPC：fail-open，allowed=nil，允许所有已装 engine 参与。
 - `Multi` first-success-wins，按 `Named(...)` 注入顺序遍历，不按 proto schemes 顺序排序。
+- engine 没看到自己的凭据时必须返回匹配 `ErrNoCredentials` 的错误，`Multi` 继续尝试后续 engine。
+- engine 看到凭据但验证失败、后端失败或配置失败时返回普通错误，`Multi` fail-fast。
 - allowed 与已装 engines 无交集时返回 `errSchemesEmpty`，上层渲染为 401。
-- 多 engine 全失败时错误实现 `SchemeAttemptsErr`，failure audit 使用聚合 reason。
+- 多 engine 全无凭据时错误同时匹配 `ErrNoCredentials` 并实现 `SchemeAttemptsErr`，failure audit 使用聚合 reason。
 - engine 成功时应在返回 ctx 中写入自己拥有的认证元数据，例如 auth type、subject 来源或 claims/key meta。
 
 `WithAuditOnFailure` 使用 `Auditor.Emit(ctx, cloudevents.Event)` 直接发 `servora.authn.v1.failure`，severity 为 `WARN`。这里没有旧版 runtime detail 或 context holder。
@@ -77,7 +80,7 @@ func SubjectFromAny(fns ...func(context.Context) (string, bool)) func(context.Co
 ## 测试
 
 ```bash
-GOWORK=off go test ./security/authn
+go test ./security/authn/...
 ```
 
-关键覆盖：public passthrough、MethodSchemes allowed 过滤、未注解 fail-open、Rules merge、Multi first-success-wins、空交集错误、scheme holder 写入、`SchemeAttemptsErr`、失败 CloudEvents audit。
+关键覆盖：public passthrough、MethodSchemes allowed 过滤、未注解 fail-open、Rules merge、Multi first-success-wins、空交集错误、`ErrNoCredentials`、`SchemeAttemptsErr`、失败 CloudEvents audit。

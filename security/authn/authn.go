@@ -20,9 +20,8 @@
 // (MethodSchemes), or fail-open across all engines (unannotated).
 //
 // `authn.Multi` is the standard decorator over multiple `NamedAuthenticator`
-// instances; first-success-wins. The successful scheme is reported back to
-// `authn.Server` via a package-private mutable holder ctx channel — the
-// `Authenticator` interface stays unchanged (still single-method).
+// instances. It treats ErrNoCredentials as "try the next allowed engine" and
+// treats any other error as fail-fast.
 //
 // On success the enriched context returned by the engine is passed directly
 // to the handler. On failure an optional `WithAuditOnFailure` auditor emits
@@ -46,9 +45,8 @@ import (
 // Authenticator is the interface for authenticating incoming requests.
 //
 // CONTRACT: this interface intentionally contains ONLY behavior body
-// (`Authenticate`). Engine metadata (the scheme string used in audit
-// detail) belongs to the wrapper layer via `authn.Named(scheme, a)` —
-// NOT on the interface itself.
+// (`Authenticate`). Engine metadata belongs to the wrapper layer via
+// `authn.Named(scheme, a)` — NOT on the interface itself.
 //
 // What MUST NOT live on this interface:
 //   - Engine metadata (e.g. `Method() string`) — supplied by `authn.Named`
@@ -160,11 +158,9 @@ func WithAuditOnFailure(a audit.Auditor) Option {
 //  3. Build the allowed-schemes set: if op ∈ `Rules.MethodSchemes`, install
 //     `allowed = set(rules.MethodSchemes[op])` into ctx. Otherwise install
 //     nil (fail-open / unannotated).
-//  4. Install a mutable `schemeHolder` into ctx — `Multi` writes the
-//     successful scheme back via `holder.set(scheme)`.
-//  5. Call `a.Authenticate(ctx)`.
-//  6. Success → use the returned enriched ctx directly, call the handler.
-//  7. Failure → optionally emit audit event (if WithAuditOnFailure set),
+//  4. Call `a.Authenticate(ctx)`.
+//  5. Success → use the returned enriched ctx directly, call the handler.
+//  6. Failure → optionally emit audit event (if WithAuditOnFailure set),
 //     then either invoke `WithErrorHandler` (if set) or return
 //     `errors.Unauthorized("AUTHN_FAILED", reason)`.
 func Server(a Authenticator, opts ...Option) middleware.Middleware {
@@ -199,15 +195,14 @@ func Server(a Authenticator, opts ...Option) middleware.Middleware {
 				allowed = stringSet(schemes)
 			}
 
-			// Step 4: install both ctx channels before dispatch. `Multi`
-			// reads `allowedSchemes`; on success writes `schemeHolder`.
+			// Step 4: install allowedSchemes before dispatch. `Multi`
+			// reads it to filter engines.
 			ctx = withAllowedSchemes(ctx, allowed)
-			ctx = installSchemeHolder(ctx)
 
 			// Step 5: dispatch.
 			enrichedCtx, err := a.Authenticate(ctx)
 
-			// Step 7: failure path.
+			// Step 6: failure path.
 			if err != nil {
 				reason := err.Error()
 				if as, ok := err.(SchemeAttemptsErr); ok {
@@ -223,7 +218,7 @@ func Server(a Authenticator, opts ...Option) middleware.Middleware {
 				return nil, errors.Unauthorized(authnFailedReason, reason)
 			}
 
-			// Step 6: success path — use the enriched ctx from engine.
+			// Step 5: success path — use the enriched ctx from engine.
 			return handler(enrichedCtx, req)
 		}
 	}
@@ -241,13 +236,12 @@ func emitAuthnFailure(ctx context.Context, auditor audit.Auditor, op, reason str
 	_ = auditor.Emit(ctx, event)
 }
 
-
 // authnFailedReason is the kratos error reason used for the default
 // `errors.Unauthorized(...)` return when no `WithErrorHandler` is set.
 const authnFailedReason = "AUTHN_FAILED"
 
 // renderSchemeAttempts serializes a `[]SchemeAttempt` into the
-// "scheme1: reason1; scheme2: reason2" form used in `AuthnDetail.FailureReason`.
+// "scheme1: reason1; scheme2: reason2" form used in failure responses.
 func renderSchemeAttempts(attempts []SchemeAttempt) string {
 	if len(attempts) == 0 {
 		return ""

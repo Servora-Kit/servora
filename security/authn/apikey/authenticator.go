@@ -2,7 +2,7 @@ package apikey
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/Servora-Kit/servora/security/authn"
 )
@@ -11,17 +11,16 @@ import (
 var _ authn.Authenticator = (*authenticator)(nil)
 
 // errMissingHeader is returned when the inbound request carries no
-// `X-API-Key` header (or no server transport is attached to ctx). The
-// string is matched by tests; downstream callers SHOULD NOT rely on its
-// exact wording but the substring "missing X-API-Key" is stable.
-var errMissingHeader = errors.New("apikey: missing X-API-Key header")
+// `X-API-Key` header or no server transport is attached to ctx.
+var errMissingHeader = fmt.Errorf("apikey: missing X-API-Key header: %w", authn.ErrNoCredentials)
 
 // NewAuthenticator creates an API-key based [authn.Authenticator].
 //
 // The returned authenticator's `Authenticate(ctx)`:
 //
 //  1. Reads the `X-API-Key` header from the Kratos server transport.
-//  2. If absent / empty → returns `(ctx, errMissingHeader)`.
+//  2. If absent / empty → returns `(ctx, errMissingHeader)`, which matches
+//     [authn.ErrNoCredentials].
 //  3. Otherwise calls `Store.Lookup(ctx, key)`.
 //  4. On success: attaches [KeyMeta] via [WithKeyMeta] and sets
 //     auth type to "api_key" via [authn.WithAuthType]; returns the

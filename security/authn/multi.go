@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+// ErrNoCredentials is returned by authentication engines when the request does
+// not carry credentials for that engine. It is not an authentication failure by
+// itself: composite dispatchers such as Multi use it to continue to the next
+// allowed engine. Invalid credentials and backend/config failures must return
+// any other non-nil error.
+var ErrNoCredentials = errors.New("authn: no credentials")
+
 // SchemeAttempt records one engine's outcome inside a `Multi` dispatch.
 // Both fields are public so `WithErrorHandler` consumers can render
 // per-scheme diagnostics (logging, metrics labels, custom RPC errors).
@@ -29,8 +36,8 @@ type SchemeAttempt struct {
 //	    return err
 //	})
 //
-// `Server` itself uses this interface to detect Multi-failures and tag
-// `AuthnDetail.Method = "multi"` with a serialized aggregate FailureReason.
+// `Server` itself uses this interface to render safe structured failure
+// reasons.
 type SchemeAttemptsErr interface {
 	error
 	SchemeAttempts() []SchemeAttempt
@@ -39,13 +46,13 @@ type SchemeAttemptsErr interface {
 // schemeAttemptsErr is the package-private implementation of
 // `SchemeAttemptsErr`. The slice is never mutated after construction.
 type schemeAttemptsErr struct {
-	attempts []SchemeAttempt
+	attempts      []SchemeAttempt
+	noCredentials bool
 }
 
-// Error renders the same "scheme: reason; scheme: reason" form that
-// `Server` uses for `AuthnDetail.FailureReason`. This keeps fallback
-// callers (log-only consumers without a `WithErrorHandler` hook) and
-// the structured detail consistent.
+// Error renders the same "scheme: reason; scheme: reason" form that Server
+// uses for failure responses. This keeps fallback callers and structured
+// diagnostics consistent.
 func (e *schemeAttemptsErr) Error() string {
 	if e == nil || len(e.attempts) == 0 {
 		return "authn: all schemes failed"
@@ -55,6 +62,10 @@ func (e *schemeAttemptsErr) Error() string {
 		parts = append(parts, fmt.Sprintf("%s: %s", a.Scheme, a.Reason))
 	}
 	return strings.Join(parts, "; ")
+}
+
+func (e *schemeAttemptsErr) Is(target error) bool {
+	return e != nil && e.noCredentials && target == ErrNoCredentials
 }
 
 // SchemeAttempts returns a copy of the per-scheme attempt slice. A copy is
@@ -83,15 +94,19 @@ type NamedAuthenticator struct {
 	inner  Authenticator
 }
 
-// Named pairs a scheme string with an `Authenticator` for `Multi`. The
-// scheme is later written into `AuthnDetail.Method` when this engine is
-// the one that succeeded.
+// Named pairs a scheme string with an `Authenticator` for `Multi`.
 //
 // The scheme string is opaque to the framework — any value is accepted.
 // Engine sub-packages typically expose a `Scheme` constant
 // (e.g. `jwt.Scheme = "jwt"`) so business code can write
 // `authn.Named(jwt.Scheme, jwt.NewAuthenticator(...))`.
 func Named(scheme string, a Authenticator) NamedAuthenticator {
+	if scheme == "" {
+		panic("authn: Named scheme is required")
+	}
+	if a == nil {
+		panic("authn: Named authenticator is required")
+	}
 	return NamedAuthenticator{scheme: scheme, inner: a}
 }
 
@@ -105,9 +120,7 @@ type multi struct {
 // Multi composes multiple `NamedAuthenticator` engines into a single
 // `Authenticator`. First-success-wins: engines are tried in injection
 // order (NOT in `allowedSchemes` order — business decides the precedence
-// at wiring time). On any success, the winning scheme is written back to
-// the package-private holder ctx channel installed by `Server`, which
-// then becomes `AuthnDetail.Method`.
+// at wiring time).
 //
 // If the `allowedSchemes` set installed by `Server` (from
 // `Rules.MethodSchemes`) is non-nil, engines whose scheme is absent from
@@ -119,6 +132,22 @@ type multi struct {
 // requiring a separate `WithMethod` option, and makes future expansion
 // to more engines a one-line change.
 func Multi(named ...NamedAuthenticator) Authenticator {
+	if len(named) == 0 {
+		panic("authn: Multi requires at least one authenticator")
+	}
+	seen := make(map[string]struct{}, len(named))
+	for _, n := range named {
+		if n.scheme == "" {
+			panic("authn: Named scheme is required")
+		}
+		if n.inner == nil {
+			panic("authn: Named authenticator is required")
+		}
+		if _, ok := seen[n.scheme]; ok {
+			panic(fmt.Sprintf("authn: duplicate scheme %q", n.scheme))
+		}
+		seen[n.scheme] = struct{}{}
+	}
 	return &multi{engines: named}
 }
 
@@ -126,7 +155,6 @@ func Multi(named ...NamedAuthenticator) Authenticator {
 // (enrichedCtx, nil) wins. See `Multi` doc for filter semantics.
 func (m *multi) Authenticate(ctx context.Context) (context.Context, error) {
 	allowed := allowedSchemesFrom(ctx)
-	holder := schemeHolderFrom(ctx)
 
 	var attempts []SchemeAttempt
 	participated := 0
@@ -139,21 +167,19 @@ func (m *multi) Authenticate(ctx context.Context) (context.Context, error) {
 		participated++
 		enrichedCtx, err := named.inner.Authenticate(ctx)
 		if err == nil {
-			// Success: write the winning scheme to the holder so Server
-			// can observe which engine succeeded.
-			if holder != nil {
-				holder.set(named.scheme)
-			}
 			return enrichedCtx, nil
 		}
 		attempts = append(attempts, SchemeAttempt{
 			Scheme: named.scheme,
 			Reason: err.Error(),
 		})
+		if !errors.Is(err, ErrNoCredentials) {
+			return ctx, &schemeAttemptsErr{attempts: attempts}
+		}
 	}
 
 	if participated == 0 {
 		return ctx, errSchemesEmpty
 	}
-	return ctx, &schemeAttemptsErr{attempts: attempts}
+	return ctx, &schemeAttemptsErr{attempts: attempts, noCredentials: true}
 }

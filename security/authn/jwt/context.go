@@ -7,8 +7,8 @@ import (
 )
 
 // tokenKey is the package-private ctx key under which the raw bearer token
-// flows from [Server] (inbound extraction) to the engine [Authenticate], and
-// from arbitrary callers to [Client] (outbound propagation).
+// flows from the engine [Authenticate] to [Client] (outbound propagation), and
+// from arbitrary callers to [Client].
 type tokenKey struct{}
 
 // claimsKey is the package-private ctx key under which the parsed JWT
@@ -17,10 +17,9 @@ type tokenKey struct{}
 type claimsKey struct{}
 
 // WithToken stores the raw bearer token into a jwt-package-private ctx
-// channel. It is invoked by [Server] after parsing the inbound Authorization
-// header, and may also be called directly by upstream code that obtained a
-// token via some other path (e.g., re-injection during a retry, or a
-// non-HTTP carrier feeding a custom wrapper around [NewAuthenticator]).
+// channel. It is invoked by [Authenticate] after resolving the inbound
+// Authorization header, and may also be called directly by upstream code that
+// obtained a token via some other path.
 //
 // The channel is intentionally jwt-private. The general transport middleware
 // package MUST NOT host equivalent helpers — credential carrier shape (the

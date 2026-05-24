@@ -8,8 +8,8 @@ import (
 )
 
 // Client returns a Kratos client middleware that propagates the jwt token
-// previously stored in the ctx (by [Server] on the inbound side, or by an
-// explicit [WithToken] call) into the outbound Authorization header as
+// previously stored in the ctx (by [Authenticator] on the inbound side, or by
+// an explicit [WithToken] call) into the outbound Authorization header as
 // `Bearer <token>`.
 //
 // If no token is present in the ctx or no client transport is attached, the

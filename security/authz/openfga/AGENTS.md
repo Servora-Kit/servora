@@ -1,7 +1,7 @@
 # AGENTS.md - security/authz/openfga/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-05-11 -->
+<!-- Generated: 2026-03-22 | Updated: 2026-05-24 -->
 
 ## 模块目的
 
@@ -10,8 +10,7 @@
 ## 当前文件
 
 - `authorizer.go`：`Authorizer` 结构体，实现 `authz.Authorizer` + `batch.BatchAuthorizer` + `lister.Lister`
-- `client.go`：底层 OpenFGA SDK 客户端构造、`ClientOption` 模式（`WithAuditRecorder`、`WithComputedRelations`）
-- `config.go`：`NewClientOptional` 便捷构造（支持透传 `ClientOption`）
+- `client.go`：底层 OpenFGA SDK 客户端构造、`ClientOption` 模式（`WithComputedRelations`）；入口直接消费 proto generated config 并调用 `ApplyConf()`
 - `check.go`：底层关系检查封装（`user` 参数为完整 principal，如 `"user:uuid"`）
 - `list.go`：底层列表查询封装（`user` 参数为完整 principal）
 - `tuples.go`：tuple 写入/删除（core/public 分层，成功后自动 emit audit 事件）
@@ -30,6 +29,7 @@
 - 底层 `Client` 保留独立 API：`Check`/`ListObjects`/`CachedCheck`/`CachedListObjects`/`BatchCheck`
 - `WriteTuples`/`DeleteTuples` 采用 core/public 分层，成功后自动通过 `obs/audit.Recorder` emit `tuple.changed` 事件
 - `InvalidateForTuples` 是 `Client` 方法（需要访问 `computedRelations`）
+- 配置类型来自 `servora.security.authz.openfga.v1.Config` 生成代码；`authz.openfga` section optional，`api_url` 与 `store_id` required，`model_id` 与 `api_token` optional。required/default 合同来自 `*.pb.servora-conf.go`，不要在本包重复维护，也不要添加绕过 `NewClient` 错误返回的 optional client helper。
 
 ## 边界约束
 
@@ -56,4 +56,5 @@ go test ./security/authz/openfga/... -count=1 -race
 - 调用方需传完整 principal（如 `"user:" + userID`），不再自动拼接前缀
 - `InvalidateForTuples` 现在是 Client 方法，非 package-level 函数
 - 若修改配置字段或 client 初始化要求，需同步检查所有服务配置模板
+- 配置必填项优先在 proto annotation 中声明，运行时通过生成的 `ApplyConf()` 消费。
 - 若扩展缓存策略，优先保证缓存失效不会放宽授权边界

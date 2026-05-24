@@ -8,9 +8,8 @@ import (
 	"github.com/Servora-Kit/servora/infra/broker"
 )
 
-// NewBrokerOptional creates a connected Kafka broker from the Broker section, or returns
-// nil when Kafka is not configured. It follows the optional-initialisation pattern of
-// pkg/openfga.NewClientOptional: callers check for nil before use.
+// NewBrokerOptional creates a connected Kafka broker from the Broker section,
+// or returns nil when Kafka is not configured. Callers check for nil before use.
 func NewBrokerOptional(ctx context.Context, cfg *brokerv1.Broker, l *slog.Logger) broker.Broker {
 	log := l.With("scope", "kafka/broker/infra")
 	if cfg == nil || cfg.GetKafka() == nil || len(cfg.GetKafka().GetBrokers()) == 0 {
@@ -29,4 +28,3 @@ func NewBrokerOptional(ctx context.Context, cfg *brokerv1.Broker, l *slog.Logger
 	}
 	return b
 }
-

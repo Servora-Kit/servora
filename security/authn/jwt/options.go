@@ -10,9 +10,8 @@ type authenticatorConfig struct {
 	claimsMapper ClaimsMapper
 }
 
-// WithVerifier sets the JWT verifier used to validate token signatures.
-// If nil, the authenticator operates in pass-through mode (anonymous actor
-// returned without an error).
+// WithVerifier sets the JWT verifier used to validate token signatures. It is
+// required; NewAuthenticator panics when no verifier is supplied.
 func WithVerifier(v *jwtpkg.Verifier) Option {
 	return func(c *authenticatorConfig) { c.verifier = v }
 }

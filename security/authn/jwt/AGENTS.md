@@ -1,7 +1,7 @@
 # AGENTS.md - security/authn/jwt/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Updated: 2026-05-21 -->
+<!-- Updated: 2026-05-24 -->
 
 ## 子包定位
 
@@ -14,7 +14,6 @@
 ```go
 const Scheme = "jwt"
 
-func Server(opts ...Option) middleware.Middleware
 func Client() middleware.Middleware
 func NewAuthenticator(opts ...Option) authn.Authenticator
 
@@ -30,17 +29,16 @@ type ClaimsMapper func(ctx context.Context, claims gojwt.MapClaims) (context.Con
 func DefaultClaimsMapper() ClaimsMapper
 ```
 
-`Server(opts...)` 是单 JWT engine 便利包装，等价于 `authn.Server(authn.Multi(authn.Named(Scheme, NewAuthenticator(opts...))))`，并在 dispatch 前从入站 `Authorization: Bearer <token>` 写入本包私有 token ctx。
-
-多 engine 场景不要叠 `jwt.Server`；直接在父包用 `authn.Server(authn.Multi(authn.Named(jwt.Scheme, jwt.NewAuthenticator(...)), ...))`。
+本包不提供 `Server(opts...)` 单 engine wrapper。统一在父包用 `authn.Server(authn.Multi(authn.Named(jwt.Scheme, jwt.NewAuthenticator(...)), ...))`。
 
 ## Token 与 claims 语义
 
 - `Authenticate` 先读 `TokenFrom(ctx)`，再 fallback 到 Kratos server transport 的 `Authorization` header。
-- 两处都没有 token：原 ctx + nil error passthrough。
-- 未配置 verifier：原 ctx + nil error passthrough，便于本地/测试装配。
+- 两处都没有 token：返回匹配 `authn.ErrNoCredentials` 的错误。
+- 未配置 verifier：`NewAuthenticator` 启动期 panic `jwt: WithVerifier is required`。
 - 验签失败：返回带 `jwt: verify token` 上下文的 error。
-- 验签成功后调用 `ClaimsMapper(ctx, claims)`，再写入 `authn.WithAuthType(enriched, "user")`。
+- 从入站 header fallback 读取 token 时，`Authenticate` 必须把 raw token 写入 `WithToken`，让显式 `Client()` 后续可透传。
+- 验签成功后调用 `ClaimsMapper(ctx, claims)`，再写入 `authn.WithAuthType(enriched, Scheme)`；auth type 表示认证机制 `"jwt"`，不是主体类型。
 - `DefaultClaimsMapper` 要求 `sub` 非空，并仅通过 `WithClaims` 保存完整 claims；不创建 actor。
 - `SubjectFrom` 从 claims ctx 读取字符串 `sub`。
 
@@ -63,14 +61,14 @@ func DefaultClaimsMapper() ClaimsMapper
 ## 常见反模式
 
 - 在 transport middleware 默认链里自动追加 `jwt.Client()`。
-- 业务多引擎时用 `jwt.Server` 再叠 `apikey`/`mtls`。
+- 重新添加 `jwt.Server` 或其他单 engine server wrapper。
 - 把 IdP 特定 claims 加进 `DefaultClaimsMapper`。
 - 把 `Scheme` 从 `"jwt"` 改为 `"bearer"`。
 
 ## 测试
 
 ```bash
-GOWORK=off go test ./security/authn/jwt
+go test ./security/authn/jwt
 ```
 
-关键覆盖：Bearer 解析边界、server wrapper 写 token、transport header fallback、ctx 优先级、client 透传、匿名路径、verifier 错误、默认 mapper、custom mapper、scheme 常量。
+关键覆盖：Bearer 解析边界、transport header fallback、ctx 优先级、client 透传、`ErrNoCredentials`、verifier 必填、verifier 错误、默认 mapper、custom mapper、scheme 常量。

@@ -121,6 +121,9 @@ func TestAuthenticate_MissingHeader_ReturnsError(t *testing.T) {
 	if !strings.Contains(err.Error(), "missing X-API-Key") {
 		t.Errorf("error = %q, want substring %q", err.Error(), "missing X-API-Key")
 	}
+	if !errors.Is(err, authn.ErrNoCredentials) {
+		t.Errorf("error = %v, want ErrNoCredentials", err)
+	}
 	if store.calls != 0 {
 		t.Errorf("Store.Lookup calls = %d, want 0 (header check must short-circuit)", store.calls)
 	}
@@ -146,6 +149,9 @@ func TestAuthenticate_NoTransport_ReturnsError(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "missing X-API-Key") {
 		t.Errorf("error = %q, want substring %q", err.Error(), "missing X-API-Key")
+	}
+	if !errors.Is(err, authn.ErrNoCredentials) {
+		t.Errorf("error = %v, want ErrNoCredentials", err)
 	}
 	if store.calls != 0 {
 		t.Errorf("Store.Lookup calls = %d, want 0", store.calls)
@@ -226,6 +232,9 @@ func TestAuthenticate_StoreError_Propagates(t *testing.T) {
 	}
 	if !errors.Is(err, wantErr) {
 		t.Errorf("error = %v, want errors.Is(%v) true", err, wantErr)
+	}
+	if errors.Is(err, authn.ErrNoCredentials) {
+		t.Errorf("error = %v, must not match ErrNoCredentials", err)
 	}
 	if resultCtx == nil {
 		t.Error("ctx = nil, want non-nil on error")
