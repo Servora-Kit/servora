@@ -1,11 +1,11 @@
-package telemetry
+package metrics
 
 import (
 	"log/slog"
 	"net/http"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/go-kratos/kratos/v2/middleware/metrics"
+	kratosmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
@@ -18,10 +18,11 @@ type Metrics struct {
 	Handler  http.Handler
 }
 
-func NewMetrics(c *corev1.Metrics, app *corev1.App, l *slog.Logger) (*Metrics, error) {
+func New(obs *corev1.Observability, app *corev1.App, l *slog.Logger) (*Metrics, error) {
+	c := obs.GetMetrics()
 	if c == nil || !c.Enable {
 		if l != nil {
-			l.With("scope", "metrics/telemetry").Info("metrics config is empty, skip metrics init")
+			l.With("scope", "obs/metrics").Info("metrics config is empty, skip metrics init")
 		}
 		return nil, nil
 	}
@@ -38,12 +39,12 @@ func NewMetrics(c *corev1.Metrics, app *corev1.App, l *slog.Logger) (*Metrics, e
 	}
 	meter := provider.Meter(meterName)
 
-	requests, err := metrics.DefaultRequestsCounter(meter, metrics.DefaultServerRequestsCounterName)
+	requests, err := kratosmetrics.DefaultRequestsCounter(meter, kratosmetrics.DefaultServerRequestsCounterName)
 	if err != nil {
 		return nil, err
 	}
 
-	seconds, err := metrics.DefaultSecondsHistogram(meter, metrics.DefaultServerSecondsHistogramName)
+	seconds, err := kratosmetrics.DefaultSecondsHistogram(meter, kratosmetrics.DefaultServerSecondsHistogramName)
 	if err != nil {
 		return nil, err
 	}

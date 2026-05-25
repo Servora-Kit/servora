@@ -27,7 +27,7 @@ func TestNew_NilSafe(t *testing.T) {
 func TestNew_DefaultStdoutWhenEmpty(t *testing.T) {
 	l, _ := New(&corev1.Bootstrap{
 		App: &corev1.App{Env: "dev"},
-		Log: &corev1.Log{},
+		Obs: &corev1.Observability{Log: &corev1.Log{}},
 	})
 	if l == nil {
 		t.Fatal("empty backends must default to stdout logger")
@@ -36,11 +36,11 @@ func TestNew_DefaultStdoutWhenEmpty(t *testing.T) {
 
 func TestNew_NoopBackend(t *testing.T) {
 	l, _ := New(&corev1.Bootstrap{
-		Log: &corev1.Log{
+		Obs: &corev1.Observability{Log: &corev1.Log{
 			Backends: []*corev1.Log_LogBackend{{
 				Backend: &corev1.Log_LogBackend_Noop{Noop: &corev1.Log_NoopBackend{}},
 			}},
-		},
+		}},
 	})
 	l.Info("should not panic")
 }
@@ -83,13 +83,13 @@ func TestWithLogHandlerFunc_ReplacesStdout(t *testing.T) {
 	l, _ := New(
 		&corev1.Bootstrap{
 			App: &corev1.App{Env: "prod"},
-			Log: &corev1.Log{
+			Obs: &corev1.Observability{Log: &corev1.Log{
 				Backends: []*corev1.Log_LogBackend{{
 					Backend: &corev1.Log_LogBackend_Stdout{
 						Stdout: &corev1.Log_StdoutBackend{},
 					},
 				}},
-			},
+			}},
 		},
 		WithLogHandlerFunc(func(_ io.Writer, lvl slog.Level) slog.Handler {
 			return slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: lvl})

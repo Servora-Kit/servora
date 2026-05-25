@@ -13,10 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"log/slog"
+	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"log/slog"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
@@ -130,7 +131,7 @@ func TestNewServer_WithTLSConfig_EndpointUsesGRPCS(t *testing.T) {
 
 	cfg := &corev1.Server_GRPC{
 		Listen: &corev1.Server_Listen{Addr: ":0"},
-		Tls: &corev1.TLSConfig{
+		Tls: &tlspb.TLS{
 			Enable:   true,
 			CertPath: certPath,
 			KeyPath:  keyPath,
@@ -151,10 +152,10 @@ func TestNewServer_WithTLSConfig_EndpointUsesGRPCS(t *testing.T) {
 	}
 }
 
-func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
+func TestNewServer_WithAdvertiseHost_EndpointUsesAdvertiseHost(t *testing.T) {
 	cfg := &corev1.Server_GRPC{
-		Listen:   &corev1.Server_Listen{Addr: "0.0.0.0:0"},
-		Registry: &corev1.Server_Registry{Host: "host.docker.internal"},
+		Listen:    &corev1.Server_Listen{Addr: "0.0.0.0:0"},
+		Advertise: &corev1.Server_Advertise{Host: "host.docker.internal"},
 	}
 
 	srv := NewServer(WithConfig(cfg))
@@ -177,10 +178,10 @@ func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
 	}
 }
 
-func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) {
+func TestNewServer_WithAdvertiseEndpoint_EndpointUsesExplicitValue(t *testing.T) {
 	cfg := &corev1.Server_GRPC{
-		Listen:   &corev1.Server_Listen{Addr: ":0"},
-		Registry: &corev1.Server_Registry{Endpoint: "grpc://example.internal:18011?isSecure=false"},
+		Listen:    &corev1.Server_Listen{Addr: ":0"},
+		Advertise: &corev1.Server_Advertise{Endpoint: "grpc://example.internal:18011?isSecure=false"},
 	}
 
 	srv := NewServer(WithConfig(cfg))

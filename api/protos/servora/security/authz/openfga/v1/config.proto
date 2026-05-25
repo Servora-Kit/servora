@@ -13,8 +13,8 @@ message Config {
     optional: true
   };
 
-  string api_url = 1 [(servora.conf.v1.field) = { required: true }]; // OpenFGA HTTP API 地址
-  string store_id = 2 [(servora.conf.v1.field) = { required: true }]; // Store ID
+  string api_url = 1 [(servora.conf.v1.field) = {required: true}]; // OpenFGA HTTP API 地址
+  string store_id = 2 [(servora.conf.v1.field) = {required: true}]; // Store ID
   string model_id = 3; // Authorization Model ID
   string api_token = 4; // API Token（可选，生产环境使用）
 }

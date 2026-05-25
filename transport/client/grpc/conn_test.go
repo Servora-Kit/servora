@@ -5,6 +5,7 @@ import (
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -63,7 +64,7 @@ func TestResolveGRPCConnectionConfig(t *testing.T) {
 				Protocol: "grpc",
 				Endpoint: "dns:///user.internal:9000",
 				Timeout:  durationpb.New(12 * time.Second),
-				Tls: &corev1.TLSConfig{
+				Tls: &tlspb.TLS{
 					Enable: true,
 				},
 			},

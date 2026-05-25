@@ -9,8 +9,10 @@ Proto files are organized in four top-level groups under `servora/`:
 | Group | Purpose | Members |
 |-------|---------|---------|
 | Annotations (flat) | Extension annotations consumed by `protoc-gen-servora-*` plugins. Each namespace holds a single `annotations.proto`. | `audit/v1` / `authn/v1` / `authz/v1` / `mapper/v1` / `conf/v1` |
-| `core/v1/` | Framework startup-required configuration — missing fields here would block boot. | `bootstrap.proto` (Bootstrap / App / Server / Registry / Discovery / Config / Data / Trace / Metrics / TLSConfig) |
+| `core/v1/` | Framework startup-required configuration — missing fields here would block boot. | `bootstrap.proto` (Bootstrap / App / Server / Data / Registry / Source / Observability) |
 | `extra/<域>/v1/` | Per-domain optional configuration. Each domain lives in its own namespace and proto file, loaded via `bootstrap.Scan`. | `broker` / `audit` / `cors` / `mail` / `jwt` |
+| `infra/<域>/v1/` | Infrastructure optional sections consumed by infra runtime packages. | `redis` |
+| `security/<域>/v1/` | Security runtime configuration consumed by security packages. | `tls` / `authn/oidc` / `authz/openfga` |
 | Neutral schema | CNCF / third-party envelope schemas that do not fit the categories above. | `cloudevents/v1/` |
 
 ## Modules
@@ -24,6 +26,8 @@ Proto files are organized in four top-level groups under `servora/`:
 | `servora.extra.cors.v1` | HTTP CORS middleware configuration; section key `cors` (optional). Defaults sourced from the proto annotation, applied via generated `ApplyDefaults()`. |
 | `servora.extra.mail.v1` | SMTP / mail configuration retained for IAM compatibility; section key `mail` (optional). |
 | `servora.extra.jwt.v1` | JWT issuer / verifier configuration retained for IAM compatibility; section key `jwt` (optional), generated defaults for `access_expire=3600` and `refresh_expire=604800`. |
+| `servora.infra.redis.v1` | Redis client configuration; section key `redis` (optional), loaded explicitly with `bootstrap.Scan`. |
+| `servora.security.tls.v1` | Shared TLS configuration referenced by core server/client endpoint config and consumed by `security/tls`. |
 | `servora.security.authn.oidc.v1` | OIDC authn backend public config; section key `authn.oidc` (optional), generated required checks for `crypto_key` / `login_base_url` and defaults for refresh-token/logout fields. |
 | `servora.security.authz.openfga.v1` | OpenFGA authz backend public config; section key `authz.openfga` (optional), generated required checks for `api_url` / `store_id`. |
 | `servora.pagination.v1` | Pagination request/response messages. |

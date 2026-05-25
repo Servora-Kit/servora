@@ -19,8 +19,8 @@ message Jwt {
 
   string private_key_path = 1;
   string private_key_pem = 2;
-  int32 access_expire = 3 [(servora.conf.v1.field) = { default: "3600" }];
-  int32 refresh_expire = 4 [(servora.conf.v1.field) = { default: "604800" }];
+  int32 access_expire = 3 [(servora.conf.v1.field) = {default: "3600"}];
+  int32 refresh_expire = 4 [(servora.conf.v1.field) = {default: "604800"}];
   string issuer = 5;
   string audience = 6;
 }

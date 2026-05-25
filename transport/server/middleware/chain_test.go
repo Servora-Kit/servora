@@ -5,17 +5,18 @@ import (
 	"testing"
 
 	"log/slog"
+
 	"go.opentelemetry.io/otel/metric/noop"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/Servora-Kit/servora/obs/telemetry"
+	"github.com/Servora-Kit/servora/obs/metrics"
 )
 
-func createTestMetrics() *telemetry.Metrics {
+func createTestMetrics() *metrics.Metrics {
 	meter := noop.NewMeterProvider().Meter("test")
 	requests, _ := meter.Int64Counter("test_requests")
 	seconds, _ := meter.Float64Histogram("test_seconds")
-	return &telemetry.Metrics{
+	return &metrics.Metrics{
 		Requests: requests,
 		Seconds:  seconds,
 		Handler:  http.NotFoundHandler(),

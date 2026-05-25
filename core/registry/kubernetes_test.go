@@ -14,7 +14,7 @@ func TestNewKubernetesRegistry(t *testing.T) {
 	})
 
 	t.Run("enable false returns nil", func(t *testing.T) {
-		cfg := &corev1.KubernetesConfig{Enable: false}
+		cfg := &corev1.Kubernetes{Enable: false}
 		reg := NewKubernetesRegistry(cfg)
 		assert.Nil(t, reg)
 	})
@@ -24,7 +24,7 @@ func TestNewKubernetesRegistry(t *testing.T) {
 			t.Skip("skipping: requires Kubernetes")
 		}
 
-		cfg := &corev1.KubernetesConfig{Enable: true}
+		cfg := &corev1.Kubernetes{Enable: true}
 
 		defer func() {
 			if r := recover(); r != nil {
@@ -44,7 +44,7 @@ func TestNewKubernetesDiscovery(t *testing.T) {
 	})
 
 	t.Run("enable false returns nil", func(t *testing.T) {
-		cfg := &corev1.KubernetesConfig{Enable: false}
+		cfg := &corev1.Kubernetes{Enable: false}
 		disc := NewKubernetesDiscovery(cfg)
 		assert.Nil(t, disc)
 	})
@@ -54,7 +54,7 @@ func TestNewKubernetesDiscovery(t *testing.T) {
 			t.Skip("skipping: requires Kubernetes")
 		}
 
-		cfg := &corev1.KubernetesConfig{Enable: true}
+		cfg := &corev1.Kubernetes{Enable: true}
 
 		defer func() {
 			if r := recover(); r != nil {

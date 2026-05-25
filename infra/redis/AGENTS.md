@@ -1,7 +1,7 @@
 # AGENTS.md - infra/redis/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
+<!-- Generated: 2026-03-15 | Updated: 2026-05-25 -->
 
 ## 模块目的
 
@@ -10,7 +10,7 @@
 ## 当前实现事实
 
 - 默认超时：`Dial=5s`、`Read=3s`、`Write=3s`
-- `NewConfigFromProto` 从 `conf.Data_Redis` 构造本地配置
+- `NewConfigFromProto` 从 `servora.infra.redis.v1.Redis` 构造本地配置；业务通过 `bootstrap.Scan(rt, redisCfg)` 显式加载 `redis` optional section
 - `NewClient` 会先 `Ping` 校验连接，并返回 `cleanup func()`
 - 初始化日志统一带 `module=redis/infra`
 - 当前一级目录没有单独测试文件，测试约定仍以包级 `go test` 为主

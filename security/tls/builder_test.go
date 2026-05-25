@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 )
 
 func TestBuildServerTLS_DisabledReturnsNil(t *testing.T) {
@@ -30,7 +30,7 @@ func TestBuildClientTLS_LoadsCA(t *testing.T) {
 	tmp := t.TempDir()
 	caPath := writeCACert(t, tmp)
 
-	c := &corev1.TLSConfig{
+	c := &tlspb.TLS{
 		Enable: true,
 		CaPath: caPath,
 	}
@@ -58,7 +58,7 @@ func TestMustBuildServerTLS_PanicsOnInvalidConfig(t *testing.T) {
 			}
 		}()
 
-		_ = MustBuildServerTLS(&corev1.TLSConfig{
+		_ = MustBuildServerTLS(&tlspb.TLS{
 			Enable:   true,
 			CertPath: "/missing-cert.pem",
 			KeyPath:  "/missing-key.pem",

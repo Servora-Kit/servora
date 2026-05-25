@@ -42,7 +42,7 @@ func TestNeedsCascade_Defaults(t *testing.T) {
 		{"Server container transitive", md(&corev1.Server{}), true},
 		{"Bootstrap container transitive", md(&corev1.Bootstrap{}), true},
 		{"App has no default subtree", md(&corev1.App{}), false},
-		{"Config oneof has no defaults", md(&corev1.Config{}), false},
+		{"Source oneof has no defaults", md(&corev1.Source{}), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

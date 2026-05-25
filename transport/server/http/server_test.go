@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"log/slog"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"log/slog"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
@@ -163,10 +163,10 @@ func TestNewServer_WithNilHealthCheck(t *testing.T) {
 	}
 }
 
-func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
+func TestNewServer_WithAdvertiseHost_EndpointUsesAdvertiseHost(t *testing.T) {
 	cfg := &corev1.Server_HTTP{
-		Listen:   &corev1.Server_Listen{Addr: "0.0.0.0:0"},
-		Registry: &corev1.Server_Registry{Host: "host.docker.internal"},
+		Listen:    &corev1.Server_Listen{Addr: "0.0.0.0:0"},
+		Advertise: &corev1.Server_Advertise{Host: "host.docker.internal"},
 	}
 
 	srv := NewServer(WithConfig(cfg))
@@ -186,10 +186,10 @@ func TestNewServer_WithRegistryHost_EndpointUsesRegistryHost(t *testing.T) {
 	}
 }
 
-func TestNewServer_WithRegistryEndpoint_EndpointUsesExplicitValue(t *testing.T) {
+func TestNewServer_WithAdvertiseEndpoint_EndpointUsesExplicitValue(t *testing.T) {
 	cfg := &corev1.Server_HTTP{
-		Listen:   &corev1.Server_Listen{Addr: ":0"},
-		Registry: &corev1.Server_Registry{Endpoint: "https://example.internal:18443?isSecure=true"},
+		Listen:    &corev1.Server_Listen{Addr: ":0"},
+		Advertise: &corev1.Server_Advertise{Endpoint: "https://example.internal:18443?isSecure=true"},
 	}
 
 	srv := NewServer(WithConfig(cfg))

@@ -3,16 +3,16 @@ package registry
 import (
 	"fmt"
 
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/go-kratos/kratos/contrib/registry/nacos/v2"
 	"github.com/go-kratos/kratos/v2/registry"
-	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 )
 
 // NewNacosRegistry 创建 Nacos 统一注册中心客户端（支持注册和发现）
-func NewNacosRegistry(c *corev1.NacosConfig) registry.Registrar {
+func NewNacosRegistry(c *corev1.Nacos) registry.Registrar {
 	if c == nil {
 		return nil
 	}
@@ -61,7 +61,7 @@ func NewNacosRegistry(c *corev1.NacosConfig) registry.Registrar {
 }
 
 // NewNacosDiscovery 创建 Nacos 服务发现客户端
-func NewNacosDiscovery(c *corev1.NacosConfig) registry.Discovery {
+func NewNacosDiscovery(c *corev1.Nacos) registry.Discovery {
 	if c == nil {
 		return nil
 	}
@@ -111,6 +111,6 @@ func NewNacosDiscovery(c *corev1.NacosConfig) registry.Discovery {
 
 // NewNacosRegistrar 创建 Nacos 注册中心客户端
 // Deprecated: 使用 NewNacosRegistry 替代
-func NewNacosRegistrar(c *corev1.NacosConfig) registry.Registrar {
+func NewNacosRegistrar(c *corev1.Nacos) registry.Registrar {
 	return NewNacosRegistry(c)
 }

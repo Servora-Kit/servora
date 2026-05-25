@@ -37,16 +37,16 @@ func NewRegistrar(cfg *corev1.Registry) registry.Registrar {
 	}
 }
 
-// NewDiscovery 根据配置创建服务发现客户端
-func NewDiscovery(cfg *corev1.Discovery) registry.Discovery {
+// NewDiscovery 根据注册中心配置创建服务发现客户端。
+func NewDiscovery(cfg *corev1.Registry) registry.Discovery {
 	if cfg == nil {
 		return nil
 	}
 
-	switch c := cfg.Discovery.(type) {
-	case *corev1.Discovery_Consul:
+	switch c := cfg.Registry.(type) {
+	case *corev1.Registry_Consul:
 		return NewConsulDiscovery(c.Consul)
-	case *corev1.Discovery_Etcd:
+	case *corev1.Registry_Etcd:
 		var opts []Option
 		if c.Etcd.Namespace != "" {
 			opts = append(opts, Namespace(c.Etcd.Namespace))
@@ -57,9 +57,9 @@ func NewDiscovery(cfg *corev1.Discovery) registry.Discovery {
 			panic(fmt.Sprintf("failed to create etcd discovery: %v", err))
 		}
 		return discovery
-	case *corev1.Discovery_Nacos:
+	case *corev1.Registry_Nacos:
 		return NewNacosDiscovery(c.Nacos)
-	case *corev1.Discovery_Kubernetes:
+	case *corev1.Registry_Kubernetes:
 		return NewKubernetesDiscovery(c.Kubernetes)
 	default:
 		return nil

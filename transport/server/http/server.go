@@ -46,11 +46,11 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 			serverOpts = append(serverOpts, khttp.TLSConfig(tlsCfg))
 		}
 
-		registryEndpoint := ""
-		registryHost := ""
-		if reg := o.conf.GetRegistry(); reg != nil {
-			registryEndpoint = reg.GetEndpoint()
-			registryHost = reg.GetHost()
+		advertiseEndpoint := ""
+		advertiseHost := ""
+		if adv := o.conf.GetAdvertise(); adv != nil {
+			advertiseEndpoint = adv.GetEndpoint()
+			advertiseHost = adv.GetHost()
 		}
 
 		secure := o.conf.GetTls() != nil && o.conf.GetTls().GetEnable()
@@ -64,8 +64,8 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 		ep, err := endpoint.ResolveRegistry(endpoint.RegistryInput{
 			Scheme:   scheme,
 			BindAddr: bindAddr,
-			Endpoint: registryEndpoint,
-			Host:     registryHost,
+			Endpoint: advertiseEndpoint,
+			Host:     advertiseHost,
 			Query:    q,
 		})
 		if err != nil {

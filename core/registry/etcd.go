@@ -9,8 +9,8 @@ import (
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"github.com/go-kratos/kratos/v2/registry"
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"github.com/go-kratos/kratos/v2/registry"
 )
 
 var (
@@ -244,7 +244,7 @@ func (r *Registry) heartBeat(ctx context.Context, leaseID clientv3.LeaseID, key 
 }
 
 // NewEtcdClient 从配置创建 etcd 客户端
-func NewEtcdClient(cfg *corev1.EtcdConfig) (*clientv3.Client, error) {
+func NewEtcdClient(cfg *corev1.Etcd) (*clientv3.Client, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("etcd config is nil")
 	}
@@ -273,7 +273,7 @@ func NewEtcdClient(cfg *corev1.EtcdConfig) (*clientv3.Client, error) {
 }
 
 // NewEtcdRegistry 从配置创建 etcd 注册中心
-func NewEtcdRegistry(cfg *corev1.EtcdConfig, opts ...Option) (registry.Registrar, error) {
+func NewEtcdRegistry(cfg *corev1.Etcd, opts ...Option) (registry.Registrar, error) {
 	client, err := NewEtcdClient(cfg)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func NewEtcdRegistry(cfg *corev1.EtcdConfig, opts ...Option) (registry.Registrar
 }
 
 // NewEtcdDiscovery 从配置创建 etcd 服务发现
-func NewEtcdDiscovery(cfg *corev1.EtcdConfig, opts ...Option) (registry.Discovery, error) {
+func NewEtcdDiscovery(cfg *corev1.Etcd, opts ...Option) (registry.Discovery, error) {
 	client, err := NewEtcdClient(cfg)
 	if err != nil {
 		return nil, err

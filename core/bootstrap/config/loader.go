@@ -43,14 +43,14 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 	}
 
 	var configCenterSource kconfig.Source
-	if cfg := bc.Config; cfg != nil {
-		switch v := cfg.Config.(type) {
-		case *corev1.Config_Nacos:
-			configCenterSource = governanceConfig.NewNacosConfigSource(v.Nacos)
-		case *corev1.Config_Consul:
-			configCenterSource = governanceConfig.NewConsulConfigSource(v.Consul)
-		case *corev1.Config_Etcd:
-			configCenterSource = governanceConfig.NewEtcdConfigSource(v.Etcd)
+	if cfg := bc.Source; cfg != nil {
+		switch v := cfg.Source.(type) {
+		case *corev1.Source_Nacos:
+			configCenterSource = governanceConfig.NewNacosSource(v.Nacos)
+		case *corev1.Source_Consul:
+			configCenterSource = governanceConfig.NewConsulSource(v.Consul)
+		case *corev1.Source_Etcd:
+			configCenterSource = governanceConfig.NewEtcdSource(v.Etcd)
 		}
 	}
 	_ = tempConfig.Close()

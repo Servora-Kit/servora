@@ -5,6 +5,7 @@ package servora.core.v1;
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "servora/conf/v1/annotations.proto";
+import "servora/security/tls/v1/config.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1;corev1";
 
@@ -20,19 +21,8 @@ message Bootstrap {
   Server server = 2;
   Data data = 3;
   Registry registry = 4;
-  Discovery discovery = 5;
-  Config config = 6;
-  Trace trace = 7;
-  Metrics metrics = 8;
-  Log log = 9;
-}
-
-// 可复用的 TLS 配置
-message TLSConfig {
-  bool enable = 1;
-  string cert_path = 2;
-  string key_path = 3;
-  string ca_path = 4;
+  Source source = 5;
+  Observability obs = 6;
 }
 
 // 通信服务端配置
@@ -45,43 +35,32 @@ message Server {
   }
 
   // 服务注册端点覆盖（用于注册中心对外公布地址）
-  message Registry {
+  message Advertise {
     string endpoint = 1;
     string host = 2;
   }
 
   message HTTP {
     Listen listen = 1;
-    TLSConfig tls = 2;
-    Registry registry = 4;
+    servora.security.tls.v1.TLS tls = 2;
+    Advertise advertise = 3;
   }
 
   message GRPC {
     Listen listen = 1;
-    TLSConfig tls = 2;
-    Registry registry = 3;
+    servora.security.tls.v1.TLS tls = 2;
+    Advertise advertise = 3;
   }
 
   HTTP http = 1;
   GRPC grpc = 2;
 }
 
-// 数据源配置（仅保留 database / redis / client 三类通用数据源）
+// 数据源配置（仅保留 database / client 等核心数据源）
 message Data {
   message Database {
     string driver = 1;
     string source = 2;
-  }
-
-  message Redis {
-    string network = 1;
-    string addr = 2;
-    string user_name = 3;
-    string password = 4;
-    int32 db = 5;
-    google.protobuf.Duration dial_timeout = 6;
-    google.protobuf.Duration read_timeout = 7;
-    google.protobuf.Duration write_timeout = 8;
   }
 
   message Client {
@@ -93,14 +72,13 @@ message Data {
       string protocol = 1;
       string endpoint = 2;
       google.protobuf.Duration timeout = 3;
-      TLSConfig tls = 4;
+      servora.security.tls.v1.TLS tls = 4;
       google.protobuf.Struct options = 5;
     }
     repeated Service services = 1;
   }
 
   Database database = 1;
-  Redis redis = 2;
   Client client = 3;
 }
 
@@ -109,7 +87,7 @@ message App {
   string env = 1;
   string name = 2;
   string version = 3;
-  // field 5 reserved (was App.Log, moved to Bootstrap.log)
+  // field 5 reserved (was App.Log, moved to Bootstrap.obs.log)
   map<string, string> metadata = 6;
   string external_url = 8;
 }
@@ -117,34 +95,24 @@ message App {
 // 注册中心配置
 message Registry {
   oneof registry {
-    ConsulConfig consul = 1;
-    EtcdConfig etcd = 2;
-    NacosConfig nacos = 3;
-    KubernetesConfig kubernetes = 4;
-  }
-}
-
-// 服务发现配置
-message Discovery {
-  oneof discovery {
-    ConsulConfig consul = 1;
-    EtcdConfig etcd = 2;
-    NacosConfig nacos = 3;
-    KubernetesConfig kubernetes = 4;
+    Consul consul = 1;
+    Etcd etcd = 2;
+    Nacos nacos = 3;
+    Kubernetes kubernetes = 4;
   }
 }
 
 // 配置中心配置
-message Config {
-  oneof config {
-    ConsulConfig consul = 1;
-    EtcdConfig etcd = 2;
-    NacosConfig nacos = 3;
+message Source {
+  oneof source {
+    Consul consul = 1;
+    Etcd etcd = 2;
+    Nacos nacos = 3;
   }
 }
 
 // 通用 Consul 配置
-message ConsulConfig {
+message Consul {
   string addr = 1;
   string scheme = 2;
   string token = 3;
@@ -155,7 +123,7 @@ message ConsulConfig {
 }
 
 // 通用 Etcd 配置
-message EtcdConfig {
+message Etcd {
   repeated string endpoints = 1;
   string username = 2;
   string password = 3;
@@ -165,7 +133,7 @@ message EtcdConfig {
 }
 
 // 通用 Nacos 配置
-message NacosConfig {
+message Nacos {
   string addr = 1;
   uint64 port = 2;
   string namespace = 3;
@@ -177,8 +145,15 @@ message NacosConfig {
 }
 
 // 通用 Kubernetes 配置
-message KubernetesConfig {
+message Kubernetes {
   bool enable = 1;
+}
+
+// 可观测性配置
+message Observability {
+  Log log = 1;
+  Trace trace = 2;
+  Metrics metrics = 3;
 }
 
 // 链路追踪配置

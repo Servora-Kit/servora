@@ -135,10 +135,10 @@ func envOf(bc *corev1.Bootstrap) string {
 }
 
 func logCfgOf(bc *corev1.Bootstrap) *corev1.Log {
-	if bc == nil || bc.GetLog() == nil {
+	if bc == nil || bc.GetObs().GetLog() == nil {
 		return &corev1.Log{}
 	}
-	return bc.GetLog()
+	return bc.GetObs().GetLog()
 }
 
 func levelOf(lc *corev1.Log) slog.Level {

@@ -9,8 +9,8 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/go-kratos/kratos/v2/registry"
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"github.com/go-kratos/kratos/v2/registry"
 )
 
 // TestEtcdErrorHandling 测试各种错误处理场景
@@ -23,7 +23,7 @@ func TestEtcdErrorHandling(t *testing.T) {
 		}
 
 		// 测试空端点
-		cfg := &corev1.EtcdConfig{
+		cfg := &corev1.Etcd{
 			Endpoints: []string{},
 		}
 		_, err = NewEtcdClient(cfg)
@@ -33,7 +33,7 @@ func TestEtcdErrorHandling(t *testing.T) {
 	})
 
 	t.Run("InvalidEndpoints", func(t *testing.T) {
-		cfg := &corev1.EtcdConfig{
+		cfg := &corev1.Etcd{
 			Endpoints: []string{"invalid-endpoint:9999"},
 			Timeout:   durationpbNew(1 * time.Second),
 		}

@@ -12,7 +12,7 @@ import (
 	"github.com/Servora-Kit/servora/core/bootstrap/config"
 	slogger "github.com/Servora-Kit/servora/obs/logger"
 	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
-	"github.com/Servora-Kit/servora/obs/telemetry"
+	"github.com/Servora-Kit/servora/obs/tracing"
 
 	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"
@@ -91,7 +91,7 @@ func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
 	appLogger := sl.With("service", bc.App.Name)
 	kratosv2.SetDefault(appLogger)
 
-	traceCleanup, err := telemetry.InitTracerProvider(bc.Trace, bc.App.Name, bc.App.Env)
+	traceCleanup, err := tracing.InitTracerProvider(bc.GetObs().GetTrace(), bc.App.Name, bc.App.Env)
 	if err != nil {
 		_ = logCloser(context.Background())
 		_ = c.Close()

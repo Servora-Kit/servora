@@ -24,7 +24,7 @@ func (e *mockExporter) Export(_ context.Context, records []sdklog.Record) error 
 	return nil
 }
 
-func (e *mockExporter) Shutdown(context.Context) error { return nil }
+func (e *mockExporter) Shutdown(context.Context) error   { return nil }
 func (e *mockExporter) ForceFlush(context.Context) error { return nil }
 
 func TestOtelHandler_TraceCorrelation(t *testing.T) {

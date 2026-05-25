@@ -9,6 +9,7 @@ import (
 	"log/slog"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -136,7 +137,7 @@ func createConnection(
 	return conn, nil
 }
 
-func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *corev1.TLSConfig) (*gogrpc.ClientConn, error) {
+func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *tlspb.TLS) (*gogrpc.ClientConn, error) {
 	if tlsCfg == nil || !tlsCfg.GetEnable() {
 		return kgrpc.DialInsecure(ctx, opts...)
 	}
@@ -156,10 +157,10 @@ func resolveConnectionConfig(
 	grpcConfigs map[string]*corev1.Data_Client_Endpoint,
 	defaultEndpoint string,
 	defaultTimeout time.Duration,
-) (string, time.Duration, *corev1.TLSConfig, bool) {
+) (string, time.Duration, *tlspb.TLS, bool) {
 	ep := defaultEndpoint
 	timeout := defaultTimeout
-	var tlsCfg *corev1.TLSConfig
+	var tlsCfg *tlspb.TLS
 
 	grpcCfg, ok := grpcConfigs[serviceName]
 	if !ok || grpcCfg == nil {

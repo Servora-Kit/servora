@@ -8,5 +8,5 @@ import (
 // ProviderSet exposes stable bootstrap roots for application Wire graphs.
 var ProviderSet = wire.NewSet(
 	wire.FieldsOf(new(*Runtime), "Bootstrap", "Config", "Logger"),
-	wire.FieldsOf(new(*corev1.Bootstrap), "Server", "Discovery", "Registry", "Data", "App", "Trace", "Metrics"),
+	wire.FieldsOf(new(*corev1.Bootstrap), "Server", "Registry", "Data", "App", "Obs"),
 )

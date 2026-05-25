@@ -7,8 +7,8 @@ import (
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"github.com/go-kratos/kratos/v2/registry"
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"github.com/go-kratos/kratos/v2/registry"
 )
 
 // TestEtcdRegistryAndDiscovery 测试 etcd 注册和发现功能
@@ -122,14 +122,14 @@ func TestEtcdRegistryAndDiscovery(t *testing.T) {
 	}
 }
 
-// TestEtcdConfigConversion 测试配置转换
-func TestEtcdConfigConversion(t *testing.T) {
+// TestEtcdConversion 测试配置转换
+func TestEtcdConversion(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping: requires Etcd")
 	}
 
 	// 创建测试配置
-	cfg := &corev1.EtcdConfig{
+	cfg := &corev1.Etcd{
 		Endpoints: []string{"127.0.0.1:2379", "127.0.0.1:2380"},
 		Username:  "testuser",
 		Password:  "testpass",

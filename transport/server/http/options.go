@@ -6,7 +6,7 @@ import (
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
-	"github.com/Servora-Kit/servora/obs/telemetry"
+	"github.com/Servora-Kit/servora/obs/metrics"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 	"github.com/Servora-Kit/servora/transport/server/http/swagger"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -53,7 +53,7 @@ func WithCORS(c *corsv1.CORS) ServerOption {
 	}
 }
 
-func WithMetrics(m *telemetry.Metrics) ServerOption {
+func WithMetrics(m *metrics.Metrics) ServerOption {
 	return func(o *serverOptions) {
 		if m != nil {
 			o.metricsHandler = m.Handler

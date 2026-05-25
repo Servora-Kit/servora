@@ -7,14 +7,14 @@ import (
 	"github.com/go-kratos/kratos/contrib/middleware/validate/v2"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
-	"github.com/go-kratos/kratos/v2/middleware/metrics"
+	kratosmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/go-kratos/kratos/v2/middleware/ratelimit"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
-	"github.com/Servora-Kit/servora/obs/telemetry"
+	"github.com/Servora-Kit/servora/obs/metrics"
 )
 
 // ChainBuilder 构建标准中间件链。
@@ -57,7 +57,7 @@ import (
 type ChainBuilder struct {
 	logger    *slog.Logger
 	trace     *corev1.Trace
-	metrics   *telemetry.Metrics
+	metrics   *metrics.Metrics
 	rateLimit bool // 默认 true
 }
 
@@ -86,7 +86,7 @@ func (b *ChainBuilder) WithTrace(t *corev1.Trace) *ChainBuilder {
 //
 // 如果 m 为 nil，则跳过 metrics 中间件。
 // metrics 中间件会记录请求计数和延迟分布。
-func (b *ChainBuilder) WithMetrics(m *telemetry.Metrics) *ChainBuilder {
+func (b *ChainBuilder) WithMetrics(m *metrics.Metrics) *ChainBuilder {
 	b.metrics = m
 	return b
 }
@@ -139,9 +139,9 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 
 	// 6. Metrics - 可选
 	if b.metrics != nil {
-		ms = append(ms, metrics.Server(
-			metrics.WithSeconds(b.metrics.Seconds),
-			metrics.WithRequests(b.metrics.Requests),
+		ms = append(ms, kratosmetrics.Server(
+			kratosmetrics.WithSeconds(b.metrics.Seconds),
+			kratosmetrics.WithRequests(b.metrics.Requests),
 		))
 	}
 

@@ -5,11 +5,11 @@ import (
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
-	"github.com/Servora-Kit/servora/obs/telemetry"
+	"github.com/Servora-Kit/servora/obs/metrics"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/circuitbreaker"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
-	"github.com/go-kratos/kratos/v2/middleware/metrics"
+	kratosmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 )
@@ -22,7 +22,7 @@ import (
 type ChainBuilder struct {
 	logger  *slog.Logger
 	trace   *corev1.Trace
-	metrics *telemetry.Metrics
+	metrics *metrics.Metrics
 	circuit bool
 }
 
@@ -41,7 +41,7 @@ func (b *ChainBuilder) WithTrace(t *corev1.Trace) *ChainBuilder {
 }
 
 // WithMetrics 启用 client metrics 中间件。
-func (b *ChainBuilder) WithMetrics(m *telemetry.Metrics) *ChainBuilder {
+func (b *ChainBuilder) WithMetrics(m *metrics.Metrics) *ChainBuilder {
 	b.metrics = m
 	return b
 }
@@ -68,9 +68,9 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 	}
 
 	if b.metrics != nil {
-		ms = append(ms, metrics.Client(
-			metrics.WithSeconds(b.metrics.Seconds),
-			metrics.WithRequests(b.metrics.Requests),
+		ms = append(ms, kratosmetrics.Client(
+			kratosmetrics.WithSeconds(b.metrics.Seconds),
+			kratosmetrics.WithRequests(b.metrics.Requests),
 		))
 	}
 

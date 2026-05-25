@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/config"
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"github.com/go-kratos/kratos/v2/config"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -49,8 +49,8 @@ type source struct {
 	options *options
 }
 
-// NewEtcdConfigSource 创建 Etcd 配置源（兼容旧版本）
-func NewEtcdConfigSource(c *corev1.EtcdConfig) config.Source {
+// NewEtcdSource 创建 Etcd 配置源（兼容旧版本）
+func NewEtcdSource(c *corev1.Etcd) config.Source {
 	if c == nil {
 		return nil
 	}

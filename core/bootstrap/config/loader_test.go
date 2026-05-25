@@ -72,8 +72,8 @@ func TestLoadBootstrap_AppliesProtoDefaults(t *testing.T) {
 	if got := bc.GetServer().GetHttp().GetListen().GetAddr(); got != ":8080" {
 		t.Fatalf("server.http.listen.addr = %q, want %q", got, ":8080")
 	}
-	if bc.GetConfig() != nil {
-		t.Fatalf("bc.Config = %v, want nil", bc.GetConfig())
+	if bc.GetSource() != nil {
+		t.Fatalf("bc.Source = %v, want nil", bc.GetSource())
 	}
 }
 

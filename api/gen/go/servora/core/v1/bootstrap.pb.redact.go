@@ -6,6 +6,7 @@ package corev1
 import (
 	context "context"
 	conf "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	redact "github.com/menta2k/protoc-gen-redact/v3/redact/v3"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -24,6 +25,7 @@ var (
 	_ durationpb.Duration
 	_ structpb.Struct
 	_ conf.SectionRule
+	_ tlspb.TLS
 )
 
 // Redact method implementation for Bootstrap
@@ -40,31 +42,9 @@ func (x *Bootstrap) Redact() string {
 
 	// Safe field: Registry
 
-	// Safe field: Discovery
+	// Safe field: Source
 
-	// Safe field: Config
-
-	// Safe field: Trace
-
-	// Safe field: Metrics
-
-	// Safe field: Log
-	return x.String()
-}
-
-// Redact method implementation for TLSConfig
-func (x *TLSConfig) Redact() string {
-	if x == nil {
-		return ""
-	}
-
-	// Safe field: Enable
-
-	// Safe field: CertPath
-
-	// Safe field: KeyPath
-
-	// Safe field: CaPath
+	// Safe field: Obs
 	return x.String()
 }
 
@@ -87,8 +67,6 @@ func (x *Data) Redact() string {
 	}
 
 	// Safe field: Database
-
-	// Safe field: Redis
 
 	// Safe field: Client
 	return x.String()
@@ -120,24 +98,16 @@ func (x *Registry) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for Discovery
-func (x *Discovery) Redact() string {
+// Redact method implementation for Source
+func (x *Source) Redact() string {
 	if x == nil {
 		return ""
 	}
 	return x.String()
 }
 
-// Redact method implementation for Config
-func (x *Config) Redact() string {
-	if x == nil {
-		return ""
-	}
-	return x.String()
-}
-
-// Redact method implementation for ConsulConfig
-func (x *ConsulConfig) Redact() string {
+// Redact method implementation for Consul
+func (x *Consul) Redact() string {
 	if x == nil {
 		return ""
 	}
@@ -158,8 +128,8 @@ func (x *ConsulConfig) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for EtcdConfig
-func (x *EtcdConfig) Redact() string {
+// Redact method implementation for Etcd
+func (x *Etcd) Redact() string {
 	if x == nil {
 		return ""
 	}
@@ -178,8 +148,8 @@ func (x *EtcdConfig) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for NacosConfig
-func (x *NacosConfig) Redact() string {
+// Redact method implementation for Nacos
+func (x *Nacos) Redact() string {
 	if x == nil {
 		return ""
 	}
@@ -202,13 +172,27 @@ func (x *NacosConfig) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for KubernetesConfig
-func (x *KubernetesConfig) Redact() string {
+// Redact method implementation for Kubernetes
+func (x *Kubernetes) Redact() string {
 	if x == nil {
 		return ""
 	}
 
 	// Safe field: Enable
+	return x.String()
+}
+
+// Redact method implementation for Observability
+func (x *Observability) Redact() string {
+	if x == nil {
+		return ""
+	}
+
+	// Safe field: Log
+
+	// Safe field: Trace
+
+	// Safe field: Metrics
 	return x.String()
 }
 
@@ -266,8 +250,8 @@ func (x *Server_Listen) Redact() string {
 	return x.String()
 }
 
-// Redact method implementation for Server_Registry
-func (x *Server_Registry) Redact() string {
+// Redact method implementation for Server_Advertise
+func (x *Server_Advertise) Redact() string {
 	if x == nil {
 		return ""
 	}
@@ -288,7 +272,7 @@ func (x *Server_HTTP) Redact() string {
 
 	// Safe field: Tls
 
-	// Safe field: Registry
+	// Safe field: Advertise
 	return x.String()
 }
 
@@ -302,7 +286,7 @@ func (x *Server_GRPC) Redact() string {
 
 	// Safe field: Tls
 
-	// Safe field: Registry
+	// Safe field: Advertise
 	return x.String()
 }
 
@@ -315,30 +299,6 @@ func (x *Data_Database) Redact() string {
 	// Safe field: Driver
 
 	// Safe field: Source
-	return x.String()
-}
-
-// Redact method implementation for Data_Redis
-func (x *Data_Redis) Redact() string {
-	if x == nil {
-		return ""
-	}
-
-	// Safe field: Network
-
-	// Safe field: Addr
-
-	// Safe field: UserName
-
-	// Safe field: Password
-
-	// Safe field: Db
-
-	// Safe field: DialTimeout
-
-	// Safe field: ReadTimeout
-
-	// Safe field: WriteTimeout
 	return x.String()
 }
 

@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/go-kratos/kratos/contrib/config/consul/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/hashicorp/consul/api"
-	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
-// NewConsulConfigSource 创建 Consul 配置源
-func NewConsulConfigSource(c *corev1.ConsulConfig) config.Source {
+// NewConsulSource 创建 Consul 配置源
+func NewConsulSource(c *corev1.Consul) config.Source {
 	if c == nil {
 		return nil
 	}

@@ -23,9 +23,10 @@ api/protos/
     ├── conf/v1/                     # config annotation extensions
     ├── core/v1/                     # Bootstrap config schema
     ├── extra/{audit,broker,cors,jwt,mail}/v1/
+    ├── infra/redis/v1/              # Redis optional section schema
     ├── mapper/v1/                   # mapper annotation extensions
     ├── pagination/v1/               # pagination public types
-    └── security/auth{n,z}/.../v1/    # security backend config schema
+    └── security/{tls,authn,authz}/.../v1/ # security runtime/backend config schema
 ```
 
 `buf.yaml`、`buf.lock`、`buf.go.gen.yaml` 都在仓库根。imports 相对于 `api/protos/`，例如：
@@ -41,7 +42,8 @@ import "servora/audit/v1/annotations.proto";
 - `go_package` 使用 `github.com/Servora-Kit/servora/api/gen/go/servora/<ns>/v1;<alias>`。
 - 新 annotation extension 号段遵守根 `AGENTS.md` 的 `5xx00` 规划。
 - `service_default` 合并语义必须与生成器测试一致：方法级显式字段覆盖服务级默认，未显式字段继承。
-- 第一方 backend 配置 proto 必须用 `servora.conf.v1.section` / `field` 表达 section、默认值和必填项；不要让 runtime 包重复维护默认值或 required 判断。
+- 第一方 backend/section 配置 proto 必须用 `servora.conf.v1.section` / `field` 表达 section、默认值和必填项；不要让 runtime 包重复维护默认值或 required 判断。
+- core `bootstrap.proto` 内的配置 message 不使用多余 `Config` 后缀；TLS、Redis 这类归属明确的配置放到所属域 proto，由 core 引用或业务显式 `bootstrap.Scan`。
 
 ## 生成与校验
 

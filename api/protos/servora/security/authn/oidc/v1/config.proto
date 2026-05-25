@@ -13,8 +13,8 @@ message Config {
     optional: true
   };
 
-  string crypto_key = 1 [(servora.conf.v1.field) = { required: true }]; // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
-  bool grant_type_refresh_token = 2 [(servora.conf.v1.field) = { default: "false" }]; // 是否启用 refresh_token grant type
-  string default_logout_redirect_uri = 3 [(servora.conf.v1.field) = { default: "/" }]; // 默认登出重定向 URI
-  string login_base_url = 4 [(servora.conf.v1.field) = { required: true }]; // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
+  string crypto_key = 1 [(servora.conf.v1.field) = {required: true}]; // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密
+  bool grant_type_refresh_token = 2 [(servora.conf.v1.field) = {default: "false"}]; // 是否启用 refresh_token grant type
+  string default_logout_redirect_uri = 3 [(servora.conf.v1.field) = {default: "/"}]; // 默认登出重定向 URI
+  string login_base_url = 4 [(servora.conf.v1.field) = {required: true}]; // OIDC 登录页基地址；GET /login 会 302 到 {login_base_url}/_auth/login?authRequestID=...
 }

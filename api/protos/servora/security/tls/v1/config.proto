@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package servora.security.tls.v1;
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1;tlspb";
+
+// TLS 配置（由 security/tls 子包消费）。
+message TLS {
+  bool enable = 1;
+  string cert_path = 2;
+  string key_path = 3;
+  string ca_path = 4;
+}

@@ -8,6 +8,7 @@ package corev1
 
 import (
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	v1 "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -76,7 +77,7 @@ func (x Log_LogLevel) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Log_LogLevel.Descriptor instead.
 func (Log_LogLevel) EnumDescriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 0}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 0}
 }
 
 type Log_LogFormat int32
@@ -125,7 +126,7 @@ func (x Log_LogFormat) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Log_LogFormat.Descriptor instead.
 func (Log_LogFormat) EnumDescriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 1}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 1}
 }
 
 type Log_OtelProtocol int32
@@ -174,7 +175,7 @@ func (x Log_OtelProtocol) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Log_OtelProtocol.Descriptor instead.
 func (Log_OtelProtocol) EnumDescriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 2}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 2}
 }
 
 type Bootstrap struct {
@@ -183,11 +184,8 @@ type Bootstrap struct {
 	Server        *Server                `protobuf:"bytes,2,opt,name=server,proto3" json:"server,omitempty"`
 	Data          *Data                  `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	Registry      *Registry              `protobuf:"bytes,4,opt,name=registry,proto3" json:"registry,omitempty"`
-	Discovery     *Discovery             `protobuf:"bytes,5,opt,name=discovery,proto3" json:"discovery,omitempty"`
-	Config        *Config                `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
-	Trace         *Trace                 `protobuf:"bytes,7,opt,name=trace,proto3" json:"trace,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,8,opt,name=metrics,proto3" json:"metrics,omitempty"`
-	Log           *Log                   `protobuf:"bytes,9,opt,name=log,proto3" json:"log,omitempty"`
+	Source        *Source                `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	Obs           *Observability         `protobuf:"bytes,6,opt,name=obs,proto3" json:"obs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -250,108 +248,18 @@ func (x *Bootstrap) GetRegistry() *Registry {
 	return nil
 }
 
-func (x *Bootstrap) GetDiscovery() *Discovery {
+func (x *Bootstrap) GetSource() *Source {
 	if x != nil {
-		return x.Discovery
+		return x.Source
 	}
 	return nil
 }
 
-func (x *Bootstrap) GetConfig() *Config {
+func (x *Bootstrap) GetObs() *Observability {
 	if x != nil {
-		return x.Config
+		return x.Obs
 	}
 	return nil
-}
-
-func (x *Bootstrap) GetTrace() *Trace {
-	if x != nil {
-		return x.Trace
-	}
-	return nil
-}
-
-func (x *Bootstrap) GetMetrics() *Metrics {
-	if x != nil {
-		return x.Metrics
-	}
-	return nil
-}
-
-func (x *Bootstrap) GetLog() *Log {
-	if x != nil {
-		return x.Log
-	}
-	return nil
-}
-
-// 可复用的 TLS 配置
-type TLSConfig struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Enable        bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`
-	CertPath      string                 `protobuf:"bytes,2,opt,name=cert_path,json=certPath,proto3" json:"cert_path,omitempty"`
-	KeyPath       string                 `protobuf:"bytes,3,opt,name=key_path,json=keyPath,proto3" json:"key_path,omitempty"`
-	CaPath        string                 `protobuf:"bytes,4,opt,name=ca_path,json=caPath,proto3" json:"ca_path,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TLSConfig) Reset() {
-	*x = TLSConfig{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TLSConfig) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TLSConfig) ProtoMessage() {}
-
-func (x *TLSConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TLSConfig.ProtoReflect.Descriptor instead.
-func (*TLSConfig) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *TLSConfig) GetEnable() bool {
-	if x != nil {
-		return x.Enable
-	}
-	return false
-}
-
-func (x *TLSConfig) GetCertPath() string {
-	if x != nil {
-		return x.CertPath
-	}
-	return ""
-}
-
-func (x *TLSConfig) GetKeyPath() string {
-	if x != nil {
-		return x.KeyPath
-	}
-	return ""
-}
-
-func (x *TLSConfig) GetCaPath() string {
-	if x != nil {
-		return x.CaPath
-	}
-	return ""
 }
 
 // 通信服务端配置
@@ -365,7 +273,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[2]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +285,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[2]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +298,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Server) GetHttp() *Server_HTTP {
@@ -407,11 +315,10 @@ func (x *Server) GetGrpc() *Server_GRPC {
 	return nil
 }
 
-// 数据源配置（仅保留 database / redis / client 三类通用数据源）
+// 数据源配置（仅保留 database / client 等核心数据源）
 type Data struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Database      *Data_Database         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
-	Redis         *Data_Redis            `protobuf:"bytes,2,opt,name=redis,proto3" json:"redis,omitempty"`
 	Client        *Data_Client           `protobuf:"bytes,3,opt,name=client,proto3" json:"client,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -419,7 +326,7 @@ type Data struct {
 
 func (x *Data) Reset() {
 	*x = Data{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[3]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -431,7 +338,7 @@ func (x *Data) String() string {
 func (*Data) ProtoMessage() {}
 
 func (x *Data) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[3]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -444,19 +351,12 @@ func (x *Data) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data.ProtoReflect.Descriptor instead.
 func (*Data) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Data) GetDatabase() *Data_Database {
 	if x != nil {
 		return x.Database
-	}
-	return nil
-}
-
-func (x *Data) GetRedis() *Data_Redis {
-	if x != nil {
-		return x.Redis
 	}
 	return nil
 }
@@ -474,7 +374,7 @@ type App struct {
 	Env     string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
 	Name    string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Version string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
-	// field 5 reserved (was App.Log, moved to Bootstrap.log)
+	// field 5 reserved (was App.Log, moved to Bootstrap.obs.log)
 	Metadata      map[string]string `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ExternalUrl   string            `protobuf:"bytes,8,opt,name=external_url,json=externalUrl,proto3" json:"external_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -483,7 +383,7 @@ type App struct {
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[4]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -495,7 +395,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[4]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -508,7 +408,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{4}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *App) GetEnv() string {
@@ -562,7 +462,7 @@ type Registry struct {
 
 func (x *Registry) Reset() {
 	*x = Registry{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[5]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -574,7 +474,7 @@ func (x *Registry) String() string {
 func (*Registry) ProtoMessage() {}
 
 func (x *Registry) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[5]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -587,7 +487,7 @@ func (x *Registry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Registry.ProtoReflect.Descriptor instead.
 func (*Registry) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{5}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Registry) GetRegistry() isRegistry_Registry {
@@ -597,7 +497,7 @@ func (x *Registry) GetRegistry() isRegistry_Registry {
 	return nil
 }
 
-func (x *Registry) GetConsul() *ConsulConfig {
+func (x *Registry) GetConsul() *Consul {
 	if x != nil {
 		if x, ok := x.Registry.(*Registry_Consul); ok {
 			return x.Consul
@@ -606,7 +506,7 @@ func (x *Registry) GetConsul() *ConsulConfig {
 	return nil
 }
 
-func (x *Registry) GetEtcd() *EtcdConfig {
+func (x *Registry) GetEtcd() *Etcd {
 	if x != nil {
 		if x, ok := x.Registry.(*Registry_Etcd); ok {
 			return x.Etcd
@@ -615,7 +515,7 @@ func (x *Registry) GetEtcd() *EtcdConfig {
 	return nil
 }
 
-func (x *Registry) GetNacos() *NacosConfig {
+func (x *Registry) GetNacos() *Nacos {
 	if x != nil {
 		if x, ok := x.Registry.(*Registry_Nacos); ok {
 			return x.Nacos
@@ -624,7 +524,7 @@ func (x *Registry) GetNacos() *NacosConfig {
 	return nil
 }
 
-func (x *Registry) GetKubernetes() *KubernetesConfig {
+func (x *Registry) GetKubernetes() *Kubernetes {
 	if x != nil {
 		if x, ok := x.Registry.(*Registry_Kubernetes); ok {
 			return x.Kubernetes
@@ -638,19 +538,19 @@ type isRegistry_Registry interface {
 }
 
 type Registry_Consul struct {
-	Consul *ConsulConfig `protobuf:"bytes,1,opt,name=consul,proto3,oneof"`
+	Consul *Consul `protobuf:"bytes,1,opt,name=consul,proto3,oneof"`
 }
 
 type Registry_Etcd struct {
-	Etcd *EtcdConfig `protobuf:"bytes,2,opt,name=etcd,proto3,oneof"`
+	Etcd *Etcd `protobuf:"bytes,2,opt,name=etcd,proto3,oneof"`
 }
 
 type Registry_Nacos struct {
-	Nacos *NacosConfig `protobuf:"bytes,3,opt,name=nacos,proto3,oneof"`
+	Nacos *Nacos `protobuf:"bytes,3,opt,name=nacos,proto3,oneof"`
 }
 
 type Registry_Kubernetes struct {
-	Kubernetes *KubernetesConfig `protobuf:"bytes,4,opt,name=kubernetes,proto3,oneof"`
+	Kubernetes *Kubernetes `protobuf:"bytes,4,opt,name=kubernetes,proto3,oneof"`
 }
 
 func (*Registry_Consul) isRegistry_Registry() {}
@@ -661,149 +561,34 @@ func (*Registry_Nacos) isRegistry_Registry() {}
 
 func (*Registry_Kubernetes) isRegistry_Registry() {}
 
-// 服务发现配置
-type Discovery struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Discovery:
-	//
-	//	*Discovery_Consul
-	//	*Discovery_Etcd
-	//	*Discovery_Nacos
-	//	*Discovery_Kubernetes
-	Discovery     isDiscovery_Discovery `protobuf_oneof:"discovery"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Discovery) Reset() {
-	*x = Discovery{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Discovery) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Discovery) ProtoMessage() {}
-
-func (x *Discovery) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Discovery.ProtoReflect.Descriptor instead.
-func (*Discovery) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *Discovery) GetDiscovery() isDiscovery_Discovery {
-	if x != nil {
-		return x.Discovery
-	}
-	return nil
-}
-
-func (x *Discovery) GetConsul() *ConsulConfig {
-	if x != nil {
-		if x, ok := x.Discovery.(*Discovery_Consul); ok {
-			return x.Consul
-		}
-	}
-	return nil
-}
-
-func (x *Discovery) GetEtcd() *EtcdConfig {
-	if x != nil {
-		if x, ok := x.Discovery.(*Discovery_Etcd); ok {
-			return x.Etcd
-		}
-	}
-	return nil
-}
-
-func (x *Discovery) GetNacos() *NacosConfig {
-	if x != nil {
-		if x, ok := x.Discovery.(*Discovery_Nacos); ok {
-			return x.Nacos
-		}
-	}
-	return nil
-}
-
-func (x *Discovery) GetKubernetes() *KubernetesConfig {
-	if x != nil {
-		if x, ok := x.Discovery.(*Discovery_Kubernetes); ok {
-			return x.Kubernetes
-		}
-	}
-	return nil
-}
-
-type isDiscovery_Discovery interface {
-	isDiscovery_Discovery()
-}
-
-type Discovery_Consul struct {
-	Consul *ConsulConfig `protobuf:"bytes,1,opt,name=consul,proto3,oneof"`
-}
-
-type Discovery_Etcd struct {
-	Etcd *EtcdConfig `protobuf:"bytes,2,opt,name=etcd,proto3,oneof"`
-}
-
-type Discovery_Nacos struct {
-	Nacos *NacosConfig `protobuf:"bytes,3,opt,name=nacos,proto3,oneof"`
-}
-
-type Discovery_Kubernetes struct {
-	Kubernetes *KubernetesConfig `protobuf:"bytes,4,opt,name=kubernetes,proto3,oneof"`
-}
-
-func (*Discovery_Consul) isDiscovery_Discovery() {}
-
-func (*Discovery_Etcd) isDiscovery_Discovery() {}
-
-func (*Discovery_Nacos) isDiscovery_Discovery() {}
-
-func (*Discovery_Kubernetes) isDiscovery_Discovery() {}
-
 // 配置中心配置
-type Config struct {
+type Source struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Config:
+	// Types that are valid to be assigned to Source:
 	//
-	//	*Config_Consul
-	//	*Config_Etcd
-	//	*Config_Nacos
-	Config        isConfig_Config `protobuf_oneof:"config"`
+	//	*Source_Consul
+	//	*Source_Etcd
+	//	*Source_Nacos
+	Source        isSource_Source `protobuf_oneof:"source"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Config) Reset() {
-	*x = Config{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[7]
+func (x *Source) Reset() {
+	*x = Source{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Config) String() string {
+func (x *Source) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Config) ProtoMessage() {}
+func (*Source) ProtoMessage() {}
 
-func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[7]
+func (x *Source) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -814,69 +599,69 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Config.ProtoReflect.Descriptor instead.
-func (*Config) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use Source.ProtoReflect.Descriptor instead.
+func (*Source) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Config) GetConfig() isConfig_Config {
+func (x *Source) GetSource() isSource_Source {
 	if x != nil {
-		return x.Config
+		return x.Source
 	}
 	return nil
 }
 
-func (x *Config) GetConsul() *ConsulConfig {
+func (x *Source) GetConsul() *Consul {
 	if x != nil {
-		if x, ok := x.Config.(*Config_Consul); ok {
+		if x, ok := x.Source.(*Source_Consul); ok {
 			return x.Consul
 		}
 	}
 	return nil
 }
 
-func (x *Config) GetEtcd() *EtcdConfig {
+func (x *Source) GetEtcd() *Etcd {
 	if x != nil {
-		if x, ok := x.Config.(*Config_Etcd); ok {
+		if x, ok := x.Source.(*Source_Etcd); ok {
 			return x.Etcd
 		}
 	}
 	return nil
 }
 
-func (x *Config) GetNacos() *NacosConfig {
+func (x *Source) GetNacos() *Nacos {
 	if x != nil {
-		if x, ok := x.Config.(*Config_Nacos); ok {
+		if x, ok := x.Source.(*Source_Nacos); ok {
 			return x.Nacos
 		}
 	}
 	return nil
 }
 
-type isConfig_Config interface {
-	isConfig_Config()
+type isSource_Source interface {
+	isSource_Source()
 }
 
-type Config_Consul struct {
-	Consul *ConsulConfig `protobuf:"bytes,1,opt,name=consul,proto3,oneof"`
+type Source_Consul struct {
+	Consul *Consul `protobuf:"bytes,1,opt,name=consul,proto3,oneof"`
 }
 
-type Config_Etcd struct {
-	Etcd *EtcdConfig `protobuf:"bytes,2,opt,name=etcd,proto3,oneof"`
+type Source_Etcd struct {
+	Etcd *Etcd `protobuf:"bytes,2,opt,name=etcd,proto3,oneof"`
 }
 
-type Config_Nacos struct {
-	Nacos *NacosConfig `protobuf:"bytes,3,opt,name=nacos,proto3,oneof"`
+type Source_Nacos struct {
+	Nacos *Nacos `protobuf:"bytes,3,opt,name=nacos,proto3,oneof"`
 }
 
-func (*Config_Consul) isConfig_Config() {}
+func (*Source_Consul) isSource_Source() {}
 
-func (*Config_Etcd) isConfig_Config() {}
+func (*Source_Etcd) isSource_Source() {}
 
-func (*Config_Nacos) isConfig_Config() {}
+func (*Source_Nacos) isSource_Source() {}
 
 // 通用 Consul 配置
-type ConsulConfig struct {
+type Consul struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	Scheme        string                 `protobuf:"bytes,2,opt,name=scheme,proto3" json:"scheme,omitempty"`
@@ -889,21 +674,21 @@ type ConsulConfig struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ConsulConfig) Reset() {
-	*x = ConsulConfig{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[8]
+func (x *Consul) Reset() {
+	*x = Consul{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ConsulConfig) String() string {
+func (x *Consul) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ConsulConfig) ProtoMessage() {}
+func (*Consul) ProtoMessage() {}
 
-func (x *ConsulConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[8]
+func (x *Consul) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,54 +699,54 @@ func (x *ConsulConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ConsulConfig.ProtoReflect.Descriptor instead.
-func (*ConsulConfig) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use Consul.ProtoReflect.Descriptor instead.
+func (*Consul) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ConsulConfig) GetAddr() string {
+func (x *Consul) GetAddr() string {
 	if x != nil {
 		return x.Addr
 	}
 	return ""
 }
 
-func (x *ConsulConfig) GetScheme() string {
+func (x *Consul) GetScheme() string {
 	if x != nil {
 		return x.Scheme
 	}
 	return ""
 }
 
-func (x *ConsulConfig) GetToken() string {
+func (x *Consul) GetToken() string {
 	if x != nil {
 		return x.Token
 	}
 	return ""
 }
 
-func (x *ConsulConfig) GetDatacenter() string {
+func (x *Consul) GetDatacenter() string {
 	if x != nil {
 		return x.Datacenter
 	}
 	return ""
 }
 
-func (x *ConsulConfig) GetTimeout() *durationpb.Duration {
+func (x *Consul) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return nil
 }
 
-func (x *ConsulConfig) GetTags() []string {
+func (x *Consul) GetTags() []string {
 	if x != nil {
 		return x.Tags
 	}
 	return nil
 }
 
-func (x *ConsulConfig) GetKey() string {
+func (x *Consul) GetKey() string {
 	if x != nil {
 		return x.Key
 	}
@@ -969,7 +754,7 @@ func (x *ConsulConfig) GetKey() string {
 }
 
 // 通用 Etcd 配置
-type EtcdConfig struct {
+type Etcd struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Endpoints     []string               `protobuf:"bytes,1,rep,name=endpoints,proto3" json:"endpoints,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
@@ -981,21 +766,21 @@ type EtcdConfig struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EtcdConfig) Reset() {
-	*x = EtcdConfig{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[9]
+func (x *Etcd) Reset() {
+	*x = Etcd{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EtcdConfig) String() string {
+func (x *Etcd) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EtcdConfig) ProtoMessage() {}
+func (*Etcd) ProtoMessage() {}
 
-func (x *EtcdConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[9]
+func (x *Etcd) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,47 +791,47 @@ func (x *EtcdConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EtcdConfig.ProtoReflect.Descriptor instead.
-func (*EtcdConfig) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use Etcd.ProtoReflect.Descriptor instead.
+func (*Etcd) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *EtcdConfig) GetEndpoints() []string {
+func (x *Etcd) GetEndpoints() []string {
 	if x != nil {
 		return x.Endpoints
 	}
 	return nil
 }
 
-func (x *EtcdConfig) GetUsername() string {
+func (x *Etcd) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
 	return ""
 }
 
-func (x *EtcdConfig) GetPassword() string {
+func (x *Etcd) GetPassword() string {
 	if x != nil {
 		return x.Password
 	}
 	return ""
 }
 
-func (x *EtcdConfig) GetTimeout() *durationpb.Duration {
+func (x *Etcd) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return nil
 }
 
-func (x *EtcdConfig) GetKey() string {
+func (x *Etcd) GetKey() string {
 	if x != nil {
 		return x.Key
 	}
 	return ""
 }
 
-func (x *EtcdConfig) GetNamespace() string {
+func (x *Etcd) GetNamespace() string {
 	if x != nil {
 		return x.Namespace
 	}
@@ -1054,7 +839,7 @@ func (x *EtcdConfig) GetNamespace() string {
 }
 
 // 通用 Nacos 配置
-type NacosConfig struct {
+type Nacos struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	Port          uint64                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
@@ -1068,21 +853,21 @@ type NacosConfig struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NacosConfig) Reset() {
-	*x = NacosConfig{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[10]
+func (x *Nacos) Reset() {
+	*x = Nacos{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NacosConfig) String() string {
+func (x *Nacos) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NacosConfig) ProtoMessage() {}
+func (*Nacos) ProtoMessage() {}
 
-func (x *NacosConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[10]
+func (x *Nacos) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1093,61 +878,61 @@ func (x *NacosConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NacosConfig.ProtoReflect.Descriptor instead.
-func (*NacosConfig) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{10}
+// Deprecated: Use Nacos.ProtoReflect.Descriptor instead.
+func (*Nacos) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *NacosConfig) GetAddr() string {
+func (x *Nacos) GetAddr() string {
 	if x != nil {
 		return x.Addr
 	}
 	return ""
 }
 
-func (x *NacosConfig) GetPort() uint64 {
+func (x *Nacos) GetPort() uint64 {
 	if x != nil {
 		return x.Port
 	}
 	return 0
 }
 
-func (x *NacosConfig) GetNamespace() string {
+func (x *Nacos) GetNamespace() string {
 	if x != nil {
 		return x.Namespace
 	}
 	return ""
 }
 
-func (x *NacosConfig) GetGroup() string {
+func (x *Nacos) GetGroup() string {
 	if x != nil {
 		return x.Group
 	}
 	return ""
 }
 
-func (x *NacosConfig) GetUsername() string {
+func (x *Nacos) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
 	return ""
 }
 
-func (x *NacosConfig) GetPassword() string {
+func (x *Nacos) GetPassword() string {
 	if x != nil {
 		return x.Password
 	}
 	return ""
 }
 
-func (x *NacosConfig) GetTimeout() *durationpb.Duration {
+func (x *Nacos) GetTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return nil
 }
 
-func (x *NacosConfig) GetDataId() string {
+func (x *Nacos) GetDataId() string {
 	if x != nil {
 		return x.DataId
 	}
@@ -1155,28 +940,28 @@ func (x *NacosConfig) GetDataId() string {
 }
 
 // 通用 Kubernetes 配置
-type KubernetesConfig struct {
+type Kubernetes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Enable        bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *KubernetesConfig) Reset() {
-	*x = KubernetesConfig{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[11]
+func (x *Kubernetes) Reset() {
+	*x = Kubernetes{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *KubernetesConfig) String() string {
+func (x *Kubernetes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*KubernetesConfig) ProtoMessage() {}
+func (*Kubernetes) ProtoMessage() {}
 
-func (x *KubernetesConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[11]
+func (x *Kubernetes) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1187,16 +972,77 @@ func (x *KubernetesConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use KubernetesConfig.ProtoReflect.Descriptor instead.
-func (*KubernetesConfig) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{11}
+// Deprecated: Use Kubernetes.ProtoReflect.Descriptor instead.
+func (*Kubernetes) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *KubernetesConfig) GetEnable() bool {
+func (x *Kubernetes) GetEnable() bool {
 	if x != nil {
 		return x.Enable
 	}
 	return false
+}
+
+// 可观测性配置
+type Observability struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Log           *Log                   `protobuf:"bytes,1,opt,name=log,proto3" json:"log,omitempty"`
+	Trace         *Trace                 `protobuf:"bytes,2,opt,name=trace,proto3" json:"trace,omitempty"`
+	Metrics       *Metrics               `protobuf:"bytes,3,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Observability) Reset() {
+	*x = Observability{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Observability) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Observability) ProtoMessage() {}
+
+func (x *Observability) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Observability.ProtoReflect.Descriptor instead.
+func (*Observability) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Observability) GetLog() *Log {
+	if x != nil {
+		return x.Log
+	}
+	return nil
+}
+
+func (x *Observability) GetTrace() *Trace {
+	if x != nil {
+		return x.Trace
+	}
+	return nil
+}
+
+func (x *Observability) GetMetrics() *Metrics {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
 }
 
 // 链路追踪配置
@@ -1212,7 +1058,7 @@ type Trace struct {
 
 func (x *Trace) Reset() {
 	*x = Trace{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[12]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1224,7 +1070,7 @@ func (x *Trace) String() string {
 func (*Trace) ProtoMessage() {}
 
 func (x *Trace) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[12]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1237,7 +1083,7 @@ func (x *Trace) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Trace.ProtoReflect.Descriptor instead.
 func (*Trace) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{12}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Trace) GetEndpoint() string {
@@ -1279,7 +1125,7 @@ type Metrics struct {
 
 func (x *Metrics) Reset() {
 	*x = Metrics{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[13]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1291,7 +1137,7 @@ func (x *Metrics) String() string {
 func (*Metrics) ProtoMessage() {}
 
 func (x *Metrics) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[13]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1304,7 +1150,7 @@ func (x *Metrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metrics.ProtoReflect.Descriptor instead.
 func (*Metrics) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Metrics) GetEnable() bool {
@@ -1332,7 +1178,7 @@ type Log struct {
 
 func (x *Log) Reset() {
 	*x = Log{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1344,7 +1190,7 @@ func (x *Log) String() string {
 func (*Log) ProtoMessage() {}
 
 func (x *Log) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1357,7 +1203,7 @@ func (x *Log) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log.ProtoReflect.Descriptor instead.
 func (*Log) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Log) GetLevel() Log_LogLevel {
@@ -1386,7 +1232,7 @@ type Server_Listen struct {
 
 func (x *Server_Listen) Reset() {
 	*x = Server_Listen{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1398,7 +1244,7 @@ func (x *Server_Listen) String() string {
 func (*Server_Listen) ProtoMessage() {}
 
 func (x *Server_Listen) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1411,7 +1257,7 @@ func (x *Server_Listen) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_Listen.ProtoReflect.Descriptor instead.
 func (*Server_Listen) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 0}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *Server_Listen) GetNetwork() string {
@@ -1436,7 +1282,7 @@ func (x *Server_Listen) GetTimeout() *durationpb.Duration {
 }
 
 // 服务注册端点覆盖（用于注册中心对外公布地址）
-type Server_Registry struct {
+type Server_Advertise struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	Host          string                 `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
@@ -1444,21 +1290,21 @@ type Server_Registry struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Server_Registry) Reset() {
-	*x = Server_Registry{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
+func (x *Server_Advertise) Reset() {
+	*x = Server_Advertise{}
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Server_Registry) String() string {
+func (x *Server_Advertise) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Server_Registry) ProtoMessage() {}
+func (*Server_Advertise) ProtoMessage() {}
 
-func (x *Server_Registry) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
+func (x *Server_Advertise) ProtoReflect() protoreflect.Message {
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1469,19 +1315,19 @@ func (x *Server_Registry) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Server_Registry.ProtoReflect.Descriptor instead.
-func (*Server_Registry) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 1}
+// Deprecated: Use Server_Advertise.ProtoReflect.Descriptor instead.
+func (*Server_Advertise) Descriptor() ([]byte, []int) {
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{1, 1}
 }
 
-func (x *Server_Registry) GetEndpoint() string {
+func (x *Server_Advertise) GetEndpoint() string {
 	if x != nil {
 		return x.Endpoint
 	}
 	return ""
 }
 
-func (x *Server_Registry) GetHost() string {
+func (x *Server_Advertise) GetHost() string {
 	if x != nil {
 		return x.Host
 	}
@@ -1491,15 +1337,15 @@ func (x *Server_Registry) GetHost() string {
 type Server_HTTP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Listen        *Server_Listen         `protobuf:"bytes,1,opt,name=listen,proto3" json:"listen,omitempty"`
-	Tls           *TLSConfig             `protobuf:"bytes,2,opt,name=tls,proto3" json:"tls,omitempty"`
-	Registry      *Server_Registry       `protobuf:"bytes,4,opt,name=registry,proto3" json:"registry,omitempty"`
+	Tls           *v1.TLS                `protobuf:"bytes,2,opt,name=tls,proto3" json:"tls,omitempty"`
+	Advertise     *Server_Advertise      `protobuf:"bytes,3,opt,name=advertise,proto3" json:"advertise,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1511,7 +1357,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1524,7 +1370,7 @@ func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_HTTP.ProtoReflect.Descriptor instead.
 func (*Server_HTTP) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 2}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{1, 2}
 }
 
 func (x *Server_HTTP) GetListen() *Server_Listen {
@@ -1534,16 +1380,16 @@ func (x *Server_HTTP) GetListen() *Server_Listen {
 	return nil
 }
 
-func (x *Server_HTTP) GetTls() *TLSConfig {
+func (x *Server_HTTP) GetTls() *v1.TLS {
 	if x != nil {
 		return x.Tls
 	}
 	return nil
 }
 
-func (x *Server_HTTP) GetRegistry() *Server_Registry {
+func (x *Server_HTTP) GetAdvertise() *Server_Advertise {
 	if x != nil {
-		return x.Registry
+		return x.Advertise
 	}
 	return nil
 }
@@ -1551,15 +1397,15 @@ func (x *Server_HTTP) GetRegistry() *Server_Registry {
 type Server_GRPC struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Listen        *Server_Listen         `protobuf:"bytes,1,opt,name=listen,proto3" json:"listen,omitempty"`
-	Tls           *TLSConfig             `protobuf:"bytes,2,opt,name=tls,proto3" json:"tls,omitempty"`
-	Registry      *Server_Registry       `protobuf:"bytes,3,opt,name=registry,proto3" json:"registry,omitempty"`
+	Tls           *v1.TLS                `protobuf:"bytes,2,opt,name=tls,proto3" json:"tls,omitempty"`
+	Advertise     *Server_Advertise      `protobuf:"bytes,3,opt,name=advertise,proto3" json:"advertise,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1571,7 +1417,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1584,7 +1430,7 @@ func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_GRPC.ProtoReflect.Descriptor instead.
 func (*Server_GRPC) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 3}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{1, 3}
 }
 
 func (x *Server_GRPC) GetListen() *Server_Listen {
@@ -1594,16 +1440,16 @@ func (x *Server_GRPC) GetListen() *Server_Listen {
 	return nil
 }
 
-func (x *Server_GRPC) GetTls() *TLSConfig {
+func (x *Server_GRPC) GetTls() *v1.TLS {
 	if x != nil {
 		return x.Tls
 	}
 	return nil
 }
 
-func (x *Server_GRPC) GetRegistry() *Server_Registry {
+func (x *Server_GRPC) GetAdvertise() *Server_Advertise {
 	if x != nil {
-		return x.Registry
+		return x.Advertise
 	}
 	return nil
 }
@@ -1618,7 +1464,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1630,7 +1476,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1643,7 +1489,7 @@ func (x *Data_Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Database.ProtoReflect.Descriptor instead.
 func (*Data_Database) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3, 0}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 0}
 }
 
 func (x *Data_Database) GetDriver() string {
@@ -1660,106 +1506,6 @@ func (x *Data_Database) GetSource() string {
 	return ""
 }
 
-type Data_Redis struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
-	Addr          string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-	UserName      string                 `protobuf:"bytes,3,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
-	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
-	Db            int32                  `protobuf:"varint,5,opt,name=db,proto3" json:"db,omitempty"`
-	DialTimeout   *durationpb.Duration   `protobuf:"bytes,6,opt,name=dial_timeout,json=dialTimeout,proto3" json:"dial_timeout,omitempty"`
-	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,7,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
-	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,8,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Data_Redis) Reset() {
-	*x = Data_Redis{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Data_Redis) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Data_Redis) ProtoMessage() {}
-
-func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Data_Redis.ProtoReflect.Descriptor instead.
-func (*Data_Redis) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3, 1}
-}
-
-func (x *Data_Redis) GetNetwork() string {
-	if x != nil {
-		return x.Network
-	}
-	return ""
-}
-
-func (x *Data_Redis) GetAddr() string {
-	if x != nil {
-		return x.Addr
-	}
-	return ""
-}
-
-func (x *Data_Redis) GetUserName() string {
-	if x != nil {
-		return x.UserName
-	}
-	return ""
-}
-
-func (x *Data_Redis) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *Data_Redis) GetDb() int32 {
-	if x != nil {
-		return x.Db
-	}
-	return 0
-}
-
-func (x *Data_Redis) GetDialTimeout() *durationpb.Duration {
-	if x != nil {
-		return x.DialTimeout
-	}
-	return nil
-}
-
-func (x *Data_Redis) GetReadTimeout() *durationpb.Duration {
-	if x != nil {
-		return x.ReadTimeout
-	}
-	return nil
-}
-
-func (x *Data_Redis) GetWriteTimeout() *durationpb.Duration {
-	if x != nil {
-		return x.WriteTimeout
-	}
-	return nil
-}
-
 type Data_Client struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Services      []*Data_Client_Service `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
@@ -1769,7 +1515,7 @@ type Data_Client struct {
 
 func (x *Data_Client) Reset() {
 	*x = Data_Client{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1781,7 +1527,7 @@ func (x *Data_Client) String() string {
 func (*Data_Client) ProtoMessage() {}
 
 func (x *Data_Client) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1794,7 +1540,7 @@ func (x *Data_Client) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Client.ProtoReflect.Descriptor instead.
 func (*Data_Client) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3, 2}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 1}
 }
 
 func (x *Data_Client) GetServices() []*Data_Client_Service {
@@ -1814,7 +1560,7 @@ type Data_Client_Service struct {
 
 func (x *Data_Client_Service) Reset() {
 	*x = Data_Client_Service{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[22]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1826,7 +1572,7 @@ func (x *Data_Client_Service) String() string {
 func (*Data_Client_Service) ProtoMessage() {}
 
 func (x *Data_Client_Service) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[22]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1839,7 +1585,7 @@ func (x *Data_Client_Service) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Client_Service.ProtoReflect.Descriptor instead.
 func (*Data_Client_Service) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3, 2, 0}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 1, 0}
 }
 
 func (x *Data_Client_Service) GetName() string {
@@ -1861,7 +1607,7 @@ type Data_Client_Endpoint struct {
 	Protocol      string                 `protobuf:"bytes,1,opt,name=protocol,proto3" json:"protocol,omitempty"`
 	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	Tls           *TLSConfig             `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"`
+	Tls           *v1.TLS                `protobuf:"bytes,4,opt,name=tls,proto3" json:"tls,omitempty"`
 	Options       *structpb.Struct       `protobuf:"bytes,5,opt,name=options,proto3" json:"options,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1869,7 +1615,7 @@ type Data_Client_Endpoint struct {
 
 func (x *Data_Client_Endpoint) Reset() {
 	*x = Data_Client_Endpoint{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1881,7 +1627,7 @@ func (x *Data_Client_Endpoint) String() string {
 func (*Data_Client_Endpoint) ProtoMessage() {}
 
 func (x *Data_Client_Endpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1894,7 +1640,7 @@ func (x *Data_Client_Endpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Client_Endpoint.ProtoReflect.Descriptor instead.
 func (*Data_Client_Endpoint) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{3, 2, 1}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{2, 1, 1}
 }
 
 func (x *Data_Client_Endpoint) GetProtocol() string {
@@ -1918,7 +1664,7 @@ func (x *Data_Client_Endpoint) GetTimeout() *durationpb.Duration {
 	return nil
 }
 
-func (x *Data_Client_Endpoint) GetTls() *TLSConfig {
+func (x *Data_Client_Endpoint) GetTls() *v1.TLS {
 	if x != nil {
 		return x.Tls
 	}
@@ -1947,7 +1693,7 @@ type Log_LogBackend struct {
 
 func (x *Log_LogBackend) Reset() {
 	*x = Log_LogBackend{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[25]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1959,7 +1705,7 @@ func (x *Log_LogBackend) String() string {
 func (*Log_LogBackend) ProtoMessage() {}
 
 func (x *Log_LogBackend) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[25]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1972,7 +1718,7 @@ func (x *Log_LogBackend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log_LogBackend.ProtoReflect.Descriptor instead.
 func (*Log_LogBackend) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 0}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 0}
 }
 
 func (x *Log_LogBackend) GetBackend() isLog_LogBackend_Backend {
@@ -2055,7 +1801,7 @@ type Log_StdoutBackend struct {
 
 func (x *Log_StdoutBackend) Reset() {
 	*x = Log_StdoutBackend{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[26]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2067,7 +1813,7 @@ func (x *Log_StdoutBackend) String() string {
 func (*Log_StdoutBackend) ProtoMessage() {}
 
 func (x *Log_StdoutBackend) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[26]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2080,7 +1826,7 @@ func (x *Log_StdoutBackend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log_StdoutBackend.ProtoReflect.Descriptor instead.
 func (*Log_StdoutBackend) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 1}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 1}
 }
 
 func (x *Log_StdoutBackend) GetFormat() Log_LogFormat {
@@ -2104,7 +1850,7 @@ type Log_FileBackend struct {
 
 func (x *Log_FileBackend) Reset() {
 	*x = Log_FileBackend{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[27]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2116,7 +1862,7 @@ func (x *Log_FileBackend) String() string {
 func (*Log_FileBackend) ProtoMessage() {}
 
 func (x *Log_FileBackend) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[27]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2129,7 +1875,7 @@ func (x *Log_FileBackend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log_FileBackend.ProtoReflect.Descriptor instead.
 func (*Log_FileBackend) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 2}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 2}
 }
 
 func (x *Log_FileBackend) GetPath() string {
@@ -2185,7 +1931,7 @@ type Log_OtelBackend struct {
 
 func (x *Log_OtelBackend) Reset() {
 	*x = Log_OtelBackend{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[28]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2197,7 +1943,7 @@ func (x *Log_OtelBackend) String() string {
 func (*Log_OtelBackend) ProtoMessage() {}
 
 func (x *Log_OtelBackend) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[28]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2210,7 +1956,7 @@ func (x *Log_OtelBackend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log_OtelBackend.ProtoReflect.Descriptor instead.
 func (*Log_OtelBackend) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 3}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 3}
 }
 
 func (x *Log_OtelBackend) GetEndpoint() string {
@@ -2242,7 +1988,7 @@ type Log_NoopBackend struct {
 
 func (x *Log_NoopBackend) Reset() {
 	*x = Log_NoopBackend{}
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[29]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2254,7 +2000,7 @@ func (x *Log_NoopBackend) String() string {
 func (*Log_NoopBackend) ProtoMessage() {}
 
 func (x *Log_NoopBackend) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[29]
+	mi := &file_servora_core_v1_bootstrap_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2267,29 +2013,21 @@ func (x *Log_NoopBackend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log_NoopBackend.ProtoReflect.Descriptor instead.
 func (*Log_NoopBackend) Descriptor() ([]byte, []int) {
-	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{14, 4}
+	return file_servora_core_v1_bootstrap_proto_rawDescGZIP(), []int{13, 4}
 }
 
 var File_servora_core_v1_bootstrap_proto protoreflect.FileDescriptor
 
 const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x1fservora/core/v1/bootstrap.proto\x12\x0fservora.core.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\"\xbb\x03\n" +
+	"\x1fservora/core/v1/bootstrap.proto\x12\x0fservora.core.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\"\xa9\x02\n" +
 	"\tBootstrap\x12&\n" +
 	"\x03app\x18\x01 \x01(\v2\x14.servora.core.v1.AppR\x03app\x12/\n" +
 	"\x06server\x18\x02 \x01(\v2\x17.servora.core.v1.ServerR\x06server\x12)\n" +
 	"\x04data\x18\x03 \x01(\v2\x15.servora.core.v1.DataR\x04data\x125\n" +
-	"\bregistry\x18\x04 \x01(\v2\x19.servora.core.v1.RegistryR\bregistry\x128\n" +
-	"\tdiscovery\x18\x05 \x01(\v2\x1a.servora.core.v1.DiscoveryR\tdiscovery\x12/\n" +
-	"\x06config\x18\x06 \x01(\v2\x17.servora.core.v1.ConfigR\x06config\x12,\n" +
-	"\x05trace\x18\a \x01(\v2\x16.servora.core.v1.TraceR\x05trace\x122\n" +
-	"\ametrics\x18\b \x01(\v2\x18.servora.core.v1.MetricsR\ametrics\x12&\n" +
-	"\x03log\x18\t \x01(\v2\x14.servora.core.v1.LogR\x03log\"t\n" +
-	"\tTLSConfig\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\x12\x1b\n" +
-	"\tcert_path\x18\x02 \x01(\tR\bcertPath\x12\x19\n" +
-	"\bkey_path\x18\x03 \x01(\tR\akeyPath\x12\x17\n" +
-	"\aca_path\x18\x04 \x01(\tR\x06caPath\"\x82\x05\n" +
+	"\bregistry\x18\x04 \x01(\v2\x19.servora.core.v1.RegistryR\bregistry\x12/\n" +
+	"\x06source\x18\x05 \x01(\v2\x17.servora.core.v1.SourceR\x06source\x120\n" +
+	"\x03obs\x18\x06 \x01(\v2\x1e.servora.core.v1.ObservabilityR\x03obs\"\x8d\x05\n" +
 	"\x06Server\x120\n" +
 	"\x04http\x18\x01 \x01(\v2\x1c.servora.core.v1.Server.HTTPR\x04http\x120\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x1c.servora.core.v1.Server.GRPCR\x04grpc\x1a~\n" +
@@ -2297,44 +2035,34 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\anetwork\x18\x01 \x01(\tB\t\x8a\xce\x18\x05\n" +
 	"\x03tcpR\anetwork\x12\x1a\n" +
 	"\x04addr\x18\x02 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a:\n" +
-	"\bRegistry\x12\x1a\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a;\n" +
+	"\tAdvertise\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x12\n" +
-	"\x04host\x18\x02 \x01(\tR\x04host\x1a\xaa\x01\n" +
+	"\x04host\x18\x02 \x01(\tR\x04host\x1a\xaf\x01\n" +
 	"\x04HTTP\x126\n" +
-	"\x06listen\x18\x01 \x01(\v2\x1e.servora.core.v1.Server.ListenR\x06listen\x12,\n" +
-	"\x03tls\x18\x02 \x01(\v2\x1a.servora.core.v1.TLSConfigR\x03tls\x12<\n" +
-	"\bregistry\x18\x04 \x01(\v2 .servora.core.v1.Server.RegistryR\bregistry\x1a\xaa\x01\n" +
+	"\x06listen\x18\x01 \x01(\v2\x1e.servora.core.v1.Server.ListenR\x06listen\x12.\n" +
+	"\x03tls\x18\x02 \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls\x12?\n" +
+	"\tadvertise\x18\x03 \x01(\v2!.servora.core.v1.Server.AdvertiseR\tadvertise\x1a\xaf\x01\n" +
 	"\x04GRPC\x126\n" +
-	"\x06listen\x18\x01 \x01(\v2\x1e.servora.core.v1.Server.ListenR\x06listen\x12,\n" +
-	"\x03tls\x18\x02 \x01(\v2\x1a.servora.core.v1.TLSConfigR\x03tls\x12<\n" +
-	"\bregistry\x18\x03 \x01(\v2 .servora.core.v1.Server.RegistryR\bregistry\"\xb0\a\n" +
+	"\x06listen\x18\x01 \x01(\v2\x1e.servora.core.v1.Server.ListenR\x06listen\x12.\n" +
+	"\x03tls\x18\x02 \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls\x12?\n" +
+	"\tadvertise\x18\x03 \x01(\v2!.servora.core.v1.Server.AdvertiseR\tadvertise\"\xc2\x04\n" +
 	"\x04Data\x12:\n" +
-	"\bdatabase\x18\x01 \x01(\v2\x1e.servora.core.v1.Data.DatabaseR\bdatabase\x121\n" +
-	"\x05redis\x18\x02 \x01(\v2\x1b.servora.core.v1.Data.RedisR\x05redis\x124\n" +
+	"\bdatabase\x18\x01 \x01(\v2\x1e.servora.core.v1.Data.DatabaseR\bdatabase\x124\n" +
 	"\x06client\x18\x03 \x01(\v2\x1c.servora.core.v1.Data.ClientR\x06client\x1a:\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
-	"\x06source\x18\x02 \x01(\tR\x06source\x1a\xba\x02\n" +
-	"\x05Redis\x12\x18\n" +
-	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
-	"\x04addr\x18\x02 \x01(\tR\x04addr\x12\x1b\n" +
-	"\tuser_name\x18\x03 \x01(\tR\buserName\x12\x1a\n" +
-	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x0e\n" +
-	"\x02db\x18\x05 \x01(\x05R\x02db\x12<\n" +
-	"\fdial_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
-	"\fread_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\x89\x03\n" +
+	"\x06source\x18\x02 \x01(\tR\x06source\x1a\x8b\x03\n" +
 	"\x06Client\x12@\n" +
 	"\bservices\x18\x01 \x03(\v2$.servora.core.v1.Data.Client.ServiceR\bservices\x1ab\n" +
 	"\aService\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12C\n" +
-	"\tendpoints\x18\x02 \x03(\v2%.servora.core.v1.Data.Client.EndpointR\tendpoints\x1a\xd8\x01\n" +
+	"\tendpoints\x18\x02 \x03(\v2%.servora.core.v1.Data.Client.EndpointR\tendpoints\x1a\xda\x01\n" +
 	"\bEndpoint\x12\x1a\n" +
 	"\bprotocol\x18\x01 \x01(\tR\bprotocol\x12\x1a\n" +
 	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12,\n" +
-	"\x03tls\x18\x04 \x01(\v2\x1a.servora.core.v1.TLSConfigR\x03tls\x121\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12.\n" +
+	"\x03tls\x18\x04 \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls\x121\n" +
 	"\aoptions\x18\x05 \x01(\v2\x17.google.protobuf.StructR\aoptions\"\xe5\x01\n" +
 	"\x03App\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12\x12\n" +
@@ -2344,30 +2072,22 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\fexternal_url\x18\b \x01(\tR\vexternalUrl\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfd\x01\n" +
-	"\bRegistry\x127\n" +
-	"\x06consul\x18\x01 \x01(\v2\x1d.servora.core.v1.ConsulConfigH\x00R\x06consul\x121\n" +
-	"\x04etcd\x18\x02 \x01(\v2\x1b.servora.core.v1.EtcdConfigH\x00R\x04etcd\x124\n" +
-	"\x05nacos\x18\x03 \x01(\v2\x1c.servora.core.v1.NacosConfigH\x00R\x05nacos\x12C\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe5\x01\n" +
+	"\bRegistry\x121\n" +
+	"\x06consul\x18\x01 \x01(\v2\x17.servora.core.v1.ConsulH\x00R\x06consul\x12+\n" +
+	"\x04etcd\x18\x02 \x01(\v2\x15.servora.core.v1.EtcdH\x00R\x04etcd\x12.\n" +
+	"\x05nacos\x18\x03 \x01(\v2\x16.servora.core.v1.NacosH\x00R\x05nacos\x12=\n" +
 	"\n" +
-	"kubernetes\x18\x04 \x01(\v2!.servora.core.v1.KubernetesConfigH\x00R\n" +
+	"kubernetes\x18\x04 \x01(\v2\x1b.servora.core.v1.KubernetesH\x00R\n" +
 	"kubernetesB\n" +
 	"\n" +
-	"\bregistry\"\xff\x01\n" +
-	"\tDiscovery\x127\n" +
-	"\x06consul\x18\x01 \x01(\v2\x1d.servora.core.v1.ConsulConfigH\x00R\x06consul\x121\n" +
-	"\x04etcd\x18\x02 \x01(\v2\x1b.servora.core.v1.EtcdConfigH\x00R\x04etcd\x124\n" +
-	"\x05nacos\x18\x03 \x01(\v2\x1c.servora.core.v1.NacosConfigH\x00R\x05nacos\x12C\n" +
-	"\n" +
-	"kubernetes\x18\x04 \x01(\v2!.servora.core.v1.KubernetesConfigH\x00R\n" +
-	"kubernetesB\v\n" +
-	"\tdiscovery\"\xb4\x01\n" +
-	"\x06Config\x127\n" +
-	"\x06consul\x18\x01 \x01(\v2\x1d.servora.core.v1.ConsulConfigH\x00R\x06consul\x121\n" +
-	"\x04etcd\x18\x02 \x01(\v2\x1b.servora.core.v1.EtcdConfigH\x00R\x04etcd\x124\n" +
-	"\x05nacos\x18\x03 \x01(\v2\x1c.servora.core.v1.NacosConfigH\x00R\x05nacosB\b\n" +
-	"\x06config\"\xcb\x01\n" +
-	"\fConsulConfig\x12\x12\n" +
+	"\bregistry\"\xa2\x01\n" +
+	"\x06Source\x121\n" +
+	"\x06consul\x18\x01 \x01(\v2\x17.servora.core.v1.ConsulH\x00R\x06consul\x12+\n" +
+	"\x04etcd\x18\x02 \x01(\v2\x15.servora.core.v1.EtcdH\x00R\x04etcd\x12.\n" +
+	"\x05nacos\x18\x03 \x01(\v2\x16.servora.core.v1.NacosH\x00R\x05nacosB\b\n" +
+	"\x06source\"\xc5\x01\n" +
+	"\x06Consul\x12\x12\n" +
 	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x16\n" +
 	"\x06scheme\x18\x02 \x01(\tR\x06scheme\x12\x14\n" +
 	"\x05token\x18\x03 \x01(\tR\x05token\x12\x1e\n" +
@@ -2376,16 +2096,15 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"datacenter\x123\n" +
 	"\atimeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12\x12\n" +
 	"\x04tags\x18\x06 \x03(\tR\x04tags\x12\x10\n" +
-	"\x03key\x18\a \x01(\tR\x03key\"\xc7\x01\n" +
-	"\n" +
-	"EtcdConfig\x12\x1c\n" +
+	"\x03key\x18\a \x01(\tR\x03key\"\xc1\x01\n" +
+	"\x04Etcd\x12\x1c\n" +
 	"\tendpoints\x18\x01 \x03(\tR\tendpoints\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x123\n" +
 	"\atimeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12\x10\n" +
 	"\x03key\x18\x05 \x01(\tR\x03key\x12\x1c\n" +
-	"\tnamespace\x18\x06 \x01(\tR\tnamespace\"\xef\x01\n" +
-	"\vNacosConfig\x12\x12\n" +
+	"\tnamespace\x18\x06 \x01(\tR\tnamespace\"\xe9\x01\n" +
+	"\x05Nacos\x12\x12\n" +
 	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x04R\x04port\x12\x1c\n" +
 	"\tnamespace\x18\x03 \x01(\tR\tnamespace\x12\x14\n" +
@@ -2393,9 +2112,14 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\busername\x18\x05 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x06 \x01(\tR\bpassword\x123\n" +
 	"\atimeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12\x17\n" +
-	"\adata_id\x18\b \x01(\tR\x06dataId\"*\n" +
-	"\x10KubernetesConfig\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\"\x7f\n" +
+	"\adata_id\x18\b \x01(\tR\x06dataId\"$\n" +
+	"\n" +
+	"Kubernetes\x12\x16\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\"\x99\x01\n" +
+	"\rObservability\x12&\n" +
+	"\x03log\x18\x01 \x01(\v2\x14.servora.core.v1.LogR\x03log\x12,\n" +
+	"\x05trace\x18\x02 \x01(\v2\x16.servora.core.v1.TraceR\x05trace\x122\n" +
+	"\ametrics\x18\x03 \x01(\v2\x18.servora.core.v1.MetricsR\ametrics\"\x7f\n" +
 	"\x05Trace\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1a\n" +
 	"\binsecure\x18\x02 \x01(\bR\binsecure\x12%\n" +
@@ -2460,103 +2184,94 @@ func file_servora_core_v1_bootstrap_proto_rawDescGZIP() []byte {
 }
 
 var file_servora_core_v1_bootstrap_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_servora_core_v1_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_servora_core_v1_bootstrap_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_servora_core_v1_bootstrap_proto_goTypes = []any{
 	(Log_LogLevel)(0),            // 0: servora.core.v1.Log.LogLevel
 	(Log_LogFormat)(0),           // 1: servora.core.v1.Log.LogFormat
 	(Log_OtelProtocol)(0),        // 2: servora.core.v1.Log.OtelProtocol
 	(*Bootstrap)(nil),            // 3: servora.core.v1.Bootstrap
-	(*TLSConfig)(nil),            // 4: servora.core.v1.TLSConfig
-	(*Server)(nil),               // 5: servora.core.v1.Server
-	(*Data)(nil),                 // 6: servora.core.v1.Data
-	(*App)(nil),                  // 7: servora.core.v1.App
-	(*Registry)(nil),             // 8: servora.core.v1.Registry
-	(*Discovery)(nil),            // 9: servora.core.v1.Discovery
-	(*Config)(nil),               // 10: servora.core.v1.Config
-	(*ConsulConfig)(nil),         // 11: servora.core.v1.ConsulConfig
-	(*EtcdConfig)(nil),           // 12: servora.core.v1.EtcdConfig
-	(*NacosConfig)(nil),          // 13: servora.core.v1.NacosConfig
-	(*KubernetesConfig)(nil),     // 14: servora.core.v1.KubernetesConfig
-	(*Trace)(nil),                // 15: servora.core.v1.Trace
-	(*Metrics)(nil),              // 16: servora.core.v1.Metrics
-	(*Log)(nil),                  // 17: servora.core.v1.Log
-	(*Server_Listen)(nil),        // 18: servora.core.v1.Server.Listen
-	(*Server_Registry)(nil),      // 19: servora.core.v1.Server.Registry
-	(*Server_HTTP)(nil),          // 20: servora.core.v1.Server.HTTP
-	(*Server_GRPC)(nil),          // 21: servora.core.v1.Server.GRPC
-	(*Data_Database)(nil),        // 22: servora.core.v1.Data.Database
-	(*Data_Redis)(nil),           // 23: servora.core.v1.Data.Redis
-	(*Data_Client)(nil),          // 24: servora.core.v1.Data.Client
-	(*Data_Client_Service)(nil),  // 25: servora.core.v1.Data.Client.Service
-	(*Data_Client_Endpoint)(nil), // 26: servora.core.v1.Data.Client.Endpoint
-	nil,                          // 27: servora.core.v1.App.MetadataEntry
-	(*Log_LogBackend)(nil),       // 28: servora.core.v1.Log.LogBackend
-	(*Log_StdoutBackend)(nil),    // 29: servora.core.v1.Log.StdoutBackend
-	(*Log_FileBackend)(nil),      // 30: servora.core.v1.Log.FileBackend
-	(*Log_OtelBackend)(nil),      // 31: servora.core.v1.Log.OtelBackend
-	(*Log_NoopBackend)(nil),      // 32: servora.core.v1.Log.NoopBackend
-	(*durationpb.Duration)(nil),  // 33: google.protobuf.Duration
-	(*structpb.Struct)(nil),      // 34: google.protobuf.Struct
+	(*Server)(nil),               // 4: servora.core.v1.Server
+	(*Data)(nil),                 // 5: servora.core.v1.Data
+	(*App)(nil),                  // 6: servora.core.v1.App
+	(*Registry)(nil),             // 7: servora.core.v1.Registry
+	(*Source)(nil),               // 8: servora.core.v1.Source
+	(*Consul)(nil),               // 9: servora.core.v1.Consul
+	(*Etcd)(nil),                 // 10: servora.core.v1.Etcd
+	(*Nacos)(nil),                // 11: servora.core.v1.Nacos
+	(*Kubernetes)(nil),           // 12: servora.core.v1.Kubernetes
+	(*Observability)(nil),        // 13: servora.core.v1.Observability
+	(*Trace)(nil),                // 14: servora.core.v1.Trace
+	(*Metrics)(nil),              // 15: servora.core.v1.Metrics
+	(*Log)(nil),                  // 16: servora.core.v1.Log
+	(*Server_Listen)(nil),        // 17: servora.core.v1.Server.Listen
+	(*Server_Advertise)(nil),     // 18: servora.core.v1.Server.Advertise
+	(*Server_HTTP)(nil),          // 19: servora.core.v1.Server.HTTP
+	(*Server_GRPC)(nil),          // 20: servora.core.v1.Server.GRPC
+	(*Data_Database)(nil),        // 21: servora.core.v1.Data.Database
+	(*Data_Client)(nil),          // 22: servora.core.v1.Data.Client
+	(*Data_Client_Service)(nil),  // 23: servora.core.v1.Data.Client.Service
+	(*Data_Client_Endpoint)(nil), // 24: servora.core.v1.Data.Client.Endpoint
+	nil,                          // 25: servora.core.v1.App.MetadataEntry
+	(*Log_LogBackend)(nil),       // 26: servora.core.v1.Log.LogBackend
+	(*Log_StdoutBackend)(nil),    // 27: servora.core.v1.Log.StdoutBackend
+	(*Log_FileBackend)(nil),      // 28: servora.core.v1.Log.FileBackend
+	(*Log_OtelBackend)(nil),      // 29: servora.core.v1.Log.OtelBackend
+	(*Log_NoopBackend)(nil),      // 30: servora.core.v1.Log.NoopBackend
+	(*durationpb.Duration)(nil),  // 31: google.protobuf.Duration
+	(*v1.TLS)(nil),               // 32: servora.security.tls.v1.TLS
+	(*structpb.Struct)(nil),      // 33: google.protobuf.Struct
 }
 var file_servora_core_v1_bootstrap_proto_depIdxs = []int32{
-	7,  // 0: servora.core.v1.Bootstrap.app:type_name -> servora.core.v1.App
-	5,  // 1: servora.core.v1.Bootstrap.server:type_name -> servora.core.v1.Server
-	6,  // 2: servora.core.v1.Bootstrap.data:type_name -> servora.core.v1.Data
-	8,  // 3: servora.core.v1.Bootstrap.registry:type_name -> servora.core.v1.Registry
-	9,  // 4: servora.core.v1.Bootstrap.discovery:type_name -> servora.core.v1.Discovery
-	10, // 5: servora.core.v1.Bootstrap.config:type_name -> servora.core.v1.Config
-	15, // 6: servora.core.v1.Bootstrap.trace:type_name -> servora.core.v1.Trace
-	16, // 7: servora.core.v1.Bootstrap.metrics:type_name -> servora.core.v1.Metrics
-	17, // 8: servora.core.v1.Bootstrap.log:type_name -> servora.core.v1.Log
-	20, // 9: servora.core.v1.Server.http:type_name -> servora.core.v1.Server.HTTP
-	21, // 10: servora.core.v1.Server.grpc:type_name -> servora.core.v1.Server.GRPC
-	22, // 11: servora.core.v1.Data.database:type_name -> servora.core.v1.Data.Database
-	23, // 12: servora.core.v1.Data.redis:type_name -> servora.core.v1.Data.Redis
-	24, // 13: servora.core.v1.Data.client:type_name -> servora.core.v1.Data.Client
-	27, // 14: servora.core.v1.App.metadata:type_name -> servora.core.v1.App.MetadataEntry
-	11, // 15: servora.core.v1.Registry.consul:type_name -> servora.core.v1.ConsulConfig
-	12, // 16: servora.core.v1.Registry.etcd:type_name -> servora.core.v1.EtcdConfig
-	13, // 17: servora.core.v1.Registry.nacos:type_name -> servora.core.v1.NacosConfig
-	14, // 18: servora.core.v1.Registry.kubernetes:type_name -> servora.core.v1.KubernetesConfig
-	11, // 19: servora.core.v1.Discovery.consul:type_name -> servora.core.v1.ConsulConfig
-	12, // 20: servora.core.v1.Discovery.etcd:type_name -> servora.core.v1.EtcdConfig
-	13, // 21: servora.core.v1.Discovery.nacos:type_name -> servora.core.v1.NacosConfig
-	14, // 22: servora.core.v1.Discovery.kubernetes:type_name -> servora.core.v1.KubernetesConfig
-	11, // 23: servora.core.v1.Config.consul:type_name -> servora.core.v1.ConsulConfig
-	12, // 24: servora.core.v1.Config.etcd:type_name -> servora.core.v1.EtcdConfig
-	13, // 25: servora.core.v1.Config.nacos:type_name -> servora.core.v1.NacosConfig
-	33, // 26: servora.core.v1.ConsulConfig.timeout:type_name -> google.protobuf.Duration
-	33, // 27: servora.core.v1.EtcdConfig.timeout:type_name -> google.protobuf.Duration
-	33, // 28: servora.core.v1.NacosConfig.timeout:type_name -> google.protobuf.Duration
-	0,  // 29: servora.core.v1.Log.level:type_name -> servora.core.v1.Log.LogLevel
-	28, // 30: servora.core.v1.Log.backends:type_name -> servora.core.v1.Log.LogBackend
-	33, // 31: servora.core.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
-	18, // 32: servora.core.v1.Server.HTTP.listen:type_name -> servora.core.v1.Server.Listen
-	4,  // 33: servora.core.v1.Server.HTTP.tls:type_name -> servora.core.v1.TLSConfig
-	19, // 34: servora.core.v1.Server.HTTP.registry:type_name -> servora.core.v1.Server.Registry
-	18, // 35: servora.core.v1.Server.GRPC.listen:type_name -> servora.core.v1.Server.Listen
-	4,  // 36: servora.core.v1.Server.GRPC.tls:type_name -> servora.core.v1.TLSConfig
-	19, // 37: servora.core.v1.Server.GRPC.registry:type_name -> servora.core.v1.Server.Registry
-	33, // 38: servora.core.v1.Data.Redis.dial_timeout:type_name -> google.protobuf.Duration
-	33, // 39: servora.core.v1.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	33, // 40: servora.core.v1.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	25, // 41: servora.core.v1.Data.Client.services:type_name -> servora.core.v1.Data.Client.Service
-	26, // 42: servora.core.v1.Data.Client.Service.endpoints:type_name -> servora.core.v1.Data.Client.Endpoint
-	33, // 43: servora.core.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
-	4,  // 44: servora.core.v1.Data.Client.Endpoint.tls:type_name -> servora.core.v1.TLSConfig
-	34, // 45: servora.core.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
-	29, // 46: servora.core.v1.Log.LogBackend.stdout:type_name -> servora.core.v1.Log.StdoutBackend
-	30, // 47: servora.core.v1.Log.LogBackend.file:type_name -> servora.core.v1.Log.FileBackend
-	31, // 48: servora.core.v1.Log.LogBackend.otel:type_name -> servora.core.v1.Log.OtelBackend
-	32, // 49: servora.core.v1.Log.LogBackend.noop:type_name -> servora.core.v1.Log.NoopBackend
-	1,  // 50: servora.core.v1.Log.StdoutBackend.format:type_name -> servora.core.v1.Log.LogFormat
-	1,  // 51: servora.core.v1.Log.FileBackend.format:type_name -> servora.core.v1.Log.LogFormat
-	2,  // 52: servora.core.v1.Log.OtelBackend.protocol:type_name -> servora.core.v1.Log.OtelProtocol
-	53, // [53:53] is the sub-list for method output_type
-	53, // [53:53] is the sub-list for method input_type
-	53, // [53:53] is the sub-list for extension type_name
-	53, // [53:53] is the sub-list for extension extendee
-	0,  // [0:53] is the sub-list for field type_name
+	6,  // 0: servora.core.v1.Bootstrap.app:type_name -> servora.core.v1.App
+	4,  // 1: servora.core.v1.Bootstrap.server:type_name -> servora.core.v1.Server
+	5,  // 2: servora.core.v1.Bootstrap.data:type_name -> servora.core.v1.Data
+	7,  // 3: servora.core.v1.Bootstrap.registry:type_name -> servora.core.v1.Registry
+	8,  // 4: servora.core.v1.Bootstrap.source:type_name -> servora.core.v1.Source
+	13, // 5: servora.core.v1.Bootstrap.obs:type_name -> servora.core.v1.Observability
+	19, // 6: servora.core.v1.Server.http:type_name -> servora.core.v1.Server.HTTP
+	20, // 7: servora.core.v1.Server.grpc:type_name -> servora.core.v1.Server.GRPC
+	21, // 8: servora.core.v1.Data.database:type_name -> servora.core.v1.Data.Database
+	22, // 9: servora.core.v1.Data.client:type_name -> servora.core.v1.Data.Client
+	25, // 10: servora.core.v1.App.metadata:type_name -> servora.core.v1.App.MetadataEntry
+	9,  // 11: servora.core.v1.Registry.consul:type_name -> servora.core.v1.Consul
+	10, // 12: servora.core.v1.Registry.etcd:type_name -> servora.core.v1.Etcd
+	11, // 13: servora.core.v1.Registry.nacos:type_name -> servora.core.v1.Nacos
+	12, // 14: servora.core.v1.Registry.kubernetes:type_name -> servora.core.v1.Kubernetes
+	9,  // 15: servora.core.v1.Source.consul:type_name -> servora.core.v1.Consul
+	10, // 16: servora.core.v1.Source.etcd:type_name -> servora.core.v1.Etcd
+	11, // 17: servora.core.v1.Source.nacos:type_name -> servora.core.v1.Nacos
+	31, // 18: servora.core.v1.Consul.timeout:type_name -> google.protobuf.Duration
+	31, // 19: servora.core.v1.Etcd.timeout:type_name -> google.protobuf.Duration
+	31, // 20: servora.core.v1.Nacos.timeout:type_name -> google.protobuf.Duration
+	16, // 21: servora.core.v1.Observability.log:type_name -> servora.core.v1.Log
+	14, // 22: servora.core.v1.Observability.trace:type_name -> servora.core.v1.Trace
+	15, // 23: servora.core.v1.Observability.metrics:type_name -> servora.core.v1.Metrics
+	0,  // 24: servora.core.v1.Log.level:type_name -> servora.core.v1.Log.LogLevel
+	26, // 25: servora.core.v1.Log.backends:type_name -> servora.core.v1.Log.LogBackend
+	31, // 26: servora.core.v1.Server.Listen.timeout:type_name -> google.protobuf.Duration
+	17, // 27: servora.core.v1.Server.HTTP.listen:type_name -> servora.core.v1.Server.Listen
+	32, // 28: servora.core.v1.Server.HTTP.tls:type_name -> servora.security.tls.v1.TLS
+	18, // 29: servora.core.v1.Server.HTTP.advertise:type_name -> servora.core.v1.Server.Advertise
+	17, // 30: servora.core.v1.Server.GRPC.listen:type_name -> servora.core.v1.Server.Listen
+	32, // 31: servora.core.v1.Server.GRPC.tls:type_name -> servora.security.tls.v1.TLS
+	18, // 32: servora.core.v1.Server.GRPC.advertise:type_name -> servora.core.v1.Server.Advertise
+	23, // 33: servora.core.v1.Data.Client.services:type_name -> servora.core.v1.Data.Client.Service
+	24, // 34: servora.core.v1.Data.Client.Service.endpoints:type_name -> servora.core.v1.Data.Client.Endpoint
+	31, // 35: servora.core.v1.Data.Client.Endpoint.timeout:type_name -> google.protobuf.Duration
+	32, // 36: servora.core.v1.Data.Client.Endpoint.tls:type_name -> servora.security.tls.v1.TLS
+	33, // 37: servora.core.v1.Data.Client.Endpoint.options:type_name -> google.protobuf.Struct
+	27, // 38: servora.core.v1.Log.LogBackend.stdout:type_name -> servora.core.v1.Log.StdoutBackend
+	28, // 39: servora.core.v1.Log.LogBackend.file:type_name -> servora.core.v1.Log.FileBackend
+	29, // 40: servora.core.v1.Log.LogBackend.otel:type_name -> servora.core.v1.Log.OtelBackend
+	30, // 41: servora.core.v1.Log.LogBackend.noop:type_name -> servora.core.v1.Log.NoopBackend
+	1,  // 42: servora.core.v1.Log.StdoutBackend.format:type_name -> servora.core.v1.Log.LogFormat
+	1,  // 43: servora.core.v1.Log.FileBackend.format:type_name -> servora.core.v1.Log.LogFormat
+	2,  // 44: servora.core.v1.Log.OtelBackend.protocol:type_name -> servora.core.v1.Log.OtelProtocol
+	45, // [45:45] is the sub-list for method output_type
+	45, // [45:45] is the sub-list for method input_type
+	45, // [45:45] is the sub-list for extension type_name
+	45, // [45:45] is the sub-list for extension extendee
+	0,  // [0:45] is the sub-list for field type_name
 }
 
 func init() { file_servora_core_v1_bootstrap_proto_init() }
@@ -2564,24 +2279,18 @@ func file_servora_core_v1_bootstrap_proto_init() {
 	if File_servora_core_v1_bootstrap_proto != nil {
 		return
 	}
-	file_servora_core_v1_bootstrap_proto_msgTypes[5].OneofWrappers = []any{
+	file_servora_core_v1_bootstrap_proto_msgTypes[4].OneofWrappers = []any{
 		(*Registry_Consul)(nil),
 		(*Registry_Etcd)(nil),
 		(*Registry_Nacos)(nil),
 		(*Registry_Kubernetes)(nil),
 	}
-	file_servora_core_v1_bootstrap_proto_msgTypes[6].OneofWrappers = []any{
-		(*Discovery_Consul)(nil),
-		(*Discovery_Etcd)(nil),
-		(*Discovery_Nacos)(nil),
-		(*Discovery_Kubernetes)(nil),
+	file_servora_core_v1_bootstrap_proto_msgTypes[5].OneofWrappers = []any{
+		(*Source_Consul)(nil),
+		(*Source_Etcd)(nil),
+		(*Source_Nacos)(nil),
 	}
-	file_servora_core_v1_bootstrap_proto_msgTypes[7].OneofWrappers = []any{
-		(*Config_Consul)(nil),
-		(*Config_Etcd)(nil),
-		(*Config_Nacos)(nil),
-	}
-	file_servora_core_v1_bootstrap_proto_msgTypes[25].OneofWrappers = []any{
+	file_servora_core_v1_bootstrap_proto_msgTypes[23].OneofWrappers = []any{
 		(*Log_LogBackend_Stdout)(nil),
 		(*Log_LogBackend_File)(nil),
 		(*Log_LogBackend_Otel)(nil),
@@ -2593,7 +2302,7 @@ func file_servora_core_v1_bootstrap_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_core_v1_bootstrap_proto_rawDesc), len(file_servora_core_v1_bootstrap_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   30,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

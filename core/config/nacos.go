@@ -3,17 +3,17 @@ package config
 import (
 	"fmt"
 
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	nacosCfg "github.com/go-kratos/kratos/contrib/config/nacos/v2"
 	"github.com/go-kratos/kratos/v2/config"
-	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/vo"
 )
 
-// NewNacosConfigSource 创建 Nacos 配置源
-func NewNacosConfigSource(c *corev1.NacosConfig) config.Source {
+// NewNacosSource 创建 Nacos 配置源
+func NewNacosSource(c *corev1.Nacos) config.Source {
 	if c == nil {
 		return nil
 	}

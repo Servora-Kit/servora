@@ -185,17 +185,17 @@ func TestEtcdWithPrefix(t *testing.T) {
 	}
 }
 
-func TestNewEtcdConfigSource(t *testing.T) {
+func TestNewEtcdSource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping: requires Etcd")
 	}
 
-	config := &corev1.EtcdConfig{
+	config := &corev1.Etcd{
 		Endpoints: []string{"127.0.0.1:2379"},
 		Key:       "/test/config",
 	}
 
-	source := NewEtcdConfigSource(config)
+	source := NewEtcdSource(config)
 	if source == nil {
 		t.Fatal("source is nil")
 	}
@@ -220,9 +220,9 @@ func TestNewEtcdConfigSource(t *testing.T) {
 }
 
 func TestSourceNilConfig(t *testing.T) {
-	source := NewEtcdConfigSource(nil)
+	source := NewEtcdSource(nil)
 	if source != nil {
-		t.Errorf("NewEtcdConfigSource(nil) = %v, want nil", source)
+		t.Errorf("NewEtcdSource(nil) = %v, want nil", source)
 	}
 }
 
