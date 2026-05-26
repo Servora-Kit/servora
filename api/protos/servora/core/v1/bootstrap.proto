@@ -167,7 +167,6 @@ message Trace {
 // Metrics 配置
 message Metrics {
   bool enable = 1;
-  string meter_name = 2;
 }
 
 // 日志配置（与 App 同级，所有 message/enum nested）

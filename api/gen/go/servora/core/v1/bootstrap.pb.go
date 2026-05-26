@@ -1118,7 +1118,6 @@ func (x *Trace) GetCaPath() string {
 type Metrics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Enable        bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`
-	MeterName     string                 `protobuf:"bytes,2,opt,name=meter_name,json=meterName,proto3" json:"meter_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1158,13 +1157,6 @@ func (x *Metrics) GetEnable() bool {
 		return x.Enable
 	}
 	return false
-}
-
-func (x *Metrics) GetMeterName() string {
-	if x != nil {
-		return x.MeterName
-	}
-	return ""
 }
 
 // 日志配置（与 App 同级，所有 message/enum nested）
@@ -2124,11 +2116,9 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1a\n" +
 	"\binsecure\x18\x02 \x01(\bR\binsecure\x12%\n" +
 	"\x0esampling_ratio\x18\x03 \x01(\x01R\rsamplingRatio\x12\x17\n" +
-	"\aca_path\x18\x04 \x01(\tR\x06caPath\"@\n" +
+	"\aca_path\x18\x04 \x01(\tR\x06caPath\"!\n" +
 	"\aMetrics\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\x12\x1d\n" +
-	"\n" +
-	"meter_name\x18\x02 \x01(\tR\tmeterName\"\xf2\b\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\"\xf2\b\n" +
 	"\x03Log\x123\n" +
 	"\x05level\x18\x01 \x01(\x0e2\x1d.servora.core.v1.Log.LogLevelR\x05level\x12;\n" +
 	"\bbackends\x18\x02 \x03(\v2\x1f.servora.core.v1.Log.LogBackendR\bbackends\x1a\xfd\x01\n" +

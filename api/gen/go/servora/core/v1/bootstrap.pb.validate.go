@@ -2052,8 +2052,6 @@ func (m *Metrics) validate(all bool) error {
 
 	// no validation rules for Enable
 
-	// no validation rules for MeterName
-
 	if len(errors) > 0 {
 		return MetricsMultiError(errors)
 	}

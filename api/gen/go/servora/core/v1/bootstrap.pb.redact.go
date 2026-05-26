@@ -219,8 +219,6 @@ func (x *Metrics) Redact() string {
 	}
 
 	// Safe field: Enable
-
-	// Safe field: MeterName
 	return x.String()
 }
 

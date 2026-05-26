@@ -9,7 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/circuitbreaker"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
-	kratosmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
+	kmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 )
@@ -68,9 +68,9 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 	}
 
 	if b.metrics != nil {
-		ms = append(ms, kratosmetrics.Client(
-			kratosmetrics.WithSeconds(b.metrics.Seconds),
-			kratosmetrics.WithRequests(b.metrics.Requests),
+		ms = append(ms, kmetrics.Client(
+			kmetrics.WithSeconds(b.metrics.ClientSeconds),
+			kmetrics.WithRequests(b.metrics.ClientRequests),
 		))
 	}
 

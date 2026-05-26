@@ -17,9 +17,9 @@ func createTestMetrics() *metrics.Metrics {
 	requests, _ := meter.Int64Counter("test_requests")
 	seconds, _ := meter.Float64Histogram("test_seconds")
 	return &metrics.Metrics{
-		Requests: requests,
-		Seconds:  seconds,
-		Handler:  http.NotFoundHandler(),
+		ServerRequests: requests,
+		ServerSeconds:  seconds,
+		Handler:        http.NotFoundHandler(),
 	}
 }
 

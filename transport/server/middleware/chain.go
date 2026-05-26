@@ -7,7 +7,7 @@ import (
 	"github.com/go-kratos/kratos/contrib/middleware/validate/v2"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
-	kratosmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
+	kmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/go-kratos/kratos/v2/middleware/ratelimit"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
@@ -139,9 +139,9 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 
 	// 6. Metrics - 可选
 	if b.metrics != nil {
-		ms = append(ms, kratosmetrics.Server(
-			kratosmetrics.WithSeconds(b.metrics.Seconds),
-			kratosmetrics.WithRequests(b.metrics.Requests),
+		ms = append(ms, kmetrics.Server(
+			kmetrics.WithSeconds(b.metrics.ServerSeconds),
+			kmetrics.WithRequests(b.metrics.ServerRequests),
 		))
 	}
 
