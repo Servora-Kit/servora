@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package servora.infra.mail.v1;
+
+import "google/protobuf/duration.proto";
+import "servora/conf/v1/annotations.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/infra/mail/v1;mailpb";
+
+message Mail {
+  option (servora.conf.v1.section) = {
+    key: "mail"
+    optional: true
+  };
+
+  SMTP smtp = 1;
+  MailFrom from = 2;
+}
+
+message SMTP {
+  string host = 1;
+  int32 port = 2;
+  string username = 3;
+  string password = 4;
+  bool tls = 5;
+  bool skip_verify_ssl = 6;
+  google.protobuf.Duration send_timeout = 7;
+}
+
+message MailFrom {
+  string address = 1;
+  string name = 2;
+}

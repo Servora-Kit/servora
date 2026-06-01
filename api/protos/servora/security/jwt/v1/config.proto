@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package servora.security.jwt.v1;
+
+import "servora/conf/v1/annotations.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/security/jwt/v1;jwtv1";
+
+// RS256 asymmetric signing. Signers configure private_key_path or
+// private_key_pem; private_key_path takes precedence when both are set.
+message Jwt {
+  option (servora.conf.v1.section) = {
+    key: "jwt"
+    optional: true
+  };
+
+  string private_key_path = 1;
+  string private_key_pem = 2;
+  int32 access_expire = 3 [(servora.conf.v1.field) = {default: "3600"}];
+  int32 refresh_expire = 4 [(servora.conf.v1.field) = {default: "604800"}];
+  string issuer = 5;
+  string audience = 6;
+}

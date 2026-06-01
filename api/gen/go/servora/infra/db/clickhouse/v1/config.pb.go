@@ -24,7 +24,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ClickHouse 客户端连接配置（clickhouse section）。
 type ClickHouse struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Addrs           []string               `protobuf:"bytes,1,rep,name=addrs,proto3" json:"addrs,omitempty"`

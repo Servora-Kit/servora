@@ -8,7 +8,6 @@ import "servora/security/tls/v1/config.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/infra/kafka/v1;kafkapb";
 
-// Kafka 客户端配置（kafka section）。
 message Kafka {
   option (servora.conf.v1.section) = {
     key: "kafka"

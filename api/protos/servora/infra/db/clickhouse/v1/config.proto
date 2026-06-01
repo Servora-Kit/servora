@@ -8,7 +8,6 @@ import "servora/security/tls/v1/config.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/infra/db/clickhouse/v1;clickhousepb";
 
-// ClickHouse 客户端连接配置（clickhouse section）。
 message ClickHouse {
   option (servora.conf.v1.section) = {
     key: "clickhouse"

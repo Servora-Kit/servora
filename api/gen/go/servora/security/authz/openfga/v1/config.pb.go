@@ -22,7 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// OpenFGA 引擎配置（由 security/authz/openfga 子包消费）
 type Config struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ApiUrl        string                 `protobuf:"bytes,1,opt,name=api_url,json=apiUrl,proto3" json:"api_url,omitempty"`       // OpenFGA HTTP API 地址

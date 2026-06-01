@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 )
 
 // Middleware 创建 CORS 中间件。
 // corsConfig 应已经过 corsv1.CORS.ApplyDefaults()（由业务方在
-// bootstrap.ScanSections 时自动完成），本函数不再回填默认值。
+// bootstrap.Scan 时自动完成），本函数不再回填默认值。
 // 当 corsConfig 为 nil 或 Enable=false 时返回透传中间件。
 func Middleware(corsConfig *corsv1.CORS) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

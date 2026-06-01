@@ -15,7 +15,7 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1;c
 // SectionRule 声明一个配置 message 在外部 yaml / json 配置中的定位键。
 // 应用方通过 bootstrap.Scan 按该 key 在 kratos config 中定向 scan。
 message SectionRule {
-  // 配置文件中的定位键（支持 dotted path，如 "audit" 或 "infra.broker"）。
+  // 配置文件中的定位键（支持 dotted path，如 "audit" 或 "authn.oidc"）。
   // 不应留空。
   string key = 1;
 
@@ -43,7 +43,7 @@ message FieldRule {
 // section 是 message 级别的扩展选项。
 // 使用示例:
 //   message Broker {
-//     option (servora.conf.v1.section) = { key: "broker", optional: true };
+//     option (servora.conf.v1.section) = { key: "redis", optional: true };
 //     // ...
 //   }
 extend google.protobuf.MessageOptions {

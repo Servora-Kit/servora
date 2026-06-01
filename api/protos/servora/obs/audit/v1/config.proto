@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package servora.obs.audit.v1;
+
+import "servora/conf/v1/annotations.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/obs/audit/v1;auditconfpb";
+
+message AuditContract {
+  option (servora.conf.v1.section) = {key: "audit"};
+
+  bool enabled = 1;
+  string emitter_type = 2 [(servora.conf.v1.field) = {default: "noop"}];
+  string topic = 3 [(servora.conf.v1.field) = {default: "servora.audit.events"}];
+  string service_name = 4;
+}

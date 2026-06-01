@@ -368,7 +368,6 @@ func (x *Data) GetClient() *Data_Client {
 	return nil
 }
 
-// 应用基础配置（剥离 jwt / audit / mail，由 extra/<域>/v1 持有）
 type App struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Env     string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`

@@ -22,12 +22,13 @@ api/protos/
     ├── cloudevents/v1/              # CloudEvents envelope schema
     ├── conf/v1/                     # config annotation extensions
     ├── core/v1/                     # Bootstrap config schema
-    ├── extra/{audit,cors,jwt,mail}/v1/
-    ├── infra/{redis,kafka}/v1/      # infra optional section schema
+    ├── infra/{redis,kafka,mail}/v1/ # infra optional section schema
     ├── infra/db/clickhouse/v1/      # ClickHouse optional section schema
     ├── mapper/v1/                   # mapper annotation extensions
+    ├── obs/audit/v1/                # obs runtime config schema
     ├── pagination/v1/               # pagination public types
-    └── security/{tls,authn,authz}/.../v1/ # security runtime/backend config schema
+    ├── security/{tls,jwt,authn,authz}/.../v1/ # security runtime/backend config schema
+    └── transport/http/cors/v1/      # transport runtime config schema
 ```
 
 `buf.yaml`、`buf.lock`、`buf.go.gen.yaml` 都在仓库根。imports 相对于 `api/protos/`，例如：
@@ -45,6 +46,7 @@ import "servora/audit/v1/annotations.proto";
 - `service_default` 合并语义必须与生成器测试一致：方法级显式字段覆盖服务级默认，未显式字段继承。
 - 第一方 backend/section 配置 proto 必须用 `servora.conf.v1.section` / `field` 表达 section、默认值和必填项；不要让 runtime 包重复维护默认值或 required 判断。
 - core `bootstrap.proto` 内的配置 message 不使用多余 `Config` 后缀；TLS、Redis 这类归属明确的配置放到所属域 proto，由 core 引用或业务显式 `bootstrap.Scan`。
+- 不新增 `extra/` proto 顶级目录；运行期配置按 owner 放入 `infra` / `security` / `transport` / `obs`。
 
 ## 生成与校验
 

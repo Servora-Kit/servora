@@ -26,7 +26,7 @@ const (
 // 应用方通过 bootstrap.Scan 按该 key 在 kratos config 中定向 scan。
 type SectionRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 配置文件中的定位键（支持 dotted path，如 "audit" 或 "infra.broker"）。
+	// 配置文件中的定位键（支持 dotted path，如 "audit" 或 "authn.oidc"）。
 	// 不应留空。
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// 是否允许该 section 在配置中缺失而不报错。

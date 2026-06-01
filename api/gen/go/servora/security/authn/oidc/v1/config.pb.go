@@ -22,7 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// OIDC Provider 引擎配置（由 security/authn/oidc 子包消费）
 type Config struct {
 	state                    protoimpl.MessageState `protogen:"open.v1"`
 	CryptoKey                string                 `protobuf:"bytes,1,opt,name=crypto_key,json=cryptoKey,proto3" json:"crypto_key,omitempty"`                                                  // 32 字节 hex 编码 AES 密钥，用于 OIDC token 加密

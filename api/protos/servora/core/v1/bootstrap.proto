@@ -9,13 +9,6 @@ import "servora/security/tls/v1/config.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1;corev1";
 
-// =============================================================================
-// Bootstrap 启动必读配置
-// 缺失任一非可选字段时 framework 不应启动。
-// 辅助配置（broker / audit / cors / mail / jwt）已迁出 extra/<域>/v1/，
-// 业务通过 bootstrap.Scan 按需加载。
-// =============================================================================
-
 message Bootstrap {
   App app = 1;
   Server server = 2;
@@ -82,7 +75,6 @@ message Data {
   Client client = 3;
 }
 
-// 应用基础配置（剥离 jwt / audit / mail，由 extra/<域>/v1 持有）
 message App {
   string env = 1;
   string name = 2;

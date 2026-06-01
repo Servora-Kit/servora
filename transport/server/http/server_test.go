@@ -10,7 +10,7 @@ import (
 	"log/slog"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 )
 

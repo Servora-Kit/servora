@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/extra/cors/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // TestApplyDefaults_PluginGenerated verifies the proto-sourced defaults
-// supplied by protoc-gen-servora-conf on extra/cors/v1/cors.proto, which
+// supplied by protoc-gen-servora-conf on transport/http/cors/v1/config.proto, which
 // replaces the prior hand-coded defaultOptions().
 func TestApplyDefaults_PluginGenerated(t *testing.T) {
 	c := &corsv1.CORS{}

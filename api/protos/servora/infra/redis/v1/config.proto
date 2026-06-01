@@ -7,7 +7,6 @@ import "servora/conf/v1/annotations.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/infra/redis/v1;redispb";
 
-// Redis 客户端配置（redis section）。
 message Redis {
   option (servora.conf.v1.section) = {
     key: "redis"

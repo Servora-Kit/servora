@@ -24,7 +24,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Kafka 客户端配置（kafka section）。
 type Kafka struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Brokers       []string               `protobuf:"bytes,1,rep,name=brokers,proto3" json:"brokers,omitempty"`
