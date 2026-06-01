@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package servora.infra.db.clickhouse.v1;
+
+import "google/protobuf/duration.proto";
+import "servora/conf/v1/annotations.proto";
+import "servora/security/tls/v1/config.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/infra/db/clickhouse/v1;clickhousepb";
+
+// ClickHouse 客户端连接配置（clickhouse section）。
+message ClickHouse {
+  option (servora.conf.v1.section) = {
+    key: "clickhouse"
+    optional: true
+  };
+
+  repeated string addrs = 1 [(servora.conf.v1.field) = {required: true}];
+  string database = 2;
+  string username = 3;
+  string password = 4;
+  google.protobuf.Duration dial_timeout = 5 [(servora.conf.v1.field) = {default: "10s"}];
+  google.protobuf.Duration read_timeout = 6 [(servora.conf.v1.field) = {default: "30s"}];
+  int32 max_open_conns = 7 [(servora.conf.v1.field) = {default: "10"}];
+  int32 max_idle_conns = 8 [(servora.conf.v1.field) = {default: "5"}];
+  google.protobuf.Duration conn_max_lifetime = 9 [(servora.conf.v1.field) = {default: "5m"}];
+  servora.security.tls.v1.TLS tls = 10;
+  string compression = 11 [(servora.conf.v1.field) = {default: "none"}];
+}

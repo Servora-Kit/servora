@@ -6,7 +6,7 @@
 
 `infra/` 是 servora 的「底层外部资源接线层」。所有对外部资源（数据库、消息中间件、缓存、Kubernetes API 等）的 client 接线、连接管理、生命周期与健康探针适配，都集中在这一层。
 
-向上服务：`obs/audit` 用 `infra/broker`（未来）、`core/registry` 用 `infra/k8s` 的 Clientset、各业务用 `infra/redis` 当 cache。
+向上服务：`obs/audit/kafka` 可复用 `infra/kafka` 构造 franz-go client，`core/registry` 用 `infra/k8s` 的 Clientset，各业务用 `infra/redis` 当 cache。
 
 ## 准入标准（Admission Gate）
 
@@ -27,7 +27,7 @@
 
 ## 当前成员
 
-- `broker/` 消息中间件抽象 + Kafka 实现（franz-go）
+- `kafka/` Kafka client 接线（franz-go native `*kgo.Client`）
 - `db/clickhouse/` ClickHouse client 接线
 - `db/ent/` ent ORM client 接线（含 mixin / scope helper）
 - `k8s/` Kubernetes API client + Pod 自感知（namespace / pod name）
@@ -42,5 +42,5 @@
 ## 维护提示
 
 - 新增 backend：在 `infra/<category>/<backend>/` 下创建，遵循 client 工厂 + lifecycle + Ping 接口的范式
-- 新增类别（如 `infra/queue/` / `infra/storage/`）：先评审是否与现有类别（`broker/` / `db/`）重叠
+- 新增类别（如 `infra/queue/` / `infra/storage/`）：先评审是否与现有类别（`kafka/` / `db/`）重叠
 - 业务侧使用 `infra/` 包时，**业务领域抽象（如 `UserRepository`）应该定义在业务侧**，`infra/` 只提供连接与原生 API 访问

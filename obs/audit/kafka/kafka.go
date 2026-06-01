@@ -1,76 +1,277 @@
-// Package kafka provides a stub Auditor for Kafka-based audit event delivery.
-// The real implementation will wrap cloudevents-sdk-go/protocol/kafka_sarama/v2;
-// this stub satisfies the interface and returns an error indicating that Kafka
-// support requires the sarama dependency to be configured.
+// Package kafka provides a franz-go backed Auditor and CloudEvents Kafka
+// binding helpers.
 package kafka
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"strings"
+	"time"
 
-	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/Servora-Kit/servora/obs/audit"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-// ErrNotImplemented is returned by the stub Kafka auditor when Emit is called.
-var ErrNotImplemented = errors.New("kafka auditor: not implemented — requires sarama dependency")
+const (
+	DefaultTopic                    = "servora.audit.events"
+	ContentTypeHeader               = "content-type"
+	CloudEventsJSONContentType      = "application/cloudevents+json"
+	CloudEventsHeaderPrefix         = "ce_"
+	defaultBinaryDataContentType    = "application/octet-stream"
+	cloudEventsSpecVersionHeaderKey = "ce_specversion"
+)
 
-// Config holds Kafka connection and behavior settings.
+type Mode int
+
+const (
+	BinaryMode Mode = iota
+	StructuredJSONMode
+)
+
+// Config holds audit Kafka behavior. Kafka connection construction belongs to
+// infra/kafka; this backend only owns topic, record encoding, and production.
 type Config struct {
-	// Brokers is the list of Kafka broker addresses.
-	Brokers []string
-
-	// Topic is the Kafka topic to produce audit events to.
-	Topic string
-
-	// Structured enables CloudEvents structured content mode.
-	// Default (false) uses binary content mode.
-	Structured bool
-
-	// PartitionKeyFn extracts a partition key from the event.
-	// Default: reads event.Extensions()[audit.ExtPartitionKey].
+	Client         *kgo.Client
+	Topic          string
+	Mode           Mode
 	PartitionKeyFn func(cloudevents.Event) string
 }
 
-// Option configures the Kafka auditor.
 type Option func(*Config)
 
-// WithStructuredMode switches from binary to structured CloudEvents content mode.
 func WithStructuredMode() Option {
-	return func(c *Config) { c.Structured = true }
+	return func(c *Config) { c.Mode = StructuredJSONMode }
 }
 
-// WithPartitionKeyFn sets a custom function to derive the Kafka partition key.
 func WithPartitionKeyFn(fn func(cloudevents.Event) string) Option {
 	return func(c *Config) { c.PartitionKeyFn = fn }
 }
 
-type auditorImpl struct {
-	cfg Config
+type producer interface {
+	ProduceSync(context.Context, ...*kgo.Record) kgo.ProduceResults
+	Flush(context.Context) error
+	Close()
 }
 
-// NewAuditor creates a new Kafka-backed Auditor.
-// NOTE: This is currently a stub implementation. The real implementation
-// requires github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2.
+type auditorImpl struct {
+	cfg      Config
+	producer producer
+	log      *slog.Logger
+}
+
 func NewAuditor(cfg Config, opts ...Option) (audit.Auditor, error) {
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	if cfg.PartitionKeyFn == nil {
-		cfg.PartitionKeyFn = defaultPartitionKey
+	if cfg.Topic == "" {
+		cfg.Topic = DefaultTopic
 	}
-	return &auditorImpl{cfg: cfg}, nil
+	if cfg.PartitionKeyFn == nil {
+		cfg.PartitionKeyFn = DefaultPartitionKey
+	}
+	if cfg.Client == nil {
+		return nil, fmt.Errorf("kafka auditor: client is nil")
+	}
+	return &auditorImpl{
+		cfg:      cfg,
+		producer: cfg.Client,
+		log:      slog.Default().With("scope", "audit/kafka"),
+	}, nil
 }
 
-func defaultPartitionKey(e cloudevents.Event) string {
-	if v, ok := e.Extensions()[audit.ExtPartitionKey]; ok {
-		if s, ok := v.(string); ok {
+func newAuditorWithProducer(cfg Config, p producer, l *slog.Logger, opts ...Option) (audit.Auditor, error) {
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	if cfg.Topic == "" {
+		cfg.Topic = DefaultTopic
+	}
+	if cfg.PartitionKeyFn == nil {
+		cfg.PartitionKeyFn = DefaultPartitionKey
+	}
+	if p == nil {
+		return nil, fmt.Errorf("kafka auditor: producer is nil")
+	}
+	if l == nil {
+		l = slog.Default()
+	}
+	return &auditorImpl{
+		cfg:      cfg,
+		producer: p,
+		log:      l.With("scope", "audit/kafka"),
+	}, nil
+}
+
+func (a *auditorImpl) Emit(ctx context.Context, event cloudevents.Event) error {
+	record, err := EncodeRecord(a.cfg.Topic, event, a.cfg.Mode, a.cfg.PartitionKeyFn)
+	if err != nil {
+		return err
+	}
+	if err := a.producer.ProduceSync(ctx, record).FirstErr(); err != nil {
+		return fmt.Errorf("kafka auditor: produce: %w", err)
+	}
+	return nil
+}
+
+func (a *auditorImpl) Flush(ctx context.Context) error {
+	return a.producer.Flush(ctx)
+}
+
+func (a *auditorImpl) Close() error {
+	a.producer.Close()
+	return nil
+}
+
+func EncodeRecord(topic string, event cloudevents.Event, mode Mode, keyFn func(cloudevents.Event) string) (*kgo.Record, error) {
+	if topic == "" {
+		return nil, fmt.Errorf("kafka record: topic is required")
+	}
+	if err := event.Validate(); err != nil {
+		return nil, fmt.Errorf("kafka record: invalid CloudEvent: %w", err)
+	}
+	if keyFn == nil {
+		keyFn = DefaultPartitionKey
+	}
+	switch mode {
+	case BinaryMode:
+		return encodeBinaryRecord(topic, event, keyFn), nil
+	case StructuredJSONMode:
+		return encodeStructuredJSONRecord(topic, event, keyFn)
+	default:
+		return nil, fmt.Errorf("kafka record: unsupported mode %d", mode)
+	}
+}
+
+func DecodeRecord(record *kgo.Record) (*cloudevents.Event, error) {
+	if record == nil {
+		return nil, fmt.Errorf("kafka record: nil")
+	}
+	if strings.HasPrefix(strings.ToLower(header(record.Headers, ContentTypeHeader)), CloudEventsJSONContentType) {
+		ev := cloudevents.NewEvent()
+		if err := json.Unmarshal(record.Value, &ev); err != nil {
+			return nil, fmt.Errorf("structured CloudEvent: %w", err)
+		}
+		if err := ev.Validate(); err != nil {
+			return nil, fmt.Errorf("structured CloudEvent validation: %w", err)
+		}
+		return &ev, nil
+	}
+
+	ev := cloudevents.NewEvent()
+	dataContentType := header(record.Headers, ContentTypeHeader)
+	for _, h := range record.Headers {
+		key := strings.ToLower(h.Key)
+		value := string(h.Value)
+		switch key {
+		case "ce_id":
+			ev.SetID(value)
+		case "ce_source":
+			ev.SetSource(value)
+		case cloudEventsSpecVersionHeaderKey:
+			ev.SetSpecVersion(value)
+		case "ce_type":
+			ev.SetType(value)
+		case "ce_subject":
+			ev.SetSubject(value)
+		case "ce_time":
+			if t, err := time.Parse(time.RFC3339Nano, value); err == nil {
+				ev.SetTime(t)
+			}
+		case "ce_dataschema":
+			ev.SetDataSchema(value)
+		case "ce_datacontenttype":
+			dataContentType = value
+		default:
+			if name, ok := strings.CutPrefix(key, CloudEventsHeaderPrefix); ok {
+				ev.SetExtension(name, value)
+			}
+		}
+	}
+	if ev.SpecVersion() == "" {
+		ev.SetSpecVersion(cloudevents.VersionV1)
+	}
+	if dataContentType == "" {
+		dataContentType = defaultBinaryDataContentType
+	}
+	if len(record.Value) > 0 {
+		if err := ev.SetData(dataContentType, record.Value); err != nil {
+			return nil, fmt.Errorf("binary CloudEvent data: %w", err)
+		}
+	}
+	if err := ev.Validate(); err != nil {
+		return nil, fmt.Errorf("binary CloudEvent validation: %w", err)
+	}
+	return &ev, nil
+}
+
+func encodeBinaryRecord(topic string, event cloudevents.Event, keyFn func(cloudevents.Event) string) *kgo.Record {
+	record := &kgo.Record{
+		Topic: topic,
+		Key:   []byte(keyFn(event)),
+		Value: event.Data(),
+		Headers: []kgo.RecordHeader{
+			{Key: "ce_id", Value: []byte(event.ID())},
+			{Key: "ce_source", Value: []byte(event.Source())},
+			{Key: cloudEventsSpecVersionHeaderKey, Value: []byte(event.SpecVersion())},
+			{Key: "ce_type", Value: []byte(event.Type())},
+		},
+	}
+	if event.Subject() != "" {
+		record.Headers = append(record.Headers, kgo.RecordHeader{Key: "ce_subject", Value: []byte(event.Subject())})
+	}
+	if !event.Time().IsZero() {
+		record.Headers = append(record.Headers, kgo.RecordHeader{Key: "ce_time", Value: []byte(event.Time().Format(time.RFC3339Nano))})
+	}
+	if event.DataSchema() != "" {
+		record.Headers = append(record.Headers, kgo.RecordHeader{Key: "ce_dataschema", Value: []byte(event.DataSchema())})
+	}
+	if event.DataContentType() != "" {
+		record.Headers = append(record.Headers,
+			kgo.RecordHeader{Key: ContentTypeHeader, Value: []byte(event.DataContentType())},
+			kgo.RecordHeader{Key: "ce_datacontenttype", Value: []byte(event.DataContentType())},
+		)
+	}
+	for k, v := range event.Extensions() {
+		record.Headers = append(record.Headers, kgo.RecordHeader{
+			Key:   CloudEventsHeaderPrefix + strings.ToLower(k),
+			Value: []byte(fmt.Sprint(v)),
+		})
+	}
+	return record
+}
+
+func encodeStructuredJSONRecord(topic string, event cloudevents.Event, keyFn func(cloudevents.Event) string) (*kgo.Record, error) {
+	value, err := json.Marshal(event)
+	if err != nil {
+		return nil, fmt.Errorf("structured CloudEvent JSON: %w", err)
+	}
+	return &kgo.Record{
+		Topic: topic,
+		Key:   []byte(keyFn(event)),
+		Value: value,
+		Headers: []kgo.RecordHeader{
+			{Key: ContentTypeHeader, Value: []byte(CloudEventsJSONContentType)},
+		},
+	}, nil
+}
+
+func DefaultPartitionKey(event cloudevents.Event) string {
+	if v, ok := event.Extensions()[audit.ExtPartitionKey]; ok {
+		if s := fmt.Sprint(v); s != "" {
 			return s
 		}
 	}
-	return e.ID()
+	return event.ID()
 }
 
-func (a *auditorImpl) Emit(_ context.Context, _ cloudevents.Event) error {
-	return ErrNotImplemented
+func header(headers []kgo.RecordHeader, key string) string {
+	for _, h := range headers {
+		if strings.EqualFold(h.Key, key) {
+			return string(h.Value)
+		}
+	}
+	return ""
 }

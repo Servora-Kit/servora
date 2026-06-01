@@ -22,8 +22,9 @@ api/protos/
     ├── cloudevents/v1/              # CloudEvents envelope schema
     ├── conf/v1/                     # config annotation extensions
     ├── core/v1/                     # Bootstrap config schema
-    ├── extra/{audit,broker,cors,jwt,mail}/v1/
-    ├── infra/redis/v1/              # Redis optional section schema
+    ├── extra/{audit,cors,jwt,mail}/v1/
+    ├── infra/{redis,kafka}/v1/      # infra optional section schema
+    ├── infra/db/clickhouse/v1/      # ClickHouse optional section schema
     ├── mapper/v1/                   # mapper annotation extensions
     ├── pagination/v1/               # pagination public types
     └── security/{tls,authn,authz}/.../v1/ # security runtime/backend config schema

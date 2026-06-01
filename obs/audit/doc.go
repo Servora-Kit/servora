@@ -16,7 +16,7 @@
 //   - obs/audit/noop   — discards all events (testing / disabled mode)
 //   - obs/audit/stdout — JSON-encodes events to stdout (local dev)
 //   - obs/audit/log    — emits structured slog records (local dev / demos)
-//   - obs/audit/kafka  — delivers events to Kafka via CloudEvents binding (stub)
+//   - obs/audit/kafka  — delivers events to Kafka via franz-go and CloudEvents binding
 //   - obs/audit/multi  — fans out to multiple auditors
 //
 // # Middleware

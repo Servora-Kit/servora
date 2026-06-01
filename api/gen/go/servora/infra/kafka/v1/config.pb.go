@@ -2,12 +2,13 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: servora/extra/broker/v1/broker.proto
+// source: servora/infra/kafka/v1/config.proto
 
-package brokerv1
+package kafkapb
 
 import (
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
+	v1 "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -23,73 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Broker struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Backend:
-	//
-	//	*Broker_Kafka
-	Backend       isBroker_Backend `protobuf_oneof:"backend"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Broker) Reset() {
-	*x = Broker{}
-	mi := &file_servora_extra_broker_v1_broker_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Broker) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Broker) ProtoMessage() {}
-
-func (x *Broker) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_extra_broker_v1_broker_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Broker.ProtoReflect.Descriptor instead.
-func (*Broker) Descriptor() ([]byte, []int) {
-	return file_servora_extra_broker_v1_broker_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Broker) GetBackend() isBroker_Backend {
-	if x != nil {
-		return x.Backend
-	}
-	return nil
-}
-
-func (x *Broker) GetKafka() *Kafka {
-	if x != nil {
-		if x, ok := x.Backend.(*Broker_Kafka); ok {
-			return x.Kafka
-		}
-	}
-	return nil
-}
-
-type isBroker_Backend interface {
-	isBroker_Backend()
-}
-
-type Broker_Kafka struct {
-	Kafka *Kafka `protobuf:"bytes,1,opt,name=kafka,proto3,oneof"`
-}
-
-func (*Broker_Kafka) isBroker_Backend() {}
-
-// Kafka 消息代理配置（用于审计事件等异步管线）
+// Kafka 客户端配置（kafka section）。
 type Kafka struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Brokers       []string               `protobuf:"bytes,1,rep,name=brokers,proto3" json:"brokers,omitempty"`
@@ -102,14 +37,15 @@ type Kafka struct {
 	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,8,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
 	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,9,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
 	Compression   string                 `protobuf:"bytes,10,opt,name=compression,proto3" json:"compression,omitempty"`
-	Sasl          *Kafka_SASL            `protobuf:"bytes,11,opt,name=sasl,proto3" json:"sasl,omitempty"`
+	Tls           *v1.TLS                `protobuf:"bytes,11,opt,name=tls,proto3" json:"tls,omitempty"`
+	Sasl          *Kafka_SASL            `protobuf:"bytes,12,opt,name=sasl,proto3" json:"sasl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Kafka) Reset() {
 	*x = Kafka{}
-	mi := &file_servora_extra_broker_v1_broker_proto_msgTypes[1]
+	mi := &file_servora_infra_kafka_v1_config_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -121,7 +57,7 @@ func (x *Kafka) String() string {
 func (*Kafka) ProtoMessage() {}
 
 func (x *Kafka) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_extra_broker_v1_broker_proto_msgTypes[1]
+	mi := &file_servora_infra_kafka_v1_config_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -134,7 +70,7 @@ func (x *Kafka) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Kafka.ProtoReflect.Descriptor instead.
 func (*Kafka) Descriptor() ([]byte, []int) {
-	return file_servora_extra_broker_v1_broker_proto_rawDescGZIP(), []int{1}
+	return file_servora_infra_kafka_v1_config_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Kafka) GetBrokers() []string {
@@ -207,6 +143,13 @@ func (x *Kafka) GetCompression() string {
 	return ""
 }
 
+func (x *Kafka) GetTls() *v1.TLS {
+	if x != nil {
+		return x.Tls
+	}
+	return nil
+}
+
 func (x *Kafka) GetSasl() *Kafka_SASL {
 	if x != nil {
 		return x.Sasl
@@ -214,7 +157,7 @@ func (x *Kafka) GetSasl() *Kafka_SASL {
 	return nil
 }
 
-// SASL 认证配置（可选）
+// SASL 认证配置（可选）。
 type Kafka_SASL struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Mechanism     string                 `protobuf:"bytes,1,opt,name=mechanism,proto3" json:"mechanism,omitempty"`
@@ -226,7 +169,7 @@ type Kafka_SASL struct {
 
 func (x *Kafka_SASL) Reset() {
 	*x = Kafka_SASL{}
-	mi := &file_servora_extra_broker_v1_broker_proto_msgTypes[2]
+	mi := &file_servora_infra_kafka_v1_config_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -238,7 +181,7 @@ func (x *Kafka_SASL) String() string {
 func (*Kafka_SASL) ProtoMessage() {}
 
 func (x *Kafka_SASL) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_extra_broker_v1_broker_proto_msgTypes[2]
+	mi := &file_servora_infra_kafka_v1_config_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -251,7 +194,7 @@ func (x *Kafka_SASL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Kafka_SASL.ProtoReflect.Descriptor instead.
 func (*Kafka_SASL) Descriptor() ([]byte, []int) {
-	return file_servora_extra_broker_v1_broker_proto_rawDescGZIP(), []int{1, 0}
+	return file_servora_infra_kafka_v1_config_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Kafka_SASL) GetMechanism() string {
@@ -275,16 +218,11 @@ func (x *Kafka_SASL) GetPassword() string {
 	return ""
 }
 
-var File_servora_extra_broker_v1_broker_proto protoreflect.FileDescriptor
+var File_servora_infra_kafka_v1_config_proto protoreflect.FileDescriptor
 
-const file_servora_extra_broker_v1_broker_proto_rawDesc = "" +
+const file_servora_infra_kafka_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"$servora/extra/broker/v1/broker.proto\x12\x17servora.extra.broker.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\"[\n" +
-	"\x06Broker\x126\n" +
-	"\x05kafka\x18\x01 \x01(\v2\x1e.servora.extra.broker.v1.KafkaH\x00R\x05kafka:\x0e\x82\xce\x18\n" +
-	"\n" +
-	"\x06broker\x10\x01B\t\n" +
-	"\abackend\"\xf9\x04\n" +
+	"#servora/infra/kafka/v1/config.proto\x12\x16servora.infra.kafka.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\"\xb7\x05\n" +
 	"\x05Kafka\x12 \n" +
 	"\abrokers\x18\x01 \x03(\tB\x06\x8a\xce\x18\x02\x10\x01R\abrokers\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12%\n" +
@@ -299,40 +237,42 @@ const file_servora_extra_broker_v1_broker_proto_rawDesc = "" +
 	"\vcompression\x18\n" +
 	" \x01(\tB\n" +
 	"\x8a\xce\x18\x06\n" +
-	"\x04noneR\vcompression\x127\n" +
-	"\x04sasl\x18\v \x01(\v2#.servora.extra.broker.v1.Kafka.SASLR\x04sasl\x1a\\\n" +
+	"\x04noneR\vcompression\x12.\n" +
+	"\x03tls\x18\v \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls\x126\n" +
+	"\x04sasl\x18\f \x01(\v2\".servora.infra.kafka.v1.Kafka.SASLR\x04sasl\x1a\\\n" +
 	"\x04SASL\x12\x1c\n" +
 	"\tmechanism\x18\x01 \x01(\tR\tmechanism\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpasswordB\xf5\x01\n" +
-	"\x1bcom.servora.extra.broker.v1B\vBrokerProtoP\x01ZJgithub.com/Servora-Kit/servora/api/gen/go/servora/extra/broker/v1;brokerv1\xa2\x02\x03SEB\xaa\x02\x17Servora.Extra.Broker.V1\xca\x02\x17Servora\\Extra\\Broker\\V1\xe2\x02#Servora\\Extra\\Broker\\V1\\GPBMetadata\xea\x02\x1aServora::Extra::Broker::V1b\x06proto3"
+	"\bpassword\x18\x03 \x01(\tR\bpassword:\r\x82\xce\x18\t\n" +
+	"\x05kafka\x10\x01B\xee\x01\n" +
+	"\x1acom.servora.infra.kafka.v1B\vConfigProtoP\x01ZHgithub.com/Servora-Kit/servora/api/gen/go/servora/infra/kafka/v1;kafkapb\xa2\x02\x03SIK\xaa\x02\x16Servora.Infra.Kafka.V1\xca\x02\x16Servora\\Infra\\Kafka\\V1\xe2\x02\"Servora\\Infra\\Kafka\\V1\\GPBMetadata\xea\x02\x19Servora::Infra::Kafka::V1b\x06proto3"
 
 var (
-	file_servora_extra_broker_v1_broker_proto_rawDescOnce sync.Once
-	file_servora_extra_broker_v1_broker_proto_rawDescData []byte
+	file_servora_infra_kafka_v1_config_proto_rawDescOnce sync.Once
+	file_servora_infra_kafka_v1_config_proto_rawDescData []byte
 )
 
-func file_servora_extra_broker_v1_broker_proto_rawDescGZIP() []byte {
-	file_servora_extra_broker_v1_broker_proto_rawDescOnce.Do(func() {
-		file_servora_extra_broker_v1_broker_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_servora_extra_broker_v1_broker_proto_rawDesc), len(file_servora_extra_broker_v1_broker_proto_rawDesc)))
+func file_servora_infra_kafka_v1_config_proto_rawDescGZIP() []byte {
+	file_servora_infra_kafka_v1_config_proto_rawDescOnce.Do(func() {
+		file_servora_infra_kafka_v1_config_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_servora_infra_kafka_v1_config_proto_rawDesc), len(file_servora_infra_kafka_v1_config_proto_rawDesc)))
 	})
-	return file_servora_extra_broker_v1_broker_proto_rawDescData
+	return file_servora_infra_kafka_v1_config_proto_rawDescData
 }
 
-var file_servora_extra_broker_v1_broker_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_servora_extra_broker_v1_broker_proto_goTypes = []any{
-	(*Broker)(nil),              // 0: servora.extra.broker.v1.Broker
-	(*Kafka)(nil),               // 1: servora.extra.broker.v1.Kafka
-	(*Kafka_SASL)(nil),          // 2: servora.extra.broker.v1.Kafka.SASL
-	(*durationpb.Duration)(nil), // 3: google.protobuf.Duration
+var file_servora_infra_kafka_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_servora_infra_kafka_v1_config_proto_goTypes = []any{
+	(*Kafka)(nil),               // 0: servora.infra.kafka.v1.Kafka
+	(*Kafka_SASL)(nil),          // 1: servora.infra.kafka.v1.Kafka.SASL
+	(*durationpb.Duration)(nil), // 2: google.protobuf.Duration
+	(*v1.TLS)(nil),              // 3: servora.security.tls.v1.TLS
 }
-var file_servora_extra_broker_v1_broker_proto_depIdxs = []int32{
-	1, // 0: servora.extra.broker.v1.Broker.kafka:type_name -> servora.extra.broker.v1.Kafka
-	3, // 1: servora.extra.broker.v1.Kafka.retry_backoff:type_name -> google.protobuf.Duration
-	3, // 2: servora.extra.broker.v1.Kafka.dial_timeout:type_name -> google.protobuf.Duration
-	3, // 3: servora.extra.broker.v1.Kafka.read_timeout:type_name -> google.protobuf.Duration
-	3, // 4: servora.extra.broker.v1.Kafka.write_timeout:type_name -> google.protobuf.Duration
-	2, // 5: servora.extra.broker.v1.Kafka.sasl:type_name -> servora.extra.broker.v1.Kafka.SASL
+var file_servora_infra_kafka_v1_config_proto_depIdxs = []int32{
+	2, // 0: servora.infra.kafka.v1.Kafka.retry_backoff:type_name -> google.protobuf.Duration
+	2, // 1: servora.infra.kafka.v1.Kafka.dial_timeout:type_name -> google.protobuf.Duration
+	2, // 2: servora.infra.kafka.v1.Kafka.read_timeout:type_name -> google.protobuf.Duration
+	2, // 3: servora.infra.kafka.v1.Kafka.write_timeout:type_name -> google.protobuf.Duration
+	3, // 4: servora.infra.kafka.v1.Kafka.tls:type_name -> servora.security.tls.v1.TLS
+	1, // 5: servora.infra.kafka.v1.Kafka.sasl:type_name -> servora.infra.kafka.v1.Kafka.SASL
 	6, // [6:6] is the sub-list for method output_type
 	6, // [6:6] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
@@ -340,29 +280,26 @@ var file_servora_extra_broker_v1_broker_proto_depIdxs = []int32{
 	0, // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_servora_extra_broker_v1_broker_proto_init() }
-func file_servora_extra_broker_v1_broker_proto_init() {
-	if File_servora_extra_broker_v1_broker_proto != nil {
+func init() { file_servora_infra_kafka_v1_config_proto_init() }
+func file_servora_infra_kafka_v1_config_proto_init() {
+	if File_servora_infra_kafka_v1_config_proto != nil {
 		return
-	}
-	file_servora_extra_broker_v1_broker_proto_msgTypes[0].OneofWrappers = []any{
-		(*Broker_Kafka)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_extra_broker_v1_broker_proto_rawDesc), len(file_servora_extra_broker_v1_broker_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_infra_kafka_v1_config_proto_rawDesc), len(file_servora_infra_kafka_v1_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_servora_extra_broker_v1_broker_proto_goTypes,
-		DependencyIndexes: file_servora_extra_broker_v1_broker_proto_depIdxs,
-		MessageInfos:      file_servora_extra_broker_v1_broker_proto_msgTypes,
+		GoTypes:           file_servora_infra_kafka_v1_config_proto_goTypes,
+		DependencyIndexes: file_servora_infra_kafka_v1_config_proto_depIdxs,
+		MessageInfos:      file_servora_infra_kafka_v1_config_proto_msgTypes,
 	}.Build()
-	File_servora_extra_broker_v1_broker_proto = out.File
-	file_servora_extra_broker_v1_broker_proto_goTypes = nil
-	file_servora_extra_broker_v1_broker_proto_depIdxs = nil
+	File_servora_infra_kafka_v1_config_proto = out.File
+	file_servora_infra_kafka_v1_config_proto_goTypes = nil
+	file_servora_infra_kafka_v1_config_proto_depIdxs = nil
 }

@@ -1,5 +1,4 @@
-// Package clickhouse provides a framework-level ClickHouse connection helper
-// following the Optional-init pattern established by pkg/broker/kafka.
+// Package clickhouse provides a framework-level ClickHouse connection helper.
 //
 // Usage:
 //
@@ -16,36 +15,16 @@ package clickhouse
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"log/slog"
+	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	clickhousepb "github.com/Servora-Kit/servora/api/gen/go/servora/infra/db/clickhouse/v1"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 )
 
-// Config carries the minimum knobs NewConnOptional needs to open a ClickHouse
-// connection. It is defined locally (not borrowed from any proto) because
-// ClickHouse-specific configuration lives in consumer-side proto (e.g.
-// servora-platform/audit) and the framework no longer owns those fields.
-type Config struct {
-	Addrs           []string
-	Database        string
-	Username        string
-	Password        string
-	DialTimeout     time.Duration
-	ReadTimeout     time.Duration
-	MaxOpenConns    int
-	MaxIdleConns    int
-	ConnMaxLifetime time.Duration
-	TLS             bool
-	TLSSkipVerify   bool
-	Compress        string // "" | "none" | "lz4" | "zstd"
-}
-
-// NewConnOptional opens a ClickHouse connection from the supplied Config.
+// NewConnOptional opens a ClickHouse connection from generated infra config.
 //
 // Return semantics:
 //   - (nil, nil)  — ClickHouse is not configured (cfg nil or no addrs).
@@ -53,45 +32,37 @@ type Config struct {
 //   - (conn, nil) — connected successfully.
 //
 // The caller is responsible for closing the connection via conn.Close().
-func NewConnOptional(ctx context.Context, cfg *Config, l *slog.Logger) (driver.Conn, error) {
-	log := l.With("scope", "clickhouse/db/infra")
+func NewConnOptional(ctx context.Context, cfg *clickhousepb.ClickHouse, l *slog.Logger) (driver.Conn, error) {
+	log := loggerOrDefault(l).With("scope", "clickhouse/db/infra")
 
-	if cfg == nil || len(cfg.Addrs) == 0 {
+	if cfg == nil || len(cfg.GetAddrs()) == 0 {
 		log.Info("ClickHouse not configured")
 		return nil, nil
 	}
-
-	dialTimeout := durationOrDefault(cfg.DialTimeout, 10*time.Second, "dial_timeout", log)
-	readTimeout := durationOrDefault(cfg.ReadTimeout, 30*time.Second, "read_timeout", log)
-	connMaxLifetime := durationOrDefault(cfg.ConnMaxLifetime, 5*time.Minute, "conn_max_lifetime", log)
-
-	maxOpenConns := 10
-	if cfg.MaxOpenConns > 0 {
-		maxOpenConns = cfg.MaxOpenConns
-	}
-	maxIdleConns := 5
-	if cfg.MaxIdleConns > 0 {
-		maxIdleConns = cfg.MaxIdleConns
+	if err := cfg.ApplyConf(); err != nil {
+		return nil, err
 	}
 
 	opts := &clickhouse.Options{
-		Addr: cfg.Addrs,
+		Addr: cfg.GetAddrs(),
 		Auth: clickhouse.Auth{
-			Database: cfg.Database,
-			Username: cfg.Username,
-			Password: cfg.Password,
+			Database: cfg.GetDatabase(),
+			Username: cfg.GetUsername(),
+			Password: cfg.GetPassword(),
 		},
-		DialTimeout:      dialTimeout,
-		ReadTimeout:      readTimeout,
-		MaxOpenConns:     maxOpenConns,
-		MaxIdleConns:     maxIdleConns,
-		ConnMaxLifetime:  connMaxLifetime,
+		DialTimeout:      cfg.GetDialTimeout().AsDuration(),
+		ReadTimeout:      cfg.GetReadTimeout().AsDuration(),
+		MaxOpenConns:     int(cfg.GetMaxOpenConns()),
+		MaxIdleConns:     int(cfg.GetMaxIdleConns()),
+		ConnMaxLifetime:  cfg.GetConnMaxLifetime().AsDuration(),
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 	}
 
-	if cfg.TLS {
+	if cfg.GetTls().GetEnable() {
 		tlsCfg, err := svrtls.NewClientConfig(svrtls.ClientConfigOptions{
-			InsecureSkipVerify: cfg.TLSSkipVerify,
+			CAPath:   cfg.GetTls().GetCaPath(),
+			CertPath: cfg.GetTls().GetCertPath(),
+			KeyPath:  cfg.GetTls().GetKeyPath(),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("build ClickHouse TLS config: %w", err)
@@ -99,14 +70,14 @@ func NewConnOptional(ctx context.Context, cfg *Config, l *slog.Logger) (driver.C
 		opts.TLS = tlsCfg
 	}
 
-	applyCompression(opts, cfg.Compress, log)
+	applyCompression(opts, cfg.GetCompression(), log)
 
 	conn, err := clickhouse.Open(opts)
 	if err != nil {
 		return nil, fmt.Errorf("open ClickHouse: %w", err)
 	}
 
-	pingCtx, cancel := context.WithTimeout(ctx, dialTimeout)
+	pingCtx, cancel := context.WithTimeout(ctx, cfg.GetDialTimeout().AsDuration())
 	defer cancel()
 	if err := conn.Ping(pingCtx); err != nil {
 		_ = conn.Close()
@@ -115,17 +86,6 @@ func NewConnOptional(ctx context.Context, cfg *Config, l *slog.Logger) (driver.C
 
 	log.Info("ClickHouse connected")
 	return conn, nil
-}
-
-// durationOrDefault returns d when positive, otherwise def (with a warn log).
-func durationOrDefault(d time.Duration, def time.Duration, name string, log *slog.Logger) time.Duration {
-	if d <= 0 {
-		if d < 0 {
-			log.Warn("non-positive duration, using default", "param", name, "value", d, "default", def)
-		}
-		return def
-	}
-	return d
 }
 
 // applyCompression normalises the compress string and sets the appropriate
@@ -142,4 +102,11 @@ func applyCompression(opts *clickhouse.Options, raw string, log *slog.Logger) {
 	default:
 		log.Warn("unknown compress value, falling back to no compression", "value", raw)
 	}
+}
+
+func loggerOrDefault(l *slog.Logger) *slog.Logger {
+	if l != nil {
+		return l
+	}
+	return slog.Default()
 }

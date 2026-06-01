@@ -110,8 +110,8 @@ func CallUser(ctx context.Context, l logger.Logger, data *corev1.Data, d registr
 import "servora/conf/v1/annotations.proto";
 import "google/protobuf/duration.proto";
 
-message Broker {
-  option (servora.conf.v1.section) = { key: "broker", optional: true };
+message Redis {
+  option (servora.conf.v1.section) = { key: "redis", optional: true };
 
   string addr    = 1 [(servora.conf.v1.field) = { required: true }];
   string network = 2 [(servora.conf.v1.field) = { default: "tcp" }];
@@ -124,14 +124,14 @@ message Broker {
 ```go
 import (
     "github.com/Servora-Kit/servora/core/bootstrap"
-    confv1 "myapp/api/gen/go/myapp/conf/v1"
+    redispb "github.com/Servora-Kit/servora/api/gen/go/servora/infra/redis/v1"
 )
 
-brokerCfg := &confv1.Broker{}
-if err := bootstrap.Scan(rt, brokerCfg); err != nil {
+redisCfg := &redispb.Redis{}
+if err := bootstrap.Scan(rt, redisCfg); err != nil {
     return err
 }
-// brokerCfg 已通过必填校验并自动填充默认值（由 ApplyConf 编排）
+// redisCfg 已通过必填校验并自动填充默认值（由 ApplyConf 编排）
 ```
 
 配置中心热更新属于 Kratos `Config.Watch` 的底层能力。业务如需在 watch 回调中复用上述契约，需要自行对新的 `Value` 执行 `Scan` 并调用 `ApplyConf()`；Servora 不会对远端配置变更自动重 scan、校验或回调。

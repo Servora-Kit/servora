@@ -1,31 +1,20 @@
 syntax = "proto3";
 
-package servora.extra.broker.v1;
+package servora.infra.kafka.v1;
 
 import "google/protobuf/duration.proto";
 import "servora/conf/v1/annotations.proto";
+import "servora/security/tls/v1/config.proto";
 
-option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/extra/broker/v1;brokerv1";
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/infra/kafka/v1;kafkapb";
 
-// =============================================================================
-// 消息中间件配置（broker section）
-// 业务侧通过 bootstrap.Scan(rt, &broker) 加载；section optional：
-// 业务不消费 broker 时缺失即静默跳过。
-// =============================================================================
-
-message Broker {
+// Kafka 客户端配置（kafka section）。
+message Kafka {
   option (servora.conf.v1.section) = {
-    key: "broker"
+    key: "kafka"
     optional: true
   };
 
-  oneof backend {
-    Kafka kafka = 1;
-  }
-}
-
-// Kafka 消息代理配置（用于审计事件等异步管线）
-message Kafka {
   repeated string brokers = 1 [(servora.conf.v1.field) = {required: true}];
   string client_id = 2;
   string consumer_group = 3;
@@ -36,12 +25,13 @@ message Kafka {
   google.protobuf.Duration read_timeout = 8;
   google.protobuf.Duration write_timeout = 9;
   string compression = 10 [(servora.conf.v1.field) = {default: "none"}];
+  servora.security.tls.v1.TLS tls = 11;
 
-  // SASL 认证配置（可选）
+  // SASL 认证配置（可选）。
   message SASL {
     string mechanism = 1;
     string username = 2;
     string password = 3;
   }
-  SASL sasl = 11;
+  SASL sasl = 12;
 }
