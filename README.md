@@ -138,26 +138,26 @@ if err := bootstrap.Scan(rt, redisCfg); err != nil {
 
 #### proto 类型映射
 
-通过 `(mapper)` 声明 message 参与 ORM 实体与 proto 之间的双向映射，`(mapper_field)` 控制单字段的重命名、内置 converter、自定义钩子或忽略策略。Plugin 生成 `<Msg>MapperPlan()` 声明式映射计划，运行时配合 `core/mapper` 的泛型 `CopierMapper[P, E]` 完成双向转换。
+通过 `(mapper)` 声明 message 参与 data 层对象到 proto resource message 的读投影，`(mapper_field)` 控制单字段从存储对象 Go 字段名到 DTO 字段名的映射。Plugin 生成 `<Msg>Mapper()` 读投影配置，运行时配合 `core/mapper` 的泛型 `CopierMapper[DTO, ENTITY]` 完成 `ENTITY -> DTO` 转换。
 
 ```proto
 import "servora/mapper/v1/mapper.proto";
 import "google/protobuf/timestamp.proto";
 
 message User {
-  option (servora.mapper.v1.mapper) = { enabled: true };
+  option (servora.mapper.v1.mapper) = {
+    ignore_read: ["internal_secret"]
+  };
 
   string id = 1 [(servora.mapper.v1.mapper_field) = {
-    converter: CONVERTER_KIND_UUID_STRING
+    rename: "ID"
   }];
-  google.protobuf.Timestamp created_at = 2 [(servora.mapper.v1.mapper_field) = {
-    converter: CONVERTER_KIND_TIMESTAMP_TIME
-  }];
-  string internal_secret = 3 [(servora.mapper.v1.mapper_field) = { ignore: true }];
+  google.protobuf.Timestamp created_at = 2;
+  string internal_secret = 3;
 }
 ```
 
-运行时构造一个泛型 mapper，把 plugin 生成的 plan 应用上去，之后即可在 proto 与实体之间双向转换：
+运行时构造一个泛型 mapper，把 plugin 生成的 config 应用上去，之后在读路径把存储对象投影为 DTO。写路径由 data repo 手写 ent setter、GORM struct literal 或其他存储层代码。
 
 ```go
 import (
@@ -167,10 +167,9 @@ import (
 )
 
 m := mapper.NewCopierMapper[pb.User, ent.User]()
-_ = mapper.ApplyPlan(pb.UserMapperPlan(), m, mapper.DefaultPresets(), mapper.NewHookRegistry())
+_ = mapper.Apply(pb.UserMapper(), m)
 
-proto, _ := m.ToProto(entity)
-entity2, _ := m.ToEntity(proto)
+dto := m.ToDTO(entity)
 ```
 
 #### 认证

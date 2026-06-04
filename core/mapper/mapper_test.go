@@ -1,132 +1,207 @@
 package mapper
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// ---------- test types ----------
-
 type domainUser struct {
-	ID       int64
-	Name     string
-	Email    string
-	Password string
-	Phone    *string
-	Role     string
+	ID        int64
+	Name      string
+	Email     string
+	Password  string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	Phone     *string
+	Role      string
+	Profile   *profileDTO `protobuf:"bytes,7,opt,name=profile,proto3" json:"profile,omitempty"`
+	Tags      []string    `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
+	CreatedAt *timestamppb.Timestamp
+	UserID    string
+	Score     int32
+}
+
+type profileDTO struct {
+	DisplayName string
 }
 
 type entLikeUser struct {
-	ID       int64
-	Name     string
-	Email    string
-	Password string
-	Phone    *string
-	Role     string
+	ID        int64
+	Name      string
+	Email     string
+	Password  string
+	Phone     *string
+	Role      string
+	Profile   *profileDTO
+	Tags      []string
+	CreatedAt time.Time
+	UserUUID  uuid.UUID
+	Score     int
 }
 
-// ---------- CopierMapper (unified) ----------
-
-func TestCopierMapper_ToProto(t *testing.T) {
+func TestCopierMapper_ToDTO(t *testing.T) {
 	m := NewCopierMapper[domainUser, entLikeUser]()
-	m.AppendConverters(AllBuiltinConverters())
 
 	src := &entLikeUser{ID: 7, Name: "alice", Email: "alice@example.com", Password: "hashed", Role: "admin"}
-	dst, err := m.ToProto(src)
-	require.NoError(t, err)
+	dst := m.ToDTO(src)
+
 	require.NotNil(t, dst)
 	require.Equal(t, src.ID, dst.ID)
 	require.Equal(t, src.Name, dst.Name)
 }
 
-func TestCopierMapper_ToEntity(t *testing.T) {
+func TestCopierMapper_TryToDTO_Nil(t *testing.T) {
 	m := NewCopierMapper[domainUser, entLikeUser]()
-	m.AppendConverters(AllBuiltinConverters())
 
-	src := &domainUser{ID: 3, Name: "bob", Email: "bob@example.com", Role: "user"}
-	dst, err := m.ToEntity(src)
-	require.NoError(t, err)
-	require.NotNil(t, dst)
-	require.Equal(t, src.ID, dst.ID)
-}
+	dst, err := m.TryToDTO(nil)
 
-func TestCopierMapper_ErrorReturn(t *testing.T) {
-	m := NewCopierMapper[domainUser, entLikeUser]()
-	dst, err := m.ToProto(nil)
 	require.NoError(t, err)
 	require.Nil(t, dst)
 }
 
-func TestCopierMapper_MustToProto(t *testing.T) {
+func TestCopierMapper_ToDTOList(t *testing.T) {
 	m := NewCopierMapper[domainUser, entLikeUser]()
-	m.AppendConverters(AllBuiltinConverters())
-
-	src := &entLikeUser{ID: 1, Name: "test"}
-	dst := m.MustToProto(src)
-	require.NotNil(t, dst)
-	require.Equal(t, int64(1), dst.ID)
-}
-
-func TestCopierMapper_ListConversions(t *testing.T) {
-	m := NewCopierMapper[domainUser, entLikeUser]()
-	m.AppendConverters(AllBuiltinConverters())
 
 	entities := []*entLikeUser{{ID: 1, Name: "a"}, nil, {ID: 2, Name: "b"}}
-	protos, err := m.ToProtoList(entities)
-	require.NoError(t, err)
-	require.Len(t, protos, 2)
+	dtos := m.ToDTOList(entities)
+
+	require.Len(t, dtos, 2)
+	require.Equal(t, int64(1), dtos[0].ID)
+	require.Equal(t, int64(2), dtos[1].ID)
 }
 
-func TestCopierMapper_RoundTrip(t *testing.T) {
-	phone := "13800000000"
-	m := NewCopierMapper[domainUser, entLikeUser]()
-	m.AppendConverters(AllBuiltinConverters())
+func TestCopierMapper_DefaultConverters(t *testing.T) {
+	type dto struct {
+		ID        string
+		CreatedAt *timestamppb.Timestamp
+		Score     int32
+		Phone     *string
+	}
+	type entity struct {
+		ID        uuid.UUID
+		CreatedAt time.Time
+		Score     int
+		Phone     string
+	}
 
-	original := &domainUser{
-		ID:       7,
+	now := time.Date(2026, 6, 4, 10, 30, 0, 0, time.UTC)
+	id := uuid.New()
+	m := NewCopierMapper[dto, entity]()
+
+	got := m.ToDTO(&entity{ID: id, CreatedAt: now, Score: 42, Phone: "13800000000"})
+
+	require.Equal(t, id.String(), got.ID)
+	require.Equal(t, now, got.CreatedAt.AsTime())
+	require.Equal(t, int32(42), got.Score)
+	require.NotNil(t, got.Phone)
+	require.Equal(t, "13800000000", *got.Phone)
+}
+
+func TestCopierMapper_ApplyRename(t *testing.T) {
+	type dto struct {
+		Name string
+	}
+	type entity struct {
+		UserName string
+	}
+
+	m := NewCopierMapper[dto, entity]()
+	err := Apply(&Config{FieldMapping: map[string]string{"UserName": "Name"}}, m)
+	require.NoError(t, err)
+
+	got := m.ToDTO(&entity{UserName: "alice"})
+
+	require.Equal(t, "alice", got.Name)
+}
+
+func TestCopierMapper_IgnoreRead(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	err := Apply(&Config{IgnoreRead: []string{"password", "profile", "tags"}}, m)
+	require.NoError(t, err)
+
+	got := m.ToDTO(&entLikeUser{
+		ID:       1,
 		Name:     "alice",
-		Email:    "alice@example.com",
-		Password: "hashed-password",
-		Phone:    &phone,
-		Role:     "admin",
-	}
+		Password: "hashed",
+		Profile:  &profileDTO{DisplayName: "Alice"},
+		Tags:     []string{"admin"},
+	})
 
-	entity, err := m.ToEntity(original)
-	require.NoError(t, err)
-	require.NotNil(t, entity)
-	require.Equal(t, original.ID, entity.ID)
-	require.Equal(t, original.Name, entity.Name)
-
-	back, err := m.ToProto(entity)
-	require.NoError(t, err)
-	require.NotNil(t, back)
-	require.Equal(t, original, back)
+	require.Equal(t, int64(1), got.ID)
+	require.Empty(t, got.Password)
+	require.Nil(t, got.Profile)
+	require.Nil(t, got.Tags)
 }
 
-func TestCopierMapper_ToEntityListWithNilItems(t *testing.T) {
-	phone := "13900000000"
-	entities := []*entLikeUser{
-		{ID: 1, Name: "u1", Email: "u1@example.com", Phone: &phone, Role: "user"},
-		nil,
-		{ID: 2, Name: "u2", Email: "u2@example.com", Role: "admin"},
-	}
-
+func TestCopierMapper_PostToDTOHook(t *testing.T) {
 	m := NewCopierMapper[domainUser, entLikeUser]()
-	m.AppendConverters(AllBuiltinConverters())
-	protos, err := m.ToProtoList(entities)
-	require.NoError(t, err)
-	require.Len(t, protos, 2)
-	require.Equal(t, int64(1), protos[0].ID)
-	require.Equal(t, int64(2), protos[1].ID)
+	m.WithPostToDTOHook(func(entity *entLikeUser, dto *domainUser) error {
+		dto.Role = entity.Role + "_from_hook"
+		return nil
+	})
+
+	got := m.ToDTO(&entLikeUser{ID: 1, Role: "admin"})
+
+	require.Equal(t, "admin_from_hook", got.Role)
 }
 
-// ---------- Functional Mapper ----------
+func TestCopierMapper_TryToDTO_ReturnsHookError(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	m.WithPostToDTOHook(func(_ *entLikeUser, _ *domainUser) error {
+		return fmt.Errorf("hook failed")
+	})
+
+	_, err := m.TryToDTO(&entLikeUser{ID: 1})
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "hook failed")
+}
+
+func TestCopierMapper_AppendBusinessEnumConverter(t *testing.T) {
+	type dtoStatus int32
+	type entityStatus string
+	type dto struct {
+		Status dtoStatus
+	}
+	type entity struct {
+		Status entityStatus
+	}
+	const (
+		dtoStatusUnspecified dtoStatus = 0
+		dtoStatusActive      dtoStatus = 1
+	)
+
+	converter := NewEnumConverter[dtoStatus, entityStatus](
+		map[int32]string{0: "UNSPECIFIED", 1: "ACTIVE"},
+		map[string]int32{"UNSPECIFIED": 0, "ACTIVE": 1},
+	)
+	m := NewCopierMapper[dto, entity]()
+	m.AppendConverters(converter.NewConverterPair())
+
+	got := m.ToDTO(&entity{Status: "ACTIVE"})
+
+	require.Equal(t, dtoStatusActive, got.Status)
+	require.NotEqual(t, dtoStatusUnspecified, got.Status)
+}
+
+func TestApplyNilConfig(t *testing.T) {
+	m := NewCopierMapper[domainUser, entLikeUser]()
+	require.NoError(t, Apply(nil, m))
+}
+
+func TestApplyNilMapper(t *testing.T) {
+	err := Apply[domainUser, entLikeUser](&Config{}, nil)
+	require.Error(t, err)
+}
 
 type typeA struct {
 	ID   int
 	Name string
 }
+
 type typeB struct {
 	Ident string
 	Label string

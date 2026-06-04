@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	mapperpb "github.com/Servora-Kit/servora/api/gen/go/servora/mapper/v1"
@@ -28,56 +29,47 @@ func main() {
 }
 
 type messageEntry struct {
-	GoName          string
-	Presets         []string
-	FieldMap        map[string]string // entity field -> proto field rename
-	FieldConverters map[string]string // proto field name -> ConverterKind constant name
-	IgnoredFields   []string
-	CustomHooks     []string
+	GoName     string
+	IgnoreRead []string
+	FieldMap   map[string]string // entity/storage Go field -> DTO Go field
 }
 
 func processFile(gen *protogen.Plugin, f *protogen.File) error {
 	var entries []messageEntry
 
 	for _, msg := range f.Messages {
-		ext := proto.GetExtension(msg.Desc.Options(), mapperpb.E_Mapper)
-		if ext == nil {
-			continue
-		}
-		rule, ok := ext.(*mapperpb.MapperMessageRule)
-		if !ok || rule == nil || !rule.Enabled {
-			continue
+		entry := messageEntry{
+			GoName:   msg.GoIdent.GoName,
+			FieldMap: make(map[string]string),
 		}
 
-		entry := messageEntry{
-			GoName:          msg.GoIdent.GoName,
-			Presets:         rule.Presets,
-			FieldMap:        make(map[string]string),
-			FieldConverters: make(map[string]string),
+		hasMapperRule := proto.HasExtension(msg.Desc.Options(), mapperpb.E_Mapper)
+		if hasMapperRule {
+			ext := proto.GetExtension(msg.Desc.Options(), mapperpb.E_Mapper)
+			rule, ok := ext.(*mapperpb.MapperRule)
+			if !ok || rule == nil {
+				return fmt.Errorf("%s: invalid mapper option", msg.Desc.FullName())
+			}
+			entry.IgnoreRead = append(entry.IgnoreRead, rule.IgnoreRead...)
 		}
 
 		for _, field := range msg.Fields {
-			fext := proto.GetExtension(field.Desc.Options(), mapperpb.E_MapperField)
-			if fext == nil {
+			if !proto.HasExtension(field.Desc.Options(), mapperpb.E_MapperField) {
 				continue
 			}
+			hasMapperRule = true
+			fext := proto.GetExtension(field.Desc.Options(), mapperpb.E_MapperField)
 			fr, ok := fext.(*mapperpb.MapperFieldRule)
 			if !ok || fr == nil {
-				continue
-			}
-			if fr.Ignore {
-				entry.IgnoredFields = append(entry.IgnoredFields, field.GoName)
-				continue
+				return fmt.Errorf("%s: invalid mapper_field option", field.Desc.FullName())
 			}
 			if fr.Rename != "" {
 				entry.FieldMap[fr.Rename] = field.GoName
 			}
-			if fr.Converter != mapperpb.ConverterKind_CONVERTER_KIND_UNSPECIFIED {
-				entry.FieldConverters[field.GoName] = converterKindToConstant(fr.Converter)
-			}
-			if fr.Custom != "" {
-				entry.CustomHooks = append(entry.CustomHooks, fr.Custom)
-			}
+		}
+
+		if !hasMapperRule {
+			continue
 		}
 
 		entries = append(entries, entry)
@@ -103,68 +95,30 @@ func generateMapperFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageNam
 	g.P("package ", pkgName)
 	g.P()
 
-	mapperPlan := g.QualifiedGoIdent(protogen.GoIdent{GoName: "MapperPlan", GoImportPath: mapperPkg})
+	mapperConfig := g.QualifiedGoIdent(protogen.GoIdent{GoName: "Config", GoImportPath: mapperPkg})
 
 	for _, e := range entries {
-		g.P("// ", e.GoName, "MapperPlan returns the declarative mapper plan")
+		g.P("// ", e.GoName, "Mapper returns the read projection mapper config")
 		g.P("// extracted from proto annotations on the ", e.GoName, " message.")
-		g.P("func ", e.GoName, "MapperPlan() *", mapperPlan, " {")
-		g.P("	return &", mapperPlan, "{")
-
-		if len(e.Presets) > 0 {
-			g.P("		Presets: []string{", formatStringSlice(e.Presets), "},")
-		}
+		g.P("func ", e.GoName, "Mapper() *", mapperConfig, " {")
+		g.P("	return &", mapperConfig, "{")
 
 		if len(e.FieldMap) > 0 {
 			g.P("		FieldMapping: map[string]string{")
-			for k, v := range e.FieldMap {
+			for _, k := range sortedKeys(e.FieldMap) {
+				v := e.FieldMap[k]
 				g.P(fmt.Sprintf("			%q: %q,", k, v))
 			}
 			g.P("		},")
 		}
 
-		if len(e.FieldConverters) > 0 {
-			converterKind := g.QualifiedGoIdent(protogen.GoIdent{GoName: "ConverterKind", GoImportPath: mapperPkg})
-			g.P("		FieldConverters: map[string]", converterKind, "{")
-			for field, kind := range e.FieldConverters {
-				kindIdent := g.QualifiedGoIdent(protogen.GoIdent{GoName: kind, GoImportPath: mapperPkg})
-				g.P(fmt.Sprintf("			%q: ", field), kindIdent, ",")
-			}
-			g.P("		},")
-		}
-
-		if len(e.IgnoredFields) > 0 {
-			g.P("		IgnoredFields: []string{", formatStringSlice(e.IgnoredFields), "},")
-		}
-
-		if len(e.CustomHooks) > 0 {
-			g.P("		CustomHooks: []string{", formatStringSlice(e.CustomHooks), "},")
+		if len(e.IgnoreRead) > 0 {
+			g.P("		IgnoreRead: []string{", formatStringSlice(e.IgnoreRead), "},")
 		}
 
 		g.P("	}")
 		g.P("}")
 		g.P()
-	}
-}
-
-func converterKindToConstant(kind mapperpb.ConverterKind) string {
-	switch kind {
-	case mapperpb.ConverterKind_CONVERTER_KIND_TIMESTAMP_TIME:
-		return "ConverterTimestampTime"
-	case mapperpb.ConverterKind_CONVERTER_KIND_TIME_PTR:
-		return "ConverterTimePTR"
-	case mapperpb.ConverterKind_CONVERTER_KIND_STRING_PTR:
-		return "ConverterStringPTR"
-	case mapperpb.ConverterKind_CONVERTER_KIND_INT64_PTR:
-		return "ConverterInt64PTR"
-	case mapperpb.ConverterKind_CONVERTER_KIND_ENUM_STRING:
-		return "ConverterEnumString"
-	case mapperpb.ConverterKind_CONVERTER_KIND_UUID_STRING:
-		return "ConverterUUIDString"
-	case mapperpb.ConverterKind_CONVERTER_KIND_INT_INT32:
-		return "ConverterIntInt32"
-	default:
-		return ""
 	}
 }
 
@@ -174,4 +128,13 @@ func formatStringSlice(ss []string) string {
 		quoted[i] = fmt.Sprintf("%q", s)
 	}
 	return strings.Join(quoted, ", ")
+}
+
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

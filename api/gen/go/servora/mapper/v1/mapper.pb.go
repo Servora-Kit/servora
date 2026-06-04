@@ -22,103 +22,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ConverterKind enumerates built-in converter types that can be referenced in field annotations.
-type ConverterKind int32
-
-const (
-	ConverterKind_CONVERTER_KIND_UNSPECIFIED ConverterKind = 0
-	// time.Time <-> *timestamppb.Timestamp
-	ConverterKind_CONVERTER_KIND_TIMESTAMP_TIME ConverterKind = 1
-	// time.Time <-> *time.Time
-	ConverterKind_CONVERTER_KIND_TIME_PTR ConverterKind = 2
-	// string <-> *string
-	ConverterKind_CONVERTER_KIND_STRING_PTR ConverterKind = 3
-	// int64 <-> *int64
-	ConverterKind_CONVERTER_KIND_INT64_PTR ConverterKind = 4
-	// protobuf enum int32 <-> entity string
-	ConverterKind_CONVERTER_KIND_ENUM_STRING ConverterKind = 5
-	// uuid.UUID <-> string (ent UUID primary key <-> proto string)
-	ConverterKind_CONVERTER_KIND_UUID_STRING ConverterKind = 6
-	// int <-> int32 (ent int <-> proto int32)
-	ConverterKind_CONVERTER_KIND_INT_INT32 ConverterKind = 7
-)
-
-// Enum value maps for ConverterKind.
-var (
-	ConverterKind_name = map[int32]string{
-		0: "CONVERTER_KIND_UNSPECIFIED",
-		1: "CONVERTER_KIND_TIMESTAMP_TIME",
-		2: "CONVERTER_KIND_TIME_PTR",
-		3: "CONVERTER_KIND_STRING_PTR",
-		4: "CONVERTER_KIND_INT64_PTR",
-		5: "CONVERTER_KIND_ENUM_STRING",
-		6: "CONVERTER_KIND_UUID_STRING",
-		7: "CONVERTER_KIND_INT_INT32",
-	}
-	ConverterKind_value = map[string]int32{
-		"CONVERTER_KIND_UNSPECIFIED":    0,
-		"CONVERTER_KIND_TIMESTAMP_TIME": 1,
-		"CONVERTER_KIND_TIME_PTR":       2,
-		"CONVERTER_KIND_STRING_PTR":     3,
-		"CONVERTER_KIND_INT64_PTR":      4,
-		"CONVERTER_KIND_ENUM_STRING":    5,
-		"CONVERTER_KIND_UUID_STRING":    6,
-		"CONVERTER_KIND_INT_INT32":      7,
-	}
-)
-
-func (x ConverterKind) Enum() *ConverterKind {
-	p := new(ConverterKind)
-	*p = x
-	return p
-}
-
-func (x ConverterKind) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ConverterKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_servora_mapper_v1_mapper_proto_enumTypes[0].Descriptor()
-}
-
-func (ConverterKind) Type() protoreflect.EnumType {
-	return &file_servora_mapper_v1_mapper_proto_enumTypes[0]
-}
-
-func (x ConverterKind) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ConverterKind.Descriptor instead.
-func (ConverterKind) EnumDescriptor() ([]byte, []int) {
-	return file_servora_mapper_v1_mapper_proto_rawDescGZIP(), []int{0}
-}
-
-// MapperMessageRule is a message-level annotation controlling mapper codegen.
-type MapperMessageRule struct {
+// MapperRule is a message-level annotation controlling read projection mapper codegen.
+type MapperRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Whether this message participates in mapper code generation.
-	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// Preset names to apply (e.g. "proto_time", "pointer", "common_proto_entity").
-	Presets       []string `protobuf:"bytes,2,rep,name=presets,proto3" json:"presets,omitempty"`
+	// Proto field names to clear after reading from storage into a DTO.
+	IgnoreRead    []string `protobuf:"bytes,1,rep,name=ignore_read,json=ignoreRead,proto3" json:"ignore_read,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MapperMessageRule) Reset() {
-	*x = MapperMessageRule{}
+func (x *MapperRule) Reset() {
+	*x = MapperRule{}
 	mi := &file_servora_mapper_v1_mapper_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MapperMessageRule) String() string {
+func (x *MapperRule) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MapperMessageRule) ProtoMessage() {}
+func (*MapperRule) ProtoMessage() {}
 
-func (x *MapperMessageRule) ProtoReflect() protoreflect.Message {
+func (x *MapperRule) ProtoReflect() protoreflect.Message {
 	mi := &file_servora_mapper_v1_mapper_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -130,36 +56,23 @@ func (x *MapperMessageRule) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MapperMessageRule.ProtoReflect.Descriptor instead.
-func (*MapperMessageRule) Descriptor() ([]byte, []int) {
+// Deprecated: Use MapperRule.ProtoReflect.Descriptor instead.
+func (*MapperRule) Descriptor() ([]byte, []int) {
 	return file_servora_mapper_v1_mapper_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *MapperMessageRule) GetEnabled() bool {
+func (x *MapperRule) GetIgnoreRead() []string {
 	if x != nil {
-		return x.Enabled
-	}
-	return false
-}
-
-func (x *MapperMessageRule) GetPresets() []string {
-	if x != nil {
-		return x.Presets
+		return x.IgnoreRead
 	}
 	return nil
 }
 
-// MapperFieldRule is a field-level annotation controlling individual field mapping.
+// MapperFieldRule is a field-level annotation controlling read projection field mapping.
 type MapperFieldRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Rename the target field in the entity.
-	Rename string `protobuf:"bytes,1,opt,name=rename,proto3" json:"rename,omitempty"`
-	// Use a built-in converter for this field.
-	Converter ConverterKind `protobuf:"varint,2,opt,name=converter,proto3,enum=servora.mapper.v1.ConverterKind" json:"converter,omitempty"`
-	// Reference a custom hook by name (registered at runtime in repo).
-	Custom string `protobuf:"bytes,3,opt,name=custom,proto3" json:"custom,omitempty"`
-	// If true, this field is excluded from mapping.
-	Ignore        bool `protobuf:"varint,4,opt,name=ignore,proto3" json:"ignore,omitempty"`
+	// Rename the storage/entity Go field used to populate this DTO field.
+	Rename        string `protobuf:"bytes,1,opt,name=rename,proto3" json:"rename,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -201,31 +114,10 @@ func (x *MapperFieldRule) GetRename() string {
 	return ""
 }
 
-func (x *MapperFieldRule) GetConverter() ConverterKind {
-	if x != nil {
-		return x.Converter
-	}
-	return ConverterKind_CONVERTER_KIND_UNSPECIFIED
-}
-
-func (x *MapperFieldRule) GetCustom() string {
-	if x != nil {
-		return x.Custom
-	}
-	return ""
-}
-
-func (x *MapperFieldRule) GetIgnore() bool {
-	if x != nil {
-		return x.Ignore
-	}
-	return false
-}
-
 var file_servora_mapper_v1_mapper_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
-		ExtensionType: (*MapperMessageRule)(nil),
+		ExtensionType: (*MapperRule)(nil),
 		Field:         50000,
 		Name:          "servora.mapper.v1.mapper",
 		Tag:           "bytes,50000,opt,name=mapper",
@@ -243,15 +135,15 @@ var file_servora_mapper_v1_mapper_proto_extTypes = []protoimpl.ExtensionInfo{
 
 // Extension fields to descriptorpb.MessageOptions.
 var (
-	// mapper declares mapper code generation rules for this message.
+	// mapper declares read projection mapper code generation rules for this message.
 	//
-	// optional servora.mapper.v1.MapperMessageRule mapper = 50000;
+	// optional servora.mapper.v1.MapperRule mapper = 50000;
 	E_Mapper = &file_servora_mapper_v1_mapper_proto_extTypes[0]
 )
 
 // Extension fields to descriptorpb.FieldOptions.
 var (
-	// mapper_field declares per-field mapping rules.
+	// mapper_field declares per-field read projection mapping rules.
 	//
 	// optional servora.mapper.v1.MapperFieldRule mapper_field = 50001;
 	E_MapperField = &file_servora_mapper_v1_mapper_proto_extTypes[1]
@@ -261,25 +153,14 @@ var File_servora_mapper_v1_mapper_proto protoreflect.FileDescriptor
 
 const file_servora_mapper_v1_mapper_proto_rawDesc = "" +
 	"\n" +
-	"\x1eservora/mapper/v1/mapper.proto\x12\x11servora.mapper.v1\x1a google/protobuf/descriptor.proto\"G\n" +
-	"\x11MapperMessageRule\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x18\n" +
-	"\apresets\x18\x02 \x03(\tR\apresets\"\x99\x01\n" +
+	"\x1eservora/mapper/v1/mapper.proto\x12\x11servora.mapper.v1\x1a google/protobuf/descriptor.proto\"-\n" +
+	"\n" +
+	"MapperRule\x12\x1f\n" +
+	"\vignore_read\x18\x01 \x03(\tR\n" +
+	"ignoreRead\")\n" +
 	"\x0fMapperFieldRule\x12\x16\n" +
-	"\x06rename\x18\x01 \x01(\tR\x06rename\x12>\n" +
-	"\tconverter\x18\x02 \x01(\x0e2 .servora.mapper.v1.ConverterKindR\tconverter\x12\x16\n" +
-	"\x06custom\x18\x03 \x01(\tR\x06custom\x12\x16\n" +
-	"\x06ignore\x18\x04 \x01(\bR\x06ignore*\x8a\x02\n" +
-	"\rConverterKind\x12\x1e\n" +
-	"\x1aCONVERTER_KIND_UNSPECIFIED\x10\x00\x12!\n" +
-	"\x1dCONVERTER_KIND_TIMESTAMP_TIME\x10\x01\x12\x1b\n" +
-	"\x17CONVERTER_KIND_TIME_PTR\x10\x02\x12\x1d\n" +
-	"\x19CONVERTER_KIND_STRING_PTR\x10\x03\x12\x1c\n" +
-	"\x18CONVERTER_KIND_INT64_PTR\x10\x04\x12\x1e\n" +
-	"\x1aCONVERTER_KIND_ENUM_STRING\x10\x05\x12\x1e\n" +
-	"\x1aCONVERTER_KIND_UUID_STRING\x10\x06\x12\x1c\n" +
-	"\x18CONVERTER_KIND_INT_INT32\x10\a:_\n" +
-	"\x06mapper\x12\x1f.google.protobuf.MessageOptions\x18І\x03 \x01(\v2$.servora.mapper.v1.MapperMessageRuleR\x06mapper:f\n" +
+	"\x06rename\x18\x01 \x01(\tR\x06rename:X\n" +
+	"\x06mapper\x12\x1f.google.protobuf.MessageOptions\x18І\x03 \x01(\v2\x1d.servora.mapper.v1.MapperRuleR\x06mapper:f\n" +
 	"\fmapper_field\x12\x1d.google.protobuf.FieldOptions\x18ц\x03 \x01(\v2\".servora.mapper.v1.MapperFieldRuleR\vmapperFieldB\xd0\x01\n" +
 	"\x15com.servora.mapper.v1B\vMapperProtoP\x01ZDgithub.com/Servora-Kit/servora/api/gen/go/servora/mapper/v1;mapperpb\xa2\x02\x03SMX\xaa\x02\x11Servora.Mapper.V1\xca\x02\x11Servora\\Mapper\\V1\xe2\x02\x1dServora\\Mapper\\V1\\GPBMetadata\xea\x02\x13Servora::Mapper::V1b\x06proto3"
 
@@ -295,26 +176,23 @@ func file_servora_mapper_v1_mapper_proto_rawDescGZIP() []byte {
 	return file_servora_mapper_v1_mapper_proto_rawDescData
 }
 
-var file_servora_mapper_v1_mapper_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_servora_mapper_v1_mapper_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_servora_mapper_v1_mapper_proto_goTypes = []any{
-	(ConverterKind)(0),                  // 0: servora.mapper.v1.ConverterKind
-	(*MapperMessageRule)(nil),           // 1: servora.mapper.v1.MapperMessageRule
-	(*MapperFieldRule)(nil),             // 2: servora.mapper.v1.MapperFieldRule
-	(*descriptorpb.MessageOptions)(nil), // 3: google.protobuf.MessageOptions
-	(*descriptorpb.FieldOptions)(nil),   // 4: google.protobuf.FieldOptions
+	(*MapperRule)(nil),                  // 0: servora.mapper.v1.MapperRule
+	(*MapperFieldRule)(nil),             // 1: servora.mapper.v1.MapperFieldRule
+	(*descriptorpb.MessageOptions)(nil), // 2: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),   // 3: google.protobuf.FieldOptions
 }
 var file_servora_mapper_v1_mapper_proto_depIdxs = []int32{
-	0, // 0: servora.mapper.v1.MapperFieldRule.converter:type_name -> servora.mapper.v1.ConverterKind
-	3, // 1: servora.mapper.v1.mapper:extendee -> google.protobuf.MessageOptions
-	4, // 2: servora.mapper.v1.mapper_field:extendee -> google.protobuf.FieldOptions
-	1, // 3: servora.mapper.v1.mapper:type_name -> servora.mapper.v1.MapperMessageRule
-	2, // 4: servora.mapper.v1.mapper_field:type_name -> servora.mapper.v1.MapperFieldRule
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	3, // [3:5] is the sub-list for extension type_name
-	1, // [1:3] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: servora.mapper.v1.mapper:extendee -> google.protobuf.MessageOptions
+	3, // 1: servora.mapper.v1.mapper_field:extendee -> google.protobuf.FieldOptions
+	0, // 2: servora.mapper.v1.mapper:type_name -> servora.mapper.v1.MapperRule
+	1, // 3: servora.mapper.v1.mapper_field:type_name -> servora.mapper.v1.MapperFieldRule
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	2, // [2:4] is the sub-list for extension type_name
+	0, // [0:2] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_servora_mapper_v1_mapper_proto_init() }
@@ -327,14 +205,13 @@ func file_servora_mapper_v1_mapper_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_mapper_v1_mapper_proto_rawDesc), len(file_servora_mapper_v1_mapper_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 2,
 			NumServices:   0,
 		},
 		GoTypes:           file_servora_mapper_v1_mapper_proto_goTypes,
 		DependencyIndexes: file_servora_mapper_v1_mapper_proto_depIdxs,
-		EnumInfos:         file_servora_mapper_v1_mapper_proto_enumTypes,
 		MessageInfos:      file_servora_mapper_v1_mapper_proto_msgTypes,
 		ExtensionInfos:    file_servora_mapper_v1_mapper_proto_extTypes,
 	}.Build()

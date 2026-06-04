@@ -6,51 +6,24 @@ import "google/protobuf/descriptor.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/mapper/v1;mapperpb";
 
-// ConverterKind enumerates built-in converter types that can be referenced in field annotations.
-enum ConverterKind {
-  CONVERTER_KIND_UNSPECIFIED = 0;
-  // time.Time <-> *timestamppb.Timestamp
-  CONVERTER_KIND_TIMESTAMP_TIME = 1;
-  // time.Time <-> *time.Time
-  CONVERTER_KIND_TIME_PTR = 2;
-  // string <-> *string
-  CONVERTER_KIND_STRING_PTR = 3;
-  // int64 <-> *int64
-  CONVERTER_KIND_INT64_PTR = 4;
-  // protobuf enum int32 <-> entity string
-  CONVERTER_KIND_ENUM_STRING = 5;
-  // uuid.UUID <-> string (ent UUID primary key <-> proto string)
-  CONVERTER_KIND_UUID_STRING = 6;
-  // int <-> int32 (ent int <-> proto int32)
-  CONVERTER_KIND_INT_INT32 = 7;
+// MapperRule is a message-level annotation controlling read projection mapper codegen.
+message MapperRule {
+  // Proto field names to clear after reading from storage into a DTO.
+  repeated string ignore_read = 1;
 }
 
-// MapperMessageRule is a message-level annotation controlling mapper codegen.
-message MapperMessageRule {
-  // Whether this message participates in mapper code generation.
-  bool enabled = 1;
-  // Preset names to apply (e.g. "proto_time", "pointer", "common_proto_entity").
-  repeated string presets = 2;
-}
-
-// MapperFieldRule is a field-level annotation controlling individual field mapping.
+// MapperFieldRule is a field-level annotation controlling read projection field mapping.
 message MapperFieldRule {
-  // Rename the target field in the entity.
+  // Rename the storage/entity Go field used to populate this DTO field.
   string rename = 1;
-  // Use a built-in converter for this field.
-  ConverterKind converter = 2;
-  // Reference a custom hook by name (registered at runtime in repo).
-  string custom = 3;
-  // If true, this field is excluded from mapping.
-  bool ignore = 4;
 }
 
 extend google.protobuf.MessageOptions {
-  // mapper declares mapper code generation rules for this message.
-  MapperMessageRule mapper = 50000;
+  // mapper declares read projection mapper code generation rules for this message.
+  MapperRule mapper = 50000;
 }
 
 extend google.protobuf.FieldOptions {
-  // mapper_field declares per-field mapping rules.
+  // mapper_field declares per-field read projection mapping rules.
   MapperFieldRule mapper_field = 50001;
 }

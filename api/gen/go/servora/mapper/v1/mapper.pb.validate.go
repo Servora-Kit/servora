@@ -35,44 +35,41 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on MapperMessageRule with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *MapperMessageRule) Validate() error {
+// Validate checks the field values on MapperRule with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *MapperRule) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on MapperMessageRule with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// MapperMessageRuleMultiError, or nil if none found.
-func (m *MapperMessageRule) ValidateAll() error {
+// ValidateAll checks the field values on MapperRule with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in MapperRuleMultiError, or
+// nil if none found.
+func (m *MapperRule) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *MapperMessageRule) validate(all bool) error {
+func (m *MapperRule) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Enabled
-
 	if len(errors) > 0 {
-		return MapperMessageRuleMultiError(errors)
+		return MapperRuleMultiError(errors)
 	}
 
 	return nil
 }
 
-// MapperMessageRuleMultiError is an error wrapping multiple validation errors
-// returned by MapperMessageRule.ValidateAll() if the designated constraints
-// aren't met.
-type MapperMessageRuleMultiError []error
+// MapperRuleMultiError is an error wrapping multiple validation errors
+// returned by MapperRule.ValidateAll() if the designated constraints aren't met.
+type MapperRuleMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m MapperMessageRuleMultiError) Error() string {
+func (m MapperRuleMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -81,11 +78,11 @@ func (m MapperMessageRuleMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m MapperMessageRuleMultiError) AllErrors() []error { return m }
+func (m MapperRuleMultiError) AllErrors() []error { return m }
 
-// MapperMessageRuleValidationError is the validation error returned by
-// MapperMessageRule.Validate if the designated constraints aren't met.
-type MapperMessageRuleValidationError struct {
+// MapperRuleValidationError is the validation error returned by
+// MapperRule.Validate if the designated constraints aren't met.
+type MapperRuleValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -93,24 +90,22 @@ type MapperMessageRuleValidationError struct {
 }
 
 // Field function returns field value.
-func (e MapperMessageRuleValidationError) Field() string { return e.field }
+func (e MapperRuleValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e MapperMessageRuleValidationError) Reason() string { return e.reason }
+func (e MapperRuleValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e MapperMessageRuleValidationError) Cause() error { return e.cause }
+func (e MapperRuleValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e MapperMessageRuleValidationError) Key() bool { return e.key }
+func (e MapperRuleValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e MapperMessageRuleValidationError) ErrorName() string {
-	return "MapperMessageRuleValidationError"
-}
+func (e MapperRuleValidationError) ErrorName() string { return "MapperRuleValidationError" }
 
 // Error satisfies the builtin error interface
-func (e MapperMessageRuleValidationError) Error() string {
+func (e MapperRuleValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -122,14 +117,14 @@ func (e MapperMessageRuleValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sMapperMessageRule.%s: %s%s",
+		"invalid %sMapperRule.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = MapperMessageRuleValidationError{}
+var _ error = MapperRuleValidationError{}
 
 var _ interface {
 	Field() string
@@ -137,7 +132,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = MapperMessageRuleValidationError{}
+} = MapperRuleValidationError{}
 
 // Validate checks the field values on MapperFieldRule with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -162,12 +157,6 @@ func (m *MapperFieldRule) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for Rename
-
-	// no validation rules for Converter
-
-	// no validation rules for Custom
-
-	// no validation rules for Ignore
 
 	if len(errors) > 0 {
 		return MapperFieldRuleMultiError(errors)

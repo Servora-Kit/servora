@@ -22,15 +22,13 @@ var (
 	_ descriptorpb.FileDescriptorSet
 )
 
-// Redact method implementation for MapperMessageRule
-func (x *MapperMessageRule) Redact() string {
+// Redact method implementation for MapperRule
+func (x *MapperRule) Redact() string {
 	if x == nil {
 		return ""
 	}
 
-	// Safe field: Enabled
-
-	// Safe field: Presets
+	// Safe field: IgnoreRead
 	return x.String()
 }
 
@@ -41,11 +39,5 @@ func (x *MapperFieldRule) Redact() string {
 	}
 
 	// Safe field: Rename
-
-	// Safe field: Converter
-
-	// Safe field: Custom
-
-	// Safe field: Ignore
 	return x.String()
 }
