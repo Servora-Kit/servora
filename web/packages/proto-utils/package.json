@@ -1,0 +1,68 @@
+{
+    "name": "@servora/proto-utils",
+    "version": "0.1.1",
+    "description": "Servora Proto 工具：CRUD 查询、FieldMask、HTTP client、Kratos 错误解析",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./query": {
+            "types": "./dist/query.d.ts",
+            "import": "./dist/query.js"
+        },
+        "./client": {
+            "types": "./dist/client/index.d.ts",
+            "import": "./dist/client/index.js"
+        },
+        "./client/request": {
+            "types": "./dist/client/request.d.ts",
+            "import": "./dist/client/request.js"
+        },
+        "./client/errors": {
+            "types": "./dist/client/errors.d.ts",
+            "import": "./dist/client/errors.js"
+        },
+        "./proto/*": {
+            "types": "./dist/gen/*/index.d.ts",
+            "import": "./dist/gen/*/index.js"
+        },
+        "./request": {
+            "types": "./dist/client/request.d.ts",
+            "import": "./dist/client/request.js"
+        },
+        "./errors": {
+            "types": "./dist/client/errors.d.ts",
+            "import": "./dist/client/errors.js"
+        }
+    },
+    "files": [
+        "dist",
+        "src",
+        "!src/**/*_test.ts"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "clean": "rm -rf dist",
+        "typecheck": "tsc --noEmit",
+        "prepublishOnly": "npm run clean && npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Servora-Kit/servora.git",
+        "directory": "web/packages/proto-utils"
+    },
+    "homepage": "https://github.com/Servora-Kit/servora/tree/main/web/packages/proto-utils",
+    "bugs": {
+        "url": "https://github.com/Servora-Kit/servora/issues"
+    },
+    "license": "MIT",
+    "sideEffects": false,
+    "dependencies": {
+        "ofetch": "^1.5.1"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.2"
+    }
+}

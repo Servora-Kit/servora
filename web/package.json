@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "format": "biome format --write",
+    "lint": "biome lint",
+    "check": "biome check",
+    "check:fix": "biome check --fix"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15"
+  }
+}

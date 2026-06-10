@@ -14,6 +14,7 @@ endif
 ROOT_DIR             := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 GO_WORKSPACE_MODULES := . api/gen
 BUF_GO_GEN_TEMPLATE  := buf.go.gen.yaml
+BUF_TS_GEN_TEMPLATE  := buf.typescript.gen.yaml
 LINT_GOWORK          ?= auto
 
 GOPATH    := $(shell go env GOPATH)
@@ -25,6 +26,7 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 PROTOC_GEN_GO_VERSION        := latest
 PROTOC_GEN_GO_GRPC_VERSION   := latest
 PROTOC_GEN_GO_HTTP_VERSION   := v2.0.0-20260404020628-f149714c1d54
+PROTOC_GEN_TYPESCRIPT_HTTP_VERSION := latest
 PROTOC_GEN_GO_ERRORS_VERSION := latest
 PROTOC_GEN_OPENAPI_VERSION   := latest
 PROTOC_GEN_VALIDATE_VERSION  := latest
@@ -65,6 +67,7 @@ plugin: ## Install protoc-gen-* plugins (third-party + servora)
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION)
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@$(PROTOC_GEN_GO_HTTP_VERSION)
+	@go install github.com/go-kratos/protoc-gen-typescript-http@$(PROTOC_GEN_TYPESCRIPT_HTTP_VERSION)
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@$(PROTOC_GEN_GO_ERRORS_VERSION)
 	@go install github.com/google/gnostic/cmd/protoc-gen-openapi@$(PROTOC_GEN_OPENAPI_VERSION)
 	@go install github.com/envoyproxy/protoc-gen-validate@$(PROTOC_GEN_VALIDATE_VERSION)
@@ -111,6 +114,24 @@ gen: ## Generate proto Go code
 	@echo "==> Generating code via $(BUF_GO_GEN_TEMPLATE)..."
 	@buf generate --template $(BUF_GO_GEN_TEMPLATE)
 	@echo "✓ Code generated"
+
+.PHONY: gen.ts
+gen.ts: ## Generate TypeScript code for Servora built-in proto
+	@echo "==> Generating TypeScript via $(BUF_TS_GEN_TEMPLATE)..."
+	@buf generate --template $(BUF_TS_GEN_TEMPLATE)
+	@echo "✓ TypeScript code generated"
+
+.PHONY: web.install
+web.install: ## Install frontend package dependencies
+	@cd web && pnpm install
+
+.PHONY: web.typecheck
+web.typecheck: ## Typecheck @servora/proto-utils
+	@cd web/packages/proto-utils && pnpm run typecheck
+
+.PHONY: web.build
+web.build: ## Build @servora/proto-utils
+	@cd web/packages/proto-utils && pnpm run build
 
 .PHONY: gen.fresh
 gen.fresh: clean gen ## Wipe api/gen/go and regenerate (use after proto rename/deletion or plugin removal)
