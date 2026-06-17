@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/Servora-Kit/servora/obs/audit"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 func TestNewAuditor_ImplementsInterface(t *testing.T) {

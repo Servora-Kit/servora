@@ -32,7 +32,7 @@ const (
 )
 
 // Config holds audit Kafka behavior. Kafka connection construction belongs to
-// infra/kafka; this backend only owns topic, record encoding, and production.
+// contrib/kafka; this backend only owns topic, record encoding, and production.
 type Config struct {
 	Client         *kgo.Client
 	Topic          string

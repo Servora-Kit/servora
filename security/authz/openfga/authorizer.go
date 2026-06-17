@@ -12,7 +12,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Servora-Kit/servora/infra/redis"
+	"github.com/Servora-Kit/servora/contrib/db/redis"
 	"github.com/Servora-Kit/servora/security/authz"
 	"github.com/Servora-Kit/servora/security/authz/batch"
 	"github.com/Servora-Kit/servora/security/authz/lister"
@@ -20,7 +20,7 @@ import (
 
 // Compile-time interface assertions.
 var (
-	_ authz.Authorizer     = (*Authorizer)(nil)
+	_ authz.Authorizer      = (*Authorizer)(nil)
 	_ batch.BatchAuthorizer = (*Authorizer)(nil)
 	_ lister.Lister         = (*Authorizer)(nil)
 )

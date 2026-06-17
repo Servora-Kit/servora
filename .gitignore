@@ -38,6 +38,8 @@ Thumbs.db
 bin/
 logs/
 cache/
+!contrib/cache/
+!contrib/cache/**
 data.db
 examples/
 /server

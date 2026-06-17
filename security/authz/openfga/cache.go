@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Servora-Kit/servora/infra/redis"
+	"github.com/Servora-Kit/servora/contrib/db/redis"
 )
 
 const (

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/Servora-Kit/servora/obs/audit"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 type countAuditor struct {

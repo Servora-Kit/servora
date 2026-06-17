@@ -7,8 +7,8 @@ import (
 	"context"
 	"errors"
 
-	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/Servora-Kit/servora/obs/audit"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 type multiAuditor struct {

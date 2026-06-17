@@ -10,7 +10,7 @@ Proto files are organized in these top-level groups under `servora/`:
 |-------|---------|---------|
 | Annotations (flat) | Extension annotations consumed by `protoc-gen-servora-*` plugins. Each namespace holds a single `annotations.proto`. | `audit/v1` / `authn/v1` / `authz/v1` / `mapper/v1` / `conf/v1` |
 | `core/v1/` | Framework startup bootstrap model. | `bootstrap.proto` (Bootstrap / App / Server / Data / Registry / Source / Observability) |
-| `infra/<域>/v1/` | Infrastructure sections consumed by infra runtime packages. | `redis` / `kafka` / `mail` / `db/clickhouse` |
+| `contrib/<域>/v1/` | Optional ecosystem sections consumed by contrib packages or business bootstrap code. | `db/redis` / `kafka` / `mail` / `db/clickhouse` |
 | `security/<域>/v1/` | Security runtime configuration consumed by security packages. | `tls` / `jwt` / `authn/oidc` / `authz/openfga` |
 | `transport/<域>/v1/` | Transport runtime configuration consumed by transport packages. | `http/cors` |
 | `obs/<域>/v1/` | Observability runtime configuration consumed by obs packages. | `audit` |
@@ -25,10 +25,10 @@ Proto files are organized in these top-level groups under `servora/`:
 | `servora.core.v1` | Startup-required framework configuration (Bootstrap and its sub-messages). Loaded by `bootstrap.NewRuntime`; business code reads it via `runtime.Bootstrap`. |
 | `servora.obs.audit.v1` | Audit emitter contract (`AuditContract`). |
 | `servora.transport.http.cors.v1` | HTTP CORS middleware configuration. Defaults are declared with proto field annotations and applied through generated `ApplyDefaults()`. |
-| `servora.infra.redis.v1` | Redis client configuration; section key `redis` (optional), loaded explicitly with `bootstrap.Scan`. |
-| `servora.infra.kafka.v1` | Kafka client configuration; section key `kafka` (optional), loaded explicitly with `bootstrap.Scan` and consumed by `infra/kafka`. |
-| `servora.infra.db.clickhouse.v1` | ClickHouse client configuration; section key `clickhouse` (optional), loaded explicitly with `bootstrap.Scan` and consumed by `infra/db/clickhouse`. |
-| `servora.infra.mail.v1` | SMTP and sender identity configuration consumed by mail infrastructure. |
+| `servora.contrib.db.redis.v1` | Redis client configuration; section key `redis` (optional), loaded explicitly with `bootstrap.Scan` and consumed by `contrib/db/redis`. |
+| `servora.contrib.kafka.v1` | Kafka client configuration; section key `kafka` (optional), loaded explicitly with `bootstrap.Scan` and consumed by `contrib/kafka`. |
+| `servora.contrib.db.clickhouse.v1` | ClickHouse client configuration; section key `clickhouse` (optional), loaded explicitly with `bootstrap.Scan` and consumed by `contrib/db/clickhouse`. |
+| `servora.contrib.mail.v1` | SMTP and sender identity configuration provided as a proto-only convenience section. |
 | `servora.security.tls.v1` | Shared TLS configuration referenced by core server/client endpoint config and consumed by `security/tls`. |
 | `servora.security.jwt.v1` | JWT issuer / verifier configuration, including generated defaults for `access_expire=3600` and `refresh_expire=604800`. |
 | `servora.security.authn.oidc.v1` | OIDC authn backend public config; section key `authn.oidc` (optional), generated required checks for `crypto_key` / `login_base_url` and defaults for refresh-token/logout fields. |

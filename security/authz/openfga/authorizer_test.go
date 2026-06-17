@@ -12,8 +12,8 @@ import (
 // Compile-time interface assertions — if these fail, the package won't compile.
 var (
 	_ authz.Authorizer      = (*Authorizer)(nil)
-	_ batch.BatchAuthorizer  = (*Authorizer)(nil)
-	_ lister.Lister          = (*Authorizer)(nil)
+	_ batch.BatchAuthorizer = (*Authorizer)(nil)
+	_ lister.Lister         = (*Authorizer)(nil)
 )
 
 func TestAuthorizer_ImplementsAuthzAuthorizer(t *testing.T) {

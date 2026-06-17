@@ -16,11 +16,11 @@ type mockTransport struct {
 	operation string
 }
 
-func (m *mockTransport) Kind() transport.Kind       { return transport.KindGRPC }
-func (m *mockTransport) Endpoint() string            { return "test-endpoint" }
-func (m *mockTransport) Operation() string           { return m.operation }
-func (m *mockTransport) RequestHeader() transport.Header  { return nil }
-func (m *mockTransport) ReplyHeader() transport.Header    { return nil }
+func (m *mockTransport) Kind() transport.Kind            { return transport.KindGRPC }
+func (m *mockTransport) Endpoint() string                { return "test-endpoint" }
+func (m *mockTransport) Operation() string               { return m.operation }
+func (m *mockTransport) RequestHeader() transport.Header { return nil }
+func (m *mockTransport) ReplyHeader() transport.Header   { return nil }
 
 // mockAuditor records emitted events.
 type mockAuditor struct {

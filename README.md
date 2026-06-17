@@ -124,7 +124,7 @@ message Redis {
 ```go
 import (
     "github.com/Servora-Kit/servora/core/bootstrap"
-    redispb "github.com/Servora-Kit/servora/api/gen/go/servora/infra/redis/v1"
+    redispb "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1"
 )
 
 redisCfg := &redispb.Redis{}

@@ -63,7 +63,7 @@ Servora audit extensions 定义在 `extensions.go`：`authid`、`authtype`、`tr
 - `noop/`：禁用或测试。
 - `stdout/`：本地开发 JSON 输出。
 - `log/`：本地/demo 的人类可读结构化 slog 输出。
-- `kafka/`：基于 franz-go 的 CloudEvents Kafka 发送后端和轻量 binding adapter；Kafka client 接线复用 `infra/kafka` 或调用方提供的 `*kgo.Client`。
+- `kafka/`：基于 franz-go 的 CloudEvents Kafka 发送后端和轻量 binding adapter；Kafka client 接线复用 `contrib/kafka` 或调用方提供的 `*kgo.Client`。
 - `multi/`：fanout 多个 auditor；单个后端失败不应改变业务返回。
 
 ## 常见反模式

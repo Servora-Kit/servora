@@ -18,20 +18,19 @@ Servora 是 ProtoBuf-contract-first 的模块化框架库。仓库同时包含 G
 | `transport/` | Kratos HTTP/gRPC client/server 装配与通用 middleware |
 | `security/` | authn/authz/jwt/tls 等安全基础设施 |
 | `obs/` | logger/tracing/metrics/audit 可观测性能力 |
-| `infra/` | kafka/db/k8s/redis/mail 等基础设施适配 |
-| `contrib/` | 第三方生态桥接，当前主要是 GORM slog adapter |
+| `contrib/` | kafka/db/k8s/redis/cache 等可选生态集成与第三方系统接线；mail 只保留 proto 配置 |
 
 隐藏工具目录（`.claude`、`.cursor`、`.opencode`、`.sisyphus`、`.understand-anything`、`.worktrees`、`.venv`）不是框架源码，不要写入架构说明或测试范围。
 
 ## 开发约束
 
-提交格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议使用一级域或二级域：`api`、`cmd`、`web/proto-utils`、`core/bootstrap`、`transport/server`、`security/authn`、`obs/audit`、`infra/redis` 等。
+提交格式：`type(scope): description`。type：`feat`/`fix`/`refactor`/`docs`/`test`/`chore`。scope 建议使用一级域或二级域：`api`、`cmd`、`web/proto-utils`、`core/bootstrap`、`transport/server`、`security/authn`、`obs/audit`、`contrib/db/redis` 等。
 
 Go 代码保持 `gofmt`/`goimports`，错误返回带上下文，测试优先表驱动。接口保持小；接受 interface、返回具体类型。
 
 ## 版本与 tag
 
-- 修改 `core/`、`transport/`、`security/`、`obs/`、`infra/`、`cmd/`、`api/protos/` 中影响使用者的代码时，主模块打 `git tag v0.x.y`。
+- 修改 `core/`、`transport/`、`security/`、`obs/`、`contrib/`、`cmd/`、`api/protos/` 中影响使用者的代码时，主模块打 `git tag v0.x.y`。
 - proto 或 `api/gen/` 产物变化时，额外执行 `make tag.api TAG=v0.x.y`，生成 `api/gen/v0.x.y` tag。
 - 生成器（`cmd/protoc-gen-servora-*`）改动导致 `api/gen/` 产物变化时，即使 `.proto` 未变，也要打 `api/gen` tag。
 - 仅文档、Makefile、CI、基础设施配置变更通常不打 tag。

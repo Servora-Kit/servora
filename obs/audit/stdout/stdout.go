@@ -9,8 +9,8 @@ import (
 	"io"
 	"os"
 
-	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/Servora-Kit/servora/obs/audit"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 // Option configures the stdout auditor.
