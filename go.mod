@@ -2,8 +2,6 @@ module github.com/Servora-Kit/servora
 
 go 1.26.1
 
-replace github.com/go-kratos/kratos/v3 v3.0.0 => github.com/go-kratos/kratos/v3 v3.0.0-20260621094049-2726761cdd77
-
 require (
 	entgo.io/ent v0.14.5
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0

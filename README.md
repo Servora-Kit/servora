@@ -41,12 +41,6 @@ curl 'http://127.0.0.1:8001/v1/hello?greeting=hi'
 
 完整流程（全容器化 / 热重载 / 端口约定 / 目录结构）见 [servora-example](https://github.com/Servora-Kit/servora-example)。
 
-> Kratos v3 pre-tag 阶段：在上游发布可解析的 `v3.0.0` tag 前，使用 Servora v3 基线的下游 main module 需要显式加入：
->
-> ```go
-> replace github.com/go-kratos/kratos/v3 v3.0.0 => github.com/go-kratos/kratos/v3 v3.0.0-20260621094049-2726761cdd77
-> ```
-
 ## 特性✨
 
 ### 服务端

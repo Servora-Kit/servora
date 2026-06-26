@@ -236,8 +236,8 @@ github.com/go-kratos/kratos/contrib/registry/kubernetes/v3 v3.0.0-20260621094049
 github.com/go-kratos/kratos/contrib/registry/kubernetes/v3 v3.0.0-20260621094049-2726761cdd77/go.mod h1:/7cDUos6CS7lClqVzqeaAJi91O96EZr56fz7Qnceg50=
 github.com/go-kratos/kratos/contrib/registry/nacos/v3 v3.0.0-20260621094049-2726761cdd77 h1:0xJnSTx7uZngyTZ+NYuQUHo5rhGLFAyHHQCdNhAksnE=
 github.com/go-kratos/kratos/contrib/registry/nacos/v3 v3.0.0-20260621094049-2726761cdd77/go.mod h1:MwQEUnoPW8rwCR2mRCDm+nQQWmlz2p+DELG75Iy+0+I=
-github.com/go-kratos/kratos/v3 v3.0.0-20260621094049-2726761cdd77 h1:LEUBqzmd6eYLivPO2GOFsahx7bbUGfL4QYKHEOYBnBI=
-github.com/go-kratos/kratos/v3 v3.0.0-20260621094049-2726761cdd77/go.mod h1:8l+0M5UPlm/5hWLvS+wzxHRVRv6sHMG6Lgb4+rw1KIs=
+github.com/go-kratos/kratos/v3 v3.0.0 h1:dCXqKoeo2Bo9jgC72YfuwJ3g7bPCkHeVeNGyZQ51bLE=
+github.com/go-kratos/kratos/v3 v3.0.0/go.mod h1:8l+0M5UPlm/5hWLvS+wzxHRVRv6sHMG6Lgb4+rw1KIs=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=
 github.com/go-logfmt/logfmt v0.5.0/go.mod h1:wCYkCAKZfumFQihp8CzCvQ3paCTfi41vtzG1KdI/P7A=
