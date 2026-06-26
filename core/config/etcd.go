@@ -9,7 +9,7 @@ import (
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v3/config"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 

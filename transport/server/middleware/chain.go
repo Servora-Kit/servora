@@ -4,16 +4,15 @@ package middleware
 import (
 	"log/slog"
 
-	"github.com/go-kratos/kratos/contrib/middleware/validate/v2"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/middleware/logging"
-	kmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
-	"github.com/go-kratos/kratos/v2/middleware/ratelimit"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	"github.com/go-kratos/kratos/contrib/middleware/validate/v3"
+	kmetrics "github.com/go-kratos/kratos/contrib/otel/v3/metrics"
+	"github.com/go-kratos/kratos/contrib/otel/v3/tracing"
+	"github.com/go-kratos/kratos/v3/middleware"
+	"github.com/go-kratos/kratos/v3/middleware/logging"
+	"github.com/go-kratos/kratos/v3/middleware/ratelimit"
+	"github.com/go-kratos/kratos/v3/middleware/recovery"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	"github.com/Servora-Kit/servora/obs/metrics"
 )
 
@@ -40,7 +39,7 @@ import (
 //	    WithTrace(trace).
 //	    WithMetrics(mtc).
 //	    Build()
-//	// 业务通过 builtin append 追加 authn/authz/audit wrapper
+//	// 业务通过 builtin append 追加 authn/authz wrapper
 //	ms = append(ms, authn.Server(authn.Multi(authn.Named(jwt.Scheme, jwt.NewAuthenticator(jwt.WithVerifier(v))))), authz.Server(fgaAuth))
 //
 // 自实现 Authenticator 的高级用法（非 jwt 载体或自定义引擎）：
@@ -113,8 +112,7 @@ func (b *ChainBuilder) WithoutRateLimit() *ChainBuilder {
 //  5. Validate  - Proto 参数校验
 //  6. Metrics   - 记录请求指标
 //
-// 返回的切片可以通过 append 追加业务特定的中间件（如 authn / authz / audit）。
-// 审计中间件由业务代码通过 audit.Middleware 自行挂载。
+// 返回的切片可以通过 append 追加业务特定的中间件（如 authn / authz）。
 func (b *ChainBuilder) Build() []middleware.Middleware {
 	var ms []middleware.Middleware
 
@@ -127,7 +125,7 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 	}
 
 	// 3. Logging - 必须
-	ms = append(ms, logging.Server(kratosv2.Wrap(b.logger)))
+	ms = append(ms, logging.Server(b.logger))
 
 	// 4. RateLimit - 默认启用
 	if b.rateLimit {

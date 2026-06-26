@@ -14,8 +14,8 @@ import (
 	"time"
 
 	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/go-kratos/kratos/v3/middleware/recovery"
+	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"log/slog"
 

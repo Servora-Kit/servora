@@ -41,6 +41,12 @@ curl 'http://127.0.0.1:8001/v1/hello?greeting=hi'
 
 完整流程（全容器化 / 热重载 / 端口约定 / 目录结构）见 [servora-example](https://github.com/Servora-Kit/servora-example)。
 
+> Kratos v3 pre-tag 阶段：在上游发布可解析的 `v3.0.0` tag 前，使用 Servora v3 基线的下游 main module 需要显式加入：
+>
+> ```go
+> replace github.com/go-kratos/kratos/v3 v3.0.0 => github.com/go-kratos/kratos/v3 v3.0.0-20260621094049-2726761cdd77
+> ```
+
 ## 特性✨
 
 ### 服务端
@@ -49,14 +55,15 @@ Servora 提供了极为方便的 HTTP、gRPC 服务端的浅层封装。`WithCon
 
 ```go
 import (
+    "log/slog"
+
     corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
     svrgrpc "github.com/Servora-Kit/servora/transport/server/grpc"
-    logger "github.com/Servora-Kit/servora/obs/logging"
     pb "myapp/api/gen/go/myapp/user/v1"
-    kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+    kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 )
 
-func NewGRPCServer(c *corev1.Server, l logger.Logger, svc *UserService) *kgrpc.Server {
+func NewGRPCServer(c *corev1.Server, l *slog.Logger, svc *UserService) *kgrpc.Server {
     return svrgrpc.NewServer(
         svrgrpc.WithConfig(c),
         svrgrpc.WithLogger(l),
@@ -74,14 +81,15 @@ Servora 提供了极为方便的 HTTP、gRPC 客户端的浅层封装。`Dialer`
 ```go
 import (
     "context"
+    "log/slog"
+
     corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
     clgrpc "github.com/Servora-Kit/servora/transport/client/grpc"
-    logger "github.com/Servora-Kit/servora/obs/logging"
     pb "myapp/api/gen/go/myapp/user/v1"
-    "github.com/go-kratos/kratos/v2/registry"
+    "github.com/go-kratos/kratos/v3/registry"
 )
 
-func CallUser(ctx context.Context, l logger.Logger, data *corev1.Data, d registry.Discovery) error {
+func CallUser(ctx context.Context, l *slog.Logger, data *corev1.Data, d registry.Discovery) error {
     dialer := clgrpc.NewDialer(
         clgrpc.WithData(data),
         clgrpc.WithDiscovery(d),

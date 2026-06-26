@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	kconfig "github.com/go-kratos/kratos/v2/config"
+	kconfig "github.com/go-kratos/kratos/v3/config"
 )
 
 // Section is the contract implemented by configuration messages that opt into

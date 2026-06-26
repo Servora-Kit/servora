@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-kratos/kratos/v2/middleware/selector"
+	"github.com/go-kratos/kratos/v3/middleware/selector"
 )
 
 // MatcherMode controls matching strategy

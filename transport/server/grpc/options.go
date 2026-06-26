@@ -4,8 +4,8 @@ import (
 	"log/slog"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/go-kratos/kratos/v2/middleware"
-	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/go-kratos/kratos/v3/middleware"
+	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 )
 
 type Registrar func(*kgrpc.Server)

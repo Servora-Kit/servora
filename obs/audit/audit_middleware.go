@@ -5,8 +5,8 @@ import (
 	"log/slog"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/go-kratos/kratos/v3/middleware"
+	"github.com/go-kratos/kratos/v3/transport"
 )
 
 // CompiledRule describes how to audit a single RPC operation.
@@ -111,4 +111,9 @@ func Middleware(auditor Auditor, opts ...MiddlewareOption) middleware.Middleware
 			return resp, err
 		}
 	}
+}
+
+// Collector is the ChainBuilder-facing name for the audit middleware.
+func Collector(auditor Auditor, opts ...MiddlewareOption) middleware.Middleware {
+	return Middleware(auditor, opts...)
 }

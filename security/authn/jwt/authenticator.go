@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	gojwt "github.com/golang-jwt/jwt/v5"
 
 	"github.com/Servora-Kit/servora/security/authn"

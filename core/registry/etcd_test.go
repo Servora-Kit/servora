@@ -8,7 +8,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/go-kratos/kratos/v2/registry"
+	"github.com/go-kratos/kratos/v3/registry"
 )
 
 // TestEtcdRegistryAndDiscovery 测试 etcd 注册和发现功能

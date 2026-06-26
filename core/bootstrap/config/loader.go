@@ -10,9 +10,9 @@ import (
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	governanceConfig "github.com/Servora-Kit/servora/core/config"
 
-	kconfig "github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/env"
-	"github.com/go-kratos/kratos/v2/config/file"
+	kconfig "github.com/go-kratos/kratos/v3/config"
+	"github.com/go-kratos/kratos/v3/config/env"
+	"github.com/go-kratos/kratos/v3/config/file"
 )
 
 // LoadBootstrap 加载服务启动配置，并返回可持续 watch 的 Kratos 配置实例。

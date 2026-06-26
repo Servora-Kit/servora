@@ -9,8 +9,8 @@ import (
 	"github.com/Servora-Kit/servora/obs/metrics"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 	"github.com/Servora-Kit/servora/transport/server/http/swagger"
-	"github.com/go-kratos/kratos/v2/middleware"
-	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/go-kratos/kratos/v3/middleware"
+	khttp "github.com/go-kratos/kratos/v3/transport/http"
 )
 
 type Registrar func(*khttp.Server)

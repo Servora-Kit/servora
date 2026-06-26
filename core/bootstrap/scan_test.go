@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	kconfig "github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/file"
+	kconfig "github.com/go-kratos/kratos/v3/config"
+	"github.com/go-kratos/kratos/v3/config/file"
 )
 
 // loadKratosConfig writes the supplied yaml to a tempfile and returns a loaded

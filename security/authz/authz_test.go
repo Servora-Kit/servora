@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
@@ -29,8 +29,8 @@ type fakeTransport struct {
 func (f *fakeTransport) Kind() transport.Kind            { return transport.KindHTTP }
 func (f *fakeTransport) Endpoint() string                { return "" }
 func (f *fakeTransport) Operation() string               { return f.operation }
-func (f *fakeTransport) RequestHeader() transport.Header  { return &fakeHeader{} }
-func (f *fakeTransport) ReplyHeader() transport.Header    { return &fakeHeader{} }
+func (f *fakeTransport) RequestHeader() transport.Header { return &fakeHeader{} }
+func (f *fakeTransport) ReplyHeader() transport.Header   { return &fakeHeader{} }
 
 type fakeHeader struct{}
 

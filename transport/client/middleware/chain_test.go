@@ -10,7 +10,7 @@ import (
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/obs/metrics"
 	"github.com/Servora-Kit/servora/security/authn/jwt"
-	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	"go.opentelemetry.io/otel/metric/noop"
 	"log/slog"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	nacosCfg "github.com/go-kratos/kratos/contrib/config/nacos/v2"
-	"github.com/go-kratos/kratos/v2/config"
+	nacosCfg "github.com/go-kratos/kratos/contrib/config/nacos/v3"
+	"github.com/go-kratos/kratos/v3/config"
 
 	"github.com/nacos-group/nacos-sdk-go/clients"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"

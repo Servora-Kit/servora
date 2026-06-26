@@ -1,12 +1,17 @@
 package bootstrap
 
 import (
+	"bytes"
 	"errors"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	klog "github.com/go-kratos/kratos/v3/log"
 )
 
 func TestResolveAppIdentity_ConfigValuesWin(t *testing.T) {
@@ -92,6 +97,43 @@ func TestNewRuntime_OptionsFillConfigAndServiceID(t *testing.T) {
 	}
 	if len(rt.cleanups) != 3 {
 		t.Fatalf("cleanups = %d, want 3", len(rt.cleanups))
+	}
+}
+
+func TestNewRuntime_BindsKratosDefaultLogger(t *testing.T) {
+	old := klog.Default()
+	t.Cleanup(func() { klog.SetDefault(old) })
+
+	var buf bytes.Buffer
+
+	configFile := writeBootstrapConfig(t, "app:\n  env: dev\n")
+	withHostname(t, "node-a", nil)
+
+	rt, err := NewRuntime(
+		configFile,
+		Name("default.service"),
+		Version("v1.0.0"),
+		WithLogHandlerFunc(func(_ io.Writer, lvl slog.Level) slog.Handler {
+			return slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: lvl})
+		}),
+	)
+	if err != nil {
+		t.Fatalf("NewRuntime() error = %v", err)
+	}
+	defer func() { _ = rt.Close(t.Context()) }()
+
+	if klog.Default() != rt.Logger {
+		t.Fatal("expected Kratos default logger to be runtime logger")
+	}
+
+	rt.NewApp()
+	if klog.Default() != rt.Logger {
+		t.Fatal("Runtime.NewApp should not rewrite Kratos default logger")
+	}
+
+	klog.Info("kratos-default-visible")
+	if got := buf.String(); !strings.Contains(got, "kratos-default-visible") || !strings.Contains(got, "service=default.service") {
+		t.Fatalf("Kratos default log output = %q, want message and service field", got)
 	}
 }
 

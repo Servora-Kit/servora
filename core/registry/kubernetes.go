@@ -5,8 +5,8 @@ import (
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/contrib/k8s"
-	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
-	"github.com/go-kratos/kratos/v2/registry"
+	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v3"
+	"github.com/go-kratos/kratos/v3/registry"
 )
 
 func NewKubernetesRegistry(c *corev1.Kubernetes) registry.Registrar {

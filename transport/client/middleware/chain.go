@@ -4,14 +4,13 @@ import (
 	"log/slog"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	"github.com/Servora-Kit/servora/obs/metrics"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/middleware/circuitbreaker"
-	"github.com/go-kratos/kratos/v2/middleware/logging"
-	kmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	kmetrics "github.com/go-kratos/kratos/contrib/otel/v3/metrics"
+	"github.com/go-kratos/kratos/contrib/otel/v3/tracing"
+	"github.com/go-kratos/kratos/v3/middleware"
+	"github.com/go-kratos/kratos/v3/middleware/circuitbreaker"
+	"github.com/go-kratos/kratos/v3/middleware/logging"
+	"github.com/go-kratos/kratos/v3/middleware/recovery"
 )
 
 // ChainBuilder 构建标准 client 中间件链。
@@ -61,7 +60,7 @@ func (b *ChainBuilder) Build() []middleware.Middleware {
 		ms = append(ms, tracing.Client())
 	}
 
-	ms = append(ms, logging.Client(kratosv2.Wrap(b.logger)))
+	ms = append(ms, logging.Client(b.logger))
 
 	if b.circuit {
 		ms = append(ms, circuitbreaker.Client())

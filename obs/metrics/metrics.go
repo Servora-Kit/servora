@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	kratosmetrics "github.com/go-kratos/kratos/v2/middleware/metrics"
+	kratosmetrics "github.com/go-kratos/kratos/contrib/otel/v3/metrics"
 	promclient "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

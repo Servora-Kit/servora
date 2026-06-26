@@ -6,7 +6,7 @@ import (
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 
-	"github.com/go-kratos/kratos/v2/registry"
+	"github.com/go-kratos/kratos/v3/registry"
 )
 
 func NewRegistrar(cfg *corev1.Registry) registry.Registrar {

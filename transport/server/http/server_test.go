@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/go-kratos/kratos/v3/encoding"
+	"github.com/go-kratos/kratos/v3/middleware/recovery"
+	khttp "github.com/go-kratos/kratos/v3/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"log/slog"
 
@@ -18,6 +19,15 @@ func TestNewServer_NoOptions(t *testing.T) {
 	srv := NewServer()
 	if srv == nil {
 		t.Fatal("expected non-nil server")
+	}
+}
+
+func TestDefaultCodecsRegistered(t *testing.T) {
+	if encoding.GetCodec("json") == nil {
+		t.Fatal("expected json codec to be registered")
+	}
+	if encoding.GetCodec("protojson") == nil {
+		t.Fatal("expected protojson codec to be registered")
 	}
 }
 

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/go-kratos/kratos/contrib/config/consul/v2"
-	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/contrib/config/consul/v3"
+	"github.com/go-kratos/kratos/v3/config"
 	"github.com/hashicorp/consul/api"
 )
 

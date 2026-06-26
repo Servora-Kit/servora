@@ -11,11 +11,11 @@ import (
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/core/bootstrap/config"
 	slogger "github.com/Servora-Kit/servora/obs/logger"
-	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	"github.com/Servora-Kit/servora/obs/tracing"
 
-	"github.com/go-kratos/kratos/v2"
-	kconfig "github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v3"
+	kconfig "github.com/go-kratos/kratos/v3/config"
+	klog "github.com/go-kratos/kratos/v3/log"
 )
 
 // Runtime 聚合启动阶段产物与 runtime 级资源清理句柄。
@@ -35,9 +35,10 @@ type Runtime struct {
 type Option func(*options)
 
 type options struct {
-	name      string
-	version   string
-	envPrefix bool
+	name           string
+	version        string
+	envPrefix      bool
+	logHandlerFunc slogger.LogHandlerFunc
 }
 
 // Name 设置配置加载前的服务名默认值。
@@ -53,6 +54,11 @@ func Version(version string) Option {
 // WithEnvPrefix 启用基于 Name option 的环境变量前缀。
 func WithEnvPrefix() Option {
 	return func(o *options) { o.envPrefix = true }
+}
+
+// WithLogHandlerFunc overrides stdout/file slog handler creation for runtime logging.
+func WithLogHandlerFunc(f slogger.LogHandlerFunc) Option {
+	return func(o *options) { o.logHandlerFunc = f }
 }
 
 var hostnameFn = os.Hostname
@@ -87,9 +93,9 @@ func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
 	}
 	serviceID := fmt.Sprintf("%s-%s", bc.App.Name, hostname)
 
-	sl, logCloser := slogger.New(bc)
+	sl, logCloser := slogger.New(bc, slogger.WithLogHandlerFunc(o.logHandlerFunc))
 	appLogger := sl.With("service", bc.App.Name)
-	kratosv2.SetDefault(appLogger)
+	klog.SetDefault(appLogger)
 
 	traceCleanup, err := tracing.InitTracerProvider(bc.GetObs().GetTrace(), bc.App.Name, bc.App.Env)
 	if err != nil {

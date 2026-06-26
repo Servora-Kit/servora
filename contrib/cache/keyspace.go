@@ -8,14 +8,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 	"sync/atomic"
 )
 
 type Keyspace struct {
 	namespace string
 	version   atomic.Uint64
-	mu        sync.Mutex
 }
 
 func NewKeyspace(namespace string) *Keyspace {

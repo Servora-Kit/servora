@@ -8,7 +8,7 @@ import (
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v3"
 )
 
 func TestRuntimeClose_LIFOOnceAndSameError(t *testing.T) {

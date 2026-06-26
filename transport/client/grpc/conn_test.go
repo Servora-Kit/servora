@@ -1,11 +1,14 @@
 package grpc
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
+	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
+	gogrpc "google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -135,5 +138,73 @@ func TestDialer_DialWithEmptyTarget(t *testing.T) {
 	_, err := dialer.Dial(t.Context(), "  ")
 	if err == nil {
 		t.Fatal("expected empty target error")
+	}
+}
+
+func TestDialConnection_UsesNewClientWithoutTLSOptionWhenDisabled(t *testing.T) {
+	old := newGRPCClient
+	t.Cleanup(func() { newGRPCClient = old })
+
+	var gotOptions int
+	newGRPCClient = func(ctx context.Context, opts ...kgrpc.ClientOption) (*gogrpc.ClientConn, error) {
+		gotOptions = len(opts)
+		return nil, nil
+	}
+
+	baseOpts := []kgrpc.ClientOption{kgrpc.WithEndpoint("localhost:19999")}
+	conn, err := dialConnection(t.Context(), baseOpts, &tlspb.TLS{Enable: false})
+	if err != nil {
+		t.Fatalf("dialConnection() error = %v", err)
+	}
+	if conn != nil {
+		t.Fatal("expected captured NewClient to return nil conn")
+	}
+	if gotOptions != len(baseOpts) {
+		t.Fatalf("options = %d, want %d without TLS option", gotOptions, len(baseOpts))
+	}
+}
+
+func TestDialConnection_AppendsTLSOptionWhenEnabled(t *testing.T) {
+	old := newGRPCClient
+	t.Cleanup(func() { newGRPCClient = old })
+
+	var gotOptions int
+	newGRPCClient = func(ctx context.Context, opts ...kgrpc.ClientOption) (*gogrpc.ClientConn, error) {
+		gotOptions = len(opts)
+		return nil, nil
+	}
+
+	baseOpts := []kgrpc.ClientOption{kgrpc.WithEndpoint("localhost:19999")}
+	conn, err := dialConnection(t.Context(), baseOpts, &tlspb.TLS{Enable: true})
+	if err != nil {
+		t.Fatalf("dialConnection() error = %v", err)
+	}
+	if conn != nil {
+		t.Fatal("expected captured NewClient to return nil conn")
+	}
+	if gotOptions != len(baseOpts)+1 {
+		t.Fatalf("options = %d, want %d with TLS option", gotOptions, len(baseOpts)+1)
+	}
+}
+
+func TestDialConnection_TLSBuildErrorPreventsNewClient(t *testing.T) {
+	old := newGRPCClient
+	t.Cleanup(func() { newGRPCClient = old })
+
+	called := false
+	newGRPCClient = func(ctx context.Context, opts ...kgrpc.ClientOption) (*gogrpc.ClientConn, error) {
+		called = true
+		return nil, nil
+	}
+
+	_, err := dialConnection(t.Context(), nil, &tlspb.TLS{
+		Enable:   true,
+		CertPath: "/missing-client-cert.pem",
+	})
+	if err == nil {
+		t.Fatal("expected TLS build error")
+	}
+	if called {
+		t.Fatal("NewClient should not be called when TLS config is invalid")
 	}
 }

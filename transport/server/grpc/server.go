@@ -6,9 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 
-	"github.com/Servora-Kit/servora/obs/logger/kratosv2"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 	"github.com/Servora-Kit/servora/transport/server/endpoint"
 )
@@ -21,9 +20,6 @@ func NewServer(opts ...ServerOption) *kgrpc.Server {
 
 	var serverOpts []kgrpc.ServerOption
 
-	if o.logger != nil {
-		serverOpts = append(serverOpts, kgrpc.Logger(kratosv2.Wrap(o.logger)))
-	}
 	if len(o.middleware) > 0 {
 		serverOpts = append(serverOpts, kgrpc.Middleware(o.middleware...))
 	}

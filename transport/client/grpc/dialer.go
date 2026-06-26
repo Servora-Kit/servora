@@ -12,9 +12,9 @@ import (
 	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	svrtls "github.com/Servora-Kit/servora/security/tls"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/registry"
-	kgrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/go-kratos/kratos/v3/middleware"
+	"github.com/go-kratos/kratos/v3/registry"
+	kgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 	gogrpc "google.golang.org/grpc"
 )
 
@@ -59,6 +59,8 @@ type Dialer struct {
 	logger      *slog.Logger
 	middleware  []middleware.Middleware
 }
+
+var newGRPCClient = kgrpc.NewClient
 
 func NewDialer(opts ...Option) *Dialer {
 	o := dialerOptions{}
@@ -138,17 +140,15 @@ func createConnection(
 }
 
 func dialConnection(ctx context.Context, opts []kgrpc.ClientOption, tlsCfg *tlspb.TLS) (*gogrpc.ClientConn, error) {
-	if tlsCfg == nil || !tlsCfg.GetEnable() {
-		return kgrpc.DialInsecure(ctx, opts...)
+	if tlsCfg != nil && tlsCfg.GetEnable() {
+		clientTLSCfg, err := svrtls.BuildClientTLS(tlsCfg)
+		if err != nil {
+			return nil, fmt.Errorf("build grpc TLS config: %w", err)
+		}
+		opts = append(opts, kgrpc.WithTLSConfig(clientTLSCfg))
 	}
 
-	clientTLSCfg, err := svrtls.BuildClientTLS(tlsCfg)
-	if err != nil {
-		return nil, fmt.Errorf("build grpc TLS config: %w", err)
-	}
-
-	opts = append(opts, kgrpc.WithTLSConfig(clientTLSCfg))
-	return kgrpc.Dial(ctx, opts...)
+	return newGRPCClient(ctx, opts...)
 }
 
 // resolveConnectionConfig 根据服务名解析连接配置，并在缺省时回落到默认端点与超时。

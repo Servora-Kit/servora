@@ -11,9 +11,11 @@ import (
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	"github.com/Servora-Kit/servora/transport/client/endpoint"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/registry"
-	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	_ "github.com/go-kratos/kratos/v3/encoding/json"
+	_ "github.com/go-kratos/kratos/v3/encoding/protojson"
+	"github.com/go-kratos/kratos/v3/middleware"
+	"github.com/go-kratos/kratos/v3/registry"
+	khttp "github.com/go-kratos/kratos/v3/transport/http"
 )
 
 const Type = "http"
