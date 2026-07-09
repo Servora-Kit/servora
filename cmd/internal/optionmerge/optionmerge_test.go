@@ -160,7 +160,7 @@ func TestMerge_Audit(t *testing.T) {
 		},
 		{
 			name:      "service default wins",
-			svc:       &auditv1.AuditRule{Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED, EventType: "admin.create"},
+			svc:       &auditv1.AuditRule{Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED},
 			method:    nil,
 			hasMethod: false,
 			wantOK:    true,

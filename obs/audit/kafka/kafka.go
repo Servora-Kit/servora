@@ -22,6 +22,7 @@ const (
 	CloudEventsHeaderPrefix         = "ce_"
 	defaultBinaryDataContentType    = "application/octet-stream"
 	cloudEventsSpecVersionHeaderKey = "ce_specversion"
+	extPartitionKey                 = "partitionkey"
 )
 
 type Mode int
@@ -259,7 +260,7 @@ func encodeStructuredJSONRecord(topic string, event cloudevents.Event, keyFn fun
 }
 
 func DefaultPartitionKey(event cloudevents.Event) string {
-	if v, ok := event.Extensions()[audit.ExtPartitionKey]; ok {
+	if v, ok := event.Extensions()[extPartitionKey]; ok {
 		if s := fmt.Sprint(v); s != "" {
 			return s
 		}

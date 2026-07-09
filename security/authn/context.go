@@ -6,7 +6,7 @@ import "context"
 // dispatcher and the `Multi` decorator to communicate without extending the
 // public `Authenticator` interface.
 //
-// allowedSchemes is written by Server from Rules.MethodSchemes and read by
+// allowedSchemes is written by Server from authn rule schemes and read by
 // Multi to filter engines. Keys and accessors are intentionally unexported:
 // external packages, including engine sub-packages, MUST NOT participate in
 // this channel directly.
@@ -16,7 +16,7 @@ import "context"
 type allowedSchemesKey struct{}
 
 // withAllowedSchemes attaches the allowed scheme set computed by `Server`
-// from `Rules.MethodSchemes`. A nil `allowed` is permitted and signals
+// from the matched authn rule. A nil `allowed` is permitted and signals
 // "no restriction" (`Multi` then tries every engine).
 func withAllowedSchemes(ctx context.Context, allowed map[string]struct{}) context.Context {
 	return context.WithValue(ctx, allowedSchemesKey{}, allowed)

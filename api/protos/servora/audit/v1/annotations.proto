@@ -3,90 +3,36 @@ syntax = "proto3";
 package servora.audit.v1;
 
 import "google/protobuf/descriptor.proto";
-import "servora/cloudevents/v1/cloudevents.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1;auditv1";
 
-// =============================================================================
-// 审计注解扩展
-// 用法: 在 RPC 方法上标注审计规则，供 protoc-gen-servora-audit 消费。
-// =============================================================================
-
-// AuditMode 表达审计开关三态。
-// 引入「服务级默认 + 方法级覆盖」机制后，proto3 bool 默认值与「未指定」无法区分；
-// 用 enum 三态可让方法级显式继承（UNSPECIFIED）/ 显式覆盖（DISABLED/ENABLED）语义清晰。
-//
-// 迁移说明：从 v0.x 起替代原 `bool enabled` 字段；旧写法 `enabled: true` 迁移为
-// `mode: AUDIT_MODE_ENABLED`，`enabled: false` 迁移为 `mode: AUDIT_MODE_DISABLED`，
-// 未指定保留为 `AUDIT_MODE_UNSPECIFIED` 表示继承服务级默认。
+// AuditMode controls whether an RPC operation produces a runtime audit event.
 enum AuditMode {
+  // UNSPECIFIED inherits the service-level default; treated as DISABLED if no
+  // service default is declared.
   AUDIT_MODE_UNSPECIFIED = 0;
+  // DISABLED suppresses audit events for this operation.
   AUDIT_MODE_DISABLED = 1;
+  // ENABLED emits a servora.audit.rpc.v1 CloudEvents event for every call.
   AUDIT_MODE_ENABLED = 2;
 }
 
-// ExtensionMapping 将一个 CloudEvents 扩展属性映射到请求/响应字段或字面值。
-// 用于在注解中声明运行时需要从请求/响应消息中提取哪些值作为事件扩展属性。
-message ExtensionMapping {
-  // CloudEvents 扩展属性名称（如 "mutation"、"resourcetype"）。
-  string name = 1;
-
-  oneof source {
-    // 从请求/响应消息的 proto field path 提取（如 "req.id"、"resp.name"）。
-    string from_field = 2;
-
-    // 字面值，直接写入事件扩展属性。
-    servora.cloudevents.v1.CloudEvent.CloudEventAttributeValue literal = 3;
-  }
-}
-
-// AuditRule 声明一个 RPC 方法的审计规则。
-// 与 CloudEvents 对齐：event_type 和 severity 映射到 CloudEvents type 与扩展属性，
-// extensions 允许声明式地从请求/响应中提取任意扩展属性。
+// AuditRule is the RPC audit on/off switch. It intentionally carries only
+// mode: event type, severity, field extraction and CloudEvents extensions are
+// the responsibility of the event producer (authn, authz, CRUD generator, or
+// business code). Keeping this annotation minimal prevents it from becoming a
+// mixed DSL.
 message AuditRule {
-  // 是否产生审计事件。UNSPECIFIED 表示沿用服务级默认或框架默认。
   AuditMode mode = 1;
-
-  // CloudEvents type 属性值（如 "servora.audit.resource_mutation"）。
-  string event_type = 2;
-
-  // 事件严重级别（如 "info"、"warning"、"critical"）。
-  // 映射到 CloudEvents 扩展属性 "severity"。
-  string severity = 3;
-
-  // detail message 的 proto field path（如 "req"），
-  // 运行时序列化后作为 CloudEvent data 载荷。留空则不附带详情。
-  string detail_message_field = 4;
-
-  // 目标 ID 的 proto field path（如 "req.id"、"resp.id"）。
-  // 由 protoc-gen-servora-audit 生成提取函数，留空则不提取。
-  string target_id_field = 5;
-
-  // 额外的 CloudEvents 扩展属性映射。
-  repeated ExtensionMapping extensions = 6;
 }
 
-// audit_rule 是方法级别的扩展选项。
-// 使用示例:
-//   rpc Hello (HelloRequest) returns (HelloResponse) {
-//     option (servora.audit.v1.audit_rule) = {
-//       mode: AUDIT_MODE_ENABLED
-//       event_type: "servora.audit.resource_mutation"
-//       severity: "info"
-//       target_id_field: "req.id"
-//       extensions: [
-//         { name: "mutation" literal: { ce_string: "CREATE" } },
-//         { name: "resourcetype" literal: { ce_string: "greeting" } }
-//       ]
-//     };
-//   }
+// audit_rule is the per-method annotation.
 extend google.protobuf.MethodOptions {
   AuditRule audit_rule = 50100;
 }
 
-// service_default 是服务级别的扩展选项，作为该 service 下未显式标 audit_rule
-// 或 mode 为 UNSPECIFIED 的方法的默认值，由 protoc-gen-servora-audit 按
-// 「服务级默认 + 方法级覆盖」语义合并消费。
+// service_default sets the fallback AuditRule for methods that do not declare
+// an explicit audit_rule. Method-level audit_rule takes precedence.
 extend google.protobuf.ServiceOptions {
   AuditRule service_default = 50101;
 }

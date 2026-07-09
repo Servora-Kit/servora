@@ -4,8 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	openfgaauditpb "github.com/Servora-Kit/servora/api/gen/go/servora/authz/openfga/audit/v1"
+	"github.com/Servora-Kit/servora/obs/audit"
 	fgaclient "github.com/openfga/go-sdk/client"
 )
+
+// EventTypeOpenFGATupleMutation is the CloudEvents type for OpenFGA tuple write/delete events.
+const EventTypeOpenFGATupleMutation = "servora.authz.openfga.tuple_mutation.v1"
 
 // Tuple represents a single OpenFGA relationship tuple.
 type Tuple struct {
@@ -15,8 +20,6 @@ type Tuple struct {
 }
 
 // WriteTuples writes one or more relationship tuples atomically.
-// Audit of tuple changes is handled by the annotation-based audit system
-// or business code using auditor.Emit directly.
 func (c *Client) WriteTuples(ctx context.Context, tuples ...Tuple) error {
 	return c.writeTuplesCore(ctx, tuples...)
 }
@@ -39,6 +42,8 @@ func (c *Client) writeTuplesCore(ctx context.Context, tuples ...Tuple) error {
 	if err != nil {
 		return fmt.Errorf("openfga write: %w", err)
 	}
+	// Emit audit event on success only.
+	c.emitTupleMutation(ctx, openfgaauditpb.TupleMutation_OPERATION_WRITE, tuples)
 	return nil
 }
 
@@ -77,8 +82,6 @@ func (c *Client) EnsureTuples(ctx context.Context, tuples ...Tuple) error {
 }
 
 // DeleteTuples deletes one or more relationship tuples atomically.
-// Audit of tuple changes is handled by the annotation-based audit system
-// or business code using auditor.Emit directly.
 func (c *Client) DeleteTuples(ctx context.Context, tuples ...Tuple) error {
 	return c.deleteTuplesCore(ctx, tuples...)
 }
@@ -101,5 +104,35 @@ func (c *Client) deleteTuplesCore(ctx context.Context, tuples ...Tuple) error {
 	if err != nil {
 		return fmt.Errorf("openfga delete: %w", err)
 	}
+	// Emit audit event on success only.
+	c.emitTupleMutation(ctx, openfgaauditpb.TupleMutation_OPERATION_DELETE, tuples)
 	return nil
+}
+
+// emitTupleMutation emits a CloudEvents audit event for a tuple write or delete.
+// Best-effort: errors are silently ignored. No-op when auditor is not configured.
+func (c *Client) emitTupleMutation(ctx context.Context, op openfgaauditpb.TupleMutation_Operation, tuples []Tuple) {
+	if c.auditor == nil {
+		return
+	}
+	pbTuples := make([]*openfgaauditpb.Tuple, len(tuples))
+	for i, t := range tuples {
+		pbTuples[i] = &openfgaauditpb.Tuple{
+			User:     t.User,
+			Relation: t.Relation,
+			Object:   t.Object,
+		}
+	}
+	subject := "openfga/store/" + c.storeID
+	event := audit.NewEvent(ctx,
+		audit.WithType(EventTypeOpenFGATupleMutation),
+		audit.WithSubject(subject),
+	)
+	data := &openfgaauditpb.TupleMutation{
+		Operation: op,
+		Tuples:    pbTuples,
+		StoreId:   c.storeID,
+	}
+	_ = audit.SetProtoData(&event, data)
+	_ = c.auditor.Emit(ctx, event)
 }

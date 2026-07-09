@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	openfgaconfpb "github.com/Servora-Kit/servora/api/gen/go/servora/security/authz/openfga/v1"
+	"github.com/Servora-Kit/servora/obs/audit"
 	fgaclient "github.com/openfga/go-sdk/client"
 	fgacredentials "github.com/openfga/go-sdk/credentials"
 )
@@ -13,6 +14,7 @@ type ClientOption func(*clientOptions)
 
 type clientOptions struct {
 	computedRelations map[string][]string
+	auditor           audit.Auditor
 }
 
 // WithComputedRelations provides a mapping from object-type to computed relations
@@ -22,10 +24,18 @@ func WithComputedRelations(m map[string][]string) ClientOption {
 	return func(o *clientOptions) { o.computedRelations = m }
 }
 
+// WithAuditor configures an Auditor for emitting tuple mutation audit events.
+// When set, WriteTuples and DeleteTuples emit a TupleMutation event on success.
+func WithAuditor(a audit.Auditor) ClientOption {
+	return func(o *clientOptions) { o.auditor = a }
+}
+
 // Client wraps the OpenFGA SDK client with caching and framework integration.
 type Client struct {
 	sdk               *fgaclient.OpenFgaClient
 	computedRelations map[string][]string
+	auditor           audit.Auditor
+	storeID           string
 }
 
 // NewClient creates a new OpenFGA client from the given configuration.
@@ -62,5 +72,7 @@ func NewClient(cfg *openfgaconfpb.Config, opts ...ClientOption) (*Client, error)
 	return &Client{
 		sdk:               sdk,
 		computedRelations: o.computedRelations,
+		auditor:           o.auditor,
+		storeID:           cfg.StoreId,
 	}, nil
 }

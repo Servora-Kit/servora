@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
-	cev1 "github.com/Servora-Kit/servora/api/gen/go/servora/cloudevents/v1"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
@@ -18,9 +17,6 @@ import (
 
 // collectDeps walks the FileDescriptor's import closure (and the file itself)
 // in topological order, returning each unique file as a FileDescriptorProto.
-// This lets the synthetic CodeGeneratorRequest include every transitive
-// dependency required by protogen to resolve type references (e.g.
-// google/protobuf/timestamp.proto when audit.proto imports it).
 func collectDeps(fd protoreflect.FileDescriptor) []*descriptorpb.FileDescriptorProto {
 	seen := map[string]bool{}
 	var out []*descriptorpb.FileDescriptorProto
@@ -38,7 +34,7 @@ func collectDeps(fd protoreflect.FileDescriptor) []*descriptorpb.FileDescriptorP
 		out = append(out, protodesc.ToFileDescriptorProto(f))
 	}
 	visit(fd)
-	_ = protoregistry.GlobalFiles // keep package referenced even if visit body grows
+	_ = protoregistry.GlobalFiles
 	return out
 }
 
@@ -51,7 +47,7 @@ type methodSpec struct {
 // serviceSpec describes a single service in the fake proto file.
 type serviceSpec struct {
 	name           string
-	serviceDefault *auditv1.AuditRule // nil → no service-level default
+	serviceDefault *auditv1.AuditRule
 	methods        []methodSpec
 }
 
@@ -65,14 +61,10 @@ type fileSpec struct {
 }
 
 // runPluginScenario constructs a fake protogen.Plugin from the given files,
-// invokes generate(), and returns the resulting plugin (so tests can inspect
-// generated files) plus any generation error.
+// invokes generate(), and returns the resulting plugin plus any generation error.
 func runPluginScenario(t *testing.T, files []fileSpec) (*protogen.Plugin, error) {
 	t.Helper()
 
-	// Walk the audit annotations.proto import closure so transitive deps
-	// (audit.proto → cloudevents.proto → google/protobuf/timestamp.proto, …)
-	// land in the request in topological order.
 	deps := collectDeps(auditv1.File_servora_audit_v1_annotations_proto)
 
 	req := &pluginpb.CodeGeneratorRequest{
@@ -131,7 +123,6 @@ func buildFileDescriptorProto(t *testing.T, fs fileSpec) *descriptorpb.FileDescr
 		fp.Service = append(fp.Service, sp)
 	}
 
-	// Inject Empty placeholder so InputType/OutputType refs resolve.
 	emptyMsg := &descriptorpb.DescriptorProto{Name: proto.String("Empty")}
 	fp.MessageType = append(fp.MessageType, emptyMsg)
 
@@ -147,8 +138,6 @@ func generatedFiles(t *testing.T, gen *protogen.Plugin) map[string]string {
 	return out
 }
 
-// lookupAuditFile finds the unique audit_rules.gen.go entry in the generated
-// output. Tests that expect exactly one generated file should use this.
 func lookupAuditFile(t *testing.T, files map[string]string) string {
 	t.Helper()
 	var matches []string
@@ -174,6 +163,8 @@ func keysOf[V any](m map[string]V) []string {
 	sort.Strings(ks)
 	return ks
 }
+
+// ── basic behaviour ──────────────────────────────────────────────────────────
 
 func TestNoAnnotations_NoFileGenerated(t *testing.T) {
 	gen, err := runPluginScenario(t, []fileSpec{
@@ -213,9 +204,7 @@ func TestMethodLevelEnabled_GoesToOutput(t *testing.T) {
 					name: "GreetingService",
 					methods: []methodSpec{
 						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType: "servora.audit.resource_mutation",
-							Severity:  "INFO",
+							Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED,
 						}},
 					},
 				},
@@ -225,25 +214,27 @@ func TestMethodLevelEnabled_GoesToOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	files := generatedFiles(t, gen)
-	content := lookupAuditFile(t, files)
+	content := lookupAuditFile(t, generatedFiles(t, gen))
+
+	// Must contain the operation key.
 	wantOp := `"/example.v1.GreetingService/Hello"`
 	if !strings.Contains(content, wantOp) {
 		t.Fatalf("audit rule missing operation key %s\n--- generated ---\n%s", wantOp, content)
 	}
-	if !strings.Contains(content, `EventType: "servora.audit.resource_mutation"`) {
-		t.Errorf("audit rule missing EventType literal\n--- generated ---\n%s", content)
+	// Must expose the AuditRules function.
+	if !strings.Contains(content, "func AuditRules()") {
+		t.Errorf("generated code should contain AuditRules()\n--- generated ---\n%s", content)
 	}
-	if !strings.Contains(content, `"INFO"`) {
-		t.Errorf("audit rule missing Severity literal\n--- generated ---\n%s", content)
+	// Must set AUDIT_MODE_ENABLED.
+	if !strings.Contains(content, "AUDIT_MODE_ENABLED") {
+		t.Errorf("generated code should reference AUDIT_MODE_ENABLED\n--- generated ---\n%s", content)
 	}
-	// Must have CompiledRule reference.
-	if !strings.Contains(content, "CompiledRule") {
-		t.Errorf("generated code should reference audit.CompiledRule\n--- generated ---\n%s", content)
+	// Must NOT reference old CompiledRule or BuildEvent.
+	if strings.Contains(content, "CompiledRule") {
+		t.Errorf("generated code must not reference CompiledRule\n--- generated ---\n%s", content)
 	}
-	// Must have BuildEvent function.
-	if !strings.Contains(content, "BuildEvent:") {
-		t.Errorf("generated code should include BuildEvent field\n--- generated ---\n%s", content)
+	if strings.Contains(content, "BuildEvent") {
+		t.Errorf("generated code must not reference BuildEvent\n--- generated ---\n%s", content)
 	}
 }
 
@@ -275,6 +266,8 @@ func TestMethodLevelDisabled_NotEmitted(t *testing.T) {
 	}
 }
 
+// ── service default / merge semantics ────────────────────────────────────────
+
 func TestServiceDefault_MethodInherits(t *testing.T) {
 	gen, err := runPluginScenario(t, []fileSpec{
 		{
@@ -286,9 +279,7 @@ func TestServiceDefault_MethodInherits(t *testing.T) {
 				{
 					name: "GreetingService",
 					serviceDefault: &auditv1.AuditRule{
-						Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-						EventType: "servora.audit.resource_mutation",
-						Severity:  "INFO",
+						Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED,
 					},
 					methods: []methodSpec{
 						{name: "Hello"}, // no method-level rule → inherits ENABLED
@@ -300,19 +291,14 @@ func TestServiceDefault_MethodInherits(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	files := generatedFiles(t, gen)
-	content := lookupAuditFile(t, files)
+	content := lookupAuditFile(t, generatedFiles(t, gen))
 	wantKey := `"/example.v1.GreetingService/Hello"`
 	if !strings.Contains(content, wantKey) {
 		t.Fatalf("inherited rule missing operation key %s\n--- generated ---\n%s", wantKey, content)
 	}
-	if !strings.Contains(content, `"servora.audit.resource_mutation"`) {
-		t.Errorf("inherited rule missing EventType\n--- generated ---\n%s", content)
-	}
 }
 
 func TestServiceDefault_MethodUnspecifiedInherits(t *testing.T) {
-	// Method-level rule exists but mode==UNSPECIFIED — should still inherit.
 	gen, err := runPluginScenario(t, []fileSpec{
 		{
 			name:     "example/v1/greeting.proto",
@@ -323,14 +309,11 @@ func TestServiceDefault_MethodUnspecifiedInherits(t *testing.T) {
 				{
 					name: "GreetingService",
 					serviceDefault: &auditv1.AuditRule{
-						Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-						EventType: "servora.audit.resource_mutation",
-						Severity:  "INFO",
+						Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED,
 					},
 					methods: []methodSpec{
 						{name: "Hello", rule: &auditv1.AuditRule{
-							// Mode left UNSPECIFIED — inherits service default.
-							EventType: "ignored-because-mode-unspecified",
+							// Mode UNSPECIFIED → inherits service default.
 						}},
 					},
 				},
@@ -340,18 +323,9 @@ func TestServiceDefault_MethodUnspecifiedInherits(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	files := generatedFiles(t, gen)
-	content := lookupAuditFile(t, files)
+	content := lookupAuditFile(t, generatedFiles(t, gen))
 	if !strings.Contains(content, `"/example.v1.GreetingService/Hello"`) {
 		t.Fatalf("expected operation entry for inherited method\n--- generated ---\n%s", content)
-	}
-	// The inherited rule should carry the service default's EventType, not
-	// the method-level "ignored" value (because UNSPECIFIED inherits whole).
-	if !strings.Contains(content, `"servora.audit.resource_mutation"`) {
-		t.Errorf("inherited EventType lost (or method-level partial leaked)\n--- generated ---\n%s", content)
-	}
-	if strings.Contains(content, "ignored-because-mode-unspecified") {
-		t.Errorf("method-level partial leaked into output (UNSPECIFIED should inherit whole rule)\n--- generated ---\n%s", content)
 	}
 }
 
@@ -366,8 +340,7 @@ func TestMethodOverridesServiceDefault_DisabledWins(t *testing.T) {
 				{
 					name: "GreetingService",
 					serviceDefault: &auditv1.AuditRule{
-						Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-						EventType: "servora.audit.resource_mutation",
+						Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED,
 					},
 					methods: []methodSpec{
 						{name: "Hello"}, // inherits ENABLED
@@ -382,32 +355,84 @@ func TestMethodOverridesServiceDefault_DisabledWins(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	files := generatedFiles(t, gen)
-	content := lookupAuditFile(t, files)
+	content := lookupAuditFile(t, generatedFiles(t, gen))
 	if !strings.Contains(content, `"/example.v1.GreetingService/Hello"`) {
 		t.Errorf("Hello should appear (inherits ENABLED)\n--- generated ---\n%s", content)
 	}
 	if strings.Contains(content, `"/example.v1.GreetingService/Healthz"`) {
-		t.Errorf("Healthz should NOT appear (method DISABLED overrides ENABLED service default)\n--- generated ---\n%s", content)
+		t.Errorf("Healthz should NOT appear (method DISABLED overrides service ENABLED)\n--- generated ---\n%s", content)
 	}
 }
 
-func TestTargetIDField_GeneratesSetSubject(t *testing.T) {
+func TestSameShortServiceNameAcrossPackages_DoesNotShareRules(t *testing.T) {
 	gen, err := runPluginScenario(t, []fileSpec{
 		{
-			name:     "example/v1/greeting.proto",
+			name:     "accounts/v1/user.proto",
+			pkg:      "accounts.v1",
+			goPkg:    "example.com/gen/accounts/v1;accountsv1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "UserService",
+					serviceDefault: &auditv1.AuditRule{
+						Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED,
+					},
+					methods: []methodSpec{{name: "Get"}},
+				},
+			},
+		},
+		{
+			name:     "admin/v1/user.proto",
+			pkg:      "admin.v1",
+			goPkg:    "example.com/gen/admin/v1;adminv1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "UserService",
+					serviceDefault: &auditv1.AuditRule{
+						Mode: auditv1.AuditMode_AUDIT_MODE_DISABLED,
+					},
+					methods: []methodSpec{{name: "Get"}},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("generate returned unexpected error: %v", err)
+	}
+
+	files := generatedFiles(t, gen)
+	accounts := files["example.com/gen/accounts/v1/audit_rules.gen.go"]
+	if accounts == "" {
+		t.Fatalf("expected generated audit file for accounts package, got: %v", keysOf(files))
+	}
+	if _, ok := files["example.com/gen/admin/v1/audit_rules.gen.go"]; ok {
+		t.Fatalf("admin service is disabled and must not emit rules, got files: %v", keysOf(files))
+	}
+	if !strings.Contains(accounts, `"/accounts.v1.UserService/Get"`) {
+		t.Fatalf("accounts rule missing full-name operation\n--- generated ---\n%s", accounts)
+	}
+	if strings.Contains(accounts, `"/admin.v1.UserService/Get"`) {
+		t.Fatalf("accounts output leaked admin operation\n--- generated ---\n%s", accounts)
+	}
+}
+
+// ── multi-service / multi-method ─────────────────────────────────────────────
+
+func TestMultipleMethods_AllEnabledPresent(t *testing.T) {
+	gen, err := runPluginScenario(t, []fileSpec{
+		{
+			name:     "example/v1/svc.proto",
 			pkg:      "example.v1",
 			goPkg:    "example.com/gen/example/v1;examplev1",
 			generate: true,
 			services: []serviceSpec{
 				{
-					name: "GreetingService",
+					name: "SvcA",
 					methods: []methodSpec{
-						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:          auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType:     "servora.audit.resource_mutation",
-							TargetIdField: "resp.id",
-						}},
+						{name: "Create", rule: &auditv1.AuditRule{Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED}},
+						{name: "Delete", rule: &auditv1.AuditRule{Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED}},
+						{name: "Get", rule: &auditv1.AuditRule{Mode: auditv1.AuditMode_AUDIT_MODE_DISABLED}},
 					},
 				},
 			},
@@ -417,245 +442,44 @@ func TestTargetIDField_GeneratesSetSubject(t *testing.T) {
 		t.Fatalf("generate returned unexpected error: %v", err)
 	}
 	content := lookupAuditFile(t, generatedFiles(t, gen))
-	if !strings.Contains(content, "SetSubject") {
-		t.Errorf("expected SetSubject call for target_id_field\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, "GetId()") {
-		t.Errorf("expected GetId() getter chain for target_id_field=resp.id\n--- generated ---\n%s", content)
-	}
-}
-
-func TestDetailMessageField_GeneratesSetProtoData(t *testing.T) {
-	gen, err := runPluginScenario(t, []fileSpec{
-		{
-			name:     "example/v1/greeting.proto",
-			pkg:      "example.v1",
-			goPkg:    "example.com/gen/example/v1;examplev1",
-			generate: true,
-			services: []serviceSpec{
-				{
-					name: "GreetingService",
-					methods: []methodSpec{
-						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:               auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType:          "servora.audit.resource_mutation",
-							DetailMessageField: "req",
-						}},
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("generate returned unexpected error: %v", err)
-	}
-	content := lookupAuditFile(t, generatedFiles(t, gen))
-	if !strings.Contains(content, "SetProtoData") {
-		t.Errorf("expected SetProtoData call for detail_message_field\n--- generated ---\n%s", content)
-	}
-}
-
-func TestExtensionsLiteral_GeneratesSetExtension(t *testing.T) {
-	gen, err := runPluginScenario(t, []fileSpec{
-		{
-			name:     "example/v1/greeting.proto",
-			pkg:      "example.v1",
-			goPkg:    "example.com/gen/example/v1;examplev1",
-			generate: true,
-			services: []serviceSpec{
-				{
-					name: "GreetingService",
-					methods: []methodSpec{
-						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType: "servora.audit.resource_mutation",
-							Extensions: []*auditv1.ExtensionMapping{
-								{
-									Name: "mutation",
-									Source: &auditv1.ExtensionMapping_Literal{
-										Literal: &cev1.CloudEvent_CloudEventAttributeValue{
-											Attr: &cev1.CloudEvent_CloudEventAttributeValue_CeString{
-												CeString: "CREATE",
-											},
-										},
-									},
-								},
-								{
-									Name: "resourcetype",
-									Source: &auditv1.ExtensionMapping_Literal{
-										Literal: &cev1.CloudEvent_CloudEventAttributeValue{
-											Attr: &cev1.CloudEvent_CloudEventAttributeValue_CeString{
-												CeString: "greeting",
-											},
-										},
-									},
-								},
-							},
-						}},
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("generate returned unexpected error: %v", err)
-	}
-	content := lookupAuditFile(t, generatedFiles(t, gen))
-	if !strings.Contains(content, `"mutation"`) {
-		t.Errorf("expected extension name 'mutation' in output\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, `"CREATE"`) {
-		t.Errorf("expected literal value 'CREATE' in output\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, `"resourcetype"`) {
-		t.Errorf("expected extension name 'resourcetype' in output\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, `"greeting"`) {
-		t.Errorf("expected literal value 'greeting' in output\n--- generated ---\n%s", content)
-	}
-}
-
-func TestExtensionsFromField_GeneratesFieldAccess(t *testing.T) {
-	gen, err := runPluginScenario(t, []fileSpec{
-		{
-			name:     "example/v1/greeting.proto",
-			pkg:      "example.v1",
-			goPkg:    "example.com/gen/example/v1;examplev1",
-			generate: true,
-			services: []serviceSpec{
-				{
-					name: "GreetingService",
-					methods: []methodSpec{
-						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType: "servora.audit.resource_mutation",
-							Extensions: []*auditv1.ExtensionMapping{
-								{
-									Name: "tenant",
-									Source: &auditv1.ExtensionMapping_FromField{
-										FromField: "req.tenant_id",
-									},
-								},
-							},
-						}},
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("generate returned unexpected error: %v", err)
-	}
-	content := lookupAuditFile(t, generatedFiles(t, gen))
-	if !strings.Contains(content, `"tenant"`) {
-		t.Errorf("expected extension name 'tenant' in output\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, "GetTenantId()") {
-		t.Errorf("expected GetTenantId() getter for from_field=req.tenant_id\n--- generated ---\n%s", content)
-	}
-}
-
-func TestErrorHandling_GeneratesErrorBlock(t *testing.T) {
-	gen, err := runPluginScenario(t, []fileSpec{
-		{
-			name:     "example/v1/greeting.proto",
-			pkg:      "example.v1",
-			goPkg:    "example.com/gen/example/v1;examplev1",
-			generate: true,
-			services: []serviceSpec{
-				{
-					name: "GreetingService",
-					methods: []methodSpec{
-						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:      auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType: "servora.audit.resource_mutation",
-						}},
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("generate returned unexpected error: %v", err)
-	}
-	content := lookupAuditFile(t, generatedFiles(t, gen))
-	// Every BuildEvent should include error handling with ExtSeverityText and ExtErrorMessage.
-	if !strings.Contains(content, "err != nil") {
-		t.Errorf("expected error check in BuildEvent\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, "ExtSeverityText") {
-		t.Errorf("expected ExtSeverityText constant usage\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, "ExtErrorMessage") {
-		t.Errorf("expected ExtErrorMessage constant usage\n--- generated ---\n%s", content)
-	}
-	if !strings.Contains(content, `"ERROR"`) {
-		t.Errorf("expected ERROR severity on error path\n--- generated ---\n%s", content)
-	}
-}
-
-func TestNestedTargetIDField(t *testing.T) {
-	gen, err := runPluginScenario(t, []fileSpec{
-		{
-			name:     "example/v1/greeting.proto",
-			pkg:      "example.v1",
-			goPkg:    "example.com/gen/example/v1;examplev1",
-			generate: true,
-			services: []serviceSpec{
-				{
-					name: "GreetingService",
-					methods: []methodSpec{
-						{name: "Hello", rule: &auditv1.AuditRule{
-							Mode:          auditv1.AuditMode_AUDIT_MODE_ENABLED,
-							EventType:     "servora.audit.resource_mutation",
-							TargetIdField: "resp.user.id",
-						}},
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("generate returned unexpected error: %v", err)
-	}
-	content := lookupAuditFile(t, generatedFiles(t, gen))
-	if !strings.Contains(content, "GetUser().GetId()") {
-		t.Errorf("expected chained getters GetUser().GetId() for resp.user.id\n--- generated ---\n%s", content)
-	}
-}
-
-func TestBuildGetterChain(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-	}{
-		{"id", "GetId()"},
-		{"user_id", "GetUserId()"},
-		{"user.id", "GetUser().GetId()"},
-		{"user.tenant_id", "GetUser().GetTenantId()"},
-	}
-	for _, tc := range tests {
-		got := buildGetterChain(tc.input)
-		if got != tc.want {
-			t.Errorf("buildGetterChain(%q) = %q, want %q", tc.input, got, tc.want)
+	for _, op := range []string{
+		`"/example.v1.SvcA/Create"`,
+		`"/example.v1.SvcA/Delete"`,
+	} {
+		if !strings.Contains(content, op) {
+			t.Errorf("expected operation %s in output\n--- generated ---\n%s", op, content)
 		}
 	}
+	if strings.Contains(content, `"/example.v1.SvcA/Get"`) {
+		t.Errorf("DISABLED Get should not appear\n--- generated ---\n%s", content)
+	}
 }
 
-func TestSnakeToPascal(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-	}{
-		{"id", "Id"},
-		{"user_id", "UserId"},
-		{"tenant_id", "TenantId"},
-		{"some_long_name", "SomeLongName"},
+func TestGeneratedFile_HasCorrectHeader(t *testing.T) {
+	gen, err := runPluginScenario(t, []fileSpec{
+		{
+			name:     "example/v1/svc.proto",
+			pkg:      "example.v1",
+			goPkg:    "example.com/gen/example/v1;examplev1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "Svc",
+					methods: []methodSpec{
+						{name: "Op", rule: &auditv1.AuditRule{Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED}},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	for _, tc := range tests {
-		got := snakeToPascal(tc.input)
-		if got != tc.want {
-			t.Errorf("snakeToPascal(%q) = %q, want %q", tc.input, got, tc.want)
-		}
+	content := lookupAuditFile(t, generatedFiles(t, gen))
+	if !strings.Contains(content, "Code generated by protoc-gen-servora-audit") {
+		t.Errorf("missing generated-code header\n--- generated ---\n%s", content)
+	}
+	if !strings.Contains(content, "DO NOT EDIT") {
+		t.Errorf("missing DO NOT EDIT marker\n--- generated ---\n%s", content)
 	}
 }

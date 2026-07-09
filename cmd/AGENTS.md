@@ -15,7 +15,7 @@
 | `protoc-gen-servora-mapper/` | 从 `mapper` / `mapper_field` 注解生成结构体映射函数 |
 | `protoc-gen-servora-audit/` | 从 `audit_rule`（method）+ `service_default`（service）注解生成审计规则；method 显式字段覆盖 service 默认，未设置字段继承默认 |
 | `protoc-gen-servora-authz/` | 从 `rule`（method）+ `service_default`（service）注解生成授权规则；合并语义同 audit |
-| `protoc-gen-servora-authn/` | 从 `rule`（method）+ `service_default`（service）注解生成认证规则与 `MethodSchemes()` 表；合并语义同 audit；schemes 运行时派发待 P0-4b |
+| `protoc-gen-servora-authn/` | 从 `rule`（method）+ `service_default`（service）注解生成 `AuthnRules() map[string]*authnpb.AuthnRule`；合并语义同 audit/authz；空 schemes 表示使用默认认证 engine 集合 |
 
 ## For AI Agents
 

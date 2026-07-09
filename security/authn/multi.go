@@ -122,9 +122,8 @@ type multi struct {
 // order (NOT in `allowedSchemes` order — business decides the precedence
 // at wiring time).
 //
-// If the `allowedSchemes` set installed by `Server` (from
-// `Rules.MethodSchemes`) is non-nil, engines whose scheme is absent from
-// the set are skipped silently. If nil (unannotated method), every engine
+// If the `allowedSchemes` set installed by `Server` is non-nil, engines whose
+// scheme is absent from the set are skipped silently. If nil, every engine
 // participates.
 //
 // Wrapping a single engine via `Multi(Named(...))` is a supported and

@@ -195,7 +195,7 @@ func TestMethodLevelCheck_GoesToOutput(t *testing.T) {
 					name: "GreetingService",
 					methods: []methodSpec{
 						{name: "Hello", rule: &authzpb.AuthzRule{
-							Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+							Mode:         authzpb.AuthzMode_AUTHZ_MODE_CHECK,
 							Action:       "user",
 							ResourceType: "greeting",
 						}},
@@ -232,8 +232,8 @@ func TestServiceDefault_MethodInherits(t *testing.T) {
 				{
 					name: "GreetingService",
 					serviceDefault: &authzpb.AuthzRule{
-						Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Action:     "user",
+						Mode:         authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+						Action:       "user",
 						ResourceType: "greeting",
 					},
 					methods: []methodSpec{
@@ -272,8 +272,8 @@ func TestServiceDefault_MethodUnspecifiedInherits(t *testing.T) {
 				{
 					name: "GreetingService",
 					serviceDefault: &authzpb.AuthzRule{
-						Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Action:     "user",
+						Mode:         authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+						Action:       "user",
 						ResourceType: "greeting",
 					},
 					methods: []methodSpec{
@@ -316,8 +316,8 @@ func TestMethodOverridesServiceDefault_NoneWins(t *testing.T) {
 				{
 					name: "GreetingService",
 					serviceDefault: &authzpb.AuthzRule{
-						Mode:       authzpb.AuthzMode_AUTHZ_MODE_CHECK,
-						Action:     "user",
+						Mode:         authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+						Action:       "user",
 						ResourceType: "greeting",
 					},
 					methods: []methodSpec{
@@ -361,6 +361,77 @@ func TestMethodOverridesServiceDefault_NoneWins(t *testing.T) {
 	// should contain neither an Action entry nor the "user" action value.
 	if strings.Contains(healthzBlock, "Action:") || strings.Contains(healthzBlock, `"user"`) {
 		t.Errorf("Healthz override should drop service-default Action, got block:\n%s", healthzBlock)
+	}
+}
+
+func TestSameShortServiceNameAcrossPackages_DoesNotShareRules(t *testing.T) {
+	gen, err := runPluginScenario(t, []fileSpec{
+		{
+			name:     "accounts/v1/user.proto",
+			pkg:      "accounts.v1",
+			goPkg:    "example.com/gen/accounts/v1;accountsv1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "UserService",
+					serviceDefault: &authzpb.AuthzRule{
+						Mode:         authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+						Action:       "read",
+						ResourceType: "account_user",
+					},
+					methods: []methodSpec{{name: "Get"}},
+				},
+			},
+		},
+		{
+			name:     "admin/v1/user.proto",
+			pkg:      "admin.v1",
+			goPkg:    "example.com/gen/admin/v1;adminv1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "UserService",
+					serviceDefault: &authzpb.AuthzRule{
+						Mode:         authzpb.AuthzMode_AUTHZ_MODE_CHECK,
+						Action:       "admin_read",
+						ResourceType: "admin_user",
+					},
+					methods: []methodSpec{{name: "Get"}},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("generate returned unexpected error: %v", err)
+	}
+
+	files := generatedFiles(t, gen)
+	accounts := files["example.com/gen/accounts/v1/authz_rules.gen.go"]
+	admin := files["example.com/gen/admin/v1/authz_rules.gen.go"]
+	if accounts == "" || admin == "" {
+		t.Fatalf("expected generated authz files for both packages, got: %v", keysOf(files))
+	}
+	if !strings.Contains(accounts, `"/accounts.v1.UserService/Get"`) {
+		t.Fatalf("accounts rule missing full-name operation\n--- generated ---\n%s", accounts)
+	}
+	if strings.Contains(accounts, `"/admin.v1.UserService/Get"`) ||
+		strings.Contains(accounts, `"admin_read"`) ||
+		strings.Contains(accounts, `"admin_user"`) {
+		t.Fatalf("accounts output leaked admin rule\n--- generated ---\n%s", accounts)
+	}
+	if !strings.Contains(accounts, `"read"`) || !strings.Contains(accounts, `"account_user"`) {
+		t.Fatalf("accounts rule lost its own fields\n--- generated ---\n%s", accounts)
+	}
+	if !strings.Contains(admin, `"/admin.v1.UserService/Get"`) {
+		t.Fatalf("admin rule missing full-name operation\n--- generated ---\n%s", admin)
+	}
+	if strings.Contains(admin, `"/accounts.v1.UserService/Get"`) ||
+		strings.Contains(admin, `"account_user"`) ||
+		strings.Contains(admin, `"read",`) {
+		t.Fatalf("admin output leaked accounts rule\n--- generated ---\n%s", admin)
+	}
+	if !strings.Contains(admin, `"admin_read"`) || !strings.Contains(admin, `"admin_user"`) {
+		t.Fatalf("admin rule lost its own fields\n--- generated ---\n%s", admin)
 	}
 }
 

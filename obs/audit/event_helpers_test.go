@@ -4,8 +4,20 @@ import (
 	"context"
 	"testing"
 
+	kratos "github.com/go-kratos/kratos/v3"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// mockAppInfo implements kratos.AppInfo for testing.
+type mockAppInfo struct {
+	name string
+}
+
+func (m mockAppInfo) ID() string                  { return "test-id" }
+func (m mockAppInfo) Name() string                { return m.name }
+func (m mockAppInfo) Version() string             { return "v0.0.0" }
+func (m mockAppInfo) Metadata() map[string]string { return nil }
+func (m mockAppInfo) Endpoint() []string          { return nil }
 
 func TestNewEvent_Defaults(t *testing.T) {
 	ctx := context.Background()
@@ -21,20 +33,35 @@ func TestNewEvent_Defaults(t *testing.T) {
 		t.Error("Time should not be zero")
 	}
 
-	sev, ok := e.Extensions()[ExtSeverityText]
-	if !ok {
-		t.Error("severity text extension should be set")
-	}
-	if sev != "INFO" {
-		t.Errorf("severity = %v, want INFO", sev)
+	// No app context: source should fall back to "//unknown".
+	if e.Source() != "//unknown" {
+		t.Errorf("Source = %q, want %q", e.Source(), "//unknown")
 	}
 
-	rec, ok := e.Extensions()[ExtRecordedTime]
-	if !ok {
-		t.Error("recorded time extension should be set")
+	// severity and recordedtime should NOT be set by default.
+	if _, ok := e.Extensions()["severitytext"]; ok {
+		t.Error("severitytext extension should not be set by NewEvent")
 	}
-	if rec == "" {
-		t.Error("recorded time should not be empty")
+	if _, ok := e.Extensions()["recordedtime"]; ok {
+		t.Error("recordedtime extension should not be set by NewEvent")
+	}
+}
+
+func TestNewEvent_SourceFromAppContext(t *testing.T) {
+	ctx := kratos.NewContext(context.Background(), mockAppInfo{name: "myapp"})
+	e := NewEvent(ctx)
+
+	if e.Source() != "//myapp" {
+		t.Errorf("Source = %q, want %q", e.Source(), "//myapp")
+	}
+}
+
+func TestNewEvent_SourceFallback(t *testing.T) {
+	ctx := context.Background()
+	e := NewEvent(ctx)
+
+	if e.Source() != "//unknown" {
+		t.Errorf("Source = %q, want %q", e.Source(), "//unknown")
 	}
 }
 
@@ -43,7 +70,6 @@ func TestNewEvent_WithOptions(t *testing.T) {
 	e := NewEvent(ctx,
 		WithType("test.type"),
 		WithSource("test-source"),
-		WithSeverity("ERROR"),
 		WithSubject("test-subject"),
 	)
 
@@ -55,10 +81,6 @@ func TestNewEvent_WithOptions(t *testing.T) {
 	}
 	if e.Subject() != "test-subject" {
 		t.Errorf("Subject = %q, want %q", e.Subject(), "test-subject")
-	}
-	sev := e.Extensions()[ExtSeverityText]
-	if sev != "ERROR" {
-		t.Errorf("severity = %v, want ERROR", sev)
 	}
 }
 

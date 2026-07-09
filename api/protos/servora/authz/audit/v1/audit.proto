@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package servora.authz.audit.v1;
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/authz/audit/v1;authzauditpb";
+
+// AuthzDecision is the CloudEvents data payload shared by all three authz
+// audit event types:
+//   - servora.authz.allowed.v1
+//   - servora.authz.denied.v1
+//   - servora.authz.error.v1
+//
+// The Decision enum distinguishes outcomes so consumers can branch on data
+// without re-parsing the CloudEvents type attribute.
+message AuthzDecision {
+  // Decision enumerates the three possible authz outcomes.
+  enum Decision {
+    DECISION_UNSPECIFIED = 0;
+    // ALLOWED — authorizer.Check returned (true, nil).
+    DECISION_ALLOWED = 1;
+    // DENIED — authorizer.Check returned (false, nil): policy explicitly denied.
+    DECISION_DENIED = 2;
+    // ERROR — authorizer.Check returned (_, err != nil): check itself failed.
+    DECISION_ERROR = 3;
+  }
+
+  Decision decision = 1;
+  // action is the authz action being checked (e.g. "read", "delete").
+  string action = 2;
+  // resource_type is the resource type from the authz rule (e.g. "document").
+  string resource_type = 3;
+  // resource_id is the resolved resource identifier.
+  string resource_id = 4;
+  // backend identifies the authorizer implementation (e.g. "openfga", "casbin").
+  string backend = 5;
+  // reason is an optional Kratos-style reason code (e.g. "AUTHZ_DENIED").
+  string reason = 6;
+  // code is the HTTP/gRPC status code.
+  int32 code = 7;
+  // message is a sanitised description.
+  string message = 8;
+}

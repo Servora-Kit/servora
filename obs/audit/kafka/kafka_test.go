@@ -78,14 +78,14 @@ func TestDecodeRecordBinaryMode(t *testing.T) {
 	if ev.ID() != "event-1" || ev.Type() != "servora.audit.test" || ev.Source() != "/test.Service/Method" {
 		t.Fatalf("decoded event context = id:%q type:%q source:%q", ev.ID(), ev.Type(), ev.Source())
 	}
-	if got := ev.Extensions()[audit.ExtPartitionKey]; got != "tenant-1" {
+	if got := ev.Extensions()["partitionkey"]; got != "tenant-1" {
 		t.Fatalf("partitionkey extension = %v, want tenant-1", got)
 	}
 }
 
 func TestDefaultPartitionKeyFallsBackToEventID(t *testing.T) {
 	ev := testEvent(t)
-	ev.SetExtension(audit.ExtPartitionKey, "")
+	ev.SetExtension("partitionkey", "")
 	if got := DefaultPartitionKey(ev); got != "event-1" {
 		t.Fatalf("DefaultPartitionKey() = %q, want event-1", got)
 	}
@@ -159,7 +159,7 @@ func testEvent(t *testing.T) cloudevents.Event {
 	ev.SetSource("/test.Service/Method")
 	ev.SetTime(time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC))
 	ev.SetSubject("target-1")
-	ev.SetExtension(audit.ExtPartitionKey, "tenant-1")
+	ev.SetExtension("partitionkey", "tenant-1")
 	if err := ev.SetData("application/json", []byte(`{"ok":true}`)); err != nil {
 		t.Fatalf("SetData() error = %v", err)
 	}

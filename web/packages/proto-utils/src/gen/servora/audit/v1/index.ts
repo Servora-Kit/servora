@@ -2,62 +2,22 @@
 /* eslint-disable camelcase */
 // @ts-nocheck
 
-// AuditMode 表达审计开关三态。
-// 引入「服务级默认 + 方法级覆盖」机制后，proto3 bool 默认值与「未指定」无法区分；
-// 用 enum 三态可让方法级显式继承（UNSPECIFIED）/ 显式覆盖（DISABLED/ENABLED）语义清晰。
-// 迁移说明：从 v0.x 起替代原 `bool enabled` 字段；旧写法 `enabled: true` 迁移为
-// `mode: AUDIT_MODE_ENABLED`，`enabled: false` 迁移为 `mode: AUDIT_MODE_DISABLED`，
-// 未指定保留为 `AUDIT_MODE_UNSPECIFIED` 表示继承服务级默认。
+// AuditMode controls whether an RPC operation produces a runtime audit event.
 export type AuditMode =
+  // UNSPECIFIED inherits the service-level default; treated as DISABLED if no
+  // service default is declared.
   | "AUDIT_MODE_UNSPECIFIED"
+  // DISABLED suppresses audit events for this operation.
   | "AUDIT_MODE_DISABLED"
+  // ENABLED emits a servora.audit.rpc.v1 CloudEvents event for every call.
   | "AUDIT_MODE_ENABLED";
-// ExtensionMapping 将一个 CloudEvents 扩展属性映射到请求/响应字段或字面值。
-// 用于在注解中声明运行时需要从请求/响应消息中提取哪些值作为事件扩展属性。
-export type ExtensionMapping = {
-  // CloudEvents 扩展属性名称（如 "mutation"、"resourcetype"）。
-  name: string | undefined;
-  // 从请求/响应消息的 proto field path 提取（如 "req.id"、"resp.name"）。
-  fromField?: string;
-  // 字面值，直接写入事件扩展属性。
-  literal?: servoracloudeventsv1_CloudEvent_CloudEventAttributeValue;
-};
-
-// The CloudEvent specification defines seven attribute value types.
-export type servoracloudeventsv1_CloudEvent_CloudEventAttributeValue = {
-  ceBoolean?: boolean;
-  ceInteger?: number;
-  ceString?: string;
-  ceBytes?: string;
-  ceUri?: string;
-  ceUriRef?: string;
-  ceTimestamp?: wellKnownTimestamp;
-};
-
-// Encoded using RFC 3339, where generated output will always be Z-normalized
-// and uses 0, 3, 6 or 9 fractional digits.
-// Offsets other than "Z" are also accepted.
-type wellKnownTimestamp = string;
-
-// AuditRule 声明一个 RPC 方法的审计规则。
-// 与 CloudEvents 对齐：event_type 和 severity 映射到 CloudEvents type 与扩展属性，
-// extensions 允许声明式地从请求/响应中提取任意扩展属性。
+// AuditRule is the RPC audit on/off switch. It intentionally carries only
+// mode: event type, severity, field extraction and CloudEvents extensions are
+// the responsibility of the event producer (authn, authz, CRUD generator, or
+// business code). Keeping this annotation minimal prevents it from becoming a
+// mixed DSL.
 export type AuditRule = {
-  // 是否产生审计事件。UNSPECIFIED 表示沿用服务级默认或框架默认。
   mode: AuditMode | undefined;
-  // CloudEvents type 属性值（如 "servora.audit.resource_mutation"）。
-  eventType: string | undefined;
-  // 事件严重级别（如 "info"、"warning"、"critical"）。
-  // 映射到 CloudEvents 扩展属性 "severity"。
-  severity: string | undefined;
-  // detail message 的 proto field path（如 "req"），
-  // 运行时序列化后作为 CloudEvent data 载荷。留空则不附带详情。
-  detailMessageField: string | undefined;
-  // 目标 ID 的 proto field path（如 "req.id"、"resp.id"）。
-  // 由 protoc-gen-servora-audit 生成提取函数，留空则不提取。
-  targetIdField: string | undefined;
-  // 额外的 CloudEvents 扩展属性映射。
-  extensions: ExtensionMapping[] | undefined;
 };
 
 

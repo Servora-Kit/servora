@@ -12,15 +12,13 @@
 //
 // Validation (any failure aborts code generation):
 //   - mode == MODE_UNSPECIFIED with non-empty schemes,
-//   - mode == MODE_PUBLIC with non-empty schemes (mutually exclusive),
-//   - mode == MODE_REQUIRED with empty schemes (must specify schemes).
+//   - mode == MODE_PUBLIC with non-empty schemes (mutually exclusive).
 package main
 
 import (
 	"fmt"
 	"path"
 	"sort"
-	"strings"
 
 	authnpb "github.com/Servora-Kit/servora/api/gen/go/servora/authn/v1"
 	"github.com/Servora-Kit/servora/cmd/internal/optionmerge"
@@ -40,11 +38,39 @@ func main() {
 // computes the merged authn rules, validates the result, and writes
 // authn_rules.gen.go into each output directory that has at least one rule.
 func generate(gen *protogen.Plugin) error {
+	serviceDefaults := map[string]*authnpb.AuthnRule{}
+	methodTemplates := map[string]map[string]*authnpb.AuthnRule{}
+	for _, f := range gen.Files {
+		for _, svc := range f.Services {
+			fullName := string(svc.Desc.FullName())
+
+			if def := serviceDefault(svc); def != nil {
+				if err := validateRule(f.Desc.Path(), fullName, "<service_default>", def); err != nil {
+					return err
+				}
+				serviceDefaults[fullName] = def
+			}
+
+			for _, m := range svc.Methods {
+				rule, hasMethod := methodRule(m)
+				if !hasMethod {
+					continue
+				}
+				if err := validateRule(f.Desc.Path(), fullName, string(m.Desc.Name()), rule); err != nil {
+					return err
+				}
+				if methodTemplates[fullName] == nil {
+					methodTemplates[fullName] = map[string]*authnpb.AuthnRule{}
+				}
+				methodTemplates[fullName][string(m.Desc.Name())] = rule
+			}
+		}
+	}
+
 	type dirGroup struct {
 		targetFile *protogen.File
 		seen       map[string]bool
-		public     []string
-		schemes    map[string][]string
+		rules      []ruleEntry
 	}
 
 	groups := map[string]*dirGroup{}
@@ -53,53 +79,40 @@ func generate(gen *protogen.Plugin) error {
 		if !f.Generate {
 			continue
 		}
+		dir := path.Dir(f.GeneratedFilenamePrefix)
 		for _, svc := range f.Services {
-			svcDefault := serviceDefault(svc)
+			fullName := string(svc.Desc.FullName())
+			svcDefault := serviceDefaults[fullName]
+			methods := methodTemplates[fullName]
+
 			for _, m := range svc.Methods {
-				rule, hasMethod := methodRule(m)
-
-				// Validate method-level rule, if present, before merging.
-				if hasMethod {
-					if err := validateRule(f.Desc.Path(), string(svc.Desc.Name()), string(m.Desc.Name()), rule); err != nil {
-						return err
-					}
-				}
-
+				methodName := string(m.Desc.Name())
+				rule, hasMethod := methods[methodName]
 				merged, ok := optionmerge.Merge(svcDefault, rule, hasMethod)
 				if !ok {
 					continue
 				}
 
-				// Validate the merged rule too — service-level default may be
-				// invalid on its own (e.g. REQUIRED with empty schemes), and a
-				// method that inherits such a default should fail just as
-				// loudly as if the rule had been written on the method itself.
-				if err := validateRule(f.Desc.Path(), string(svc.Desc.Name()), string(m.Desc.Name()), merged); err != nil {
+				if err := validateRule(f.Desc.Path(), fullName, methodName, merged); err != nil {
 					return err
 				}
 
-				dir := path.Dir(f.GeneratedFilenamePrefix)
 				if groups[dir] == nil {
 					groups[dir] = &dirGroup{
 						targetFile: f,
 						seen:       map[string]bool{},
-						schemes:    map[string][]string{},
 					}
 				}
-				op := fmt.Sprintf("/%s/%s", svc.Desc.FullName(), m.Desc.Name())
+				op := fmt.Sprintf("/%s/%s", fullName, methodName)
 				if groups[dir].seen[op] {
 					continue
 				}
 				groups[dir].seen[op] = true
-
-				switch merged.Mode {
-				case authnpb.AuthnRule_MODE_PUBLIC:
-					groups[dir].public = append(groups[dir].public, op)
-				case authnpb.AuthnRule_MODE_REQUIRED:
-					// Defensive copy so the generated file owns its slice.
-					schemesCopy := append([]string(nil), merged.Schemes...)
-					groups[dir].schemes[op] = schemesCopy
-				}
+				groups[dir].rules = append(groups[dir].rules, ruleEntry{
+					Operation: op,
+					Mode:      merged.GetMode(),
+					Schemes:   append([]string(nil), merged.GetSchemes()...),
+				})
 			}
 		}
 	}
@@ -116,21 +129,24 @@ func generate(gen *protogen.Plugin) error {
 
 	for _, dir := range dirs {
 		g := groups[dir]
-		sort.Strings(g.public)
-		schemeKeys := make([]string, 0, len(g.schemes))
-		for k := range g.schemes {
-			schemeKeys = append(schemeKeys, k)
-		}
-		sort.Strings(schemeKeys)
+		sort.Slice(g.rules, func(i, j int) bool {
+			return g.rules[i].Operation < g.rules[j].Operation
+		})
 
 		gf := gen.NewGeneratedFile(
 			path.Join(dir, "authn_rules.gen.go"),
 			g.targetFile.GoImportPath,
 		)
-		writeFile(gf, g.targetFile.GoPackageName, g.public, g.schemes, schemeKeys)
+		writeFile(gf, g.targetFile.GoPackageName, g.rules)
 	}
 
 	return nil
+}
+
+type ruleEntry struct {
+	Operation string
+	Mode      authnpb.AuthnRule_Mode
+	Schemes   []string
 }
 
 // methodRule extracts the AuthnRule attached to a method via E_Rule, returning
@@ -190,73 +206,53 @@ func validateRule(file, service, method string, r *authnpb.AuthnRule) error {
 				file, service, method, r.Schemes,
 			)
 		}
-	case authnpb.AuthnRule_MODE_REQUIRED:
-		if len(r.Schemes) == 0 {
-			return fmt.Errorf(
-				"%s: service %s method %s: invalid AuthnRule with MODE_REQUIRED and empty schemes — required methods must list at least one scheme",
-				file, service, method,
-			)
-		}
 	}
 	return nil
 }
 
 // writeFile emits authn_rules.gen.go containing a single aggregate
-// AuthnRules() func that returns an authn.Rules value. Each call allocates
-// fresh slices and a fresh map (with deep-copied inner slices) so callers
-// cannot mutate the package-internal state.
-func writeFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, public []string, schemes map[string][]string, schemeKeys []string) {
-	authnPkg := protogen.GoImportPath("github.com/Servora-Kit/servora/security/authn")
+// AuthnRules() func that returns a map keyed by operation and valued by the
+// authn annotation proto type.
+func writeFile(g *protogen.GeneratedFile, pkgName protogen.GoPackageName, rules []ruleEntry) {
+	authnPkg := protogen.GoImportPath("github.com/Servora-Kit/servora/api/gen/go/servora/authn/v1")
+	protoPkg := protogen.GoImportPath("google.golang.org/protobuf/proto")
 
 	g.P("// Code generated by protoc-gen-servora-authn. DO NOT EDIT.")
 	g.P()
 	g.P("package ", pkgName)
 	g.P()
 
-	rulesIdent := g.QualifiedGoIdent(protogen.GoIdent{GoName: "Rules", GoImportPath: authnPkg})
+	ruleIdent := g.QualifiedGoIdent(protogen.GoIdent{GoName: "AuthnRule", GoImportPath: authnPkg})
+	protoClone := g.QualifiedGoIdent(protogen.GoIdent{GoName: "Clone", GoImportPath: protoPkg})
 
-	// _authnRules backing struct literal.
 	g.P("// _authnRules is the immutable backing store for AuthnRules.")
-	g.P("var _authnRules = ", rulesIdent, "{")
-
-	g.P("\tPublicMethods: []string{")
-	for _, op := range public {
-		g.P(fmt.Sprintf("\t\t%q,", op))
-	}
-	g.P("\t},")
-
-	g.P("\tMethodSchemes: map[string][]string{")
-	for _, k := range schemeKeys {
-		v := schemes[k]
-		var b strings.Builder
-		for i, s := range v {
-			if i > 0 {
-				b.WriteString(", ")
+	g.P("var _authnRules = map[string]*", ruleIdent, "{")
+	for _, r := range rules {
+		modeIdent := g.QualifiedGoIdent(protogen.GoIdent{
+			GoName:       "AuthnRule_" + r.Mode.String(),
+			GoImportPath: authnPkg,
+		})
+		g.P(fmt.Sprintf("\t%q: {", r.Operation))
+		g.P("\t\tMode: ", modeIdent, ",")
+		if len(r.Schemes) > 0 {
+			g.P("\t\tSchemes: []string{")
+			for _, s := range r.Schemes {
+				g.P(fmt.Sprintf("\t\t\t%q,", s))
 			}
-			fmt.Fprintf(&b, "%q", s)
+			g.P("\t\t},")
 		}
-		g.P(fmt.Sprintf("\t\t%q: {%s},", k, b.String()))
+		g.P("\t},")
 	}
-	g.P("\t},")
 	g.P("}")
 	g.P()
 
-	// AuthnRules accessor — deep copy (PublicMethods slice + MethodSchemes
-	// map + inner schemes slices). Each call returns an independent value so
-	// callers may freely mutate the result.
 	g.P("// AuthnRules returns the authentication rules declared via authn proto")
-	g.P("// annotations. Each call allocates fresh slices and a fresh map (with")
-	g.P("// deep-copied inner slices); callers may mutate the returned value freely")
-	g.P("// without affecting other callers or package-internal state.")
-	g.P("func AuthnRules() ", rulesIdent, " {")
-	g.P("\tpm := make([]string, len(_authnRules.PublicMethods))")
-	g.P("\tcopy(pm, _authnRules.PublicMethods)")
-	g.P("\tms := make(map[string][]string, len(_authnRules.MethodSchemes))")
-	g.P("\tfor k, v := range _authnRules.MethodSchemes {")
-	g.P("\t\tcp := make([]string, len(v))")
-	g.P("\t\tcopy(cp, v)")
-	g.P("\t\tms[k] = cp")
+	g.P("// annotations. Each call returns a fresh map and cloned rule messages.")
+	g.P("func AuthnRules() map[string]*", ruleIdent, " {")
+	g.P("\tm := make(map[string]*", ruleIdent, ", len(_authnRules))")
+	g.P("\tfor k, v := range _authnRules {")
+	g.P("\t\tm[k] = ", protoClone, "(v).(*", ruleIdent, ")")
 	g.P("\t}")
-	g.P("\treturn ", rulesIdent, "{PublicMethods: pm, MethodSchemes: ms}")
+	g.P("\treturn m")
 	g.P("}")
 }

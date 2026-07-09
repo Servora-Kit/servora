@@ -22,17 +22,20 @@
 // # Middleware
 //
 // The Middleware function (audit_middleware.go) intercepts RPC calls, looks up
-// CompiledRules by operation, builds CloudEvents events, supplements auth
-// metadata, and emits through the configured Auditor. Emission errors are logged
+// generated AuditRules by operation, builds servora.audit.rpc.v1 CloudEvents
+// events, and emits through the configured Auditor. Emission errors are logged
 // but never block business logic.
 //
 // Recommended middleware chain order:
 //
 //	recovery → tracing → logging → ratelimit → validate → metrics → audit.Middleware → authn → authz → handler
 //
-// # CloudEvents Extensions
+// # CloudEvents Attributes
 //
-// Servora audit events use the following CloudEvents extension attributes
-// (defined in extensions.go): authid, authtype, traceparent, tracestate,
-// severitytext, recordedtime, partitionkey, errormessage.
+// NewEvent sets CloudEvents required attributes and uses source="//app-name".
+// The generic RPC audit middleware sets subject to the transport operation.
+// Extensions are producer-owned: NewEvent adds traceparent/tracestate when a
+// sampled OTel span is present, the RPC middleware adds errormessage for handler
+// errors, authz emits authid, and backend-specific fields such as partitionkey
+// stay private to their backend package.
 package audit

@@ -1,7 +1,7 @@
 # AGENTS.md - security/authz/openfga/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-05-24 -->
+<!-- Generated: 2026-03-22 | Updated: 2026-07-09 -->
 
 ## 模块目的
 
@@ -10,7 +10,7 @@
 ## 当前文件
 
 - `authorizer.go`：`Authorizer` 结构体，实现 `authz.Authorizer` + `batch.BatchAuthorizer` + `lister.Lister`
-- `client.go`：底层 OpenFGA SDK 客户端构造、`ClientOption` 模式（`WithComputedRelations`）；入口直接消费 proto generated config 并调用 `ApplyConf()`
+- `client.go`：底层 OpenFGA SDK 客户端构造、`ClientOption` 模式（`WithComputedRelations`、`WithAuditor`）；入口直接消费 proto generated config 并调用 `ApplyConf()`
 - `check.go`：底层关系检查封装（`user` 参数为完整 principal，如 `"user:uuid"`）
 - `list.go`：底层列表查询封装（`user` 参数为完整 principal）
 - `tuples.go`：tuple 写入/删除（core/public 分层，成功后自动 emit audit 事件）
@@ -27,7 +27,7 @@
 - `BatchCheck(ctx, []authz.CheckRequest) ([]bool, error)` — 不走缓存，单次 OpenFGA 批量调用
 - `ListAllowed(ctx, subject, action, resourceType) ([]string, error)` — 走缓存
 - 底层 `Client` 保留独立 API：`Check`/`ListObjects`/`CachedCheck`/`CachedListObjects`/`BatchCheck`
-- `WriteTuples`/`DeleteTuples` 采用 core/public 分层，成功后自动通过 `obs/audit.Recorder` emit `tuple.changed` 事件
+- `WriteTuples`/`DeleteTuples` 采用 core/public 分层，成功后通过 `Client.auditor`（`audit.Auditor`）直接调用 `audit.NewEvent()` + `auditor.Emit()` 发送 `servora.authz.openfga.tuple_mutation.v1` 事件，data 使用 `openfgaauditpb.TupleMutation` proto，subject 格式为 `"openfga/store/{storeID}"`
 - `InvalidateForTuples` 是 `Client` 方法（需要访问 `computedRelations`）
 - 配置类型来自 `servora.security.authz.openfga.v1.Config` 生成代码；`authz.openfga` section optional，`api_url` 与 `store_id` required，`model_id` 与 `api_token` optional。required/default 合同来自 `*.pb.servora-conf.go`，不要在本包重复维护，也不要添加绕过 `NewClient` 错误返回的 optional client helper。
 
@@ -35,7 +35,7 @@
 
 - 本包只封装 OpenFGA API 与通用调用模式，不负责策略设计与资源规则建模
 - computed relation 映射由调用方通过 `WithComputedRelations` 注入，本包不含任何业务特定映射
-- 审计 emit 通过可选的 `*audit.Recorder` 实现，nil-safe
+- 审计 emit 通过 `Client` 的可选字段 `auditor audit.Auditor`（由 `WithAuditor(a audit.Auditor)` 注入）实现，nil-safe；直接调用 `audit.NewEvent()` + `auditor.Emit()`，不再使用 `audit.Recorder`
 - 不在这里承载 Redis 通用能力；缓存仅是 OpenFGA 场景优化
 
 ## 常见反模式

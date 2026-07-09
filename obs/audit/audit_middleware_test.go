@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/transport"
@@ -42,42 +43,20 @@ func (m *mockAuditor) Events() []cloudevents.Event {
 	return append([]cloudevents.Event{}, m.events...)
 }
 
-func testRules() map[string]*CompiledRule {
-	return map[string]*CompiledRule{
+func testRules() map[string]*auditv1.AuditRule {
+	return map[string]*auditv1.AuditRule{
 		"/test.Service/Enabled": {
-			Mode:      2, // ENABLED
-			EventType: "servora.test.v1",
-			Severity:  "INFO",
-			BuildEvent: func(ctx context.Context, req, resp any, err error) cloudevents.Event {
-				e := NewEvent(ctx, WithType("servora.test.v1"), WithSeverity("INFO"))
-				if err != nil {
-					e.SetExtension(ExtErrorMessage, err.Error())
-				}
-				return e
-			},
+			Mode: auditv1.AuditMode_AUDIT_MODE_ENABLED,
 		},
 		"/test.Service/Disabled": {
-			Mode:      1, // DISABLED
-			EventType: "servora.test.v1.disabled",
-			Severity:  "INFO",
-			BuildEvent: func(ctx context.Context, req, resp any, err error) cloudevents.Event {
-				return NewEvent(ctx)
-			},
+			Mode: auditv1.AuditMode_AUDIT_MODE_DISABLED,
 		},
 	}
 }
 
 func TestMiddleware_EmitOnEnabledRule(t *testing.T) {
 	ma := &mockAuditor{}
-	mw := Middleware(ma,
-		WithRulesFuncs(testRules),
-		WithSubjectFunc(func(ctx context.Context) (string, bool) {
-			return "user-123", true
-		}),
-		WithAuthTypeFunc(func(ctx context.Context) (string, bool) {
-			return "jwt", true
-		}),
-	)
+	mw := Middleware(ma, WithRulesFuncs(testRules))
 
 	handler := mw(func(ctx context.Context, req interface{}) (interface{}, error) {
 		return "response", nil
@@ -101,14 +80,12 @@ func TestMiddleware_EmitOnEnabledRule(t *testing.T) {
 	}
 
 	e := events[0]
-	if e.Type() != "servora.test.v1" {
-		t.Errorf("event Type = %q, want %q", e.Type(), "servora.test.v1")
+	// Middleware must emit a generic RPC audit event with the correct type and subject.
+	if e.Type() != "servora.audit.rpc.v1" {
+		t.Errorf("event Type = %q, want %q", e.Type(), "servora.audit.rpc.v1")
 	}
-	if v, ok := e.Extensions()[ExtAuthID]; !ok || v != "user-123" {
-		t.Errorf("authid = %v, want user-123", v)
-	}
-	if v, ok := e.Extensions()[ExtAuthType]; !ok || v != "jwt" {
-		t.Errorf("authtype = %v, want jwt", v)
+	if e.Subject() != "/test.Service/Enabled" {
+		t.Errorf("event Subject = %q, want %q", e.Subject(), "/test.Service/Enabled")
 	}
 }
 
@@ -202,7 +179,7 @@ func TestMiddleware_HandlerErrorPropagated(t *testing.T) {
 	if len(events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(events))
 	}
-	if v, ok := events[0].Extensions()[ExtErrorMessage]; !ok || v != "handler failed" {
+	if v, ok := events[0].Extensions()["errormessage"]; !ok || v != "handler failed" {
 		t.Errorf("errormessage = %v, want 'handler failed'", v)
 	}
 }

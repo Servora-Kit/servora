@@ -1,6 +1,6 @@
 {
     "name": "@servora/proto-utils",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Servora Proto 工具：CRUD 查询、FieldMask、HTTP client、Kratos 错误解析",
     "type": "module",
     "exports": {

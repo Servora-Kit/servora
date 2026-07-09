@@ -25,8 +25,8 @@ func TestAuditor_EmitMapsCloudEventFields(t *testing.T) {
 	e.SetSource("test-source")
 	e.SetSubject("test-subject")
 	e.SetTime(eventTime)
-	e.SetExtension(audit.ExtSeverityText, "WARN")
-	e.SetExtension(audit.ExtRecordedTime, "2026-05-23T10:11:13.014Z")
+	// Add an arbitrary extension to verify generic extension output.
+	e.SetExtension("customkey", "customval")
 
 	if err := a.Emit(context.Background(), e); err != nil {
 		t.Fatalf("Emit() returned error: %v", err)
@@ -46,18 +46,57 @@ func TestAuditor_EmitMapsCloudEventFields(t *testing.T) {
 		t.Fatalf("cloudevent = %T, want object", record["cloudevent"])
 	}
 
-	want := map[string]any{
-		"id":                  "test-id",
-		"type":                "test.type",
-		"source":              "test-source",
-		"subject":             "test-subject",
-		"time":                eventTime.Format(time.RFC3339Nano),
-		audit.ExtSeverityText: "WARN",
-		audit.ExtRecordedTime: "2026-05-23T10:11:13.014Z",
+	// Verify CE required attributes + subject.
+	wantFixed := map[string]any{
+		"id":      "test-id",
+		"type":    "test.type",
+		"source":  "test-source",
+		"subject": "test-subject",
+		"time":    eventTime.Format(time.RFC3339Nano),
 	}
-	for key, value := range want {
+	for key, value := range wantFixed {
 		if cloudEvent[key] != value {
 			t.Errorf("cloudevent.%s = %v, want %v", key, cloudEvent[key], value)
 		}
+	}
+
+	// Verify extension is present via generic iteration.
+	if cloudEvent["customkey"] != "customval" {
+		t.Errorf("cloudevent.customkey = %v, want customval", cloudEvent["customkey"])
+	}
+
+	// Verify that old hardcoded extension names are NOT required in the output;
+	// the log backend no longer forces severitytext or recordedtime.
+}
+
+func TestAuditor_EmitWithMultipleExtensions(t *testing.T) {
+	var buf bytes.Buffer
+	a := NewAuditor(slog.New(slog.NewJSONHandler(&buf, nil)))
+
+	e := cloudevents.NewEvent()
+	e.SetID("ext-id")
+	e.SetType("ext.type")
+	e.SetSource("//myapp")
+	e.SetSubject("/my.Service/Method")
+	e.SetTime(time.Now())
+	e.SetExtension("traceparent", "00-abc-def-01")
+	e.SetExtension("errormessage", "some error")
+
+	if err := a.Emit(context.Background(), e); err != nil {
+		t.Fatalf("Emit() returned error: %v", err)
+	}
+
+	var record map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &record); err != nil {
+		t.Fatalf("log output is not valid JSON: %v\noutput: %s", err, buf.String())
+	}
+
+	cloudEvent := record["cloudevent"].(map[string]any)
+
+	if cloudEvent["traceparent"] != "00-abc-def-01" {
+		t.Errorf("traceparent = %v, want 00-abc-def-01", cloudEvent["traceparent"])
+	}
+	if cloudEvent["errormessage"] != "some error" {
+		t.Errorf("errormessage = %v, want some error", cloudEvent["errormessage"])
 	}
 }

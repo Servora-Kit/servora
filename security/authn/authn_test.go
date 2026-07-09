@@ -11,6 +11,8 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/transport"
+
+	authnpb "github.com/Servora-Kit/servora/api/gen/go/servora/authn/v1"
 )
 
 // readFile is a thin os.ReadFile wrapper kept package-local so the structural
@@ -83,7 +85,7 @@ func (minimalAuthenticator) Authenticate(ctx context.Context) (context.Context, 
 var _ Authenticator = (*minimalAuthenticator)(nil)
 var _ Authenticator = (*fakeAuthenticator)(nil)
 
-// fakeAuditor captures CloudEvents emitted via WithAuditOnFailure.
+// fakeAuditor captures CloudEvents emitted via WithAuditor.
 type fakeAuditor struct {
 	events []cloudevents.Event
 }
@@ -94,13 +96,15 @@ func (a *fakeAuditor) Emit(_ context.Context, event cloudevents.Event) error {
 }
 
 // ---------------------------------------------------------------------------
-// Server: PublicMethods passthrough
+// Server: MODE_PUBLIC passthrough
 // ---------------------------------------------------------------------------
 
-func TestServer_PublicMethodsPassthrough(t *testing.T) {
+func TestServer_ModePublicPassthrough(t *testing.T) {
 	auth := &fakeAuthenticator{returnErr: errors.New("must not be called")}
-	rules := func() Rules {
-		return Rules{PublicMethods: []string{"/svc/Healthz"}}
+	rules := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/svc/Healthz": {Mode: authnpb.AuthnRule_MODE_PUBLIC},
+		}
 	}
 
 	mw := Server(auth, WithRulesFuncs(rules))
@@ -122,19 +126,20 @@ func TestServer_PublicMethodsPassthrough(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Server: MethodSchemes path installs allowed set into ctx
+// Server: REQUIRED schemes path installs allowed set into ctx
 // ---------------------------------------------------------------------------
 
-func TestServer_MethodSchemes_InstallsAllowedSet(t *testing.T) {
+func TestServer_RequiredSchemes_InstallsAllowedSet(t *testing.T) {
 	var capturedCtx context.Context
 	auth := &fakeAuthenticator{
 		captureCtx: &capturedCtx,
 	}
 
-	rules := func() Rules {
-		return Rules{
-			MethodSchemes: map[string][]string{
-				"/svc/Op": {"jwt", "apikey"},
+	rules := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/svc/Op": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"jwt", "apikey"},
 			},
 		}
 	}
@@ -174,10 +179,13 @@ func TestServer_UnannotatedPath_AllowedNil(t *testing.T) {
 		captureCtx: &capturedCtx,
 	}
 
-	rules := func() Rules {
-		// No PublicMethods or MethodSchemes entries for this op.
-		return Rules{
-			MethodSchemes: map[string][]string{"/svc/Other": {"jwt"}},
+	rules := func() map[string]*authnpb.AuthnRule {
+		// No rule entry for this op.
+		return map[string]*authnpb.AuthnRule{
+			"/svc/Other": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"jwt"},
+			},
 		}
 	}
 
@@ -266,9 +274,12 @@ func TestServer_MultiFailure_AggregatesReason(t *testing.T) {
 		Named("apikey", apikeyAuth),
 	)
 
-	rules := func() Rules {
-		return Rules{
-			MethodSchemes: map[string][]string{"/svc/Op": {"jwt", "apikey"}},
+	rules := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/svc/Op": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"jwt", "apikey"},
+			},
 		}
 	}
 
@@ -354,15 +365,15 @@ func TestServer_DefaultErrorIsUnauthorized(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Server: WithAuditOnFailure emits CloudEvent
+// Server: WithAuditor emits CloudEvent
 // ---------------------------------------------------------------------------
 
-func TestServer_WithAuditOnFailure_Emits(t *testing.T) {
+func TestServer_WithAuditor_Emits(t *testing.T) {
 	sentinel := errors.New("bad token")
 	auth := &fakeAuthenticator{returnErr: sentinel}
 	auditor := &fakeAuditor{}
 
-	mw := Server(auth, WithAuditOnFailure(auditor))
+	mw := Server(auth, WithAuditor(auditor))
 	handler := mw(func(_ context.Context, _ any) (any, error) {
 		t.Fatal("handler must not run on auth failure")
 		return nil, nil
@@ -374,27 +385,24 @@ func TestServer_WithAuditOnFailure_Emits(t *testing.T) {
 		t.Fatalf("auditor.events count = %d, want 1", len(auditor.events))
 	}
 	evt := auditor.events[0]
-	if evt.Type() != "servora.authn.v1.failure" {
-		t.Errorf("event type = %q, want servora.authn.v1.failure", evt.Type())
+	if evt.Type() != EventTypeAuthnFailure {
+		t.Errorf("event type = %q, want %s", evt.Type(), EventTypeAuthnFailure)
 	}
-	if evt.Source() != "/svc/SecureOp" {
-		t.Errorf("event source = %q, want /svc/SecureOp", evt.Source())
+	// Source is set from app context ("//unknown" when no app is registered).
+	if evt.Source() == "" {
+		t.Errorf("event source should not be empty")
 	}
-	sev, _ := evt.Extensions()["severity"].(string)
-	if sev != "WARN" {
-		t.Errorf("event severity = %q, want WARN", sev)
-	}
-	// Data should contain the error reason.
+	// Data is protobuf-encoded: the reason string should appear in the raw bytes.
 	if data := string(evt.Data()); !strings.Contains(data, "bad token") {
 		t.Errorf("event data = %q, want to contain 'bad token'", data)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Server: WithAuditOnFailure NOT configured → silent
+// Server: WithAuditor NOT configured → silent
 // ---------------------------------------------------------------------------
 
-func TestServer_WithoutAuditOnFailure_Silent(t *testing.T) {
+func TestServer_WithoutAuditor_Silent(t *testing.T) {
 	auth := &fakeAuthenticator{returnErr: errors.New("fail")}
 
 	// No auditor configured — should not panic or emit.
@@ -416,50 +424,69 @@ func TestServer_WithoutAuditOnFailure_Silent(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestWithRulesFuncs_MergeBehavior(t *testing.T) {
-	fn1 := func() Rules {
-		return Rules{
-			PublicMethods: []string{"/a/Healthz"},
-			MethodSchemes: map[string][]string{"/a/Op": {"jwt"}},
+	fn1 := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/a/Healthz": {Mode: authnpb.AuthnRule_MODE_PUBLIC},
+			"/a/Op": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"jwt"},
+			},
 		}
 	}
-	fn2 := func() Rules {
-		return Rules{
-			PublicMethods: []string{"/b/Healthz"},
-			MethodSchemes: map[string][]string{"/b/Op": {"apikey"}},
+	fn2 := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/b/Healthz": {Mode: authnpb.AuthnRule_MODE_PUBLIC},
+			"/b/Op": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"apikey"},
+			},
 		}
 	}
 
 	cfg := &serverConfig{}
 	WithRulesFuncs(fn1, nil, fn2)(cfg)
 
-	if len(cfg.rules.PublicMethods) != 2 {
-		t.Errorf("PublicMethods len = %d, want 2", len(cfg.rules.PublicMethods))
+	if len(cfg.rules) != 4 {
+		t.Errorf("rules len = %d, want 4", len(cfg.rules))
 	}
-	if cfg.rules.PublicMethods[0] != "/a/Healthz" || cfg.rules.PublicMethods[1] != "/b/Healthz" {
-		t.Errorf("PublicMethods = %v, want [/a/Healthz /b/Healthz]", cfg.rules.PublicMethods)
+	if cfg.rules["/a/Healthz"].GetMode() != authnpb.AuthnRule_MODE_PUBLIC {
+		t.Errorf("/a/Healthz mode = %v, want MODE_PUBLIC", cfg.rules["/a/Healthz"].GetMode())
 	}
-	if got := cfg.rules.MethodSchemes["/a/Op"]; len(got) != 1 || got[0] != "jwt" {
-		t.Errorf("MethodSchemes[/a/Op] = %v, want [jwt]", got)
+	if cfg.rules["/b/Healthz"].GetMode() != authnpb.AuthnRule_MODE_PUBLIC {
+		t.Errorf("/b/Healthz mode = %v, want MODE_PUBLIC", cfg.rules["/b/Healthz"].GetMode())
 	}
-	if got := cfg.rules.MethodSchemes["/b/Op"]; len(got) != 1 || got[0] != "apikey" {
-		t.Errorf("MethodSchemes[/b/Op] = %v, want [apikey]", got)
+	if got := cfg.rules["/a/Op"].GetSchemes(); len(got) != 1 || got[0] != "jwt" {
+		t.Errorf("/a/Op schemes = %v, want [jwt]", got)
+	}
+	if got := cfg.rules["/b/Op"].GetSchemes(); len(got) != 1 || got[0] != "apikey" {
+		t.Errorf("/b/Op schemes = %v, want [apikey]", got)
 	}
 }
 
 func TestWithRulesFuncs_LaterOverwritesEarlier(t *testing.T) {
-	fn1 := func() Rules {
-		return Rules{MethodSchemes: map[string][]string{"/svc/Op": {"jwt"}}}
+	fn1 := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/svc/Op": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"jwt"},
+			},
+		}
 	}
-	fn2 := func() Rules {
-		return Rules{MethodSchemes: map[string][]string{"/svc/Op": {"apikey"}}}
+	fn2 := func() map[string]*authnpb.AuthnRule {
+		return map[string]*authnpb.AuthnRule{
+			"/svc/Op": {
+				Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+				Schemes: []string{"apikey"},
+			},
+		}
 	}
 
 	cfg := &serverConfig{}
 	WithRulesFuncs(fn1, fn2)(cfg)
 
-	got := cfg.rules.MethodSchemes["/svc/Op"]
+	got := cfg.rules["/svc/Op"].GetSchemes()
 	if len(got) != 1 || got[0] != "apikey" {
-		t.Errorf("MethodSchemes[/svc/Op] = %v, want [apikey] (later wins)", got)
+		t.Errorf("/svc/Op schemes = %v, want [apikey] (later wins)", got)
 	}
 }
 

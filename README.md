@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  SERVORA = Servora Enables Reliable, Versioned, Observable Resource APIs
+</p>
+
+<p align="center">
   <a href="https://pkg.go.dev/github.com/Servora-Kit/servora"><img src="https://pkg.go.dev/badge/github.com/Servora-Kit/servora.svg" alt="Go Reference" /></a>
   <a href="https://github.com/Servora-Kit/servora/releases"><img src="https://img.shields.io/github/v/release/Servora-Kit/servora" alt="GitHub release" /></a>
   <a href="https://goreportcard.com/report/github.com/Servora-Kit/servora"><img src="https://goreportcard.com/badge/github.com/Servora-Kit/servora" alt="Go Report Card" /></a>
@@ -273,28 +277,23 @@ mw := authz.Server(openfga.NewAuthorizer(client), authz.WithRulesFuncs(pb.AuthzR
 
 #### 审计
 
-通过 `audit_rule` 在方法上声明审计事件，事件以 [CloudEvents](https://cloudevents.io/) 格式投递（默认走 Kafka）。`extensions` 支持声明式地从请求/响应中提取任意 CloudEvents 扩展属性。
+通过 `audit_rule` 或 `service_default` 声明 RPC 是否进入通用审计。注解只表达开关；事件类型、业务目标、详情 data 和扩展属性由事件生产者负责，例如 authn/authz middleware、后续 CRUD generator 或业务显式 emit。通用 RPC 审计事件以 [CloudEvents](https://cloudevents.io/) 投递。
 
 ```proto
 import "servora/audit/v1/annotations.proto";
 
 service ResourceService {
+  option (servora.audit.v1.service_default) = { mode: AUDIT_MODE_ENABLED };
+
   rpc CreateResource(CreateResourceRequest) returns (Resource) {
     option (servora.audit.v1.audit_rule) = {
       mode: AUDIT_MODE_ENABLED
-      event_type: "myapp.resource.created"
-      severity: "info"
-      target_id_field: "resp.id"
-      extensions: [
-        { name: "mutation"     literal: { ce_string: "CREATE" } },
-        { name: "resourcetype" literal: { ce_string: "resource" } }
-      ]
     };
   }
 }
 ```
 
-Plugin 生成 `AuditRules()` 编译后规则表（含 extension 提取闭包），业务侧把 `Auditor` 实现（默认 Kafka）跟规则表一起挂到 middleware：
+Plugin 生成 `AuditRules()` 规则表，业务侧把 `Auditor` 实现（默认 Kafka）跟规则表一起挂到 middleware：
 
 ```go
 import (
@@ -306,6 +305,8 @@ mw := audit.Middleware(auditor,
     audit.WithRulesFuncs(pb.AuditRules),
 )
 ```
+
+通用 middleware 发出的事件固定为 `servora.audit.rpc.v1`，`source` 为 `"//" + app.Name`，`subject` 为 Kratos transport operation（如 `/myapp.resource.v1.ResourceService/CreateResource`）。业务资源事件可直接用 `audit.NewEvent()` 构造自定义 CloudEvent 并调用 `Auditor.Emit`。
 
 ### 服务治理
 

@@ -18,9 +18,11 @@
 //
 // # Audit integration
 //
-// When WithAuditOnDeny is configured with an audit.Auditor, the middleware
-// emits CloudEvents events on authorization denial or error. This is purely
-// opt-in; without the option, the middleware is silent.
+// When WithAuditor is configured with an audit.Auditor, the middleware
+// emits typed CloudEvents events on authorization allowed, denied, and error
+// decisions. The authenticated subject is written to the CloudEvents authid
+// extension so platform audit storage can project actor_id. Without the option,
+// the middleware is silent.
 //
 // # Future: contextual tuples / attributes
 //

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package servora.authn.audit.v1;
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/authn/audit/v1;authnauditpb";
+
+// AuthnFailure is the CloudEvents data payload for servora.authn.failure.v1
+// events. All string fields MUST be sanitised — no raw tokens, API keys, or
+// full JWT claims may appear here.
+message AuthnFailure {
+  // reason is the high-level failure reason (e.g. "AUTHN_FAILED").
+  string reason = 1;
+  // code is the HTTP/gRPC status code (e.g. 401).
+  int32 code = 2;
+  // message is a sanitised, human-readable failure description.
+  string message = 3;
+  // attempts lists the per-scheme authentication results when Multi dispatch
+  // was used.
+  repeated SchemeAttempt attempts = 4;
+}
+
+// SchemeAttempt records the outcome of a single authentication scheme within a
+// Multi-dispatcher round.
+message SchemeAttempt {
+  // scheme is the authenticator name (e.g. "jwt", "apikey", "casdoor").
+  string scheme = 1;
+  // reason is the sanitised failure reason returned by this scheme's backend.
+  string reason = 2;
+  // message is a sanitised description from this scheme's backend.
+  string message = 3;
+}
+
+// AuthnSuccess is the CloudEvents data payload for servora.authn.success.v1
+// events. Identity fields are intentionally omitted — the authenticated
+// subject is carried in CloudEvents extensions or set by the business layer.
+message AuthnSuccess {
+  // scheme is the authentication scheme that succeeded (e.g. "jwt", "apikey").
+  string scheme = 1;
+  // message is an optional human-readable note.
+  string message = 2;
+}

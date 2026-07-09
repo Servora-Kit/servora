@@ -159,7 +159,7 @@ func TestNoAnnotations_NoFileGenerated(t *testing.T) {
 	}
 }
 
-func TestMethodLevelPublic_GoesToPublicMethods(t *testing.T) {
+func TestMethodLevelPublic_GeneratesPublicRule(t *testing.T) {
 	gen, err := runPluginScenario(t, []fileSpec{
 		{
 			name:     "example/v1/greeting.proto",
@@ -252,18 +252,78 @@ func TestMethodOverridesServiceDefault_PublicWins(t *testing.T) {
 	publicOp := `"/example.v1.GreetingService/PublicHello"`
 	privateOp := `"/example.v1.GreetingService/PrivateHello"`
 
-	// PublicHello must appear in the PublicMethods slice section of the
-	// aggregate _authnRules literal.
-	publicSection, schemesSection := splitSections(t, content)
+	if !strings.Contains(content, publicOp) {
+		t.Errorf("PublicHello missing from generated rules:\n%s", content)
+	}
+	if !strings.Contains(content, "AuthnRule_MODE_PUBLIC") {
+		t.Errorf("PublicHello should carry MODE_PUBLIC:\n%s", content)
+	}
+	if !strings.Contains(content, privateOp) {
+		t.Errorf("PrivateHello missing from generated rules:\n%s", content)
+	}
+	if !strings.Contains(content, "AuthnRule_MODE_REQUIRED") || !strings.Contains(content, `"jwt"`) {
+		t.Errorf("PrivateHello should inherit REQUIRED + jwt:\n%s", content)
+	}
+}
 
-	if !strings.Contains(publicSection, publicOp) {
-		t.Errorf("PublicHello missing from PublicMethods section:\n%s", publicSection)
+func TestSameShortServiceNameAcrossPackages_DoesNotShareRules(t *testing.T) {
+	gen, err := runPluginScenario(t, []fileSpec{
+		{
+			name:     "accounts/v1/user.proto",
+			pkg:      "accounts.v1",
+			goPkg:    "example.com/gen/accounts/v1;accountsv1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "UserService",
+					serviceDefault: &authnpb.AuthnRule{
+						Mode:    authnpb.AuthnRule_MODE_REQUIRED,
+						Schemes: []string{"jwt"},
+					},
+					methods: []methodSpec{{name: "Get"}},
+				},
+			},
+		},
+		{
+			name:     "admin/v1/user.proto",
+			pkg:      "admin.v1",
+			goPkg:    "example.com/gen/admin/v1;adminv1",
+			generate: true,
+			services: []serviceSpec{
+				{
+					name: "UserService",
+					serviceDefault: &authnpb.AuthnRule{
+						Mode: authnpb.AuthnRule_MODE_PUBLIC,
+					},
+					methods: []methodSpec{{name: "Get"}},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	if strings.Contains(schemesSection, publicOp) {
-		t.Errorf("PublicHello should NOT appear in MethodSchemes (was overridden):\n%s", schemesSection)
+
+	files := generatedFiles(t, gen)
+	accounts := files["example.com/gen/accounts/v1/authn_rules.gen.go"]
+	admin := files["example.com/gen/admin/v1/authn_rules.gen.go"]
+	if accounts == "" || admin == "" {
+		t.Fatalf("expected generated authn files for both packages, got: %v", keysOf(files))
 	}
-	if !strings.Contains(schemesSection, privateOp) {
-		t.Errorf("PrivateHello missing from MethodSchemes (should inherit jwt):\n%s", schemesSection)
+	if !strings.Contains(accounts, `"/accounts.v1.UserService/Get"`) {
+		t.Fatalf("accounts rule missing full-name operation\n--- generated ---\n%s", accounts)
+	}
+	if strings.Contains(accounts, `"/admin.v1.UserService/Get"`) {
+		t.Fatalf("accounts output leaked admin operation\n--- generated ---\n%s", accounts)
+	}
+	if !strings.Contains(accounts, `"jwt"`) {
+		t.Fatalf("accounts inherited REQUIRED jwt rule lost\n--- generated ---\n%s", accounts)
+	}
+	if !strings.Contains(admin, `"/admin.v1.UserService/Get"`) {
+		t.Fatalf("admin public rule missing full-name operation\n--- generated ---\n%s", admin)
+	}
+	if !strings.Contains(admin, "AuthnRule_MODE_PUBLIC") || strings.Contains(admin, `"jwt"`) {
+		t.Fatalf("admin output inherited accounts rule unexpectedly\n--- generated ---\n%s", admin)
 	}
 }
 
@@ -298,18 +358,18 @@ func TestInvalid_PublicWithSchemes(t *testing.T) {
 	}
 }
 
-func TestInvalid_RequiredWithEmptySchemes(t *testing.T) {
-	_, err := runPluginScenario(t, []fileSpec{
+func TestRequiredWithEmptySchemes_GeneratesDefaultEngineRule(t *testing.T) {
+	gen, err := runPluginScenario(t, []fileSpec{
 		{
-			name:     "example/v1/bad.proto",
+			name:     "example/v1/default.proto",
 			pkg:      "example.v1",
 			goPkg:    "example.com/gen/example/v1;examplev1",
 			generate: true,
 			services: []serviceSpec{
 				{
-					name: "BadService",
+					name: "DefaultService",
 					methods: []methodSpec{
-						{name: "BadOp", rule: &authnpb.AuthnRule{
+						{name: "SecureOp", rule: &authnpb.AuthnRule{
 							Mode: authnpb.AuthnRule_MODE_REQUIRED,
 						}},
 					},
@@ -317,14 +377,19 @@ func TestInvalid_RequiredWithEmptySchemes(t *testing.T) {
 			},
 		},
 	})
-	if err == nil {
-		t.Fatalf("expected validation error for REQUIRED + empty schemes, got nil")
+	if err != nil {
+		t.Fatalf("generate returned unexpected error: %v", err)
 	}
-	msg := err.Error()
-	for _, want := range []string{"example/v1/bad.proto", "BadService", "BadOp", "MODE_REQUIRED", "schemes"} {
-		if !strings.Contains(msg, want) {
-			t.Errorf("error message missing %q\n--- got ---\n%s", want, msg)
-		}
+	files := generatedFiles(t, gen)
+	content := lookupAuthnFile(t, files)
+	if !strings.Contains(content, `"/example.v1.DefaultService/SecureOp"`) {
+		t.Fatalf("REQUIRED empty-schemes rule missing operation\n--- generated ---\n%s", content)
+	}
+	if !strings.Contains(content, "AuthnRule_MODE_REQUIRED") {
+		t.Fatalf("REQUIRED empty-schemes rule missing mode\n--- generated ---\n%s", content)
+	}
+	if strings.Contains(content, "Schemes:") {
+		t.Fatalf("REQUIRED empty-schemes rule should not emit Schemes field\n--- generated ---\n%s", content)
 	}
 }
 
@@ -359,10 +424,9 @@ func TestInvalid_UnspecifiedWithSchemes(t *testing.T) {
 }
 
 // TestGeneratedAccessorsReturnIndependentCopies validates the produced Go file
-// declares a single AuthnRules() accessor that explicitly deep-copies the
-// backing PublicMethods slice, MethodSchemes map, and per-key scheme slices.
-// We assert on generated source presence rather than execute it (which would
-// require a separate `go test` pipeline on the produced file).
+// declares a single AuthnRules() accessor returning cloned protobuf rule
+// messages. We assert on generated source presence rather than execute it
+// here; TestGeneratedFileCompiles covers parser/type-checking.
 func TestGeneratedAccessorsReturnIndependentCopies(t *testing.T) {
 	gen, err := runPluginScenario(t, []fileSpec{
 		{
@@ -390,14 +454,16 @@ func TestGeneratedAccessorsReturnIndependentCopies(t *testing.T) {
 	}
 	files := generatedFiles(t, gen)
 	content := lookupAuthnFile(t, files)
-	// AuthnRules accessor must import authn main package, declare a single
-	// aggregate function, and deep-copy slices + map.
+	// AuthnRules accessor must use pb rules, declare a single aggregate
+	// function, and clone protobuf messages. The protobuf package alias is
+	// chosen by protogen, so assert the contract instead of a fixed alias.
 	for _, sig := range []string{
-		`authn "github.com/Servora-Kit/servora/security/authn"`,
-		"func AuthnRules() authn.Rules",
-		"make([]string,",            // fresh PublicMethods slice
-		"copy(",                     // slice copy
-		"make(map[string][]string,", // fresh MethodSchemes map
+		`"github.com/Servora-Kit/servora/api/gen/go/servora/authn/v1"`,
+		`proto "google.golang.org/protobuf/proto"`,
+		"func AuthnRules() map[string]*",
+		"AuthnRule",
+		"make(map[string]*",
+		"proto.Clone(v).(*",
 	} {
 		if !strings.Contains(content, sig) {
 			t.Errorf("generated file missing %q\n--- generated ---\n%s", sig, content)
@@ -405,8 +471,11 @@ func TestGeneratedAccessorsReturnIndependentCopies(t *testing.T) {
 	}
 	// The legacy double-func shape MUST NOT be emitted.
 	for _, banned := range []string{
-		"func PublicMethods() []string",
-		"func MethodSchemes() map[string][]string",
+		"func " + "Public" + "Methods() []string",
+		"func " + "Method" + "Schemes() map[string][]string",
+		"authn." + "Rules",
+		"Public" + "Methods:",
+		"Method" + "Schemes:",
 	} {
 		if strings.Contains(content, banned) {
 			t.Errorf("generated file unexpectedly contains legacy %q\n--- generated ---\n%s", banned, content)
@@ -454,36 +523,12 @@ func TestGeneratedFileCompiles(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module sandbox\n\ngo 1.22\n"), 0o644); err != nil {
 		t.Fatalf("write go.mod: %v", err)
 	}
-	// The generated file declares `package examplev1` and imports the real
-	// security/authn main package for the Rules type. The sandbox is offline
-	// (GOWORK=off + GOFLAGS=-mod=mod with no network), so we redirect that
-	// import to a local stub under sandbox/authn that declares the Rules
-	// shape. The package directive is also realigned so go vet ./... can
-	// type-check the file as part of the sandbox module root.
+	// The generated file declares `package examplev1`; realign it so go vet
+	// can type-check the file as part of the sandbox module root.
 	rewrite := src
 	rewrite = strings.Replace(rewrite, "package examplev1", "package sandbox", 1)
-	rewrite = strings.Replace(
-		rewrite,
-		`authn "github.com/Servora-Kit/servora/security/authn"`,
-		`authn "sandbox/authn"`,
-		1,
-	)
 	if err := os.WriteFile(filepath.Join(dir, "authn_rules.gen.go"), []byte(rewrite), 0o644); err != nil {
 		t.Fatalf("write generated file: %v", err)
-	}
-
-	// Stub authn package: just enough for the generated file to type-check.
-	authnDir := filepath.Join(dir, "authn")
-	if err := os.MkdirAll(authnDir, 0o755); err != nil {
-		t.Fatalf("mkdir authn stub: %v", err)
-	}
-	stub := "package authn\n\n" +
-		"type Rules struct {\n" +
-		"\tPublicMethods []string\n" +
-		"\tMethodSchemes map[string][]string\n" +
-		"}\n"
-	if err := os.WriteFile(filepath.Join(authnDir, "authn.go"), []byte(stub), 0o644); err != nil {
-		t.Fatalf("write authn stub: %v", err)
 	}
 
 	cmd := exec.Command("go", "vet", "./...")
@@ -523,17 +568,4 @@ func keysOf[V any](m map[string]V) []string {
 	}
 	sort.Strings(ks)
 	return ks
-}
-
-// splitSections splits the generated file at the boundary between the
-// PublicMethods slice literal and the MethodSchemes map literal inside the
-// aggregate _authnRules struct, so tests can assert containment in the
-// correct section without false positives.
-func splitSections(t *testing.T, content string) (publicSection, schemesSection string) {
-	t.Helper()
-	idx := strings.Index(content, "MethodSchemes:")
-	if idx < 0 {
-		return content, ""
-	}
-	return content[:idx], content[idx:]
 }
