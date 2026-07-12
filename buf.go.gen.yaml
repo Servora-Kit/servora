@@ -14,7 +14,7 @@ managed:
         - module: buf.build/kratos/apis
         - module: buf.build/gnostic/gnostic
         - module: buf.build/gogo/protobuf
-        - module: buf.build/menta2k-org/redact
+        - module: buf.build/go-wind/redact
 
         # --- 本仓库 go_package 例外：保留 proto 里手写的自定义别名 ---
         - file_option: go_package
@@ -49,7 +49,7 @@ plugins:
           - lang=go
 
     # generate redact code (field-level log redaction)
-    - local: protoc-gen-redact
+    - local: protoc-gen-go-redact
       out: api/gen/go
       opt:
           - paths=source_relative

@@ -30,6 +30,7 @@ PROTOC_GEN_TYPESCRIPT_HTTP_VERSION := latest
 PROTOC_GEN_GO_ERRORS_VERSION := latest
 PROTOC_GEN_OPENAPI_VERSION   := latest
 PROTOC_GEN_VALIDATE_VERSION  := latest
+PROTOC_GEN_GO_REDACT_VERSION := latest
 KRATOS_VERSION               := latest
 GNOSTIC_VERSION              := latest
 BUF_VERSION                  := latest
@@ -71,6 +72,7 @@ plugin: ## Install protoc-gen-* plugins (third-party + servora)
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v3@$(PROTOC_GEN_GO_ERRORS_VERSION)
 	@go install github.com/google/gnostic/cmd/protoc-gen-openapi@$(PROTOC_GEN_OPENAPI_VERSION)
 	@go install github.com/envoyproxy/protoc-gen-validate@$(PROTOC_GEN_VALIDATE_VERSION)
+	@go install github.com/tx7do/go-wind-toolkit/protoc-gen-go-redact@$(PROTOC_GEN_GO_REDACT_VERSION)
 	@go install ./cmd/protoc-gen-servora-authz
 	@go install ./cmd/protoc-gen-servora-audit
 	@go install ./cmd/protoc-gen-servora-mapper

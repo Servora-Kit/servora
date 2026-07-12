@@ -11,7 +11,7 @@ managed:
         - module: buf.build/kratos/apis
         - module: buf.build/gnostic/gnostic
         - module: buf.build/gogo/protobuf
-        - module: buf.build/menta2k-org/redact
+        - module: buf.build/go-wind/redact
 
 inputs:
     - directory: api/protos
