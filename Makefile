@@ -25,12 +25,12 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 # Tool versions — override to pin a specific version.
 PROTOC_GEN_GO_VERSION        := latest
 PROTOC_GEN_GO_GRPC_VERSION   := latest
-PROTOC_GEN_GO_HTTP_VERSION   := v3.0.0-20260621094049-2726761cdd77
+PROTOC_GEN_GO_HTTP_VERSION   := latest
 PROTOC_GEN_TYPESCRIPT_HTTP_VERSION := latest
-PROTOC_GEN_GO_ERRORS_VERSION := v3.0.0-20260621094049-2726761cdd77
+PROTOC_GEN_GO_ERRORS_VERSION := latest
 PROTOC_GEN_OPENAPI_VERSION   := latest
 PROTOC_GEN_VALIDATE_VERSION  := latest
-KRATOS_VERSION               := v3.0.0-20260621094049-2726761cdd77
+KRATOS_VERSION               := latest
 GNOSTIC_VERSION              := latest
 BUF_VERSION                  := latest
 GOLANGCI_LINT_VERSION        := latest
