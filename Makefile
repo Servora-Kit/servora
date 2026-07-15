@@ -37,6 +37,7 @@ BUF_VERSION                  := latest
 GOLANGCI_LINT_VERSION        := latest
 WIRE_VERSION                 := latest
 ENT_VERSION                  := latest
+API_LINTER_VERSION           := latest
 
 # ============================================================================
 # META
@@ -87,6 +88,7 @@ cli: ## Install CLI tools (kratos, buf, golangci-lint, wire, ent, svr)
 	@go install github.com/google/gnostic@$(GNOSTIC_VERSION)
 	@go install github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	@go install github.com/googleapis/api-linter/cmd/api-linter@$(API_LINTER_VERSION)
 	@go install github.com/google/wire/cmd/wire@$(WIRE_VERSION)
 	@go install entgo.io/ent/cmd/ent@$(ENT_VERSION)
 	@go install ./cmd/svr
