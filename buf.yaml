@@ -6,6 +6,7 @@ modules:
 
 deps:
   - buf.build/bufbuild/protovalidate
+  # - buf.build/kratos/apis
 
 breaking:
   use:
