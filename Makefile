@@ -26,7 +26,6 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 PROTOC_GEN_GO_VERSION        := latest
 PROTOC_GEN_GO_GRPC_VERSION   := latest
 PROTOC_GEN_GO_HTTP_VERSION   := latest
-PROTOC_GEN_TYPESCRIPT_HTTP_VERSION := latest
 PROTOC_GEN_GO_ERRORS_VERSION := latest
 PROTOC_GEN_OPENAPI_VERSION   := latest
 PROTOC_GEN_VALIDATE_VERSION  := latest
@@ -69,7 +68,7 @@ plugin: ## Install protoc-gen-* plugins (third-party + servora)
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION)
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v3@$(PROTOC_GEN_GO_HTTP_VERSION)
-	@go install github.com/go-kratos/protoc-gen-typescript-http@$(PROTOC_GEN_TYPESCRIPT_HTTP_VERSION)
+	@go install ./cmd/protoc-gen-typescript-http
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v3@$(PROTOC_GEN_GO_ERRORS_VERSION)
 	@go install github.com/google/gnostic/cmd/protoc-gen-openapi@$(PROTOC_GEN_OPENAPI_VERSION)
 	@go install github.com/envoyproxy/protoc-gen-validate@$(PROTOC_GEN_VALIDATE_VERSION)

@@ -1,7 +1,7 @@
 # AGENTS.md - cmd/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-15 | Updated: 2026-03-15 -->
+<!-- Generated: 2026-03-15 | Updated: 2026-07-17 -->
 
 ## Purpose
 
@@ -12,6 +12,7 @@
 | Directory | Purpose |
 |-----------|---------|
 | `svr/` | 统一开发 CLI：`svr new api`、`svr gen gorm`、`svr openfga`（见 `svr/AGENTS.md`） |
+| `protoc-gen-typescript-http/` | 仓库内维护的 TypeScript HTTP client 生成器：遵循 canonical ProtoJSON 的 64 位整数字符串映射，并按 `google.api.http` 单段/多段规则编码路径变量 |
 | `protoc-gen-servora-mapper/` | 从 `mapper` / `mapper_field` 注解生成结构体映射函数 |
 | `protoc-gen-servora-audit/` | 从 `audit_rule`（method）+ `service_default`（service）注解生成审计规则；method 显式字段覆盖 service 默认，未设置字段继承默认 |
 | `protoc-gen-servora-authz/` | 从 `rule`（method）+ `service_default`（service）注解生成授权规则；合并语义同 audit |
@@ -22,3 +23,4 @@
 - 从项目根目录运行 `go run ./cmd/svr ...`
 - 修改 proto 注解后需重新 `make gen` 以触发对应 plugin
 - 各 plugin 的合并测试套件位于 `cmd/protoc-gen-servora-{audit,authz,authn}/main_test.go`，新增 service 级字段时务必补合并矩阵 case
+- 修改 `protoc-gen-typescript-http` 后运行 `go test ./cmd/protoc-gen-typescript-http/...`、`make gen.ts`、`make web.typecheck` 和 `make web.build`；生成契约测试位于 `internal/plugin/generate_test.go`

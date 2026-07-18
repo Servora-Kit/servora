@@ -1,0 +1,64 @@
+package plugin
+
+import (
+	"fmt"
+	"path"
+	"strings"
+
+	"github.com/Servora-Kit/servora/cmd/protoc-gen-typescript-http/internal/codegen"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
+)
+
+func Generate(request *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse, error) {
+	if request == nil {
+		return nil, fmt.Errorf("code generator request is nil")
+	}
+	if len(request.GetFileToGenerate()) == 0 {
+		Warn("no files to generate in the request")
+	}
+	generate := make(map[string]struct{})
+	registry, err := protodesc.NewFiles(&descriptorpb.FileDescriptorSet{
+		File: request.GetProtoFile(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create proto registry: %w", err)
+	}
+	for _, f := range request.GetFileToGenerate() {
+		generate[f] = struct{}{}
+	}
+	packaged := make(map[protoreflect.FullName][]protoreflect.FileDescriptor)
+	for _, f := range request.GetFileToGenerate() {
+		file, err := registry.FindFileByPath(f)
+		if err != nil {
+			return nil, fmt.Errorf("find file %s: %w", f, err)
+		}
+		if file.Package() == "" {
+			Warn("file %q has no package declaration; output will be placed in root directory", f)
+		}
+		packaged[file.Package()] = append(packaged[file.Package()], file)
+	}
+
+	var res pluginpb.CodeGeneratorResponse
+	for pkg, files := range packaged {
+		if len(files) == 0 {
+			continue
+		}
+		var index codegen.File
+		indexPathElems := append(strings.Split(string(pkg), "."), "index.ts")
+		if err := (packageGenerator{pkg: pkg, files: files}).Generate(&index); err != nil {
+			return nil, fmt.Errorf("generate package '%s': %w", pkg, err)
+		}
+		index.P()
+		index.P("// @@protoc_insertion_point(typescript-http-eof)")
+		res.File = append(res.File, &pluginpb.CodeGeneratorResponse_File{
+			Name:    proto.String(path.Join(indexPathElems...)),
+			Content: proto.String(string(index.Content())),
+		})
+	}
+	res.SupportedFeatures = proto.Uint64(uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL))
+	return &res, nil
+}
