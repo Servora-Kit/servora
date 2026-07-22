@@ -242,9 +242,9 @@ mw := authz.Server(openfga.NewAuthorizer(client), authz.WithRulesFuncs(pb.AuthzR
 
 #### CRUD 生态
 
-完整声明 `google.api.resource` 与 `IDENTIFIER name` 后，`protoc-gen-servora-crud` 生成 Go/TypeScript 资源名及字段 helper；`core/crud` 在 service 边界规范化 FieldMask、字段生命周期、filter/order、page token 与响应清理，`core/crud/mapper` 和 Ent adapter 负责显式装配的读映射与查询执行。
+Servora 提供了声明式、 AIP 风格约束的 CRUD 生态框架，用户只需要在 [API Proto](./api/protos/servora/example/v1/example.proto) 中定义 AIP 规范的资源 message ，Servora 就会利用 `protoc-gen-servora-crud` 插件生成 Go 、 TypeScript 关于 分页、排序以及过滤的辅助函数，以及关于 proto 生成的代码与 data 层所使用的 orm框架字段的绑定关系代码。通过 CRUD 生态，用户可以非常规范、方便地完成增删改查的 API 设计与业务开发。
 
-CRUD 不接管授权、租户、事务、业务错误或 repository 写入。首版提供 Ent adapter；SQLite/PostgreSQL 通过本地 live contract 验证，MySQL 仅为实验性 SQL-builder 支持。完整 Proto 约定、组合示例、软删除/AIP-164 边界、Secret 建模及 TypeScript 用法见 [`docs/crud.md`](./docs/crud.md)。
+具体使用示例可见：[servora-platform/example.service](https://github.com/Servora-Kit/servora-platform/tree/main/app/example)
 
 #### 审计
 
