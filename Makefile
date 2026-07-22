@@ -26,7 +26,6 @@ GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown")
 PROTOC_GEN_GO_VERSION        := latest
 PROTOC_GEN_GO_GRPC_VERSION   := latest
 PROTOC_GEN_GO_HTTP_VERSION   := latest
-PROTOC_GEN_GO_ERRORS_VERSION := latest
 PROTOC_GEN_OPENAPI_VERSION   := latest
 PROTOC_GEN_VALIDATE_VERSION  := latest
 PROTOC_GEN_GO_REDACT_VERSION := latest
@@ -69,15 +68,15 @@ plugin: ## Install protoc-gen-* plugins (third-party + servora)
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GO_GRPC_VERSION)
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v3@$(PROTOC_GEN_GO_HTTP_VERSION)
 	@go install ./cmd/protoc-gen-typescript-http
-	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v3@$(PROTOC_GEN_GO_ERRORS_VERSION)
+	@go install ./cmd/protoc-gen-go-errors
 	@go install github.com/google/gnostic/cmd/protoc-gen-openapi@$(PROTOC_GEN_OPENAPI_VERSION)
 	@go install github.com/envoyproxy/protoc-gen-validate@$(PROTOC_GEN_VALIDATE_VERSION)
 	@go install github.com/tx7do/go-wind-toolkit/protoc-gen-go-redact@$(PROTOC_GEN_GO_REDACT_VERSION)
 	@go install ./cmd/protoc-gen-servora-authz
 	@go install ./cmd/protoc-gen-servora-audit
-	@go install ./cmd/protoc-gen-servora-mapper
 	@go install ./cmd/protoc-gen-servora-authn
 	@go install ./cmd/protoc-gen-servora-conf
+	@go install ./cmd/protoc-gen-servora-crud
 	@echo "✓ Protoc plugins installed"
 
 .PHONY: cli
@@ -169,6 +168,18 @@ test: ## Run unit tests across modules (-short, no external deps)
 .PHONY: test.all
 test.all: ## Run all tests including integration (needs Redis, etc.)
 	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Testing $(mod) (all)..." && (cd $(ROOT_DIR)$(mod) && go test ./...) && ) true
+
+.PHONY: test.ent.sqlite
+test.ent.sqlite: export SERVORA_ENT_SQLITE_DSN := $(SERVORA_ENT_SQLITE_DSN)
+test.ent.sqlite: ## Run the local SQLite Ent live contract (requires explicit DSN)
+	@test -n "$$SERVORA_ENT_SQLITE_DSN" || { echo "SERVORA_ENT_SQLITE_DSN is required (use a dedicated fixture database)" >&2; exit 2; }
+	@go test -count=1 -tags=integration ./contrib/db/entgo/crud -run '^TestSQLiteLiveContract$$'
+
+.PHONY: test.ent.postgres
+test.ent.postgres: export SERVORA_ENT_POSTGRES_DSN := $(SERVORA_ENT_POSTGRES_DSN)
+test.ent.postgres: ## Run the local PostgreSQL Ent live contract (requires explicit DSN)
+	@test -n "$$SERVORA_ENT_POSTGRES_DSN" || { echo "SERVORA_ENT_POSTGRES_DSN is required (use a dedicated fixture database)" >&2; exit 2; }
+	@go test -count=1 -tags=integration ./contrib/db/entgo/crud -run '^TestPostgresLiveContract$$'
 
 .PHONY: cover
 cover: ## Run tests with coverage profile

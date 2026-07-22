@@ -1,0 +1,46 @@
+{
+  "valid": [
+    {
+      "name": "tenants/acme/users/alice",
+      "tenant": "acme",
+      "user": "alice"
+    },
+    {
+      "name": "tenants/-/users/-",
+      "tenant": "-",
+      "user": "-"
+    },
+    {
+      "name": "tenants/acme.example/users/user_123",
+      "tenant": "acme.example",
+      "user": "user_123"
+    }
+  ],
+  "invalidNames": [
+    "",
+    "/tenants/acme/users/alice",
+    "tenants/acme/users/",
+    "tenants//users/alice",
+    "projects/acme/users/alice",
+    "tenants/acme/members/alice",
+    "tenants/acme/users/alice/extra"
+  ],
+  "invalidParts": [
+    {
+      "tenant": "",
+      "user": "alice"
+    },
+    {
+      "tenant": "acme",
+      "user": ""
+    },
+    {
+      "tenant": "bad/tenant",
+      "user": "alice"
+    },
+    {
+      "tenant": "acme",
+      "user": "bad/user"
+    }
+  ]
+}

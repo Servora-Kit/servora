@@ -1,4 +1,4 @@
-package ent_test
+package ent
 
 import (
 	"context"
@@ -11,9 +11,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
-
-	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	servoraent "github.com/Servora-Kit/servora/contrib/db/entgo"
 )
 
 type fakeDriver struct {
@@ -35,7 +32,7 @@ func (f *fakeDriver) Dialect() string { return "fake" }
 
 func TestWrapWithTracing_DelegatesQuery(t *testing.T) {
 	inner := &fakeDriver{}
-	wrapped := servoraent.WrapWithTracing(inner, zap.NewNop())
+	wrapped := wrapWithTracing(inner, zap.NewNop())
 
 	if err := wrapped.Query(context.Background(), "SELECT 1", nil, nil); err != nil {
 		t.Fatalf("Query returned error: %v", err)
@@ -55,7 +52,7 @@ func TestWrapWithTracing_QueryErrorLogsTraceID(t *testing.T) {
 	core, recorded := observer.New(zapcore.DebugLevel)
 	zlog := zap.New(core)
 
-	wrapped := servoraent.WrapWithTracing(&erroringDriver{}, zlog)
+	wrapped := wrapWithTracing(&erroringDriver{}, zlog)
 
 	traceID, _ := trace.TraceIDFromHex("0c655cd077ab20bd780fa1504e4da2c9")
 	spanID, _ := trace.SpanIDFromHex("c16e5b0589450eb0")
@@ -92,7 +89,7 @@ func TestWrapWithTracing_QuerySuccessDebugLog(t *testing.T) {
 	core, recorded := observer.New(zapcore.DebugLevel)
 	zlog := zap.New(core)
 
-	wrapped := servoraent.WrapWithTracing(&fakeDriver{}, zlog)
+	wrapped := wrapWithTracing(&fakeDriver{}, zlog)
 	if err := wrapped.Query(context.Background(), "SELECT 1", nil, nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -111,7 +108,7 @@ func TestWrapWithTracing_QuerySuccessDebugLog(t *testing.T) {
 
 func TestWrapWithTracing_ExecMirrorsQuery(t *testing.T) {
 	core, recorded := observer.New(zapcore.DebugLevel)
-	wrapped := servoraent.WrapWithTracing(&fakeDriver{}, zap.New(core))
+	wrapped := wrapWithTracing(&fakeDriver{}, zap.New(core))
 
 	if err := wrapped.Exec(context.Background(), "INSERT INTO t VALUES(?)", []any{1}, nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -149,7 +146,7 @@ func (d *txProvidingDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 func TestWrapWithTracing_TxQueryEmitsTraceLog(t *testing.T) {
 	core, recorded := observer.New(zapcore.DebugLevel)
 	inner := &txProvidingDriver{}
-	wrapped := servoraent.WrapWithTracing(inner, zap.New(core))
+	wrapped := wrapWithTracing(inner, zap.New(core))
 
 	traceID, _ := trace.TraceIDFromHex("aa93007433f6fed9d671232f325c08e8")
 	spanID, _ := trace.SpanIDFromHex("056b6dd0acd286d2")
@@ -180,25 +177,5 @@ func TestWrapWithTracing_TxQueryEmitsTraceLog(t *testing.T) {
 	}
 	if inner.tx.queryCalls != 1 || !inner.tx.committed {
 		t.Errorf("inner tx not exercised correctly: %+v", inner.tx)
-	}
-}
-
-func TestNewDriverWithTracing_WrapsTransparently(t *testing.T) {
-	cfg := &corev1.Data{
-		Database: &corev1.Data_Database{Driver: "sqlite", Source: ":memory:"},
-	}
-	core, recorded := observer.New(zapcore.DebugLevel)
-
-	drv, err := servoraent.NewDriverWithTracing(cfg, zap.New(core))
-	if err != nil {
-		t.Fatalf("NewDriverWithTracing: %v", err)
-	}
-	defer func() { _ = drv.Close() }()
-
-	if err := drv.Exec(context.Background(), "CREATE TABLE t (id INT)", []any{}, nil); err != nil {
-		t.Fatalf("Exec: %v", err)
-	}
-	if got := len(recorded.All()); got == 0 {
-		t.Errorf("expected log entry from wrapped driver, got 0")
 	}
 }

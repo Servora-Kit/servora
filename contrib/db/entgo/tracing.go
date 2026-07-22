@@ -17,9 +17,8 @@ type tracingDriver struct {
 	log   *zap.Logger
 }
 
-// WrapWithTracing returns a dialect.Driver that delegates to inner and emits
-// trace-correlated logs through log. Pass zap.NewNop() to disable logging.
-func WrapWithTracing(inner dialect.Driver, log *zap.Logger) dialect.Driver {
+// wrapWithTracing decorates inner with trace-correlated SQL logging.
+func wrapWithTracing(inner dialect.Driver, log *zap.Logger) dialect.Driver {
 	if log == nil {
 		log = zap.NewNop()
 	}

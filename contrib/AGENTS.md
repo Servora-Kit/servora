@@ -45,7 +45,7 @@ Mail 只作为 proto 便利配置存在于 `servora/api/protos/servora/contrib/m
 ## 分层规则
 
 - 基础封装放在对应基础包，例如 `contrib/db/entgo`、`contrib/db/redis`、`contrib/kafka`。
-- CRUD adapter 只能放在对应 `crud` 子目录，例如 `contrib/db/entgo/crud`、`contrib/db/gorm/crud`。
+- 当前 CRUD adapter 只有 `contrib/db/entgo/crud`；GORM CRUD adapter 不存在，后续必须独立设计与验证。
 - 基础封装不得 import CRUD runtime。
 - Redis 基础 client、lock、KV helper 属于 `contrib/db/redis`；cache 策略和 cache backend 属于 `contrib/cache` 或 `contrib/cache/redis`。
 - Kafka 只负责 franz-go native client 接线，不承载 audit 语义。

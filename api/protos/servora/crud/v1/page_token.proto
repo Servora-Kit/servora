@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package servora.crud.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1;crudpb";
+
+// PageTokenPayload is the server-side payload of an opaque page token.
+// Business request and response messages must not import or embed this type.
+message PageTokenPayload {
+  // Payload version. Decoders must reject unsupported versions.
+  uint32 version = 1;
+
+  // A 32-byte SHA-256 digest of the canonical query context.
+  bytes context_fingerprint = 2;
+
+  // Cursor values aligned positionally with the resolved final order.
+  repeated CursorValue cursor = 3;
+}
+
+// CursorValue stores one canonical value from the resolved final order.
+// An unset value is invalid; null_value represents a database NULL.
+message CursorValue {
+  oneof value {
+    string string_value = 1;
+    // Used for signed integers and protobuf enum numbers.
+    int64 int64_value = 2;
+    // Used for unsigned integers.
+    uint64 uint64_value = 3;
+    // Used for float and double values after finite-value validation.
+    double double_value = 4;
+    bool bool_value = 5;
+    bytes bytes_value = 6;
+    google.protobuf.Timestamp timestamp_value = 7;
+    google.protobuf.Duration duration_value = 8;
+    google.protobuf.NullValue null_value = 9;
+  }
+  // Original storage timezone offset in seconds for dialects that persist time.Time as text.
+  // The instant remains in timestamp_value; this preserves backend comparison semantics across opaque-token round trips.
+  sint32 timestamp_offset_seconds = 10;
+}

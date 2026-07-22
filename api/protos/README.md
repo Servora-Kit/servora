@@ -33,8 +33,6 @@ Proto files are organized in these top-level groups under `servora/`:
 | `servora.security.jwt.v1` | JWT issuer / verifier configuration, including generated defaults for `access_expire=3600` and `refresh_expire=604800`. |
 | `servora.security.authn.oidc.v1` | OIDC authn backend public config; section key `authn.oidc` (optional), generated required checks for `crypto_key` / `login_base_url` and defaults for refresh-token/logout fields. |
 | `servora.security.authz.openfga.v1` | OpenFGA authz backend public config; section key `authz.openfga` (optional), generated required checks for `api_url` / `store_id`. |
-| `servora.pagination.v1` | Pagination request/response messages. |
-| `servora.mapper.v1` | Object mapping annotation extensions for `protoc-gen-servora-mapper` (extension numbers `5000x`). |
 | `servora.audit.v1` | Audit annotation extensions for `protoc-gen-servora-audit` (extension `5010x`, supports service-level `service_default` + three-state `AuditMode`; `AuditRule` only carries the RPC audit on/off switch). |
 | `servora.authz.v1` | Authorization annotation extensions for `protoc-gen-servora-authz` (extension `5020x`, supports service-level `service_default`). |
 | `servora.authn.v1` | Authentication annotation extensions for `protoc-gen-servora-authn` (extension `5030x`, supports service-level `service_default` + `schemes` / `credentials_locations` fields). |

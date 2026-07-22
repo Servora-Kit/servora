@@ -7,6 +7,10 @@
         "strict": true,
         "skipLibCheck": true,
         "lib": ["ES2022", "DOM"],
+        "baseUrl": ".",
+        "paths": {
+            "@servora/proto-utils/crud": ["src/crud/index.ts"]
+        },
 
         "rootDir": "src",
         "outDir": "dist",

@@ -6,7 +6,7 @@ modules:
 
 deps:
   - buf.build/bufbuild/protovalidate
-  # - buf.build/kratos/apis
+  - buf.build/googleapis/googleapis
 
 breaking:
   use:
@@ -19,3 +19,6 @@ lint:
     - ENUM_VALUE_PREFIX
     - ENUM_ZERO_VALUE_SUFFIX
     - RPC_REQUEST_RESPONSE_UNIQUE
+  ignore_only:
+    RPC_RESPONSE_STANDARD_NAME:
+      - api/protos/servora/example/v1/example.proto

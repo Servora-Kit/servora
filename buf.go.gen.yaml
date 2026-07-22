@@ -20,6 +20,7 @@ managed:
         - file_option: go_package
           path: servora/conf/v1/conf.proto
 
+
 plugins:
     # generate go struct code
     - local: protoc-gen-go
@@ -62,10 +63,13 @@ plugins:
       out: api/gen/go
       opt: paths=source_relative
 
-    # generate mapper plans from proto annotations
-    - local: protoc-gen-servora-mapper
+
+    # generate typed CRUD descriptors, field paths, and resource-name helpers
+    - local: protoc-gen-servora-crud
       out: api/gen/go
-      opt: paths=source_relative
+      opt:
+          - paths=source_relative
+          - target=go
 
     # generate audit rules from proto annotations
     - local: protoc-gen-servora-audit

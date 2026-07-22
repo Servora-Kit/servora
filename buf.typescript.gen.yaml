@@ -21,3 +21,10 @@ inputs:
 plugins:
     - local: protoc-gen-typescript-http
       out: web/packages/proto-utils/src/gen
+
+
+    - local: protoc-gen-servora-crud
+      out: web/packages/proto-utils/src/gen
+      opt:
+          - target=ts
+          - paths=source_relative

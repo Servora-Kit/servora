@@ -1,0 +1,214 @@
+syntax = "proto3";
+
+// Servora 标准 CRUD 业务契约与生成链公开示例。
+package servora.example.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/example/v1;examplev1";
+option java_multiple_files = true;
+option java_outer_classname = "ExampleProto";
+option java_package = "dev.servora.example.v1";
+
+// UserService 提供 User 资源的标准 CRUD 方法及 AIP-164 恢复方法。
+service UserService {
+  // GetUser 根据资源名取得一个 User；授权后的实现可显式读取 tombstone。
+  rpc GetUser(GetUserRequest) returns (User) {
+    option (google.api.http) = {get: "/v1/{name=tenants/*/users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListUsers 列出指定 tenant 下的 User。
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/v1/{parent=tenants/*}/users"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // CreateUser 在指定 tenant 下创建一个 User。
+  rpc CreateUser(CreateUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/v1/{parent=tenants/*}/users"
+      body: "user"
+    };
+    option (google.api.method_signature) = "parent,user,user_id";
+  }
+
+  // UpdateUser 更新一个已有 User。
+  rpc UpdateUser(UpdateUserRequest) returns (User) {
+    option (google.api.http) = {
+      patch: "/v1/{user.name=tenants/*/users/*}"
+      body: "user"
+    };
+    option (google.api.method_signature) = "user,update_mask";
+  }
+
+  // DeleteUser 软删除 User 并返回更新后的 tombstone。
+  rpc DeleteUser(DeleteUserRequest) returns (User) {
+    option (google.api.http) = {delete: "/v1/{name=tenants/*/users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // UndeleteUser 恢复一个已软删除的 User。
+  rpc UndeleteUser(UndeleteUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/v1/{name=tenants/*/users/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// User 表示 tenant 下的公开用户资源。
+message User {
+  option (google.api.resource) = {
+    type: "example.servora.dev/User"
+    pattern: "tenants/{tenant}/users/{user}"
+    singular: "user"
+    plural: "users"
+  };
+
+  // name 是 User 的 canonical AIP 资源名。
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // display_name 是调用方可修改的显示名称；显式 Clear 写入空字符串。
+  optional string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // email 是创建 User 时必须提供且非空的电子邮箱。
+  optional string email = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // tenant_plan 是创建后不可修改的租户套餐快照。
+  optional string tenant_plan = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // nickname 保留 presence；显式 Clear 写入 NULL。
+  optional string nickname = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // temporary_password 只供 Create/Update 输入；存储层转换为私有 password_hash。
+  optional string temporary_password = 6 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_behavior) = INPUT_ONLY
+  ];
+
+  // etag 是服务端并发控制值；生命周期由业务显式处理。
+  string etag = 7;
+
+  // create_time 是服务端记录的创建时间。
+  google.protobuf.Timestamp create_time = 100 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // update_time 是服务端记录的最近更新时间。
+  google.protobuf.Timestamp update_time = 101 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // delete_time 是软删除发生时间；未删除时为空。
+  google.protobuf.Timestamp delete_time = 102 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // purge_time 是计划物理清除时间；本示例无限期保留，因此可一直为空。
+  google.protobuf.Timestamp purge_time = 103 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// GetUserRequest 按 canonical 资源名定位 User。
+message GetUserRequest {
+  // name 是待获取 User 的 canonical 资源名。
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "example.servora.dev/User"}
+  ];
+}
+
+// ListUsersRequest 描述一个标准 User 集合查询。
+message ListUsersRequest {
+  // parent 是待查询 User collection 的 tenant 资源名。
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "example.servora.dev/User"}
+  ];
+
+  // page_size 是服务端最多返回的资源数量。
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+  // page_token 是前一页返回的不透明连续翻页令牌。
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // 可单独使用，也可在 page_token 恢复 cursor 后额外跳过资源；服务可以限制最大值。
+  // Servora 的随机跳页扩展；项目 api-linter 配置明示允许该字段。
+  // (-- api-linter: core::0158::request-skip-field=disabled --)
+  int64 skip = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // filter 是 AIP-160 确定性子集表达式。
+  string filter = 5 [(google.api.field_behavior) = OPTIONAL];
+  // order_by 是 AIP-132 排序表达式。
+  string order_by = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // 只有 true 时执行 Count 并返回 total_size。
+  // Servora 的可选 total 扩展；项目 api-linter 配置需允许该附加字段。
+  // (-- api-linter: core::0132::request-unknown-fields=disabled --)
+  bool include_total = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // true 时显式包含正常资源与 tombstone；默认只返回正常资源。
+  bool show_deleted = 8 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// ListUsersResponse 包含一页 User 及分页元数据。
+message ListUsersResponse {
+  // users 是当前页返回的 User 列表。
+  repeated User users = 1;
+  // next_page_token 是下一页的不透明连续翻页令牌；末页为空。
+  string next_page_token = 2;
+
+  // 仅在 include_total 为 true 时设置。Servora 明示使用 optional int64
+  // 表达“未计算”并支持大型集合。
+  // Servora 的可选 total 扩展；项目 api-linter 配置明示允许该字段。
+  // (-- api-linter: core::0132::response-unknown-fields=disabled --)
+  optional int64 total_size = 3;
+}
+
+// CreateUserRequest 描述创建 User 所需输入。
+message CreateUserRequest {
+  // parent 是新 User 所属 tenant 的 canonical 资源名。
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "example.servora.dev/User"}
+  ];
+
+  // 成为 User.name 的末段；请求中的 user.name 被忽略。
+  string user_id = 2 [(google.api.field_behavior) = REQUIRED];
+  // user 是待创建的 User；请求中的 name 被忽略。
+  User user = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// UpdateUserRequest 描述 User 更新及其字段选择。
+message UpdateUserRequest {
+  // user.name 定位待更新资源。
+  User user = 1 [(google.api.field_behavior) = REQUIRED];
+  // update_mask 选择待更新字段；省略时按标准隐式 mask 处理。
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+  // allow_missing 允许业务按 AIP-134 执行 upsert。
+  bool allow_missing = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // 显式包含 display_name 且值为 "" 时写入空字符串；显式包含 nickname
+  // 但 user.nickname absent 时清除 nickname。
+}
+
+// DeleteUserRequest 按 canonical 资源名定位待删除 User。
+message DeleteUserRequest {
+  // name 是待删除 User 的 canonical 资源名。
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "example.servora.dev/User"}
+  ];
+  // etag 非空时要求与当前资源一致。
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+  // allow_missing 为 true 时删除不存在资源可由业务返回幂等结果。
+  bool allow_missing = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// UndeleteUserRequest 按 canonical 资源名定位待恢复 User。
+message UndeleteUserRequest {
+  // name 是待恢复 User 的 canonical 资源名。
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "example.servora.dev/User"}
+  ];
+}

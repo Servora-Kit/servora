@@ -18,17 +18,17 @@ api/protos/
 └── servora/
     ├── audit/v1/                    # audit annotation extensions
     ├── authn/v1/                    # authn annotation extensions
-    ├── authz/v1/                    # authz annotation + runtime types
+    ├── authz/v1/                    # authz annotation and runtime types
     ├── cloudevents/v1/              # CloudEvents envelope schema
     ├── conf/v1/                     # config annotation extensions
-    ├── core/v1/                     # Bootstrap config schema
-    ├── contrib/{kafka,mail}/v1/     # contrib optional section schema
-    ├── contrib/db/{redis,clickhouse}/v1/ # db optional section schema
-    ├── mapper/v1/                   # mapper annotation extensions
-    ├── obs/audit/v1/                # obs runtime config schema
-    ├── pagination/v1/               # pagination public types
-    ├── security/{tls,jwt,authn,authz}/.../v1/ # security runtime/backend config schema
-    └── transport/http/cors/v1/      # transport runtime config schema
+    ├── core/v1/                     # bootstrap config schema
+    ├── crud/v1/                     # CRUD framework errors and page-token payload
+    ├── errors/v1/                   # error-code annotation extensions
+    ├── contrib/{kafka,mail}/v1/     # optional section schema
+    ├── contrib/db/{redis,clickhouse}/v1/ # database section schema
+    ├── obs/audit/v1/                # audit runtime config schema
+    ├── security/{tls,jwt,authn,authz}/.../v1/ # security config/schema
+    └── transport/http/cors/v1/      # transport config schema
 ```
 
 `buf.yaml`、`buf.lock`、`buf.go.gen.yaml` 都在仓库根。imports 相对于 `api/protos/`，例如：

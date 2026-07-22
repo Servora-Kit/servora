@@ -19,8 +19,7 @@ pnpm add @servora/proto-utils
 ```typescript
 import { createRequestHandler } from '@servora/proto-utils/client/request'
 import { parseKratosError, kratosMessage } from '@servora/proto-utils/client/errors'
-import { makeFilter, makeOrderBy, makeUpdateMask } from '@servora/proto-utils/query'
-import type { PaginationRequest } from '@servora/proto-utils/proto/servora/pagination/v1'
+import { firstPage, makeUpdateMask } from '@servora/proto-utils/crud'
 ```
 
 ## Local Development

@@ -1,6 +1,6 @@
 {
     "name": "@servora/proto-utils",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "Servora Proto 工具：CRUD 查询、FieldMask、HTTP client、Kratos 错误解析",
     "type": "module",
     "exports": {
@@ -8,9 +8,9 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js"
         },
-        "./query": {
-            "types": "./dist/query.d.ts",
-            "import": "./dist/query.js"
+        "./crud": {
+            "types": "./dist/crud/index.d.ts",
+            "import": "./dist/crud/index.js"
         },
         "./client": {
             "types": "./dist/client/index.d.ts",
@@ -46,6 +46,7 @@
         "build": "tsc -p tsconfig.build.json",
         "clean": "rm -rf dist",
         "typecheck": "tsc --noEmit",
+        "test": "pnpm run build && node --test test/*.test.mjs",
         "prepublishOnly": "npm run clean && npm run build"
     },
     "repository": {

@@ -142,41 +142,6 @@ if err := bootstrap.Scan(rt, redisCfg); err != nil {
 
 配置中心热更新属于 Kratos `Config.Watch` 的底层能力。业务如需在 watch 回调中复用上述契约，需要自行对新的 `Value` 执行 `Scan` 并调用 `ApplyConf()`；Servora 不会对远端配置变更自动重 scan、校验或回调。
 
-#### proto 类型映射
-
-通过 `(mapper)` 声明 message 参与 data 层对象到 proto resource message 的读投影，`(mapper_field)` 控制单字段从存储对象 Go 字段名到 DTO 字段名的映射。Plugin 生成 `<Msg>Mapper()` 读投影配置，运行时配合 `core/mapper` 的泛型 `CopierMapper[DTO, ENTITY]` 完成 `ENTITY -> DTO` 转换。
-
-```proto
-import "servora/mapper/v1/mapper.proto";
-import "google/protobuf/timestamp.proto";
-
-message User {
-  option (servora.mapper.v1.mapper) = {
-    ignore_read: ["internal_secret"]
-  };
-
-  string id = 1 [(servora.mapper.v1.mapper_field) = {
-    rename: "ID"
-  }];
-  google.protobuf.Timestamp created_at = 2;
-  string internal_secret = 3;
-}
-```
-
-运行时构造一个泛型 mapper，把 plugin 生成的 config 应用上去，之后在读路径把存储对象投影为 DTO。写路径由 data repo 手写 ent setter、GORM struct literal 或其他存储层代码。
-
-```go
-import (
-    "github.com/Servora-Kit/servora/core/mapper"
-    pb "myapp/api/gen/go/myapp/user/v1"
-    "myapp/internal/ent"
-)
-
-m := mapper.NewCopierMapper[pb.User, ent.User]()
-_ = mapper.Apply(pb.UserMapper(), m)
-
-dto := m.ToDTO(entity)
-```
 
 #### 认证
 
@@ -274,6 +239,12 @@ if err != nil {
 }
 mw := authz.Server(openfga.NewAuthorizer(client), authz.WithRulesFuncs(pb.AuthzRules))
 ```
+
+#### CRUD 生态
+
+完整声明 `google.api.resource` 与 `IDENTIFIER name` 后，`protoc-gen-servora-crud` 生成 Go/TypeScript 资源名及字段 helper；`core/crud` 在 service 边界规范化 FieldMask、字段生命周期、filter/order、page token 与响应清理，`core/crud/mapper` 和 Ent adapter 负责显式装配的读映射与查询执行。
+
+CRUD 不接管授权、租户、事务、业务错误或 repository 写入。首版提供 Ent adapter；SQLite/PostgreSQL 通过本地 live contract 验证，MySQL 仅为实验性 SQL-builder 支持。完整 Proto 约定、组合示例、软删除/AIP-164 边界、Secret 建模及 TypeScript 用法见 [`docs/crud.md`](./docs/crud.md)。
 
 #### 审计
 

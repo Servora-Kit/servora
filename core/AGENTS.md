@@ -4,32 +4,28 @@
 
 ## 目录定位
 
-`core/` 是 servora 的「框架横切协议 + 平台能力」聚合根。它收纳两类东西：
-
-- **框架级横切协议**：被多个 capability 共用、有清晰契约的工具（例如 `pagination` 分页协议、`mapper` proto ↔ entity 映射协议）
-- **平台能力**：服务整体生命周期与装配的基础设施（`bootstrap` 启动装配、`config` 配置加载、`registry` 服务注册与发现）
+`core/` 是 Servora 的框架横切协议与平台能力聚合根。
 
 ## 准入标准（Admission Gate）
 
-新增成员 MUST **同时**满足以下三项：
-
-1. **框架级横切**——被多个 capability 使用，不是单一 capability 的内部工具
-2. **有清晰协议**——包名能在 godoc 上一句话讲清契约（例如 "分页协议"、"proto ↔ entity 映射协议"），不是无主题的杂烩
-3. **无业务语义**——不绑定任何业务领域（不出现「用户管理」「订单流程」之类语义）
-
-**新增 PR MUST 在描述里逐条 verify 三项准入标准。** 任一项不满足时拒绝 PR：
-
-- 单 capability 使用 → 归到该 capability 的内部子包
-- 无清晰主题（"util" / "helper" / "common"）→ 拆成清晰主题包或归并到现有 capability
-- 含业务语义 → 归到对应业务层而非框架核心
+新增成员 MUST 同时满足：被多个 capability 复用、有清晰协议、且不绑定业务语义。单一 capability 的内部工具归属 capability 子包；不得创建 `util`/`helper`/`common` 杂物包。
 
 ## 当前成员
 
 - `bootstrap/` 启动装配与生命周期
-- `config/` 配置加载（etcd / nacos / consul）
-- `registry/` 服务注册与发现（etcd / nacos / consul / kubernetes）
-- `mapper/` proto ↔ entity 映射协议与 protoc 插件运行时
-- `pagination/` 分页协议工具
+- `config/` 配置加载
+- `registry/` 服务注册与发现
+- `crud/` 后端中立资源 Plan、List、FieldMask、page token 与响应清理
+- `crud/mapper/` ORM 无关 PO → 资源 PB 读投影
+
+CRUD 不持有 ORM client，不解析认证上下文，不安装权限、租户、事务或存储策略。新增 core 包必须在 PR 描述中逐条说明准入标准。
+
+## 验证
+
+```bash
+go test ./core/...
+go test -short ./...
+```
 
 ## 反模式
 
@@ -40,5 +36,5 @@
 ## 维护提示
 
 - 新成员加入须先在 PR 描述里答辩准入标准
-- 现有 `mapper/` 与 `pagination/` 是范例：包名一句话讲清，跨多个 capability 使用，无业务语义
+- `crud/` 是框架横切协议范例：包名可一句话讲清、跨 capability 使用且无业务语义。
 - `bootstrap/` / `config/` / `registry/` 是「平台能力」类成员，与「框架横切协议」共享同一聚合根，但准入闸同样适用

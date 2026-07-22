@@ -24,10 +24,10 @@ export type RequestMeta = {
   method: string;
 };
 
-export type RequestHandler = (
+export type RequestHandler = <T = unknown>(
   request: RequestType,
   meta: RequestMeta,
-) => Promise<unknown>;
+) => Promise<T>;
 
 export interface TokenStore {
   getAccessToken: () => string | null;
@@ -125,17 +125,17 @@ export function createRequestHandler(
     return refreshPromise;
   }
 
-  async function doRequest(
+  async function doRequest<T = unknown>(
     request: RequestType,
     meta: RequestMeta,
     isRetry = false,
-  ): Promise<unknown> {
+  ): Promise<T> {
     const headers: Record<string, string> = {
-      Accept: "application/json",
+      Accept: "application/protojson",
     };
 
     if (request.body) {
-      headers["Content-Type"] = "application/json";
+      headers["Content-Type"] = "application/protojson";
     }
 
     if (tokenStore) {
@@ -149,10 +149,11 @@ export function createRequestHandler(
       Object.assign(headers, contextHeaders(meta));
     }
 
-    const fetchOptions: FetchOptions = {
+    const fetchOptions: FetchOptions<"json", T> = {
       baseURL: baseUrl,
       method: request.method as FetchOptions["method"],
       headers,
+      responseType: "json",
       timeout: timeoutMs,
     };
 
@@ -163,7 +164,7 @@ export function createRequestHandler(
     const normalizedPath = ensureLeadingSlash(request.path);
 
     try {
-      return await ofetch(normalizedPath, fetchOptions);
+      return await ofetch<T>(normalizedPath, fetchOptions);
     } catch (err: unknown) {
       const fetchError =
         err != null && typeof err === "object"
@@ -195,7 +196,7 @@ export function createRequestHandler(
         ) {
           const refreshed = await tryRefreshToken();
           if (refreshed) {
-            return doRequest(request, meta, true);
+            return doRequest<T>(request, meta, true);
           }
         }
 

@@ -7,6 +7,8 @@ import (
 
 	"github.com/Servora-Kit/servora/cmd/protoc-gen-typescript-http/internal/codegen"
 	"github.com/Servora-Kit/servora/cmd/protoc-gen-typescript-http/internal/httprule"
+	annotations "google.golang.org/genproto/googleapis/api/annotations"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -107,6 +109,7 @@ func (s serviceGenerator) generateMethod(f *codegen.File, method protoreflect.Me
 		paramName = "_request"
 	}
 	f.P(t(2), method.Name(), "(", paramName, ") {")
+	generateRequiredFieldValidation(f, method.Input(), rule)
 	generateMethodPathValidation(f, method.Input(), rule)
 	generateMethodPath(f, method.Input(), rule)
 	generateMethodBody(f, method.Input(), rule)
@@ -119,12 +122,38 @@ func (s serviceGenerator) generateMethod(f *codegen.File, method protoreflect.Me
 		f.P(t(3), "}")
 		uriVar = "uri"
 	}
-	f.P(t(3), "return transport.unary(", uriVar, ", ", tsSingleQuote(rule.Method), ", body, {")
+	f.P(t(3), "return transport.unary<", outputType.Reference(), ">(", uriVar, ", ", tsSingleQuote(rule.Method), ", body, {")
 	f.P(t(4), "service: '", method.Parent().Name(), "',")
 	f.P(t(4), "method: '", method.Name(), "',")
-	f.P(t(3), "}) as Promise<", outputType.Reference(), ">;")
+	f.P(t(3), "});")
 	f.P(t(2), "},")
 	return nil
+}
+
+func generateRequiredFieldValidation(
+	f *codegen.File,
+	input protoreflect.MessageDescriptor,
+	rule httprule.Rule,
+) {
+	for i := 0; i < input.Fields().Len(); i++ {
+		field := input.Fields().Get(i)
+		if !hasFieldBehavior(field, annotations.FieldBehavior_REQUIRED) || fieldUsedInPath(field, rule) {
+			continue
+		}
+		access := "request." + field.JSONName()
+		f.P(t(3), "if (", missingValueCondition(access, field), ") {")
+		f.P(t(4), "throw new Error(", tsSingleQuote("missing required field request."+string(field.Name())), ");")
+		f.P(t(3), "}")
+	}
+}
+
+func fieldUsedInPath(field protoreflect.FieldDescriptor, rule httprule.Rule) bool {
+	for _, segment := range rule.Template.Segments {
+		if segment.Kind == httprule.SegmentKindVariable && len(segment.Variable.FieldPath) > 0 && segment.Variable.FieldPath[0] == string(field.Name()) {
+			return true
+		}
+	}
+	return false
 }
 
 func generateMethodPathValidation(
@@ -139,10 +168,67 @@ func generateMethodPathValidation(
 		fp := seg.Variable.FieldPath
 		nullPath := nullPropagationPath(fp, input)
 		protoPath := strings.Join(fp, ".")
-		errMsg := "missing required field request." + protoPath
-		f.P(t(3), "if (request.", nullPath, " === undefined || request.", nullPath, " === null) {")
-		f.P(t(4), "throw new Error(", tsSingleQuote(errMsg), ");")
+		field := fieldAtPath(input, fp)
+		condition := "request." + nullPath + " === undefined || request." + nullPath + " === null"
+		if field != nil {
+			condition = missingValueCondition("request."+nullPath, field)
+		}
+		f.P(t(3), "if (", condition, ") {")
+		f.P(t(4), "throw new Error(", tsSingleQuote("missing required field request."+protoPath), ");")
 		f.P(t(3), "}")
+	}
+}
+
+func hasFieldBehavior(field protoreflect.FieldDescriptor, wanted annotations.FieldBehavior) bool {
+	if field.Options() == nil || !proto.HasExtension(field.Options(), annotations.E_FieldBehavior) {
+		return false
+	}
+	behaviors, ok := proto.GetExtension(field.Options(), annotations.E_FieldBehavior).([]annotations.FieldBehavior)
+	if !ok {
+		return false
+	}
+	for _, behavior := range behaviors {
+		if behavior == wanted {
+			return true
+		}
+	}
+	return false
+}
+
+func fieldAtPath(message protoreflect.MessageDescriptor, path httprule.FieldPath) protoreflect.FieldDescriptor {
+	var field protoreflect.FieldDescriptor
+	for _, segment := range path {
+		field = message.Fields().ByName(protoreflect.Name(segment))
+		if field == nil || field.Message() == nil {
+			return field
+		}
+		message = field.Message()
+	}
+	return field
+}
+
+func missingValueCondition(access string, field protoreflect.FieldDescriptor) string {
+	if field.IsList() {
+		return "!Array.isArray(" + access + ") || " + access + ".length === 0"
+	}
+	if field.IsMap() {
+		return access + " === undefined || " + access + " === null || Object.keys(" + access + ").length === 0"
+	}
+	switch field.Kind() {
+	case protoreflect.StringKind, protoreflect.BytesKind:
+		return access + " === undefined || " + access + " === null || " + access + " === ''"
+	case protoreflect.BoolKind:
+		return access + " !== true"
+	case protoreflect.EnumKind,
+		protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind,
+		protoreflect.Uint32Kind, protoreflect.Fixed32Kind, protoreflect.FloatKind,
+		protoreflect.DoubleKind:
+		return access + " === undefined || " + access + " === null || " + access + " === 0"
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind,
+		protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return access + " === undefined || " + access + " === null || " + access + " === '0'"
+	default:
+		return access + " === undefined || " + access + " === null"
 	}
 }
 
@@ -266,7 +352,7 @@ func generateMethodQuery(
 		}
 		nullPath := nullPropagationPath(path, input)
 		jp := jsonPath(path, input)
-		f.P(t(3), "if (request.", nullPath, ") {")
+		f.P(t(3), "if (request.", nullPath, " !== undefined && request.", nullPath, " !== null) {")
 		switch {
 		case field.IsMap():
 			f.P(t(4), "Object.entries(request.", jp, ").forEach(([key, value]) => {")

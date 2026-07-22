@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package servora.crud.v1;
+
+import "servora/errors/v1/errors.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1;crudpb";
+
+// CrudErrorReason contains only errors produced by the CRUD framework itself.
+// Storage facts and business semantics must use application-owned errors.
+enum CrudErrorReason {
+  option (servora.errors.v1.default_code) = 500;
+
+  CRUD_ERROR_REASON_UNSPECIFIED = 0;
+
+  // The resource name or parent does not match the declared resource pattern.
+  CRUD_ERROR_REASON_INVALID_RESOURCE_NAME = 1 [(servora.errors.v1.code) = 400];
+  // The page token cannot be decoded or does not match the current query.
+  CRUD_ERROR_REASON_INVALID_PAGE_TOKEN = 2 [(servora.errors.v1.code) = 400];
+  // The filter is invalid, unsupported, or exceeds configured limits.
+  CRUD_ERROR_REASON_INVALID_FILTER = 3 [(servora.errors.v1.code) = 400];
+  // The order_by value is invalid, unsupported, or exceeds configured limits.
+  CRUD_ERROR_REASON_INVALID_ORDER_BY = 4 [(servora.errors.v1.code) = 400];
+  // The update mask contains an unknown, overlapping, or unsupported path.
+  CRUD_ERROR_REASON_INVALID_FIELD_MASK = 5 [(servora.errors.v1.code) = 400];
+  // A field value violates the CRUD request contract.
+  CRUD_ERROR_REASON_INVALID_FIELD_VALUE = 6 [(servora.errors.v1.code) = 400];
+
+  // An internal CRUD framework invariant was violated.
+  CRUD_ERROR_REASON_INTERNAL = 7 [(servora.errors.v1.code) = 500];
+}

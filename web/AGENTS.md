@@ -10,7 +10,7 @@
 
 | 包 | 路径 | 说明 |
 |---|------|------|
-| `@servora/proto-utils` | `web/packages/proto-utils/` | Proto 查询工具、FieldMask、通用 HTTP client、Token 管理、Kratos 错误解析 |
+| `@servora/proto-utils` | `web/packages/proto-utils/` | CRUD/FieldMask/query helper、通用 HTTP client、Token 管理、Kratos 错误解析 |
 
 ## 开发约束
 
@@ -57,8 +57,9 @@ servora/
     ├── packages/
     │   └── proto-utils/      # @servora/proto-utils
     │       ├── src/
-    │       │   ├── query.ts
-    │       │   └── client/
+    │       │   ├── crud/      # FieldMask、filter/order、pager、ResourceNameError
+    │       │   ├── client/    # HTTP request handler 与 Kratos error helpers
+    │       │   └── gen/       # make gen.ts 生成，禁止手改
     │       ├── dist/         # 构建产物（gitignored，npm publish 时生成）
     │       ├── package.json
     │       ├── tsconfig.json

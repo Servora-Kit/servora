@@ -18,14 +18,14 @@ func TestGenerateUsesProtoJSONTypesFor64BitIntegers(t *testing.T) {
 	output := generateContractFixture(t)
 
 	for _, declaration := range []string{
-		"int64Value: string | undefined;",
-		"uint64Value: string | undefined;",
-		"sint64Value: string | undefined;",
-		"fixed64Value: string | undefined;",
-		"sfixed64Value: string | undefined;",
+		"int64Value?: string;",
+		"uint64Value?: string;",
+		"sint64Value?: string;",
+		"fixed64Value?: string;",
+		"sfixed64Value?: string;",
 		"optionalInt64?: string;",
-		"repeatedInt64: string[] | undefined;",
-		"uint64ByKey: { [key: string]: string } | undefined;",
+		"repeatedInt64?: string[];",
+		"uint64ByKey?: { [key: string]: string };",
 		"type wellKnownInt64Value = null | string;",
 		"type wellKnownUInt64Value = null | string;",
 	} {
@@ -33,15 +33,29 @@ func TestGenerateUsesProtoJSONTypesFor64BitIntegers(t *testing.T) {
 	}
 
 	for _, declaration := range []string{
-		"int32Value: number | undefined;",
-		"uint32Value: number | undefined;",
-		"floatValue: number | undefined;",
-		"doubleValue: number | undefined;",
+		"int32Value?: number;",
+		"uint32Value?: number;",
+		"floatValue?: number;",
+		"doubleValue?: number;",
 		"type wellKnownInt32Value = null | number;",
 		"type wellKnownUInt32Value = null | number;",
 	} {
 		assert.Contains(t, output, declaration)
 	}
+	assert.NotContains(t, output, "@ts-nocheck")
+	assert.NotContains(t, output, " | undefined;")
+}
+
+func TestGenerateEmitsTypeSafeHTTPRuntimeGuards(t *testing.T) {
+	output := generateContractFixture(t)
+
+	assert.Contains(t, output, "unary<T>(")
+	assert.Contains(t, output, "return transport.unary<Payload>(")
+	assert.Contains(t, output, "if (request.name === undefined || request.name === null || request.name === '') {")
+	assert.Contains(t, output, "if (request.payload === undefined || request.payload === null) {")
+	assert.Contains(t, output, "if (request.enabled !== undefined && request.enabled !== null) {")
+	assert.Contains(t, output, "if (request.pageSize !== undefined && request.pageSize !== null) {")
+	assert.NotContains(t, output, ") as Promise<")
 }
 
 func TestGenerateEncodesHTTPPathVariablesByTemplateShape(t *testing.T) {
@@ -63,6 +77,7 @@ func generateContractFixture(t *testing.T) string {
 		FileToGenerate: []string{file.GetName()},
 		ProtoFile: descriptorClosure(
 			annotations.File_google_api_annotations_proto,
+			annotations.File_google_api_field_behavior_proto,
 			wrapperspb.File_google_protobuf_wrappers_proto,
 		),
 	}
@@ -134,6 +149,14 @@ func contractFixtureDescriptor() *descriptorpb.FileDescriptorProto {
 		Field: []*descriptorpb.FieldDescriptorProto{
 			scalarField("name", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
 			scalarField("id", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+			scalarField("enabled", 3, descriptorpb.FieldDescriptorProto_TYPE_BOOL),
+			scalarField("page_size", 4, descriptorpb.FieldDescriptorProto_TYPE_INT32),
+		},
+	}
+	createRequest := &descriptorpb.DescriptorProto{
+		Name: proto.String("CreateRequest"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			requiredField(messageField("payload", 1, ".test.v1.Payload")),
 		},
 	}
 
@@ -141,9 +164,10 @@ func contractFixtureDescriptor() *descriptorpb.FileDescriptorProto {
 		Name:       proto.String("test/v1/contract.proto"),
 		Package:    proto.String("test.v1"),
 		Syntax:     proto.String("proto3"),
-		Dependency: []string{"google/api/annotations.proto", "google/protobuf/wrappers.proto"},
+		Dependency: []string{"google/api/annotations.proto", "google/api/field_behavior.proto", "google/protobuf/wrappers.proto"},
 		MessageType: []*descriptorpb.DescriptorProto{
 			request,
+			createRequest,
 			payload,
 		},
 		Service: []*descriptorpb.ServiceDescriptorProto{
@@ -152,6 +176,7 @@ func contractFixtureDescriptor() *descriptorpb.FileDescriptorProto {
 				Method: []*descriptorpb.MethodDescriptorProto{
 					httpMethod("GetNested", "/v1/{name=tenants/*/users/*}"),
 					httpMethod("GetSingle", "/v1/users/{id}"),
+					httpPostMethod("Create", "/v1/users", "payload", ".test.v1.CreateRequest"),
 				},
 			},
 		},
@@ -185,6 +210,26 @@ func httpMethod(name string, path string) *descriptorpb.MethodDescriptorProto {
 	return &descriptorpb.MethodDescriptorProto{
 		Name:       proto.String(name),
 		InputType:  proto.String(".test.v1.GetRequest"),
+		OutputType: proto.String(".test.v1.Payload"),
+		Options:    options,
+	}
+}
+
+func requiredField(field *descriptorpb.FieldDescriptorProto) *descriptorpb.FieldDescriptorProto {
+	field.Options = &descriptorpb.FieldOptions{}
+	proto.SetExtension(field.Options, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
+	return field
+}
+
+func httpPostMethod(name, path, body, input string) *descriptorpb.MethodDescriptorProto {
+	options := &descriptorpb.MethodOptions{}
+	proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+		Pattern: &annotations.HttpRule_Post{Post: path},
+		Body:    body,
+	})
+	return &descriptorpb.MethodDescriptorProto{
+		Name:       proto.String(name),
+		InputType:  proto.String(input),
 		OutputType: proto.String(".test.v1.Payload"),
 		Options:    options,
 	}

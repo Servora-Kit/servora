@@ -12,13 +12,13 @@ Servora 是 ProtoBuf-contract-first 的模块化框架库。仓库同时包含 G
 | --- | --- |
 | `api/protos/` | 公共 proto contract 与 annotation extensions |
 | `api/gen/` | 由 `make gen` 生成的独立 Go module；不要手改 |
-| `cmd/` | `svr` CLI 与 `protoc-gen-servora-*` 生成器 |
-| `web/` | 前端共享包工作区，当前包含 `@servora/proto-utils` |
-| `core/` | bootstrap/config/registry/mapper/pagination 等框架基础能力 |
+| `cmd/` | `svr` CLI 与 `protoc-gen-servora-*` 生成器，包括 CRUD generator |
+| `web/` | 前端共享包工作区，包含 `@servora/proto-utils` 的 CRUD/client helpers |
+| `core/` | bootstrap/config/registry 与后端中立 CRUD runtime/mapper |
 | `transport/` | Kratos HTTP/gRPC client/server 装配与通用 middleware |
 | `security/` | authn/authz/jwt/tls 等安全基础设施 |
 | `obs/` | logger/tracing/metrics/audit 可观测性能力 |
-| `contrib/` | kafka/db/k8s/redis/cache 等可选生态集成与第三方系统接线；mail 只保留 proto 配置 |
+| `contrib/` | kafka/db/k8s/redis/cache 等可选生态集成与 adapter |
 
 隐藏工具目录（`.claude`、`.cursor`、`.opencode`、`.sisyphus`、`.understand-anything`、`.worktrees`、`.venv`）不是框架源码，不要写入架构说明或测试范围。
 
@@ -51,8 +51,6 @@ Annotation extension 号段：
 
 | 注解 | 编号 | 消费者 |
 | --- | --- | --- |
-| `servora.mapper.v1.mapper` | 50000 | `protoc-gen-servora-mapper` |
-| `servora.mapper.v1.mapper_field` | 50001 | `protoc-gen-servora-mapper` |
 | `servora.audit.v1.audit_rule` | 50100 | `protoc-gen-servora-audit` |
 | `servora.audit.v1.service_default` | 50101 | `protoc-gen-servora-audit` |
 | `servora.authz.v1.rule` | 50200 | `protoc-gen-servora-authz` |
@@ -61,6 +59,8 @@ Annotation extension 号段：
 | `servora.authn.v1.service_default` | 50301 | `protoc-gen-servora-authn` |
 | `servora.conf.v1.section` | 50400 | `protoc-gen-servora-conf` |
 | `servora.conf.v1.field` | 50401 | `protoc-gen-servora-conf` |
+| `servora.errors.v1.default_code` | 50500 | `protoc-gen-go-errors` |
+| `servora.errors.v1.code` | 50501 | `protoc-gen-go-errors` |
 
 号段约定：每个命名空间从 `5xx00` 起步；`+0` 给 method/message 级，`+1` 给 service/field 级。新增命名空间继续往后递推。
 

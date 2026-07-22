@@ -7,14 +7,13 @@ import (
 	"database/sql"
 	"testing"
 
-	"entgo.io/ent/dialect"
-	entsql "entgo.io/ent/dialect/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	servoraent "github.com/Servora-Kit/servora/contrib/db/entgo"
 )
 
@@ -26,8 +25,14 @@ func TestIntegration_SqliteExecWithTrace(t *testing.T) {
 	defer db.Close()
 
 	core, recorded := observer.New(zapcore.DebugLevel)
-	var inner dialect.Driver = entsql.OpenDB(dialect.SQLite, db)
-	wrapped := servoraent.WrapWithTracing(inner, zap.New(core))
+	wrapped, err := servoraent.NewDriver(
+		&corev1.Data{Database: &corev1.Data_Database{Driver: "sqlite"}},
+		servoraent.WithDB(db),
+		servoraent.WithTracing(zap.New(core)),
+	)
+	if err != nil {
+		t.Fatalf("NewDriver: %v", err)
+	}
 
 	traceID, _ := trace.TraceIDFromHex("11111111111111111111111111111111")
 	spanID, _ := trace.SpanIDFromHex("2222222222222222")

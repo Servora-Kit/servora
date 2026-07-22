@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package servora.errors.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/errors/v1;errorsv1";
+
+// default_code defines the fallback HTTP status code for an error reason enum.
+extend google.protobuf.EnumOptions {
+  int32 default_code = 50500;
+}
+
+// code overrides the HTTP status code for one error reason value.
+extend google.protobuf.EnumValueOptions {
+  int32 code = 50501;
+}

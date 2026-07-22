@@ -1,44 +1,46 @@
 # AGENTS.md - contrib/db/entgo/
 
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-22 | Updated: 2026-03-22 -->
+<!-- Updated: 2026-07-21 -->
 
 ## 模块目的
 
-提供 Ent 相关的共享基础设施，包括 SQL driver 装配、schema mixin 与 scope 支撑能力。
+提供 Ent 共享基础设施：组合式 SQL driver、通用 schema mixin，以及 `crud/` 中的类型化 List/Clear adapter。
 
 ## 当前结构
 
 ```text
 contrib/db/entgo/
-├── driver.go
-├── mixin/
-└── scope/
+├── driver.go        # NewDriver(cfg, options...)、WithDB、WithTracing
+├── mixin/           # SoftDeleteMixin 与显式 context bypass
+└── crud/            # ListFields、List、ClearHelper 与方言 fixture
 ```
 
 ## 当前实现事实
 
-- `driver.go` 根据共享 `conf.Data` 构造 Ent SQL driver
-- `mixin/` 当前承载 `timestamp`、`soft_delete` 等通用 schema mixin
-- `scope/` 承载 Ent 访问范围相关辅助
-- 本级目录负责“Ent 共享支撑”，不是某个具体服务的数据层实现目录
+- `NewDriver` 区分 database/sql driver 与 Ent dialect；`WithDB` 借用外部 pool，不取得 Close ownership。
+- `SoftDeleteMixin` 提供 tombstone 字段、默认过滤、Delete 改写与显式 bypass，不决定公共 AIP-164 API。
+- `crud/` 把 `core/crud.ListQuery` 绑定到 Ent SQL builder；首版没有 GORM CRUD adapter。
+- 本级目录负责跨服务 Ent 支撑，不存放具体业务 entity、repository、授权 scope 或事务 runner。
 
 ## 边界约束
 
 - 不在这里放具体业务 entity、repository 或查询编排
-- `mixin/` 与 `scope/` 属于下级专题目录；本文件只说明一级边界，不递归描述内部实现
+- `mixin/` 与 `crud/` 属于下级专题目录；基础 driver 不 import CRUD runtime。
 - 不把服务私有数据库配置散落到本目录公共代码
 
 ## 常见反模式
 
 - 在 `contrib/db/entgo` 中加入只服务于单个业务的 schema 逻辑
 - 让 driver 构造依赖服务内部包，破坏共享库边界
-- 把软删除、组织作用域等 mixin 语义复制粘贴到各服务，而不是统一复用
+- 不把软删除、授权 scope 或业务查询规则复制进基础 driver；具体 scope 始终由 repository 映射。
 
 ## 测试与使用
 
 ```bash
 go test ./contrib/db/entgo/...
+SERVORA_ENT_SQLITE_DSN='file:servora_crud_live?mode=memory&cache=shared&_fk=1' make test.ent.sqlite
+SERVORA_ENT_POSTGRES_DSN='postgres://…' make test.ent.postgres
 ```
 
 ## 维护提示
