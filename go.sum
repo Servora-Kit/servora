@@ -25,6 +25,8 @@ github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/Servora-Kit/servora/api/gen v0.8.1 h1:7RNkgKmh7DpB3jy0EcGFuI2ZqMZnBs7oRCV2mYHJrKg=
 github.com/Servora-Kit/servora/api/gen v0.8.1/go.mod h1:ZcTWukSAkBasypNM/Gu04VOmPTaZjyat0hnhEWTON8o=
+github.com/Servora-Kit/servora/api/gen v0.8.2 h1:8xrO9keNYzSvFIO+X2iS+zdNU78lU1za8+r2d3OJV34=
+github.com/Servora-Kit/servora/api/gen v0.8.2/go.mod h1:8KU09V5zOxubKStZJSj72ietwFo68EtaMOSl7kUVpAc=
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
