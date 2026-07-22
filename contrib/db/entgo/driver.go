@@ -92,7 +92,7 @@ func NewDriver(cfg *corev1.Data, options ...DriverOption) (dialect.Driver, error
 		config.ownsDB = true
 	}
 
-	var result dialect.Driver = manageDriver(entsql.OpenDB(entDialect, config.db), config.ownsDB)
+	result := manageDriver(entsql.OpenDB(entDialect, config.db), config.ownsDB)
 	if config.trace {
 		result = wrapWithTracing(result, config.log)
 	}
