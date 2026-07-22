@@ -235,7 +235,19 @@ resourceMapper, err := mapper.NewResourceMapper[*userv1.User, ent.User](
 - `WithPostToDTOHook`：relation、JSON、oneof、computed 等本地补充；
 - `WithResourceName`：设置 canonical `IDENTIFIER` name。
 
-`TryToDTO`/`TryToDTOs` 返回映射错误；`ToDTO`/`ToDTOs` 在程序合同破坏时 panic。批量转换保持 1:1 顺序并拒绝 nil 元素。
+`NewResourceMapper` 在 provider 构造期验证静态类型与配置。标准 CRUD repository 在 converter、hook 与 formatter 的失败都属于应用不变量时，可直接调用 `ToDTO`/`ToDTOs` 并 fail-fast；不要再为每个资源增加只包装错误的 `mapXxx` 私有方法。动态 callback 的返回错误确实属于可恢复运行时分支时，使用 `TryToDTO`/`TryToDTOs` 显式处理。Try 变体返回映射错误，但不承诺捕获 callback 自身的任意 panic。批量转换始终保持 1:1 顺序并拒绝 nil 元素。
+
+单个资源：
+
+```go
+return repo.mapper.ToDTO(entity), nil
+```
+
+资源列表：
+
+```go
+resources := repo.mapper.ToDTOs(result.Items())
+```
 
 ResourceMapper 不提供反向写映射，不决定 filter/order，也不加载 relation。Create/Update 继续使用 repository 的显式 setter。
 
@@ -326,7 +338,11 @@ present 值和 repeated/map Replace 仍由 repository setter 处理。
 
 not-found、already-exists、唯一冲突、etag mismatch、allow-missing、业务前置条件和授权隐藏策略都不是框架错误。应用应在自己的业务 Proto 中定义 reason，由 data 使用 `ent.IsNotFound`、`ent.IsConstraintError` 或业务 sentinel 识别存储事实，由 biz 决定对外语义。
 
-Ent adapter 对数据库执行错误不做归类，也不替换错误链。repository 增加上下文时应保留 `%w`，使 `errors.Is`/`errors.As` 仍能到达原始 Ent/driver 错误。
+Ent adapter 对数据库执行错误不做归类，也不替换错误链。官方参考应用额外演示一种可选的 repository 约定：在 ORM/driver 操作失败处记录带 operation/resource identity 的 data 日志；未知后端错误原样返回；NotFound、唯一冲突等 biz 需要区分的已知结果使用 `errors.Join(biz.ErrXxx, err)` 同时保留应用定义的 persistence fact 与原始 ORM cause。该约定位于应用 data/biz 边界，不是 Ent adapter 自动产生的行为，data 也不生成公共 Proto/Kratos error。
+
+Kratos/Servora 的推荐依赖方向是 `service → biz ← data`。参考应用由 biz 拥有 Repo interface、业务 scope 与应用自己的 persistence fact（`ErrNotFound`、`ErrAlreadyExists`、`ErrMutationMiss`），data import biz 并实现该 interface，biz 不 import data。条件 mutation 返回 0 行时，参考 data 返回中立 `ErrMutationMiss`，由 biz 结合 ETag、`allow_missing`、软删除和幂等语义决定生成的 User NotFound、EtagMismatch 或成功返回当前资源。
+
+参考应用在业务 Proto 中定义公共错误并由 `protoc-gen-go-errors` 生成，biz 再将 persistence fact 转成生成错误。为避免同一 repository failure 重复记录，示例 biz 对 data 已记录的错误只完成公共 Internal 转换；hash、etag、业务计算等在 biz 内产生的错误仍由 biz 记录。其它应用可以采用不同日志策略，但必须保留原始 cause，并维持 adapter 不推导业务错误的边界。
 
 ## 软删除：存储能力与公共 API 分开
 

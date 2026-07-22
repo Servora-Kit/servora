@@ -237,7 +237,7 @@ func NewResourceMapper[DTO proto.Message, PO any](options ...Option) (*ResourceM
 	}, nil
 }
 
-// TryToDTO converts one PO. Nil input returns (nil, nil).
+// TryToDTO converts one PO and returns mapping errors for callers that intentionally handle them. Nil input returns (nil, nil).
 func (mapper *ResourceMapper[DTO, PO]) TryToDTO(po *PO) (DTO, error) {
 	var zero DTO
 	if po == nil {
@@ -267,7 +267,7 @@ func (mapper *ResourceMapper[DTO, PO]) TryToDTO(po *PO) (DTO, error) {
 	return cloned, nil
 }
 
-// ToDTO converts one PO and panics on mapping contract errors.
+// ToDTO converts one PO and panics when TryToDTO returns an error.
 func (mapper *ResourceMapper[DTO, PO]) ToDTO(po *PO) DTO {
 	dto, err := mapper.TryToDTO(po)
 	if err != nil {
@@ -276,7 +276,7 @@ func (mapper *ResourceMapper[DTO, PO]) ToDTO(po *PO) DTO {
 	return dto
 }
 
-// TryToDTOs converts a batch in strict 1:1 order and rejects nil entries.
+// TryToDTOs converts a batch, preserving strict 1:1 order and returning mapping errors or nil-entry errors to the caller.
 func (mapper *ResourceMapper[DTO, PO]) TryToDTOs(pos []*PO) ([]DTO, error) {
 	if len(pos) == 0 {
 		return nil, nil
@@ -295,7 +295,7 @@ func (mapper *ResourceMapper[DTO, PO]) TryToDTOs(pos []*PO) ([]DTO, error) {
 	return result, nil
 }
 
-// ToDTOs converts a batch and panics on mapping contract errors.
+// ToDTOs converts a batch and panics when TryToDTOs returns an error.
 func (mapper *ResourceMapper[DTO, PO]) ToDTOs(pos []*PO) []DTO {
 	dtos, err := mapper.TryToDTOs(pos)
 	if err != nil {
