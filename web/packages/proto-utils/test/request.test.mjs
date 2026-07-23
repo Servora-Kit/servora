@@ -7,9 +7,22 @@ import {
   createRequestHandler,
 } from "../dist/client/request.js";
 
-async function startProtoJSONServer(t) {
-  const server = createServer((request, response) => {
-    response.setHeader("Content-Type", "application/protojson");
+async function startJSONServer(t) {
+  const receivedRequests = [];
+  const server = createServer(async (request, response) => {
+    let body = "";
+    for await (const chunk of request) {
+      body += chunk;
+    }
+    receivedRequests.push({
+      accept: request.headers.accept,
+      body,
+      contentType: request.headers["content-type"],
+      method: request.method,
+      url: request.url,
+    });
+
+    response.setHeader("Content-Type", "application/json");
     if (request.url === "/v1/failure") {
       response.statusCode = 409;
       response.end(
@@ -24,7 +37,7 @@ async function startProtoJSONServer(t) {
     response.end(
       JSON.stringify({
         name: "tenants/acme/users/ada",
-        totalSize: "1",
+        totalSize: "9223372036854775807",
       }),
     );
   });
@@ -40,11 +53,13 @@ async function startProtoJSONServer(t) {
   );
   const address = server.address();
   assert(address && typeof address === "object");
-  return `http://127.0.0.1:${address.port}`;
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    receivedRequests,
+  };
 }
-
-test("request handler parses successful application/protojson responses", async (t) => {
-  const baseUrl = await startProtoJSONServer(t);
+test("request handler uses application/json for successful requests", async (t) => {
+  const { baseUrl, receivedRequests } = await startJSONServer(t);
   const request = createRequestHandler({ baseUrl });
 
   const result = await request(
@@ -54,17 +69,26 @@ test("request handler parses successful application/protojson responses", async 
 
   assert.deepEqual(result, {
     name: "tenants/acme/users/ada",
-    totalSize: "1",
+    totalSize: "9223372036854775807",
   });
+  assert.deepEqual(receivedRequests, [
+    {
+      accept: "application/json",
+      body: "",
+      contentType: undefined,
+      method: "GET",
+      url: "/v1/user",
+    },
+  ]);
 });
-
-test("request handler preserves parsed ProtoJSON error bodies", async (t) => {
-  const baseUrl = await startProtoJSONServer(t);
+test("request handler uses application/json for error requests", async (t) => {
+  const { baseUrl, receivedRequests } = await startJSONServer(t);
   const request = createRequestHandler({ baseUrl });
+  const body = JSON.stringify({ revision: "9223372036854775807" });
 
   await assert.rejects(
     request(
-      { path: "/v1/failure", method: "POST", body: "{}" },
+      { path: "/v1/failure", method: "POST", body },
       { service: "UserHTTPService", method: "CreateUser" },
     ),
     (error) => {
@@ -78,4 +102,15 @@ test("request handler preserves parsed ProtoJSON error bodies", async (t) => {
       return true;
     },
   );
+
+  assert.deepEqual(receivedRequests, [
+    {
+      accept: "application/json",
+      body,
+      contentType: "application/json",
+      method: "POST",
+      url: "/v1/failure",
+    },
+  ]);
 });
+

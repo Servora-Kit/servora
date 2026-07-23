@@ -12,6 +12,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-kratos/kratos/contrib/config/consul/v3 v3.0.0-20260621094049-2726761cdd77
 	github.com/go-kratos/kratos/contrib/config/nacos/v3 v3.0.0-20260621094049-2726761cdd77
+	github.com/go-kratos/kratos/contrib/encoding/json/v3 v3.0.0-20260626125723-668db92c2c00
 	github.com/go-kratos/kratos/contrib/middleware/validate/v3 v3.0.0-20260621094049-2726761cdd77
 	github.com/go-kratos/kratos/contrib/otel/v3 v3.0.0-20260621094049-2726761cdd77
 	github.com/go-kratos/kratos/contrib/registry/consul/v3 v3.0.0-20260621094049-2726761cdd77

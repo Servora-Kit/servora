@@ -131,11 +131,11 @@ export function createRequestHandler(
     isRetry = false,
   ): Promise<T> {
     const headers: Record<string, string> = {
-      Accept: "application/protojson",
+      Accept: "application/json",
     };
 
     if (request.body) {
-      headers["Content-Type"] = "application/protojson";
+      headers["Content-Type"] = "application/json";
     }
 
     if (tokenStore) {

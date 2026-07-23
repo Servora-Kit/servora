@@ -234,6 +234,8 @@ github.com/go-kratos/kratos/contrib/config/consul/v3 v3.0.0-20260621094049-27267
 github.com/go-kratos/kratos/contrib/config/consul/v3 v3.0.0-20260621094049-2726761cdd77/go.mod h1:jDURyzpBy212T1r4+//OgrbZdkLsaosxbx3reX2+yT0=
 github.com/go-kratos/kratos/contrib/config/nacos/v3 v3.0.0-20260621094049-2726761cdd77 h1:o8b+D5dNejbcJZSTkNq+6wZNzDJcKAWeQizTLf+WBWY=
 github.com/go-kratos/kratos/contrib/config/nacos/v3 v3.0.0-20260621094049-2726761cdd77/go.mod h1:N1qUKqHokKjsNTUu9QsWcMr1vGjWH14ByPNOhXG+2Jg=
+github.com/go-kratos/kratos/contrib/encoding/json/v3 v3.0.0-20260626125723-668db92c2c00 h1:XO5N6bg3F2yRD1z5EBmYQVdzs4nwlDOieGn0bOcBmuY=
+github.com/go-kratos/kratos/contrib/encoding/json/v3 v3.0.0-20260626125723-668db92c2c00/go.mod h1:1NSFI6PynkDxw77gYvZ+T7uoiLtj6PNl4FiyY+/fqV8=
 github.com/go-kratos/kratos/contrib/middleware/validate/v3 v3.0.0-20260621094049-2726761cdd77 h1:KIhRpBCer3PHR3D3hJ2vKmKjfGWVUESaHCfBClpJUX0=
 github.com/go-kratos/kratos/contrib/middleware/validate/v3 v3.0.0-20260621094049-2726761cdd77/go.mod h1:94bNDjRbQtA+KtxKSI2GWO7XgaDl74usVWu2n5Nx6Qw=
 github.com/go-kratos/kratos/contrib/otel/v3 v3.0.0-20260621094049-2726761cdd77 h1:NiOiS3X74uuS/HJ3o0G8XOohFVQj2MZnTCzx2Bw31hk=

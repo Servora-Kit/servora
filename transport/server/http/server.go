@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	_ "github.com/go-kratos/kratos/v3/encoding/json"
+	_ "github.com/go-kratos/kratos/contrib/encoding/json/v3"
 	_ "github.com/go-kratos/kratos/v3/encoding/protojson"
 	khttp "github.com/go-kratos/kratos/v3/transport/http"
 

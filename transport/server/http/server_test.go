@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log/slog"
 	"testing"
 	"time"
 
@@ -8,12 +9,87 @@ import (
 	"github.com/go-kratos/kratos/v3/middleware/recovery"
 	khttp "github.com/go-kratos/kratos/v3/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"log/slog"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 	"github.com/Servora-Kit/servora/transport/server/http/health"
 )
+
+func TestJSONCodecUsesProtoJSONForMessages(t *testing.T) {
+	NewServer()
+	codec := encoding.GetCodec("json")
+	if codec == nil {
+		t.Fatal("expected json codec to be registered")
+	}
+
+	const maxInt64 = int64(9223372036854775807)
+	encoded, err := codec.Marshal(wrapperspb.Int64(maxInt64))
+	if err != nil {
+		t.Fatalf("marshal int64 wrapper: %v", err)
+	}
+	if got, want := string(encoded), `"9223372036854775807"`; got != want {
+		t.Fatalf("expected ProtoJSON int64 string %s, got %s", want, got)
+	}
+
+	var decoded wrapperspb.Int64Value
+	if err := codec.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unmarshal int64 wrapper: %v", err)
+	}
+	if decoded.Value != maxInt64 {
+		t.Fatalf("expected %d, got %d", maxInt64, decoded.Value)
+	}
+}
+
+func TestJSONCodecPreservesStandardJSONForNonMessages(t *testing.T) {
+	NewServer()
+	type payload struct {
+		DisplayName string `json:"display_name"`
+		Count       int    `json:"count"`
+	}
+
+	codec := encoding.GetCodec("json")
+	if codec == nil {
+		t.Fatal("expected json codec to be registered")
+	}
+
+	encoded, err := codec.Marshal(payload{DisplayName: "Ada", Count: 7})
+	if err != nil {
+		t.Fatalf("marshal ordinary JSON payload: %v", err)
+	}
+	if got, want := string(encoded), `{"display_name":"Ada","count":7}`; got != want {
+		t.Fatalf("expected %s, got %s", want, got)
+	}
+
+	var decoded payload
+	if err := codec.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unmarshal ordinary JSON payload: %v", err)
+	}
+	if decoded.DisplayName != "Ada" || decoded.Count != 7 {
+		t.Fatalf("unexpected decoded payload: %+v", decoded)
+	}
+}
+
+func TestProtoJSONCodecRemainsUsable(t *testing.T) {
+	codec := encoding.GetCodec("protojson")
+	if codec == nil {
+		t.Fatal("expected protojson codec to be registered")
+	}
+
+	const maxInt64 = int64(9223372036854775807)
+	encoded, err := codec.Marshal(wrapperspb.Int64(maxInt64))
+	if err != nil {
+		t.Fatalf("marshal int64 wrapper: %v", err)
+	}
+
+	var decoded wrapperspb.Int64Value
+	if err := codec.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unmarshal int64 wrapper: %v", err)
+	}
+	if decoded.Value != maxInt64 {
+		t.Fatalf("expected %d, got %d", maxInt64, decoded.Value)
+	}
+}
 
 func TestNewServer_NoOptions(t *testing.T) {
 	srv := NewServer()
@@ -23,6 +99,7 @@ func TestNewServer_NoOptions(t *testing.T) {
 }
 
 func TestDefaultCodecsRegistered(t *testing.T) {
+	NewServer()
 	if encoding.GetCodec("json") == nil {
 		t.Fatal("expected json codec to be registered")
 	}
