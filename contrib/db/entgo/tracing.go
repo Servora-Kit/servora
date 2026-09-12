@@ -2,6 +2,7 @@ package ent
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -69,6 +70,16 @@ func (d *tracingDriver) Exec(ctx context.Context, query string, args, v any) err
 
 func (d *tracingDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 	tx, err := d.inner.Tx(ctx)
+	logCallTo(d.log, ctx, "ent.tx.begin", "", 0, err)
+	if err != nil {
+		return nil, err
+	}
+	return &tracingTx{inner: tx, log: d.log, ctx: ctx}, nil
+}
+
+// BeginTx retains isolation/read-only options and the transaction tracing lifecycle.
+func (d *tracingDriver) BeginTx(ctx context.Context, opts *sql.TxOptions) (dialect.Tx, error) {
+	tx, err := beginTx(ctx, d.inner, opts)
 	logCallTo(d.log, ctx, "ent.tx.begin", "", 0, err)
 	if err != nil {
 		return nil, err

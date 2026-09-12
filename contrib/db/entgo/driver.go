@@ -1,6 +1,7 @@
 package ent
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -126,4 +127,19 @@ func (driver *managedDriver) Close() error {
 		return nil
 	}
 	return driver.Driver.Close()
+}
+
+// BeginTx preserves Ent's optional SQL transaction interface through ownership wrapping.
+func (driver *managedDriver) BeginTx(ctx context.Context, opts *sql.TxOptions) (dialect.Tx, error) {
+	return beginTx(ctx, driver.Driver, opts)
+}
+
+func beginTx(ctx context.Context, driver dialect.Driver, opts *sql.TxOptions) (dialect.Tx, error) {
+	beginner, ok := driver.(interface {
+		BeginTx(context.Context, *sql.TxOptions) (dialect.Tx, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("Ent driver does not support SQL transaction options")
+	}
+	return beginner.BeginTx(ctx, opts)
 }

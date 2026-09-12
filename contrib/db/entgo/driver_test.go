@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -126,3 +127,40 @@ var _ driver.Pinger = (*stubConn)(nil)
 var _ driver.SessionResetter = (*stubConn)(nil)
 var _ driver.Validator = (*stubConn)(nil)
 var _ io.Closer = (*stubConn)(nil)
+
+type optionsDriver struct {
+	dialect.Driver
+	ctx  context.Context
+	opts *sql.TxOptions
+	tx   *fakeTx
+	err  error
+}
+
+func (d *optionsDriver) BeginTx(ctx context.Context, opts *sql.TxOptions) (dialect.Tx, error) {
+	d.ctx, d.opts = ctx, opts
+	return d.tx, d.err
+}
+
+func TestDriverWrappersPreserveTransactionOptions(t *testing.T) {
+	for _, tracing := range []bool{false, true} {
+		t.Run(fmt.Sprint(tracing), func(t *testing.T) {
+			inner := &optionsDriver{tx: &fakeTx{}}
+			wrapped := manageDriver(inner, false)
+			if tracing {
+				wrapped = wrapWithTracing(wrapped, zap.NewNop())
+			}
+			opts := &sql.TxOptions{Isolation: sql.LevelReadCommitted, ReadOnly: true}
+			tx, err := beginTx(t.Context(), wrapped, opts)
+			if err != nil || inner.opts != opts || inner.ctx != t.Context() {
+				t.Fatalf("BeginTx lost options/context: %v", err)
+			}
+			if err := tx.Commit(); err != nil || !inner.tx.committed {
+				t.Fatalf("commit not forwarded: %v", err)
+			}
+			inner.err = errors.New("begin failed")
+			if _, err := beginTx(t.Context(), wrapped, opts); !errors.Is(err, inner.err) {
+				t.Fatalf("BeginTx error lost: %v", err)
+			}
+		})
+	}
+}
