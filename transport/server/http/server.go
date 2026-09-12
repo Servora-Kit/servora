@@ -74,8 +74,13 @@ func NewServer(opts ...ServerOption) *khttp.Server {
 		}
 	}
 
+	var filters []khttp.FilterFunc
 	if cors.IsEnabled(o.cors) {
-		serverOpts = append(serverOpts, khttp.Filter(cors.Middleware(o.cors)))
+		filters = append(filters, cors.Middleware(o.cors))
+	}
+	filters = append(filters, o.filters...)
+	if len(filters) > 0 {
+		serverOpts = append(serverOpts, khttp.Filter(filters...))
 	}
 
 	docs, err := apidocs.NewHandler(o.conf.GetApiDocs())

@@ -18,6 +18,7 @@ type ServerOption func(*serverOptions)
 type serverOptions struct {
 	conf           *corev1.Server_HTTP
 	middleware     []middleware.Middleware
+	filters        []khttp.FilterFunc
 	cors           *corsv1.CORS
 	metricsHandler http.Handler
 	registrars     []Registrar
@@ -33,6 +34,14 @@ func WithConfig(c *corev1.Server_HTTP) ServerOption {
 func WithMiddleware(mw ...middleware.Middleware) ServerOption {
 	return func(o *serverOptions) {
 		o.middleware = mw
+	}
+}
+
+// WithFilter 按声明顺序安装原生 HTTP 中间件，首个位于最外层。
+// Filter 覆盖所有 handler；启用的内置 CORS 在这些 Filter 之外处理预检。
+func WithFilter(filters ...khttp.FilterFunc) ServerOption {
+	return func(o *serverOptions) {
+		o.filters = append(o.filters, filters...)
 	}
 }
 
