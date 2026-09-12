@@ -3,6 +3,7 @@ package ent
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -79,7 +80,13 @@ func (d *tracingDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 
 // BeginTx retains isolation/read-only options and the transaction tracing lifecycle.
 func (d *tracingDriver) BeginTx(ctx context.Context, opts *sql.TxOptions) (dialect.Tx, error) {
-	tx, err := beginTx(ctx, d.inner, opts)
+	beginner, ok := d.inner.(interface {
+		BeginTx(context.Context, *sql.TxOptions) (dialect.Tx, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("ent driver does not support SQL transaction options")
+	}
+	tx, err := beginner.BeginTx(ctx, opts)
 	logCallTo(d.log, ctx, "ent.tx.begin", "", 0, err)
 	if err != nil {
 		return nil, err

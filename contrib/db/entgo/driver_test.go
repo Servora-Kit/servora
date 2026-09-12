@@ -149,8 +149,14 @@ func TestDriverWrappersPreserveTransactionOptions(t *testing.T) {
 			if tracing {
 				wrapped = wrapWithTracing(wrapped, zap.NewNop())
 			}
+			beginner, ok := wrapped.(interface {
+				BeginTx(context.Context, *sql.TxOptions) (dialect.Tx, error)
+			})
+			if !ok {
+				t.Fatal("wrapped driver does not expose BeginTx")
+			}
 			opts := &sql.TxOptions{Isolation: sql.LevelReadCommitted, ReadOnly: true}
-			tx, err := beginTx(t.Context(), wrapped, opts)
+			tx, err := beginner.BeginTx(t.Context(), opts)
 			if err != nil || inner.opts != opts || inner.ctx != t.Context() {
 				t.Fatalf("BeginTx lost options/context: %v", err)
 			}
@@ -158,7 +164,7 @@ func TestDriverWrappersPreserveTransactionOptions(t *testing.T) {
 				t.Fatalf("commit not forwarded: %v", err)
 			}
 			inner.err = errors.New("begin failed")
-			if _, err := beginTx(t.Context(), wrapped, opts); !errors.Is(err, inner.err) {
+			if _, err := beginner.BeginTx(t.Context(), opts); !errors.Is(err, inner.err) {
 				t.Fatalf("BeginTx error lost: %v", err)
 			}
 		})
