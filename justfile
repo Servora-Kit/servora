@@ -3,11 +3,8 @@ set dotenv-override
 set export
 
 ROOT_DIR := justfile_directory() + "/"
-GO_WORKSPACE_MODULES := ". api/gen"
 BUF_GO_GEN_TEMPLATE := "buf.go.gen.yaml"
 BUF_TS_GEN_TEMPLATE := "buf.typescript.gen.yaml"
-LINT_GOWORK := env("LINT_GOWORK", "auto")
-TAG := env("TAG", "")
 
 GOPATH := `go env GOPATH`
 GOVERSION := `go version`
@@ -75,31 +72,13 @@ cli:
 
 # Download Go module dependencies
 dep:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        echo "  $mod"
-        (
-            cd "$ROOT_DIR$mod"
-            go mod download
-        )
-    done
+    @go mod download
 
-# Run go mod tidy across modules and go work sync
+# Run go mod tidy for the repository module
 tidy:
-    #!/usr/bin/env sh
-    set -eu
-    echo "==> Tidying Go modules..."
-    for mod in $GO_WORKSPACE_MODULES; do
-        echo "  $mod"
-        (
-            cd "$ROOT_DIR$mod"
-            go mod tidy
-        )
-    done
-    cd "$ROOT_DIR"
-    go work sync
-    echo "✓ Modules tidied"
+    @echo "==> Tidying Go module..."
+    @go mod tidy
+    @echo "✓ Module tidied"
 
 # Generate proto Go code
 gen:
@@ -146,52 +125,22 @@ clean:
     @rm -rf api/gen/go
     @echo "✓ Cleaned"
 
-# Run gofmt across modules
+# Run gofmt across the repository module
 fmt:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        (
-            cd "$ROOT_DIR$mod"
-            gofmt -w .
-        )
-    done
-    echo "✓ Formatted"
+    @go fmt ./...
+    @echo "✓ Formatted"
 
-# Run go vet across modules
+# Run go vet across the repository module
 vet:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        (
-            cd "$ROOT_DIR$mod"
-            go vet ./...
-        )
-    done
+    @go vet ./...
 
-# Run unit tests across modules (-short, no external deps)
+# Run unit tests (-short, no external deps)
 test:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        echo "==> Testing $mod..."
-        (
-            cd "$ROOT_DIR$mod"
-            go test -short ./...
-        )
-    done
+    @go test -short ./...
 
 # Run all tests without build tags; existing external-service skips still apply
 test-all:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        echo "==> Testing $mod (all)..."
-        (
-            cd "$ROOT_DIR$mod"
-            go test ./...
-        )
-    done
+    @go test ./...
 
 # Run the local SQLite Ent live contract (requires explicit DSN)
 test-ent-sqlite:
@@ -215,29 +164,14 @@ test-ent-postgres:
 
 # Run tests with coverage profile
 cover:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        (
-            cd "$ROOT_DIR$mod"
-            go test -v ./... -coverprofile=coverage.out
-        )
-    done
+    @go test -v ./... -coverprofile=coverage.out
 
 # Run Go and Proto lint
 lint: lint-go && lint-proto
 
-# Run golangci-lint across modules
-lint-go $gowork=LINT_GOWORK:
-    #!/usr/bin/env sh
-    set -eu
-    for mod in $GO_WORKSPACE_MODULES; do
-        echo "==> Linting Go ($mod, GOWORK=$gowork)..."
-        (
-            cd "$ROOT_DIR$mod"
-            GOWORK="$gowork" golangci-lint run
-        )
-    done
+# Run golangci-lint across the repository module
+lint-go:
+    @golangci-lint run ./...
 
 # Run buf lint
 lint-proto:
@@ -250,18 +184,11 @@ fmt-proto:
     @echo "✓ Proto formatted"
 
 # Run CI-equivalent lint (GOWORK=off + proto lint)
-ci-lint: (lint-go "off") && lint-proto
-
-# Tag api/gen submodule (v0.x.y required)
-tag-api $TAG=TAG:
+ci-lint:
     #!/usr/bin/env sh
     set -eu
-    if [ -z "$TAG" ]; then
-        echo "TAG is required. Usage: just tag-api v0.x.y" >&2
-        exit 2
-    fi
-    git tag "api/gen/$TAG"
-    echo "✓ Tagged api/gen/$TAG (run 'git push --tags' to push)"
+    GOWORK=off just lint-go
+    just lint-proto
 
 # Push proto to BSR (local fallback; CI handles daily pushes via buf-ci.yml)
 bsr-push:

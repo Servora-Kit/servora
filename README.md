@@ -184,7 +184,7 @@ service ResourceService {
 }
 ```
 
-> **v0.8.7 破坏性迁移：** method option 已从 `servora.audit.v1.audit_rule` 硬切换为 `servora.audit.v1.rule`，Go extension 同步从 `auditv1.E_AuditRule` 改为 `auditv1.E_Rule`；extension number 仍为 `50100`，不提供 deprecated alias。升级生成模块使用 `go get github.com/Servora-Kit/servora/api/gen@v0.8.7`。
+> **v0.8.7 破坏性迁移：** method option 已从 `servora.audit.v1.audit_rule` 硬切换为 `servora.audit.v1.rule`，Go extension 同步从 `auditv1.E_AuditRule` 改为 `auditv1.E_Rule`；extension number 仍为 `50100`，不提供 deprecated alias。对于仍采用独立生成 module 的 v0.8.7～v0.9.6，升级命令为 `go get github.com/Servora-Kit/servora/api/gen@v0.8.7`；从 v0.9.7 起生成 package 随根 module 发布。
 
 Plugin 生成 `AuditRules()` 规则表，业务侧把 `Auditor` 实现（默认 Kafka）跟规则表一起挂到 middleware：
 

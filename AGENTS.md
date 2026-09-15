@@ -1,11 +1,11 @@
 # Servora
 
-Proto contract 驱动的 Go 微服务框架；包含运行时、protoc 插件、公共 Proto、生成模块和前端共享包。
+Proto contract 驱动的 Go 微服务框架；包含运行时、protoc 插件、公共 Proto、根 module 内生成 package 和前端共享包。
 
 ## 目录
 
 - `api/protos/`：公共 Proto 与 annotation
-- `api/gen/`：生成的独立 Go module
+- `api/gen/go/`：根 Go module 内的生成 package
 - `cmd/`：CLI 与 `protoc-gen-servora-*`
 - `security/`：通用 TLS primitive
 - `obs/`：日志、追踪、指标、Audit
@@ -38,6 +38,6 @@ just tidy
 
 ## 发布
 
-Proto 或生成模块变化时先发布 `api/gen/v0.x.y`，再更新主模块依赖并验证，最后发布主模块 `v0.x.y`。前端包独立使用 `proto-utils/vx.y.z` tag。
+Proto 或 Go 生成 package 变化时随根 module 的 `v0.x.y` 一起发布；既有 `api/gen/v*` tag 只保留为历史版本，不再新增。BSR 与 Go module 版本相互独立，前端包继续使用 `proto-utils/vx.y.z` tag。
 
 提交格式：`type(scope): description`。

@@ -44,12 +44,12 @@ func TestCrossPackageDefaultsCompileAndRun(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	apiGen, err := filepath.Abs("../../api/gen")
+	repoRoot, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
 	}
 	generated := plugintest.ResponseFiles(plugin)
-	generated["go.mod"] = "module example.com/fixture\n\ngo 1.27.0\n\nrequire github.com/Servora-Kit/servora/api/gen v0.0.0\nreplace github.com/Servora-Kit/servora/api/gen => " + apiGen + "\n"
+	generated["go.mod"] = "module example.com/fixture\n\ngo 1.27.0\n\nrequire github.com/Servora-Kit/servora v0.0.0\nreplace github.com/Servora-Kit/servora => " + repoRoot + "\n"
 	// Companion methods must compile against a parent with a field in another Go package.
 	generated["fixture_test.go"] = `package fixture
 import (

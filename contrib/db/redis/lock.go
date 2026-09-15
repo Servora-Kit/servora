@@ -29,8 +29,8 @@ end
 // Lock 表示一个已获取的分布式锁。
 type Lock struct {
 	rdb   *goredis.Client
-	key    string
-	token  string
+	key   string
+	token string
 }
 
 // TryLock 尝试获取分布式锁。
@@ -54,9 +54,9 @@ func TryLock(ctx context.Context, rdb *goredis.Client, key string, ttl time.Dura
 	}
 
 	return &Lock{
-		rdb:    rdb,
-		key:    key,
-		token:  token,
+		rdb:   rdb,
+		key:   key,
+		token: token,
 	}, nil
 }
 

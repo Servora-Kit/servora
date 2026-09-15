@@ -64,7 +64,7 @@ func OnlyGeneratedFile(t testing.TB, files map[string]string, baseName string) s
 	return content
 }
 
-// AssertGeneratedGoCompiles type-checks generated source against the local api/gen module.
+// AssertGeneratedGoCompiles type-checks generated source against the local Servora module.
 func AssertGeneratedGoCompiles(t testing.TB, source, packageName string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -72,8 +72,8 @@ func AssertGeneratedGoCompiles(t testing.TB, source, packageName string) {
 	if !ok {
 		t.Fatal("resolve plugintest helper path")
 	}
-	apiGenDir := filepath.Clean(filepath.Join(filepath.Dir(helperFile), "..", "..", "..", "api", "gen"))
-	goMod := "module sandbox\n\ngo 1.22\n\nreplace github.com/Servora-Kit/servora/api/gen => " + apiGenDir + "\n"
+	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(helperFile), "..", "..", ".."))
+	goMod := "module sandbox\n\ngo 1.22\n\nrequire github.com/Servora-Kit/servora v0.0.0\nreplace github.com/Servora-Kit/servora => " + repoRoot + "\n"
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goMod), 0o644); err != nil {
 		t.Fatalf("write go.mod: %v", err)
 	}

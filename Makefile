@@ -12,10 +12,8 @@ endif
 # ============================================================================
 
 ROOT_DIR             := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-GO_WORKSPACE_MODULES := . api/gen
 BUF_GO_GEN_TEMPLATE  := buf.go.gen.yaml
 BUF_TS_GEN_TEMPLATE  := buf.typescript.gen.yaml
-LINT_GOWORK          ?= auto
 
 GOPATH    := $(shell go env GOPATH)
 GOVERSION := $(shell go version)
@@ -96,14 +94,13 @@ cli: ## Install CLI tools (kratos, buf, golangci-lint, wire, ent, svr)
 
 .PHONY: dep
 dep: ## Download Go module dependencies
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "  $(mod)" && (cd $(ROOT_DIR)$(mod) && go mod download) && ) true
+	@go mod download
 
 .PHONY: tidy
-tidy: ## go mod tidy across modules and go work sync
-	@echo "==> Tidying Go modules..."
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "  $(mod)" && (cd $(ROOT_DIR)$(mod) && go mod tidy) && ) true
-	@go work sync
-	@echo "✓ Modules tidied"
+tidy: ## Run go mod tidy for the repository module
+	@echo "==> Tidying Go module..."
+	@go mod tidy
+	@echo "✓ Module tidied"
 
 # ============================================================================
 # CODE GENERATION
@@ -151,21 +148,21 @@ clean: ## Remove generated code
 # ============================================================================
 
 .PHONY: fmt
-fmt: ## Run gofmt across modules
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),(cd $(ROOT_DIR)$(mod) && gofmt -w .) && ) true
+fmt: ## Run gofmt across the repository module
+	@go fmt ./...
 	@echo "✓ Formatted"
 
 .PHONY: vet
-vet: ## Run go vet across modules
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),(cd $(ROOT_DIR)$(mod) && go vet ./...) && ) true
+vet: ## Run go vet across the repository module
+	@go vet ./...
 
 .PHONY: test
-test: ## Run unit tests across modules (-short, no external deps)
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Testing $(mod)..." && (cd $(ROOT_DIR)$(mod) && go test -short ./...) && ) true
+test: ## Run unit tests (-short, no external deps)
+	@go test -short ./...
 
 .PHONY: test.all
 test.all: ## Run all tests including integration (needs Redis, etc.)
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Testing $(mod) (all)..." && (cd $(ROOT_DIR)$(mod) && go test ./...) && ) true
+	@go test ./...
 
 .PHONY: test.ent.sqlite
 test.ent.sqlite: export SERVORA_ENT_SQLITE_DSN := $(SERVORA_ENT_SQLITE_DSN)
@@ -181,14 +178,14 @@ test.ent.postgres: ## Run the local PostgreSQL Ent live contract (requires expli
 
 .PHONY: cover
 cover: ## Run tests with coverage profile
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),(cd $(ROOT_DIR)$(mod) && go test -v ./... -coverprofile=coverage.out) && ) true
+	@go test -v ./... -coverprofile=coverage.out
 
 .PHONY: lint
 lint: lint.go lint.proto ## Run Go and Proto lint
 
 .PHONY: lint.go
 lint.go:
-	@$(foreach mod,$(GO_WORKSPACE_MODULES),echo "==> Linting Go ($(mod), GOWORK=$(LINT_GOWORK))..." && (cd $(ROOT_DIR)$(mod) && GOWORK=$(LINT_GOWORK) golangci-lint run) && ) true
+	@golangci-lint run ./...
 
 .PHONY: lint.proto
 lint.proto: ## Run buf lint
@@ -202,21 +199,12 @@ fmt.proto: ## Format proto files (buf format -w)
 
 # CI-equivalent path: disable Go workspace, then lint Go + proto.
 .PHONY: ci.lint
-ci.lint: LINT_GOWORK=off
+ci.lint: export GOWORK := off
 ci.lint: lint.go lint.proto ## CI-equivalent lint (GOWORK=off + proto lint)
 
 # ============================================================================
 # RELEASE
 # ============================================================================
-
-# Usage: make tag.api TAG=v0.2.0
-.PHONY: tag.api
-tag.api: ## Tag api/gen submodule (TAG=v0.x.y required)
-ifndef TAG
-	$(error TAG is required. Usage: make tag.api TAG=v0.x.y)
-endif
-	@git tag api/gen/$(TAG)
-	@echo "✓ Tagged api/gen/$(TAG) (run 'git push --tags' to push)"
 
 .PHONY: bsr.push
 # 日常 BSR 推送已交给 .github/workflows/buf-ci.yml；此 target 仅作本地预演/应急使用

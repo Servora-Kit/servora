@@ -14,6 +14,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  GOWORK: "off"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -30,9 +33,6 @@ jobs:
 
       - run: just --fmt --check
 
-      - name: Setup multi-module workspace
-        run: go work init . ./api/gen
-
       - uses: golangci/golangci-lint-action@v9
 
   test:
@@ -43,9 +43,6 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
-      - name: Setup multi-module workspace
-        run: go work init . ./api/gen
 
       - run: go build ./...
 
