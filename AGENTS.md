@@ -38,6 +38,6 @@ just tidy
 
 ## 发布
 
-Proto 或 Go 生成 package 变化时随根 module 的 `v0.x.y` 一起发布；既有 `api/gen/v*` tag 只保留为历史版本，不再新增。BSR 与 Go module 版本相互独立，前端包继续使用 `proto-utils/vx.y.z` tag。
+Proto 或 Go 生成 package 变化时随根 module 的 `v0.x.y` 一起发布；既有 `api/gen/v*` tag 只保留为历史版本，不再新增。BSR 与 Go module 版本体系相互独立，但根 `v*` Git tag 会触发 Buf CI 自动推送当前 schema，并维护 BSR `main` 与对应版本 label；前端包继续使用 `proto-utils/vx.y.z` tag。
 
 提交格式：`type(scope): description`。
