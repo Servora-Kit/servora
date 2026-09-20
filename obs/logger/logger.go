@@ -38,8 +38,9 @@ var isTerminal = func(fd uintptr) bool {
 }
 
 // New assembles a logger from Bootstrap proto config.
-// Returns a stdlib *slog.Logger and a closer (always non-nil; no-op
-// when no OTel backend is active). Callers MUST invoke closer on shutdown.
+// Returns a stdlib *slog.Logger and a closer (always non-nil; no-op when no
+// backend owns a releaseable resource, e.g. OTel or file). Callers MUST invoke
+// closer on shutdown so those resources are not leaked.
 func New(bc *corev1.Bootstrap, opts ...Option) (*slog.Logger, func(context.Context) error) {
 	var o options
 	for _, fn := range opts {
@@ -60,9 +61,12 @@ func New(bc *corev1.Bootstrap, opts ...Option) (*slog.Logger, func(context.Conte
 		case *corev1.Log_LogBackend_Stdout:
 			handlers = append(handlers, buildStdoutHandler(o.handlerFunc, x.Stdout, env, lvl))
 		case *corev1.Log_LogBackend_File:
-			h := buildFileHandler(o.handlerFunc, x.File, lvl)
+			h, closer := buildFileHandler(o.handlerFunc, x.File, lvl)
 			if h != nil {
 				handlers = append(handlers, h)
+				if closer != nil {
+					closers = append(closers, closer)
+				}
 			}
 		case *corev1.Log_LogBackend_Otel:
 			h, closer := buildOtelHandler(x.Otel, lvl)

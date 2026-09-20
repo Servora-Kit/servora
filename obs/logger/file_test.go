@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -13,13 +14,18 @@ import (
 func TestFileHandler_WritesFile(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "app.log")
-	h := buildFileHandler(nil, &corev1.Log_FileBackend{
+	h, closer := buildFileHandler(nil, &corev1.Log_FileBackend{
 		Path:    p,
 		MaxSize: 1,
 	}, slog.LevelInfo)
 	if h == nil {
 		t.Fatal("file handler must not be nil")
 	}
+	if closer == nil {
+		t.Fatal("file handler closer must not be nil")
+	}
+	// Release the log file before t.TempDir cleanup removes the directory.
+	t.Cleanup(func() { _ = closer(context.Background()) })
 	slog.New(h).Info("file-test-line", "k", "v")
 
 	b, err := os.ReadFile(p)
@@ -32,29 +38,40 @@ func TestFileHandler_WritesFile(t *testing.T) {
 }
 
 func TestFileHandler_NilConfig(t *testing.T) {
-	h := buildFileHandler(nil, nil, slog.LevelInfo)
+	h, closer := buildFileHandler(nil, nil, slog.LevelInfo)
 	if h != nil {
 		t.Error("nil config should return nil handler")
+	}
+	if closer != nil {
+		t.Error("nil config should return nil closer")
 	}
 }
 
 func TestFileHandler_EmptyPath(t *testing.T) {
-	h := buildFileHandler(nil, &corev1.Log_FileBackend{}, slog.LevelInfo)
+	h, closer := buildFileHandler(nil, &corev1.Log_FileBackend{}, slog.LevelInfo)
 	if h != nil {
 		t.Error("empty path should return nil handler")
+	}
+	if closer != nil {
+		t.Error("empty path should return nil closer")
 	}
 }
 
 func TestFileHandler_TextFormat(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "text.log")
-	h := buildFileHandler(nil, &corev1.Log_FileBackend{
+	h, closer := buildFileHandler(nil, &corev1.Log_FileBackend{
 		Path:   p,
 		Format: corev1.Log_LOG_FORMAT_TEXT,
 	}, slog.LevelInfo)
 	if h == nil {
 		t.Fatal("text file handler must not be nil")
 	}
+	if closer == nil {
+		t.Fatal("text file handler closer must not be nil")
+	}
+	// Release the log file before t.TempDir cleanup removes the directory.
+	t.Cleanup(func() { _ = closer(context.Background()) })
 	slog.New(h).Info("text-line")
 
 	b, err := os.ReadFile(p)
