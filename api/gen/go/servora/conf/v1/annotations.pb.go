@@ -22,77 +22,18 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// SectionRule 声明一个配置 message 在外部 yaml / json 配置中的定位键。
-// 应用方通过 bootstrap.Scan 按该 key 在 kratos config 中定向 scan。
-type SectionRule struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 配置文件中的定位键（支持 dotted path，如 "audit" 或 "data.redis"）。
-	// 不应留空。
-	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// 是否允许该 section 在配置中缺失而不报错。
-	// optional=true：缺失静默跳过 scan，但 message 仍会经 ApplyDefaults 填默认值；
-	// optional=false（默认）：缺失视为配置错误。
-	Optional      bool `protobuf:"varint,2,opt,name=optional,proto3" json:"optional,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SectionRule) Reset() {
-	*x = SectionRule{}
-	mi := &file_servora_conf_v1_annotations_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SectionRule) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SectionRule) ProtoMessage() {}
-
-func (x *SectionRule) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_annotations_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SectionRule.ProtoReflect.Descriptor instead.
-func (*SectionRule) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_annotations_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *SectionRule) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *SectionRule) GetOptional() bool {
-	if x != nil {
-		return x.Optional
-	}
-	return false
-}
-
 // FieldRule 声明一个配置字段的默认值与必填语义。
-// default 与 required 互斥使用：required=true 表示用户必须显式提供（零值不接受），
-// default 表示用户未提供时填入字面量。
+// default 与 required 互斥：required 要求明确提供，允许显式零值；
+// default 仅在字段缺失时补值，非空或范围约束由 buf.validate 单独表达。
 type FieldRule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 字段默认值的字面量表达。
 	// - string 字段：直接字面量（如 "tcp"）；
 	// - 数字 / bool 字段：可解析为对应类型的字符串（如 "8080" / "true"）；
 	// - google.protobuf.Duration：Go duration 字符串（如 "24h" / "5s"）；
-	// - repeated 标量：逗号分隔（如 "GET,POST,OPTIONS"）。
-	Default string `protobuf:"bytes,1,opt,name=default,proto3" json:"default,omitempty"`
-	// 是否必填。若 true，由 plugin 生成 Validate() 在零值时返回 error。
+	// 声明本身保留存在性，因此 default: "" 也是有效的字符串默认值。
+	Default *string `protobuf:"bytes,1,opt,name=default,proto3,oneof" json:"default,omitempty"`
+	// 是否必须明确提供。标量必须能区分未设置与显式零值，集合不支持此规则。
 	Required      bool `protobuf:"varint,2,opt,name=required,proto3" json:"required,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -100,7 +41,7 @@ type FieldRule struct {
 
 func (x *FieldRule) Reset() {
 	*x = FieldRule{}
-	mi := &file_servora_conf_v1_annotations_proto_msgTypes[1]
+	mi := &file_servora_conf_v1_annotations_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -112,7 +53,7 @@ func (x *FieldRule) String() string {
 func (*FieldRule) ProtoMessage() {}
 
 func (x *FieldRule) ProtoReflect() protoreflect.Message {
-	mi := &file_servora_conf_v1_annotations_proto_msgTypes[1]
+	mi := &file_servora_conf_v1_annotations_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -125,12 +66,12 @@ func (x *FieldRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FieldRule.ProtoReflect.Descriptor instead.
 func (*FieldRule) Descriptor() ([]byte, []int) {
-	return file_servora_conf_v1_annotations_proto_rawDescGZIP(), []int{1}
+	return file_servora_conf_v1_annotations_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *FieldRule) GetDefault() string {
-	if x != nil {
-		return x.Default
+	if x != nil && x.Default != nil {
+		return *x.Default
 	}
 	return ""
 }
@@ -145,10 +86,10 @@ func (x *FieldRule) GetRequired() bool {
 var file_servora_conf_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
-		ExtensionType: (*SectionRule)(nil),
+		ExtensionType: (*bool)(nil),
 		Field:         50400,
 		Name:          "servora.conf.v1.section",
-		Tag:           "bytes,50400,opt,name=section",
+		Tag:           "varint,50400,opt,name=section",
 		Filename:      "servora/conf/v1/annotations.proto",
 	},
 	{
@@ -163,7 +104,7 @@ var file_servora_conf_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 
 // Extension fields to descriptorpb.MessageOptions.
 var (
-	// optional servora.conf.v1.SectionRule section = 50400;
+	// optional bool section = 50400;
 	E_Section = &file_servora_conf_v1_annotations_proto_extTypes[0]
 )
 
@@ -177,14 +118,13 @@ var File_servora_conf_v1_annotations_proto protoreflect.FileDescriptor
 
 const file_servora_conf_v1_annotations_proto_rawDesc = "" +
 	"\n" +
-	"!servora/conf/v1/annotations.proto\x12\x0fservora.conf.v1\x1a google/protobuf/descriptor.proto\";\n" +
-	"\vSectionRule\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1a\n" +
-	"\boptional\x18\x02 \x01(\bR\boptional\"A\n" +
-	"\tFieldRule\x12\x18\n" +
-	"\adefault\x18\x01 \x01(\tR\adefault\x12\x1a\n" +
-	"\brequired\x18\x02 \x01(\bR\brequired:Y\n" +
-	"\asection\x12\x1f.google.protobuf.MessageOptions\x18\xe0\x89\x03 \x01(\v2\x1c.servora.conf.v1.SectionRuleR\asection:Q\n" +
+	"!servora/conf/v1/annotations.proto\x12\x0fservora.conf.v1\x1a google/protobuf/descriptor.proto\"R\n" +
+	"\tFieldRule\x12\x1d\n" +
+	"\adefault\x18\x01 \x01(\tH\x00R\adefault\x88\x01\x01\x12\x1a\n" +
+	"\brequired\x18\x02 \x01(\bR\brequiredB\n" +
+	"\n" +
+	"\b_default:;\n" +
+	"\asection\x12\x1f.google.protobuf.MessageOptions\x18\xe0\x89\x03 \x01(\bR\asection:Q\n" +
 	"\x05field\x12\x1d.google.protobuf.FieldOptions\x18\xe1\x89\x03 \x01(\v2\x1a.servora.conf.v1.FieldRuleR\x05fieldB@Z>github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1;confb\x06proto3"
 
 var (
@@ -199,21 +139,19 @@ func file_servora_conf_v1_annotations_proto_rawDescGZIP() []byte {
 	return file_servora_conf_v1_annotations_proto_rawDescData
 }
 
-var file_servora_conf_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_servora_conf_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_servora_conf_v1_annotations_proto_goTypes = []any{
-	(*SectionRule)(nil),                 // 0: servora.conf.v1.SectionRule
-	(*FieldRule)(nil),                   // 1: servora.conf.v1.FieldRule
-	(*descriptorpb.MessageOptions)(nil), // 2: google.protobuf.MessageOptions
-	(*descriptorpb.FieldOptions)(nil),   // 3: google.protobuf.FieldOptions
+	(*FieldRule)(nil),                   // 0: servora.conf.v1.FieldRule
+	(*descriptorpb.MessageOptions)(nil), // 1: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),   // 2: google.protobuf.FieldOptions
 }
 var file_servora_conf_v1_annotations_proto_depIdxs = []int32{
-	2, // 0: servora.conf.v1.section:extendee -> google.protobuf.MessageOptions
-	3, // 1: servora.conf.v1.field:extendee -> google.protobuf.FieldOptions
-	0, // 2: servora.conf.v1.section:type_name -> servora.conf.v1.SectionRule
-	1, // 3: servora.conf.v1.field:type_name -> servora.conf.v1.FieldRule
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	2, // [2:4] is the sub-list for extension type_name
+	1, // 0: servora.conf.v1.section:extendee -> google.protobuf.MessageOptions
+	2, // 1: servora.conf.v1.field:extendee -> google.protobuf.FieldOptions
+	0, // 2: servora.conf.v1.field:type_name -> servora.conf.v1.FieldRule
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	2, // [2:3] is the sub-list for extension type_name
 	0, // [0:2] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
 }
@@ -223,13 +161,14 @@ func file_servora_conf_v1_annotations_proto_init() {
 	if File_servora_conf_v1_annotations_proto != nil {
 		return
 	}
+	file_servora_conf_v1_annotations_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servora_conf_v1_annotations_proto_rawDesc), len(file_servora_conf_v1_annotations_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   1,
 			NumExtensions: 2,
 			NumServices:   0,
 		},

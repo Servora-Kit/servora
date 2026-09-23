@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"google.golang.org/protobuf/proto"
+
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 )
 
@@ -15,8 +17,8 @@ func TestFileHandler_WritesFile(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "app.log")
 	h, closer := buildFileHandler(nil, &corev1.Log_FileBackend{
-		Path:    p,
-		MaxSize: 1,
+		Path:    proto.String(p),
+		MaxSize: proto.Int32(1),
 	}, slog.LevelInfo)
 	if h == nil {
 		t.Fatal("file handler must not be nil")
@@ -47,21 +49,11 @@ func TestFileHandler_NilConfig(t *testing.T) {
 	}
 }
 
-func TestFileHandler_EmptyPath(t *testing.T) {
-	h, closer := buildFileHandler(nil, &corev1.Log_FileBackend{}, slog.LevelInfo)
-	if h != nil {
-		t.Error("empty path should return nil handler")
-	}
-	if closer != nil {
-		t.Error("empty path should return nil closer")
-	}
-}
-
 func TestFileHandler_TextFormat(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "text.log")
 	h, closer := buildFileHandler(nil, &corev1.Log_FileBackend{
-		Path:   p,
+		Path:   proto.String(p),
 		Format: corev1.Log_LOG_FORMAT_TEXT,
 	}, slog.LevelInfo)
 	if h == nil {

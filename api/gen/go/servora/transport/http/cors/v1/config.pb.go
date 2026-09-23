@@ -119,20 +119,16 @@ var File_servora_transport_http_cors_v1_config_proto protoreflect.FileDescriptor
 
 const file_servora_transport_http_cors_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"+servora/transport/http/cors/v1/config.proto\x12\x1eservora.transport.http.cors.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\"\x98\x03\n" +
+	"+servora/transport/http/cors/v1/config.proto\x12\x1eservora.transport.http.cors.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\"\xb4\x02\n" +
 	"\x04CORS\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\x120\n" +
-	"\x0fallowed_origins\x18\x02 \x03(\tB\a\x8a\xce\x18\x03\n" +
-	"\x01*R\x0eallowedOrigins\x12J\n" +
-	"\x0fallowed_methods\x18\x03 \x03(\tB!\x8a\xce\x18\x1d\n" +
-	"\x1bGET,POST,PUT,DELETE,OPTIONSR\x0eallowedMethods\x12W\n" +
-	"\x0fallowed_headers\x18\x04 \x03(\tB.\x8a\xce\x18*\n" +
-	"(Origin,Content-Type,Accept,AuthorizationR\x0eallowedHeaders\x12'\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\x12'\n" +
+	"\x0fallowed_origins\x18\x02 \x03(\tR\x0eallowedOrigins\x12'\n" +
+	"\x0fallowed_methods\x18\x03 \x03(\tR\x0eallowedMethods\x12'\n" +
+	"\x0fallowed_headers\x18\x04 \x03(\tR\x0eallowedHeaders\x12'\n" +
 	"\x0fexposed_headers\x18\x05 \x03(\tR\x0eexposedHeaders\x12+\n" +
 	"\x11allow_credentials\x18\x06 \x01(\bR\x10allowCredentials\x12=\n" +
 	"\amax_age\x18\a \x01(\v2\x19.google.protobuf.DurationB\t\x8a\xce\x18\x05\n" +
-	"\x0324hR\x06maxAge:\f\x82\xce\x18\b\n" +
-	"\x04cors\x10\x01BQZOgithub.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1;corsv1b\x06proto3"
+	"\x0324hR\x06maxAge:\x04\x80\xce\x18\x01BQZOgithub.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1;corsv1b\x06proto3"
 
 var (
 	file_servora_transport_http_cors_v1_config_proto_rawDescOnce sync.Once

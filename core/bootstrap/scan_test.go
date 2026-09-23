@@ -1,237 +1,111 @@
 package bootstrap
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/obs/audit/v1"
+	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 	kconfig "github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
 )
 
-// loadKratosConfig writes the supplied yaml to a tempfile and returns a loaded
-// kratos config. The cleanup is registered via t.Cleanup.
+// loadKratosConfig 创建独立的临时来源并在测试结束时关闭。
 func loadKratosConfig(t *testing.T, yaml string) kconfig.Config {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "bootstrap.yaml")
 	if err := os.WriteFile(path, []byte(yaml), 0o600); err != nil {
-		t.Fatalf("write tmp yaml: %v", err)
+		t.Fatal(err)
 	}
-	cfg := kconfig.New(
-		kconfig.WithSource(file.NewSource(path)),
-		kconfig.WithResolveActualTypes(true),
-	)
+	cfg := kconfig.New(kconfig.WithSource(file.NewSource(path)), kconfig.WithResolveActualTypes(true))
 	if err := cfg.Load(); err != nil {
-		t.Fatalf("load config: %v", err)
+		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = cfg.Close() })
 	return cfg
 }
 
-type stubSection struct {
-	Name  string `json:"name"`
-	Count int    `json:"count"`
-
-	key            string
-	optional       bool
-	applyCalls     int
-	validateCalls  int
-	validateResult error
-}
-
-func (s *stubSection) SectionKey() string    { return s.key }
-func (s *stubSection) SectionOptional() bool { return s.optional }
-func (s *stubSection) ApplyDefaults() {
-	s.applyCalls++
-	if s.Name == "" {
-		s.Name = "filled-default"
+func TestScanRejectsInvalidRuntimeAndTarget(t *testing.T) {
+	if err := Scan(nil); err == nil || !strings.Contains(err.Error(), "nil runtime") {
+		t.Fatalf("nil runtime: %v", err)
 	}
-}
-func (s *stubSection) CheckRequired() error { s.validateCalls++; return s.validateResult }
-func (s *stubSection) ApplyConf() error {
-	if err := s.CheckRequired(); err != nil {
-		return err
+	if err := Scan(&Runtime{}); err == nil || !strings.Contains(err.Error(), "nil config") {
+		t.Fatalf("nil config: %v", err)
 	}
-	s.ApplyDefaults()
-	return nil
-}
-
-// minimalSection has SectionKey only (no optional / defaulter / validator).
-type minimalSection struct {
-	Greeting string `json:"greeting"`
-}
-
-func (*minimalSection) SectionKey() string { return "hello" }
-
-type wholeConfig struct {
-	Seed struct {
-		AdminName string `json:"admin_name"`
-	} `json:"seed"`
-	applyCalls int
-	applyErr   error
-}
-
-func (c *wholeConfig) ApplyConf() error {
-	c.applyCalls++
-	return c.applyErr
-}
-
-func TestScan_NilRuntime(t *testing.T) {
-	if err := Scan(nil); err == nil || err.Error() != "bootstrap: scan: nil runtime" {
-		t.Fatalf("Scan(nil) error = %v, want nil runtime", err)
+	rt := &Runtime{Config: loadKratosConfig(t, "app: {}")}
+	if err := Scan(rt, nil); err == nil || !strings.Contains(err.Error(), "target[0]: nil") {
+		t.Fatalf("nil target: %v", err)
+	}
+	var typedNil *corsv1.CORS
+	if err := Scan(rt, typedNil); err == nil || !strings.Contains(err.Error(), "typed nil") {
+		t.Fatalf("typed nil target: %v", err)
 	}
 }
 
-func TestScan_NilConfig(t *testing.T) {
-	if err := Scan(&Runtime{}); err == nil || err.Error() != "bootstrap: scan: nil config" {
-		t.Fatalf("Scan(nil config) error = %v, want nil config", err)
-	}
-}
-
-func TestScan_NilTarget(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, "")}
-	if err := Scan(rt, nil); err == nil || err.Error() != "bootstrap: scan target[0]: nil" {
-		t.Fatalf("Scan(nil target) error = %v, want nil target", err)
-	}
-}
-
-func TestScan_TypedNilTarget(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, "")}
-	var s *stubSection
-	if err := Scan(rt, s); err == nil || err.Error() != "bootstrap: scan target[0]: typed nil *bootstrap.stubSection" {
-		t.Fatalf("Scan(typed nil) error = %v, want typed nil", err)
-	}
-}
-
-func TestScan_WholeConfig(t *testing.T) {
+func TestScanWholeConfigDoesNotReadSameNamedSection(t *testing.T) {
 	rt := &Runtime{Config: loadKratosConfig(t, `
-seed:
-  admin_name: "root-admin"
+server:
+  http:
+    listen:
+      addr: ":8080"
 `)}
-	cfg := &wholeConfig{}
+	cfg := &corev1.Bootstrap{}
 	if err := Scan(rt, cfg); err != nil {
-		t.Fatalf("Scan whole config error = %v", err)
+		t.Fatal(err)
 	}
-	if cfg.Seed.AdminName != "root-admin" {
-		t.Fatalf("admin_name = %q, want root-admin", cfg.Seed.AdminName)
-	}
-	if cfg.applyCalls != 1 {
-		t.Fatalf("ApplyConf calls = %d, want 1", cfg.applyCalls)
+	if got := cfg.GetServer().GetHttp().GetListen().GetNetwork(); got != "tcp" {
+		t.Fatalf("whole config default network = %q", got)
 	}
 }
 
-func TestScan_WholeConfigApplyError(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, `seed: { admin_name: "root" }`)}
-	want := errors.New("apply failed")
-	cfg := &wholeConfig{applyErr: want}
-	err := Scan(rt, cfg)
-	if !errors.Is(err, want) || !strings.Contains(err.Error(), "bootstrap: apply target[0] config") {
-		t.Fatalf("error = %v, want config apply wrap", err)
-	}
-}
-
-func TestScan_EmptySectionKey(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, "")}
-	s := &stubSection{key: ""}
-	if err := Scan(rt, s); err == nil || err.Error() != "bootstrap: scan target[0]: empty section key" {
-		t.Fatalf("Scan empty key error = %v, want empty key", err)
-	}
-}
-
-func TestScan_PresentSection(t *testing.T) {
+func TestScanUsesAcronymAndCompositeMessageKeys(t *testing.T) {
 	rt := &Runtime{Config: loadKratosConfig(t, `
-biz:
-  name: "found-name"
-  count: 42
+audit_contract:
+  enabled: true
+cors:
+  enable: true
 `)}
-	s := &stubSection{key: "biz"}
-	if err := Scan(rt, s); err != nil {
-		t.Fatalf("Scan section error = %v", err)
+	audit, cors := &auditv1.AuditContract{}, &corsv1.CORS{}
+	if err := Scan(rt, audit, cors); err != nil {
+		t.Fatal(err)
 	}
-	if s.Name != "found-name" {
-		t.Fatalf("Name = %q, want %q", s.Name, "found-name")
-	}
-	if s.Count != 42 {
-		t.Fatalf("Count = %d, want 42", s.Count)
-	}
-	if s.applyCalls != 1 {
-		t.Fatalf("ApplyDefaults called %d times, want 1", s.applyCalls)
-	}
-	if s.validateCalls != 1 {
-		t.Fatalf("CheckRequired called %d times, want 1", s.validateCalls)
+	if !audit.GetEnabled() || audit.GetEmitterType() != "noop" || !cors.GetEnable() {
+		t.Fatalf("automatic section keys did not load or apply: audit=%v cors=%v", audit, cors)
 	}
 }
 
-func TestScan_OptionalMissingSkipsApplyConf(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, `other: "value"`)}
-	s := &stubSection{key: "biz", optional: true}
-	if err := Scan(rt, s); err != nil {
-		t.Fatalf("optional missing should not error, got: %v", err)
+func TestScanMissingSectionSkipsApply(t *testing.T) {
+	rt := &Runtime{Config: loadKratosConfig(t, "unrelated: true")}
+	cfg := &corsv1.CORS{Enable: true}
+	if err := Scan(rt, cfg); err != nil {
+		t.Fatal(err)
 	}
-	if s.applyCalls != 0 {
-		t.Fatalf("ApplyConf should be skipped when section missing, got %d calls", s.applyCalls)
-	}
-	if s.Name != "" {
-		t.Fatalf("Name = %q, want empty because ApplyConf was skipped", s.Name)
+	if cfg.MaxAge != nil {
+		t.Fatalf("missing section unexpectedly applied max age: %v", cfg.MaxAge)
 	}
 }
 
-func TestScan_RequiredMissing(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, `other: "value"`)}
-	s := &stubSection{key: "biz", optional: false}
-	err := Scan(rt, s)
-	if err == nil || !strings.Contains(err.Error(), `bootstrap: scan target[0] section "biz"`) {
-		t.Fatalf("required missing error = %v, want section scan wrap", err)
+func TestScanPresentSectionAppliesAndReportsErrors(t *testing.T) {
+	rt := &Runtime{Config: loadKratosConfig(t, "cors: {enable: true}\n")}
+	cfg := &corsv1.CORS{}
+	if err := Scan(rt, cfg); err != nil {
+		t.Fatal(err)
 	}
-}
+	if !cfg.GetEnable() || cfg.GetMaxAge() == nil || cfg.GetMaxAge().AsDuration() != 24*time.Hour {
+		t.Fatalf("present CORS section not applied: %v", cfg)
+	}
 
-func TestScan_RequiredCheckerFailFast(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, `
-a: { name: "ok" }
-b: { name: "ok" }
-`)}
-	first := &stubSection{key: "a", validateResult: errors.New("first failed")}
-	second := &stubSection{key: "b"}
-	err := Scan(rt, first, second)
-	if err == nil || err.Error() != `bootstrap: apply target[0] section "a": first failed` {
-		t.Fatalf("error = %v, want section apply wrap", err)
+	invalidType := &Runtime{Config: loadKratosConfig(t, "cors: 42\n")}
+	if err := Scan(invalidType, &corsv1.CORS{}); err == nil || !strings.Contains(err.Error(), `section "cors"`) {
+		t.Fatalf("invalid section type: %v", err)
 	}
-	if first.validateCalls != 1 {
-		t.Fatalf("first.CheckRequired calls = %d, want 1", first.validateCalls)
-	}
-	if second.validateCalls != 0 {
-		t.Fatalf("second should not be processed, got %d calls", second.validateCalls)
-	}
-}
 
-func TestScan_DottedKey(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, `
-infra:
-  broker:
-    name: "inner-broker"
-    count: 7
-`)}
-	s := &stubSection{key: "infra.broker"}
-	if err := Scan(rt, s); err != nil {
-		t.Fatalf("dotted key scan err: %v", err)
-	}
-	if s.Name != "inner-broker" || s.Count != 7 {
-		t.Fatalf("dotted scan result = (%q, %d), want (inner-broker, 7)", s.Name, s.Count)
-	}
-}
-
-func TestScan_MinimalNoOptionsOrCheckRequired(t *testing.T) {
-	rt := &Runtime{Config: loadKratosConfig(t, `
-hello:
-  greeting: "hi"
-`)}
-	m := &minimalSection{}
-	if err := Scan(rt, m); err != nil {
-		t.Fatalf("minimal section err: %v", err)
-	}
-	if m.Greeting != "hi" {
-		t.Fatalf("Greeting = %q, want hi", m.Greeting)
+	invalidRule := &Runtime{Config: loadKratosConfig(t, "obs: {log: {backends: [{file: {}}]}}\n")}
+	if err := Scan(invalidRule, &corev1.Bootstrap{}); err == nil || !strings.Contains(err.Error(), "path") {
+		t.Fatalf("invalid nested file backend: %v", err)
 	}
 }

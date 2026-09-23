@@ -63,7 +63,7 @@ export type User = {
   //
   // Behaviors: IDENTIFIER
   name?: string;
-  // nickname 保留 presence；显式 Clear 写入 NULL。
+  // nickname 区分未设置与空字符串；显式清除时写入 NULL。
   //
   // Behaviors: OPTIONAL
   nickname?: string;

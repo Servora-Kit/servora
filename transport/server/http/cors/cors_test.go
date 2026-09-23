@@ -10,27 +10,32 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-// TestApplyDefaults_PluginGenerated verifies the proto-sourced defaults
-// supplied by protoc-gen-servora-conf on transport/http/cors/v1/config.proto, which
-// replaces the prior hand-coded defaultOptions().
-func TestApplyDefaults_PluginGenerated(t *testing.T) {
-	c := &corsv1.CORS{}
-	c.ApplyDefaults()
-
-	if len(c.AllowedOrigins) != 1 || c.AllowedOrigins[0] != "*" {
-		t.Errorf("default allowed origins = %v, want [\"*\"]", c.AllowedOrigins)
-	}
-	want := map[string]bool{"GET": true, "POST": true, "PUT": true, "DELETE": true, "OPTIONS": true}
-	if len(c.AllowedMethods) != len(want) {
-		t.Errorf("default allowed methods count = %d, want %d", len(c.AllowedMethods), len(want))
-	}
-	for _, m := range c.AllowedMethods {
-		if !want[m] {
-			t.Errorf("unexpected default method %q", m)
-		}
-	}
-	if c.MaxAge == nil || c.MaxAge.AsDuration() != 24*time.Hour {
-		t.Errorf("default max age = %v, want 24h", c.MaxAge)
+func TestMiddleware_DefaultsForOmittedAndEmptyLists(t *testing.T) {
+	for name, config := range map[string]*corsv1.CORS{
+		"omitted": {Enable: true},
+		"empty":   {Enable: true, AllowedOrigins: []string{}, AllowedMethods: []string{}, AllowedHeaders: []string{}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if !IsEnabled(config) || len(GetAllowedOrigins(config)) != 1 || GetAllowedOrigins(config)[0] != "*" {
+				t.Fatalf("effective origins = %v, enabled = %t", GetAllowedOrigins(config), IsEnabled(config))
+			}
+			w := httptest.NewRecorder()
+			handler := Middleware(config)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				t.Fatal("preflight must not call the next handler")
+			}))
+			r := httptest.NewRequest(http.MethodOptions, "/", nil)
+			r.Header.Set("Origin", "https://example.com")
+			handler.ServeHTTP(w, r)
+			if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+				t.Fatalf("origin = %q", got)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Methods"); got != "GET, POST, PUT, DELETE, OPTIONS" {
+				t.Fatalf("methods = %q", got)
+			}
+			if got := w.Header().Get("Access-Control-Allow-Headers"); got != "Origin, Content-Type, Accept, Authorization" {
+				t.Fatalf("headers = %q", got)
+			}
+		})
 	}
 }
 
@@ -71,7 +76,7 @@ func TestMiddleware_Disabled(t *testing.T) {
 
 func TestMiddleware_EnabledWithDefaults(t *testing.T) {
 	corsConfig := &corsv1.CORS{Enable: true}
-	corsConfig.ApplyDefaults() // caller is expected to apply defaults before passing in
+	// 缺省列表直接由中间件采用内置配置，无须修改输入。
 	corsMiddleware := Middleware(corsConfig)
 
 	req := httptest.NewRequest("GET", "http://example.com", nil)
@@ -205,7 +210,6 @@ func TestMiddleware_WithCredentials(t *testing.T) {
 
 func TestIsEnabled(t *testing.T) {
 	withDefaults := &corsv1.CORS{Enable: true}
-	withDefaults.ApplyDefaults()
 	tests := []struct {
 		name     string
 		config   *corsv1.CORS
@@ -213,7 +217,7 @@ func TestIsEnabled(t *testing.T) {
 	}{
 		{"nil config", nil, false},
 		{"disabled", &corsv1.CORS{Enable: false}, false},
-		{"enabled but no origins", &corsv1.CORS{Enable: true}, false}, // defaults not applied
+		{"enabled with omitted origins", &corsv1.CORS{Enable: true}, true},
 		{"enabled with defaults", withDefaults, true},
 		{"enabled with origins", &corsv1.CORS{Enable: true, AllowedOrigins: []string{"https://example.com"}}, true},
 	}
@@ -229,7 +233,6 @@ func TestIsEnabled(t *testing.T) {
 
 func TestGetAllowedOrigins(t *testing.T) {
 	withDefaults := &corsv1.CORS{Enable: true}
-	withDefaults.ApplyDefaults()
 	tests := []struct {
 		name     string
 		config   *corsv1.CORS

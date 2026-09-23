@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package servora.core.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "servora/conf/v1/annotations.proto";
@@ -23,8 +24,11 @@ message Bootstrap {
 message Server {
   // 监听配置（面向 net.Listen 参数）
   message Listen {
-    string network = 1 [(servora.conf.v1.field) = {default: "tcp"}];
-    string addr = 2 [(servora.conf.v1.field) = {required: true}];
+    optional string network = 1 [(servora.conf.v1.field) = {default: "tcp"}];
+    optional string addr = 2 [
+      (servora.conf.v1.field) = {required: true},
+      (buf.validate.field).string.min_len = 1
+    ];
     google.protobuf.Duration timeout = 3;
   }
 
@@ -154,7 +158,10 @@ message Observability {
 message Trace {
   string endpoint = 1;
   bool insecure = 2;
-  double sampling_ratio = 3;
+  optional double sampling_ratio = 3 [(buf.validate.field).double = {
+    gte: 0
+    lte: 1
+  }];
   string ca_path = 4;
 }
 
@@ -182,8 +189,11 @@ message Log {
   }
 
   message FileBackend {
-    string path = 1 [(servora.conf.v1.field) = {required: true}];
-    int32 max_size = 2 [(servora.conf.v1.field) = {default: "100"}];
+    optional string path = 1 [
+      (servora.conf.v1.field) = {required: true},
+      (buf.validate.field).string.min_len = 1
+    ];
+    optional int32 max_size = 2 [(servora.conf.v1.field) = {default: "100"}];
     int32 max_backups = 3;
     int32 max_age = 4;
     bool compress = 5;
@@ -191,7 +201,10 @@ message Log {
   }
 
   message OtelBackend {
-    string endpoint = 1 [(servora.conf.v1.field) = {required: true}];
+    optional string endpoint = 1 [
+      (servora.conf.v1.field) = {required: true},
+      (buf.validate.field).string.min_len = 1
+    ];
     OtelProtocol protocol = 2;
     bool insecure = 3;
   }

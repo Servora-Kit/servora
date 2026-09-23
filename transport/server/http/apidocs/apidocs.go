@@ -56,18 +56,23 @@ type source struct {
 
 // NewHandler 从 Proto 配置构造文档；未启用时返回 (nil, nil)，且不读取文件。
 // 成功后修改输入配置或文件不会影响该实例；构造期间调用方不得并发修改输入。
-// 默认值来自生成的 ApplyDefaults，不修改调用方配置，也不按应用环境隐式开启。
+// 默认值来自 clone 后的 Apply，不修改调用方配置，也不按应用环境隐式开启。
 func NewHandler(config *apidocsv1.APIDocs) (*Handler, error) {
 	if !config.GetEnable() {
 		return nil, nil
 	}
 	config = proto.Clone(config).(*apidocsv1.APIDocs)
-	config.ApplyDefaults()
-	basePath := strings.TrimSuffix(config.BasePath, "/")
-	if !basePathPattern.MatchString(basePath) || path.Clean(basePath) != basePath {
-		return nil, fmt.Errorf("apidocs: invalid base path %q", config.BasePath)
+	if config.Scalar == nil {
+		config.Scalar = &apidocsv1.Scalar{}
 	}
-	if err := validateURL(config.ScriptUrl, true); err != nil {
+	if err := config.Apply(); err != nil {
+		return nil, fmt.Errorf("apidocs: config: %w", err)
+	}
+	basePath := strings.TrimSuffix(config.GetBasePath(), "/")
+	if !basePathPattern.MatchString(basePath) || path.Clean(basePath) != basePath {
+		return nil, fmt.Errorf("apidocs: invalid base path %q", config.GetBasePath())
+	}
+	if err := validateURL(config.GetScriptUrl(), true); err != nil {
 		return nil, fmt.Errorf("apidocs: script URL: %w", err)
 	}
 	scalar, err := scalarOptions(config.Scalar)
@@ -76,7 +81,7 @@ func NewHandler(config *apidocsv1.APIDocs) (*Handler, error) {
 	}
 	documents := config.Documents
 	if len(documents) == 0 {
-		documents = []*apidocsv1.Document{{Source: &apidocsv1.Document_Path{Path: config.Path}}}
+		documents = []*apidocsv1.Document{{Source: &apidocsv1.Document_Path{Path: config.GetPath()}}}
 	}
 	h := &Handler{
 		basePath:  basePath,
@@ -129,7 +134,7 @@ func NewHandler(config *apidocsv1.APIDocs) (*Handler, error) {
 	init.WriteString(");\n")
 	h.addResource("init.js", "text/javascript; charset=utf-8", init.Bytes())
 	var page bytes.Buffer
-	if err := pageTemplate.Execute(&page, struct{ Title, ScriptURL string }{config.Title, config.ScriptUrl}); err != nil {
+	if err := pageTemplate.Execute(&page, struct{ Title, ScriptURL string }{config.GetTitle(), config.GetScriptUrl()}); err != nil {
 		return nil, fmt.Errorf("apidocs: render page: %w", err)
 	}
 	h.addResource("", "text/html; charset=utf-8", page.Bytes())
@@ -170,10 +175,10 @@ func loadDocument(doc *apidocsv1.Document) (body []byte, specURL string, err err
 }
 
 func scalarOptions(config *apidocsv1.Scalar) (map[string]any, error) {
-	if config.Layout != "modern" && config.Layout != "classic" {
+	if config.GetLayout() != "modern" && config.GetLayout() != "classic" {
 		return nil, fmt.Errorf("apidocs: Scalar layout must be modern or classic")
 	}
-	if len(config.SearchHotKey) != 1 || config.SearchHotKey[0] < 'a' || config.SearchHotKey[0] > 'z' {
+	if key := config.GetSearchHotKey(); len(key) != 1 || key[0] < 'a' || key[0] > 'z' {
 		return nil, fmt.Errorf("apidocs: Scalar search hot key must be a lowercase ASCII letter")
 	}
 	options := make(map[string]any)
@@ -194,9 +199,9 @@ func scalarOptions(config *apidocsv1.Scalar) (map[string]any, error) {
 			}
 		}
 	}
-	options["theme"] = config.Theme
-	options["layout"] = config.Layout
-	options["searchHotKey"] = config.SearchHotKey
+	options["theme"] = config.GetTheme()
+	options["layout"] = config.GetLayout()
+	options["searchHotKey"] = config.GetSearchHotKey()
 	options["hideTestRequestButton"] = config.HideTestRequestButton
 	options["telemetry"] = config.Telemetry
 	options["persistAuth"] = config.PersistAuth

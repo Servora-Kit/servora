@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package servora.contrib.kafka.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/duration.proto";
 import "servora/conf/v1/annotations.proto";
 import "servora/security/tls/v1/config.proto";
@@ -9,21 +10,18 @@ import "servora/security/tls/v1/config.proto";
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/kafka/v1;kafkapb";
 
 message Kafka {
-  option (servora.conf.v1.section) = {
-    key: "kafka"
-    optional: true
-  };
+  option (servora.conf.v1.section) = true;
 
-  repeated string brokers = 1 [(servora.conf.v1.field) = {required: true}];
+  repeated string brokers = 1 [(buf.validate.field).repeated.min_items = 1];
   string client_id = 2;
   string consumer_group = 3;
   int32 required_acks = 4;
-  int32 retry_max = 5 [(servora.conf.v1.field) = {default: "3"}];
+  optional int32 retry_max = 5 [(servora.conf.v1.field) = {default: "3"}];
   google.protobuf.Duration retry_backoff = 6;
   google.protobuf.Duration dial_timeout = 7;
   google.protobuf.Duration read_timeout = 8;
   google.protobuf.Duration write_timeout = 9;
-  string compression = 10 [(servora.conf.v1.field) = {default: "none"}];
+  optional string compression = 10 [(servora.conf.v1.field) = {default: "none"}];
   servora.security.tls.v1.TLS tls = 11;
 
   // SASL 认证配置（可选）。

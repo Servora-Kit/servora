@@ -35,109 +35,6 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on SectionRule with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *SectionRule) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SectionRule with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in SectionRuleMultiError, or
-// nil if none found.
-func (m *SectionRule) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SectionRule) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for Key
-
-	// no validation rules for Optional
-
-	if len(errors) > 0 {
-		return SectionRuleMultiError(errors)
-	}
-
-	return nil
-}
-
-// SectionRuleMultiError is an error wrapping multiple validation errors
-// returned by SectionRule.ValidateAll() if the designated constraints aren't met.
-type SectionRuleMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SectionRuleMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SectionRuleMultiError) AllErrors() []error { return m }
-
-// SectionRuleValidationError is the validation error returned by
-// SectionRule.Validate if the designated constraints aren't met.
-type SectionRuleValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SectionRuleValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SectionRuleValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SectionRuleValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SectionRuleValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SectionRuleValidationError) ErrorName() string { return "SectionRuleValidationError" }
-
-// Error satisfies the builtin error interface
-func (e SectionRuleValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSectionRule.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SectionRuleValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SectionRuleValidationError{}
-
 // Validate checks the field values on FieldRule with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -160,9 +57,11 @@ func (m *FieldRule) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Default
-
 	// no validation rules for Required
+
+	if m.Default != nil {
+		// no validation rules for Default
+	}
 
 	if len(errors) > 0 {
 		return FieldRuleMultiError(errors)

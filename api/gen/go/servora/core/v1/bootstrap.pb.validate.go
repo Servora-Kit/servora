@@ -1948,9 +1948,11 @@ func (m *Trace) validate(all bool) error {
 
 	// no validation rules for Insecure
 
-	// no validation rules for SamplingRatio
-
 	// no validation rules for CaPath
+
+	if m.SamplingRatio != nil {
+		// no validation rules for SamplingRatio
+	}
 
 	if len(errors) > 0 {
 		return TraceMultiError(errors)
@@ -2285,10 +2287,6 @@ func (m *Server_Listen) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Network
-
-	// no validation rules for Addr
-
 	if all {
 		switch v := interface{}(m.GetTimeout()).(type) {
 		case interface{ ValidateAll() error }:
@@ -2316,6 +2314,14 @@ func (m *Server_Listen) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.Network != nil {
+		// no validation rules for Network
+	}
+
+	if m.Addr != nil {
+		// no validation rules for Addr
 	}
 
 	if len(errors) > 0 {
@@ -3864,10 +3870,6 @@ func (m *Log_FileBackend) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Path
-
-	// no validation rules for MaxSize
-
 	// no validation rules for MaxBackups
 
 	// no validation rules for MaxAge
@@ -3875,6 +3877,14 @@ func (m *Log_FileBackend) validate(all bool) error {
 	// no validation rules for Compress
 
 	// no validation rules for Format
+
+	if m.Path != nil {
+		// no validation rules for Path
+	}
+
+	if m.MaxSize != nil {
+		// no validation rules for MaxSize
+	}
 
 	if len(errors) > 0 {
 		return Log_FileBackendMultiError(errors)
@@ -3976,11 +3986,13 @@ func (m *Log_OtelBackend) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Endpoint
-
 	// no validation rules for Protocol
 
 	// no validation rules for Insecure
+
+	if m.Endpoint != nil {
+		// no validation rules for Endpoint
+	}
 
 	if len(errors) > 0 {
 		return Log_OtelBackendMultiError(errors)

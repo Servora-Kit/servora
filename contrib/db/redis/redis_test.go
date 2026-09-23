@@ -7,20 +7,40 @@ import (
 
 	redispb "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1"
 	tlspb "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func TestConfigFromProtoPlaintext(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := configFromProto(&redispb.Redis{Addr: "localhost:6379"})
+	cfg, err := configFromProto(&redispb.Redis{Network: "tcp4", Addr: "localhost:6379"})
 	if err != nil {
 		t.Fatalf("configFromProto() error = %v", err)
 	}
 	if cfg.TLSConfig != nil {
 		t.Fatalf("TLSConfig = %#v, want nil", cfg.TLSConfig)
 	}
-	if cfg.DialTimeout != DefaultDialTimeout || cfg.ReadTimeout != DefaultReadTimeout || cfg.WriteTimeout != DefaultWriteTimeout {
-		t.Fatalf("timeouts = (%v, %v, %v), want defaults", cfg.DialTimeout, cfg.ReadTimeout, cfg.WriteTimeout)
+	if cfg.DialTimeout != 5*time.Second || cfg.ReadTimeout != 3*time.Second || cfg.WriteTimeout != 3*time.Second {
+		t.Fatalf("timeouts = (%v, %v, %v), want Proto defaults", cfg.DialTimeout, cfg.ReadTimeout, cfg.WriteTimeout)
+	}
+	if got := newRedisOptions(cfg).Network; got != "tcp4" {
+		t.Fatalf("go-redis network = %q, want tcp4", got)
+	}
+}
+
+func TestConfigFromProtoPreservesExplicitZeroTimeout(t *testing.T) {
+	config, err := configFromProto(&redispb.Redis{
+		Addr:         "localhost:6379",
+		DialTimeout:  durationpb.New(0),
+		ReadTimeout:  durationpb.New(0),
+		WriteTimeout: durationpb.New(0),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	options := newRedisOptions(config)
+	if options.DialTimeout != 0 || options.ReadTimeout != 0 || options.WriteTimeout != 0 {
+		t.Fatalf("explicit zero was overwritten: dial=%v read=%v write=%v", options.DialTimeout, options.ReadTimeout, options.WriteTimeout)
 	}
 }
 

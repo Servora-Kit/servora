@@ -58,14 +58,6 @@ func (m *APIDocs) validate(all bool) error {
 
 	// no validation rules for Enable
 
-	// no validation rules for Path
-
-	// no validation rules for BasePath
-
-	// no validation rules for Title
-
-	// no validation rules for ScriptUrl
-
 	for idx, item := range m.GetDocuments() {
 		_, _ = idx, item
 
@@ -127,6 +119,22 @@ func (m *APIDocs) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.Path != nil {
+		// no validation rules for Path
+	}
+
+	if m.BasePath != nil {
+		// no validation rules for BasePath
+	}
+
+	if m.Title != nil {
+		// no validation rules for Title
+	}
+
+	if m.ScriptUrl != nil {
+		// no validation rules for ScriptUrl
 	}
 
 	if len(errors) > 0 {
@@ -371,12 +379,6 @@ func (m *Scalar) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Theme
-
-	// no validation rules for Layout
-
-	// no validation rules for SearchHotKey
-
 	// no validation rules for HideTestRequestButton
 
 	// no validation rules for Telemetry
@@ -416,12 +418,24 @@ func (m *Scalar) validate(all bool) error {
 		}
 	}
 
+	if m.Theme != nil {
+		// no validation rules for Theme
+	}
+
+	if m.Layout != nil {
+		// no validation rules for Layout
+	}
+
 	if m.DarkMode != nil {
 		// no validation rules for DarkMode
 	}
 
 	if m.ShowSidebar != nil {
 		// no validation rules for ShowSidebar
+	}
+
+	if m.SearchHotKey != nil {
+		// no validation rules for SearchHotKey
 	}
 
 	if len(errors) > 0 {

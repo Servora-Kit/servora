@@ -9,12 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/go-kratos/kratos/v3/encoding"
 	"github.com/go-kratos/kratos/v3/middleware/recovery"
 	khttp "github.com/go-kratos/kratos/v3/transport/http"
-	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
@@ -116,20 +115,6 @@ func TestDefaultCodecsRegistered(t *testing.T) {
 	}
 }
 
-func TestNewServer_WithConfig(t *testing.T) {
-	cfg := &corev1.Server_HTTP{
-		Listen: &corev1.Server_Listen{
-			Network: "tcp4",
-			Addr:    ":8080",
-			Timeout: durationpb.New(30 * time.Second),
-		},
-	}
-	srv := NewServer(WithConfig(cfg))
-	if srv == nil {
-		t.Fatal("expected non-nil server")
-	}
-}
-
 func TestNewServer_WithNilConfig(t *testing.T) {
 	srv := NewServer(WithConfig(nil))
 	if srv == nil {
@@ -206,27 +191,6 @@ func TestNewServer_WithMultipleServices(t *testing.T) {
 	}
 }
 
-func TestNewServer_FullOptions(t *testing.T) {
-	cfg := &corev1.Server_HTTP{
-		Listen: &corev1.Server_Listen{
-			Addr:    ":8080",
-			Timeout: durationpb.New(10 * time.Second),
-		},
-	}
-	corsConf := &corsv1.CORS{
-		Enable:         true,
-		AllowedOrigins: []string{"http://localhost"},
-	}
-	srv := NewServer(
-		WithConfig(cfg),
-		WithMiddleware(recovery.Recovery()),
-		WithCORS(corsConf),
-	)
-	if srv == nil {
-		t.Fatal("expected non-nil server with full options")
-	}
-}
-
 func TestNewServer_WithHealthCheck(t *testing.T) {
 	h := health.NewHandler()
 	srv := NewServer(WithHealthCheck(h))
@@ -244,7 +208,7 @@ func TestNewServer_WithNilHealthCheck(t *testing.T) {
 
 func TestNewServer_WithAdvertiseHost_EndpointUsesAdvertiseHost(t *testing.T) {
 	cfg := &corev1.Server_HTTP{
-		Listen:    &corev1.Server_Listen{Addr: "0.0.0.0:0"},
+		Listen:    &corev1.Server_Listen{Addr: proto.String("0.0.0.0:0")},
 		Advertise: &corev1.Server_Advertise{Host: "host.docker.internal"},
 	}
 
@@ -267,7 +231,7 @@ func TestNewServer_WithAdvertiseHost_EndpointUsesAdvertiseHost(t *testing.T) {
 
 func TestNewServer_WithAdvertiseEndpoint_EndpointUsesExplicitValue(t *testing.T) {
 	cfg := &corev1.Server_HTTP{
-		Listen:    &corev1.Server_Listen{Addr: ":0"},
+		Listen:    &corev1.Server_Listen{Addr: proto.String(":0")},
 		Advertise: &corev1.Server_Advertise{Endpoint: "https://example.internal:18443?isSecure=true"},
 	}
 
@@ -289,7 +253,7 @@ func TestNewServer_APIDocsFromConfig(t *testing.T) {
 	document := []byte("openapi: 3.1.0\ninfo: {title: Orders, version: '1'}\npaths: {}\n")
 	c := &corev1.Server_HTTP{ApiDocs: &apidocsv1.APIDocs{
 		Enable:    true,
-		BasePath:  "/api-docs",
+		BasePath:  proto.String("/api-docs"),
 		Documents: []*apidocsv1.Document{{Source: &apidocsv1.Document_Data{Data: document}}},
 	}}
 	srv := NewServer(WithConfig(c), WithServices(func(s *khttp.Server) {
@@ -330,7 +294,7 @@ func TestNewServer_APIDocsDisabled(t *testing.T) {
 	}{
 		{"absent", nil},
 		{"nil", []ServerOption{WithConfig(nil)}},
-		{"disabled with invalid path", []ServerOption{WithConfig(&corev1.Server_HTTP{ApiDocs: &apidocsv1.APIDocs{Path: "missing", BasePath: "invalid"}})}},
+		{"disabled with invalid path", []ServerOption{WithConfig(&corev1.Server_HTTP{ApiDocs: &apidocsv1.APIDocs{Path: proto.String("missing"), BasePath: proto.String("invalid")}})}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv := NewServer(tc.opts...)
@@ -353,7 +317,7 @@ func TestNewServer_APIDocsConfigurationFailure(t *testing.T) {
 			t.Fatalf("missing enabled document must fail construction with context: %v", err)
 		}
 	}()
-	NewServer(WithConfig(&corev1.Server_HTTP{ApiDocs: &apidocsv1.APIDocs{Enable: true, Path: file}}))
+	NewServer(WithConfig(&corev1.Server_HTTP{ApiDocs: &apidocsv1.APIDocs{Enable: true, Path: proto.String(file)}}))
 }
 
 func TestNewServer_APIDocsBootstrapConfiguration(t *testing.T) {

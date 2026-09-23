@@ -62,8 +62,6 @@ func (m *Kafka) validate(all bool) error {
 
 	// no validation rules for RequiredAcks
 
-	// no validation rules for RetryMax
-
 	if all {
 		switch v := interface{}(m.GetRetryBackoff()).(type) {
 		case interface{ ValidateAll() error }:
@@ -180,8 +178,6 @@ func (m *Kafka) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Compression
-
 	if all {
 		switch v := interface{}(m.GetTls()).(type) {
 		case interface{ ValidateAll() error }:
@@ -238,6 +234,14 @@ func (m *Kafka) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.RetryMax != nil {
+		// no validation rules for RetryMax
+	}
+
+	if m.Compression != nil {
+		// no validation rules for Compression
 	}
 
 	if len(errors) > 0 {

@@ -7,6 +7,7 @@
 package kafkapb
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	v1 "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -30,12 +31,12 @@ type Kafka struct {
 	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	ConsumerGroup string                 `protobuf:"bytes,3,opt,name=consumer_group,json=consumerGroup,proto3" json:"consumer_group,omitempty"`
 	RequiredAcks  int32                  `protobuf:"varint,4,opt,name=required_acks,json=requiredAcks,proto3" json:"required_acks,omitempty"`
-	RetryMax      int32                  `protobuf:"varint,5,opt,name=retry_max,json=retryMax,proto3" json:"retry_max,omitempty"`
+	RetryMax      *int32                 `protobuf:"varint,5,opt,name=retry_max,json=retryMax,proto3,oneof" json:"retry_max,omitempty"`
 	RetryBackoff  *durationpb.Duration   `protobuf:"bytes,6,opt,name=retry_backoff,json=retryBackoff,proto3" json:"retry_backoff,omitempty"`
 	DialTimeout   *durationpb.Duration   `protobuf:"bytes,7,opt,name=dial_timeout,json=dialTimeout,proto3" json:"dial_timeout,omitempty"`
 	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,8,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
 	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,9,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
-	Compression   string                 `protobuf:"bytes,10,opt,name=compression,proto3" json:"compression,omitempty"`
+	Compression   *string                `protobuf:"bytes,10,opt,name=compression,proto3,oneof" json:"compression,omitempty"`
 	Tls           *v1.TLS                `protobuf:"bytes,11,opt,name=tls,proto3" json:"tls,omitempty"`
 	Sasl          *Kafka_SASL            `protobuf:"bytes,12,opt,name=sasl,proto3" json:"sasl,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -101,8 +102,8 @@ func (x *Kafka) GetRequiredAcks() int32 {
 }
 
 func (x *Kafka) GetRetryMax() int32 {
-	if x != nil {
-		return x.RetryMax
+	if x != nil && x.RetryMax != nil {
+		return *x.RetryMax
 	}
 	return 0
 }
@@ -136,8 +137,8 @@ func (x *Kafka) GetWriteTimeout() *durationpb.Duration {
 }
 
 func (x *Kafka) GetCompression() string {
-	if x != nil {
-		return x.Compression
+	if x != nil && x.Compression != nil {
+		return *x.Compression
 	}
 	return ""
 }
@@ -221,29 +222,31 @@ var File_servora_contrib_kafka_v1_config_proto protoreflect.FileDescriptor
 
 const file_servora_contrib_kafka_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"%servora/contrib/kafka/v1/config.proto\x12\x18servora.contrib.kafka.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\"\xb9\x05\n" +
-	"\x05Kafka\x12 \n" +
-	"\abrokers\x18\x01 \x03(\tB\x06\x8a\xce\x18\x02\x10\x01R\abrokers\x12\x1b\n" +
+	"%servora/contrib/kafka/v1/config.proto\x12\x18servora.contrib.kafka.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\"\xda\x05\n" +
+	"\x05Kafka\x12\"\n" +
+	"\abrokers\x18\x01 \x03(\tB\b\xbaH\x05\x92\x01\x02\b\x01R\abrokers\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12%\n" +
 	"\x0econsumer_group\x18\x03 \x01(\tR\rconsumerGroup\x12#\n" +
-	"\rrequired_acks\x18\x04 \x01(\x05R\frequiredAcks\x12$\n" +
+	"\rrequired_acks\x18\x04 \x01(\x05R\frequiredAcks\x12)\n" +
 	"\tretry_max\x18\x05 \x01(\x05B\a\x8a\xce\x18\x03\n" +
-	"\x013R\bretryMax\x12>\n" +
+	"\x013H\x00R\bretryMax\x88\x01\x01\x12>\n" +
 	"\rretry_backoff\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\fretryBackoff\x12<\n" +
 	"\fdial_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
 	"\fread_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\t \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x12,\n" +
+	"\rwrite_timeout\x18\t \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x121\n" +
 	"\vcompression\x18\n" +
 	" \x01(\tB\n" +
 	"\x8a\xce\x18\x06\n" +
-	"\x04noneR\vcompression\x12.\n" +
+	"\x04noneH\x01R\vcompression\x88\x01\x01\x12.\n" +
 	"\x03tls\x18\v \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls\x128\n" +
 	"\x04sasl\x18\f \x01(\v2$.servora.contrib.kafka.v1.Kafka.SASLR\x04sasl\x1a\\\n" +
 	"\x04SASL\x12\x1c\n" +
 	"\tmechanism\x18\x01 \x01(\tR\tmechanism\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword:\r\x82\xce\x18\t\n" +
-	"\x05kafka\x10\x01BLZJgithub.com/Servora-Kit/servora/api/gen/go/servora/contrib/kafka/v1;kafkapbb\x06proto3"
+	"\bpassword\x18\x03 \x01(\tR\bpassword:\x04\x80\xce\x18\x01B\f\n" +
+	"\n" +
+	"_retry_maxB\x0e\n" +
+	"\f_compressionBLZJgithub.com/Servora-Kit/servora/api/gen/go/servora/contrib/kafka/v1;kafkapbb\x06proto3"
 
 var (
 	file_servora_contrib_kafka_v1_config_proto_rawDescOnce sync.Once
@@ -283,6 +286,7 @@ func file_servora_contrib_kafka_v1_config_proto_init() {
 	if File_servora_contrib_kafka_v1_config_proto != nil {
 		return
 	}
+	file_servora_contrib_kafka_v1_config_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

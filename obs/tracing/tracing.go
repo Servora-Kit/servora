@@ -34,6 +34,11 @@ type traceRuntimeConfig struct {
 
 // InitTracerProvider 初始化 OpenTelemetry Trace Provider，并返回关闭回调。
 func InitTracerProvider(c *corev1.Trace, serviceName, env string) (func(), error) {
+	if c != nil {
+		if err := c.Apply(); err != nil {
+			return nil, fmt.Errorf("trace: config: %w", err)
+		}
+	}
 	runtimeCfg := resolveTraceRuntimeConfig(c, env)
 	if runtimeCfg.endpoint == "" {
 		return func() {}, nil
@@ -94,8 +99,8 @@ func resolveTraceRuntimeConfig(c *corev1.Trace, env string) traceRuntimeConfig {
 	runtimeCfg.insecure = c.GetInsecure()
 	runtimeCfg.caPath = strings.TrimSpace(c.GetCaPath())
 
-	if samplingRatio := c.GetSamplingRatio(); samplingRatio > 0 && samplingRatio <= 1 {
-		runtimeCfg.samplingRatio = samplingRatio
+	if c.SamplingRatio != nil {
+		runtimeCfg.samplingRatio = c.GetSamplingRatio()
 	}
 
 	return runtimeCfg

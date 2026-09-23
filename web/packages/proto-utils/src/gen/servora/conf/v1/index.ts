@@ -39,29 +39,17 @@ function encodeMultiSegmentPath(value: unknown): string {
     .join('/');
 }
 
-// SectionRule 声明一个配置 message 在外部 yaml / json 配置中的定位键。
-// 应用方通过 bootstrap.Scan 按该 key 在 kratos config 中定向 scan。
-export type SectionRule = {
-  // 配置文件中的定位键（支持 dotted path，如 "audit" 或 "data.redis"）。
-  // 不应留空。
-  key?: string;
-  // 是否允许该 section 在配置中缺失而不报错。
-  // optional=true：缺失静默跳过 scan，但 message 仍会经 ApplyDefaults 填默认值；
-  // optional=false（默认）：缺失视为配置错误。
-  optional?: boolean;
-};
-
 // FieldRule 声明一个配置字段的默认值与必填语义。
-// default 与 required 互斥使用：required=true 表示用户必须显式提供（零值不接受），
-// default 表示用户未提供时填入字面量。
+// default 与 required 互斥：required 要求明确提供，允许显式零值；
+// default 仅在字段缺失时补值，非空或范围约束由 buf.validate 单独表达。
 export type FieldRule = {
   // 字段默认值的字面量表达。
   // - string 字段：直接字面量（如 "tcp"）；
   // - 数字 / bool 字段：可解析为对应类型的字符串（如 "8080" / "true"）；
   // - google.protobuf.Duration：Go duration 字符串（如 "24h" / "5s"）；
-  // - repeated 标量：逗号分隔（如 "GET,POST,OPTIONS"）。
+  // 声明本身保留存在性，因此 default: "" 也是有效的字符串默认值。
   default?: string;
-  // 是否必填。若 true，由 plugin 生成 Validate() 在零值时返回 error。
+  // 是否必须明确提供。标量必须能区分未设置与显式零值，集合不支持此规则。
   required?: boolean;
 };
 

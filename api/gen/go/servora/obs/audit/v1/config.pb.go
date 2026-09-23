@@ -25,8 +25,8 @@ const (
 type AuditContract struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	EmitterType   string                 `protobuf:"bytes,2,opt,name=emitter_type,json=emitterType,proto3" json:"emitter_type,omitempty"`
-	Topic         string                 `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
+	EmitterType   *string                `protobuf:"bytes,2,opt,name=emitter_type,json=emitterType,proto3,oneof" json:"emitter_type,omitempty"`
+	Topic         *string                `protobuf:"bytes,3,opt,name=topic,proto3,oneof" json:"topic,omitempty"`
 	ServiceName   string                 `protobuf:"bytes,4,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -70,15 +70,15 @@ func (x *AuditContract) GetEnabled() bool {
 }
 
 func (x *AuditContract) GetEmitterType() string {
-	if x != nil {
-		return x.EmitterType
+	if x != nil && x.EmitterType != nil {
+		return *x.EmitterType
 	}
 	return ""
 }
 
 func (x *AuditContract) GetTopic() string {
-	if x != nil {
-		return x.Topic
+	if x != nil && x.Topic != nil {
+		return *x.Topic
 	}
 	return ""
 }
@@ -94,16 +94,17 @@ var File_servora_obs_audit_v1_config_proto protoreflect.FileDescriptor
 
 const file_servora_obs_audit_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"!servora/obs/audit/v1/config.proto\x12\x14servora.obs.audit.v1\x1a!servora/conf/v1/annotations.proto\"\xba\x01\n" +
+	"!servora/obs/audit/v1/config.proto\x12\x14servora.obs.audit.v1\x1a!servora/conf/v1/annotations.proto\"\xd8\x01\n" +
 	"\rAuditContract\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12-\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x122\n" +
 	"\femitter_type\x18\x02 \x01(\tB\n" +
 	"\x8a\xce\x18\x06\n" +
-	"\x04noopR\vemitterType\x120\n" +
+	"\x04noopH\x00R\vemitterType\x88\x01\x01\x125\n" +
 	"\x05topic\x18\x03 \x01(\tB\x1a\x8a\xce\x18\x16\n" +
-	"\x14servora.audit.eventsR\x05topic\x12!\n" +
-	"\fservice_name\x18\x04 \x01(\tR\vserviceName:\v\x82\xce\x18\a\n" +
-	"\x05auditBLZJgithub.com/Servora-Kit/servora/api/gen/go/servora/obs/audit/v1;auditconfpbb\x06proto3"
+	"\x14servora.audit.eventsH\x01R\x05topic\x88\x01\x01\x12!\n" +
+	"\fservice_name\x18\x04 \x01(\tR\vserviceName:\x04\x80\xce\x18\x01B\x0f\n" +
+	"\r_emitter_typeB\b\n" +
+	"\x06_topicBLZJgithub.com/Servora-Kit/servora/api/gen/go/servora/obs/audit/v1;auditconfpbb\x06proto3"
 
 var (
 	file_servora_obs_audit_v1_config_proto_rawDescOnce sync.Once
@@ -134,6 +135,7 @@ func file_servora_obs_audit_v1_config_proto_init() {
 	if File_servora_obs_audit_v1_config_proto != nil {
 		return
 	}
+	file_servora_obs_audit_v1_config_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

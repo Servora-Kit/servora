@@ -7,6 +7,7 @@
 package corev1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	_ "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	v1 "github.com/Servora-Kit/servora/api/gen/go/servora/security/tls/v1"
 	v11 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/apidocs/v1"
@@ -1050,7 +1051,7 @@ type Trace struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	Insecure      bool                   `protobuf:"varint,2,opt,name=insecure,proto3" json:"insecure,omitempty"`
-	SamplingRatio float64                `protobuf:"fixed64,3,opt,name=sampling_ratio,json=samplingRatio,proto3" json:"sampling_ratio,omitempty"`
+	SamplingRatio *float64               `protobuf:"fixed64,3,opt,name=sampling_ratio,json=samplingRatio,proto3,oneof" json:"sampling_ratio,omitempty"`
 	CaPath        string                 `protobuf:"bytes,4,opt,name=ca_path,json=caPath,proto3" json:"ca_path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1101,8 +1102,8 @@ func (x *Trace) GetInsecure() bool {
 }
 
 func (x *Trace) GetSamplingRatio() float64 {
-	if x != nil {
-		return x.SamplingRatio
+	if x != nil && x.SamplingRatio != nil {
+		return *x.SamplingRatio
 	}
 	return 0
 }
@@ -1215,8 +1216,8 @@ func (x *Log) GetBackends() []*Log_LogBackend {
 // 监听配置（面向 net.Listen 参数）
 type Server_Listen struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
-	Addr          string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	Network       *string                `protobuf:"bytes,1,opt,name=network,proto3,oneof" json:"network,omitempty"`
+	Addr          *string                `protobuf:"bytes,2,opt,name=addr,proto3,oneof" json:"addr,omitempty"`
 	Timeout       *durationpb.Duration   `protobuf:"bytes,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1253,15 +1254,15 @@ func (*Server_Listen) Descriptor() ([]byte, []int) {
 }
 
 func (x *Server_Listen) GetNetwork() string {
-	if x != nil {
-		return x.Network
+	if x != nil && x.Network != nil {
+		return *x.Network
 	}
 	return ""
 }
 
 func (x *Server_Listen) GetAddr() string {
-	if x != nil {
-		return x.Addr
+	if x != nil && x.Addr != nil {
+		return *x.Addr
 	}
 	return ""
 }
@@ -1838,8 +1839,8 @@ func (x *Log_StdoutBackend) GetFormat() Log_LogFormat {
 
 type Log_FileBackend struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	MaxSize       int32                  `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	Path          *string                `protobuf:"bytes,1,opt,name=path,proto3,oneof" json:"path,omitempty"`
+	MaxSize       *int32                 `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3,oneof" json:"max_size,omitempty"`
 	MaxBackups    int32                  `protobuf:"varint,3,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
 	MaxAge        int32                  `protobuf:"varint,4,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
 	Compress      bool                   `protobuf:"varint,5,opt,name=compress,proto3" json:"compress,omitempty"`
@@ -1879,15 +1880,15 @@ func (*Log_FileBackend) Descriptor() ([]byte, []int) {
 }
 
 func (x *Log_FileBackend) GetPath() string {
-	if x != nil {
-		return x.Path
+	if x != nil && x.Path != nil {
+		return *x.Path
 	}
 	return ""
 }
 
 func (x *Log_FileBackend) GetMaxSize() int32 {
-	if x != nil {
-		return x.MaxSize
+	if x != nil && x.MaxSize != nil {
+		return *x.MaxSize
 	}
 	return 0
 }
@@ -1922,7 +1923,7 @@ func (x *Log_FileBackend) GetFormat() Log_LogFormat {
 
 type Log_OtelBackend struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Endpoint      *string                `protobuf:"bytes,1,opt,name=endpoint,proto3,oneof" json:"endpoint,omitempty"`
 	Protocol      Log_OtelProtocol       `protobuf:"varint,2,opt,name=protocol,proto3,enum=servora.core.v1.Log_OtelProtocol" json:"protocol,omitempty"`
 	Insecure      bool                   `protobuf:"varint,3,opt,name=insecure,proto3" json:"insecure,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1960,8 +1961,8 @@ func (*Log_OtelBackend) Descriptor() ([]byte, []int) {
 }
 
 func (x *Log_OtelBackend) GetEndpoint() string {
-	if x != nil {
-		return x.Endpoint
+	if x != nil && x.Endpoint != nil {
+		return *x.Endpoint
 	}
 	return ""
 }
@@ -2020,22 +2021,25 @@ var File_servora_core_v1_bootstrap_proto protoreflect.FileDescriptor
 
 const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x1fservora/core/v1/bootstrap.proto\x12\x0fservora.core.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\x1a.servora/transport/http/apidocs/v1/config.proto\"\xa9\x02\n" +
+	"\x1fservora/core/v1/bootstrap.proto\x12\x0fservora.core.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\x1a.servora/transport/http/apidocs/v1/config.proto\"\xa9\x02\n" +
 	"\tBootstrap\x12&\n" +
 	"\x03app\x18\x01 \x01(\v2\x14.servora.core.v1.AppR\x03app\x12/\n" +
 	"\x06server\x18\x02 \x01(\v2\x17.servora.core.v1.ServerR\x06server\x12)\n" +
 	"\x04data\x18\x03 \x01(\v2\x15.servora.core.v1.DataR\x04data\x125\n" +
 	"\bregistry\x18\x04 \x01(\v2\x19.servora.core.v1.RegistryR\bregistry\x12/\n" +
 	"\x06source\x18\x05 \x01(\v2\x17.servora.core.v1.SourceR\x06source\x120\n" +
-	"\x03obs\x18\x06 \x01(\v2\x1e.servora.core.v1.ObservabilityR\x03obs\"\xd4\x05\n" +
+	"\x03obs\x18\x06 \x01(\v2\x1e.servora.core.v1.ObservabilityR\x03obs\"\xfb\x05\n" +
 	"\x06Server\x120\n" +
 	"\x04http\x18\x01 \x01(\v2\x1c.servora.core.v1.Server.HTTPR\x04http\x120\n" +
-	"\x04grpc\x18\x02 \x01(\v2\x1c.servora.core.v1.Server.GRPCR\x04grpc\x1a~\n" +
-	"\x06Listen\x12#\n" +
+	"\x04grpc\x18\x02 \x01(\v2\x1c.servora.core.v1.Server.GRPCR\x04grpc\x1a\xa4\x01\n" +
+	"\x06Listen\x12(\n" +
 	"\anetwork\x18\x01 \x01(\tB\t\x8a\xce\x18\x05\n" +
-	"\x03tcpR\anetwork\x12\x1a\n" +
-	"\x04addr\x18\x02 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a;\n" +
+	"\x03tcpH\x00R\anetwork\x88\x01\x01\x12&\n" +
+	"\x04addr\x18\x02 \x01(\tB\r\xbaH\x04r\x02\x10\x01\x8a\xce\x18\x02\x10\x01H\x01R\x04addr\x88\x01\x01\x123\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeoutB\n" +
+	"\n" +
+	"\b_networkB\a\n" +
+	"\x05_addr\x1a;\n" +
 	"\tAdvertise\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x1a\xf6\x01\n" +
@@ -2120,14 +2124,15 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\rObservability\x12&\n" +
 	"\x03log\x18\x01 \x01(\v2\x14.servora.core.v1.LogR\x03log\x12,\n" +
 	"\x05trace\x18\x02 \x01(\v2\x16.servora.core.v1.TraceR\x05trace\x122\n" +
-	"\ametrics\x18\x03 \x01(\v2\x18.servora.core.v1.MetricsR\ametrics\"\x7f\n" +
+	"\ametrics\x18\x03 \x01(\v2\x18.servora.core.v1.MetricsR\ametrics\"\xb0\x01\n" +
 	"\x05Trace\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1a\n" +
-	"\binsecure\x18\x02 \x01(\bR\binsecure\x12%\n" +
-	"\x0esampling_ratio\x18\x03 \x01(\x01R\rsamplingRatio\x12\x17\n" +
-	"\aca_path\x18\x04 \x01(\tR\x06caPath\"!\n" +
+	"\binsecure\x18\x02 \x01(\bR\binsecure\x12C\n" +
+	"\x0esampling_ratio\x18\x03 \x01(\x01B\x17\xbaH\x14\x12\x12\x19\x00\x00\x00\x00\x00\x00\xf0?)\x00\x00\x00\x00\x00\x00\x00\x00H\x00R\rsamplingRatio\x88\x01\x01\x12\x17\n" +
+	"\aca_path\x18\x04 \x01(\tR\x06caPathB\x11\n" +
+	"\x0f_sampling_ratio\"!\n" +
 	"\aMetrics\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\"\xf2\b\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\"\xb2\t\n" +
 	"\x03Log\x123\n" +
 	"\x05level\x18\x01 \x01(\x0e2\x1d.servora.core.v1.Log.LogLevelR\x05level\x12;\n" +
 	"\bbackends\x18\x02 \x03(\v2\x1f.servora.core.v1.Log.LogBackendR\bbackends\x1a\xfd\x01\n" +
@@ -2139,20 +2144,23 @@ const file_servora_core_v1_bootstrap_proto_rawDesc = "" +
 	"\x04noop\x18\x04 \x01(\v2 .servora.core.v1.Log.NoopBackendH\x00R\x04noopB\t\n" +
 	"\abackend\x1aG\n" +
 	"\rStdoutBackend\x126\n" +
-	"\x06format\x18\x01 \x01(\x0e2\x1e.servora.core.v1.Log.LogFormatR\x06format\x1a\xdd\x01\n" +
-	"\vFileBackend\x12\x1a\n" +
-	"\x04path\x18\x01 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\x04path\x12$\n" +
+	"\x06format\x18\x01 \x01(\x0e2\x1e.servora.core.v1.Log.LogFormatR\x06format\x1a\x84\x02\n" +
+	"\vFileBackend\x12&\n" +
+	"\x04path\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01\x8a\xce\x18\x02\x10\x01H\x00R\x04path\x88\x01\x01\x12)\n" +
 	"\bmax_size\x18\x02 \x01(\x05B\t\x8a\xce\x18\x05\n" +
-	"\x03100R\amaxSize\x12\x1f\n" +
+	"\x03100H\x01R\amaxSize\x88\x01\x01\x12\x1f\n" +
 	"\vmax_backups\x18\x03 \x01(\x05R\n" +
 	"maxBackups\x12\x17\n" +
 	"\amax_age\x18\x04 \x01(\x05R\x06maxAge\x12\x1a\n" +
 	"\bcompress\x18\x05 \x01(\bR\bcompress\x126\n" +
-	"\x06format\x18\x06 \x01(\x0e2\x1e.servora.core.v1.Log.LogFormatR\x06format\x1a\x8c\x01\n" +
-	"\vOtelBackend\x12\"\n" +
-	"\bendpoint\x18\x01 \x01(\tB\x06\x8a\xce\x18\x02\x10\x01R\bendpoint\x12=\n" +
+	"\x06format\x18\x06 \x01(\x0e2\x1e.servora.core.v1.Log.LogFormatR\x06formatB\a\n" +
+	"\x05_pathB\v\n" +
+	"\t_max_size\x1a\xa5\x01\n" +
+	"\vOtelBackend\x12.\n" +
+	"\bendpoint\x18\x01 \x01(\tB\r\xbaH\x04r\x02\x10\x01\x8a\xce\x18\x02\x10\x01H\x00R\bendpoint\x88\x01\x01\x12=\n" +
 	"\bprotocol\x18\x02 \x01(\x0e2!.servora.core.v1.Log.OtelProtocolR\bprotocol\x12\x1a\n" +
-	"\binsecure\x18\x03 \x01(\bR\binsecure\x1a\r\n" +
+	"\binsecure\x18\x03 \x01(\bR\binsecureB\v\n" +
+	"\t_endpoint\x1a\r\n" +
 	"\vNoopBackend\"w\n" +
 	"\bLogLevel\x12\x19\n" +
 	"\x15LOG_LEVEL_UNSPECIFIED\x10\x00\x12\x13\n" +
@@ -2290,12 +2298,16 @@ func file_servora_core_v1_bootstrap_proto_init() {
 		(*Source_Etcd)(nil),
 		(*Source_Nacos)(nil),
 	}
+	file_servora_core_v1_bootstrap_proto_msgTypes[11].OneofWrappers = []any{}
+	file_servora_core_v1_bootstrap_proto_msgTypes[14].OneofWrappers = []any{}
 	file_servora_core_v1_bootstrap_proto_msgTypes[23].OneofWrappers = []any{
 		(*Log_LogBackend_Stdout)(nil),
 		(*Log_LogBackend_File)(nil),
 		(*Log_LogBackend_Otel)(nil),
 		(*Log_LogBackend_Noop)(nil),
 	}
+	file_servora_core_v1_bootstrap_proto_msgTypes[25].OneofWrappers = []any{}
+	file_servora_core_v1_bootstrap_proto_msgTypes[26].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -3,8 +3,23 @@
 
 package redispb
 
-// SectionKey returns the configuration section key declared on Redis.
-func (*Redis) SectionKey() string { return "redis" }
+import (
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
+)
 
-// SectionOptional reports whether the section may be absent from the config source.
-func (*Redis) SectionOptional() bool { return true }
+// Apply 检查字段设置状态、补充缺失的默认值并处理实际存在的子配置及本层值约束。
+func (m *Redis) Apply() error {
+	if m == nil {
+		return nil
+	}
+	if m.DialTimeout == nil {
+		m.DialTimeout = durationpb.New(5000000000)
+	}
+	if m.ReadTimeout == nil {
+		m.ReadTimeout = durationpb.New(3000000000)
+	}
+	if m.WriteTimeout == nil {
+		m.WriteTimeout = durationpb.New(3000000000)
+	}
+	return nil
+}

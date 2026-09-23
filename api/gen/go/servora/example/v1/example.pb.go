@@ -38,7 +38,7 @@ type User struct {
 	Email *string `protobuf:"bytes,3,opt,name=email,proto3,oneof" json:"email,omitempty"`
 	// tenant_plan 是创建后不可修改的租户套餐快照。
 	TenantPlan *string `protobuf:"bytes,4,opt,name=tenant_plan,json=tenantPlan,proto3,oneof" json:"tenant_plan,omitempty"`
-	// nickname 保留 presence；显式 Clear 写入 NULL。
+	// nickname 区分未设置与空字符串；显式清除时写入 NULL。
 	Nickname *string `protobuf:"bytes,5,opt,name=nickname,proto3,oneof" json:"nickname,omitempty"`
 	// temporary_password 只供 Create/Update 输入；存储层转换为私有 password_hash。
 	TemporaryPassword *string `protobuf:"bytes,6,opt,name=temporary_password,json=temporaryPassword,proto3,oneof" json:"temporary_password,omitempty"`

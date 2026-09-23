@@ -95,7 +95,7 @@ func TestResourceMethods(t *testing.T) {
 }
 
 func TestDisabledConfigurationSkipsValidationAndFiles(t *testing.T) {
-	for _, c := range []*apidocsv1.APIDocs{nil, {}, {Path: "missing/file.yaml", BasePath: "not/a/route", ScriptUrl: "javascript:bad", Scalar: &apidocsv1.Scalar{Layout: "invalid"}}} {
+	for _, c := range []*apidocsv1.APIDocs{nil, {}, {Path: proto.String("missing/file.yaml"), BasePath: proto.String("not/a/route"), ScriptUrl: proto.String("javascript:bad"), Scalar: &apidocsv1.Scalar{Layout: proto.String("invalid")}}} {
 		h, err := apidocs.NewHandler(c)
 		if h != nil || err != nil {
 			t.Fatalf("disabled configuration = %v, %v", h, err)
@@ -121,15 +121,15 @@ func TestConstructionRejectsInvalidConfiguration(t *testing.T) {
 			c.Documents = append(c.Documents, proto.Clone(c.Documents[0]).(*apidocsv1.Document))
 		}},
 		{"slug traversal", func(c *apidocsv1.APIDocs) { c.Documents[0].Slug = "../api" }},
-		{"root path", func(c *apidocsv1.APIDocs) { c.BasePath = "/" }},
-		{"path traversal", func(c *apidocsv1.APIDocs) { c.BasePath = "/docs/../api" }},
-		{"encoded separator", func(c *apidocsv1.APIDocs) { c.BasePath = "/docs%2fapi" }},
-		{"route pattern", func(c *apidocsv1.APIDocs) { c.BasePath = "/docs/{api}" }},
-		{"unsafe script", func(c *apidocsv1.APIDocs) { c.ScriptUrl = "javascript:alert(1)" }},
-		{"protocol relative script", func(c *apidocsv1.APIDocs) { c.ScriptUrl = "//example.invalid/script.js" }},
-		{"browser backslash URL", func(c *apidocsv1.APIDocs) { c.ScriptUrl = `/\example.invalid/script.js` }},
-		{"invalid layout", func(c *apidocsv1.APIDocs) { c.Scalar = &apidocsv1.Scalar{Layout: "invalid"} }},
-		{"invalid search key", func(c *apidocsv1.APIDocs) { c.Scalar = &apidocsv1.Scalar{SearchHotKey: "Ctrl+K"} }},
+		{"root path", func(c *apidocsv1.APIDocs) { c.BasePath = proto.String("/") }},
+		{"path traversal", func(c *apidocsv1.APIDocs) { c.BasePath = proto.String("/docs/../api") }},
+		{"encoded separator", func(c *apidocsv1.APIDocs) { c.BasePath = proto.String("/docs%2fapi") }},
+		{"route pattern", func(c *apidocsv1.APIDocs) { c.BasePath = proto.String("/docs/{api}") }},
+		{"unsafe script", func(c *apidocsv1.APIDocs) { c.ScriptUrl = proto.String("javascript:alert(1)") }},
+		{"protocol relative script", func(c *apidocsv1.APIDocs) { c.ScriptUrl = proto.String("//example.invalid/script.js") }},
+		{"browser backslash URL", func(c *apidocsv1.APIDocs) { c.ScriptUrl = proto.String(`/\example.invalid/script.js`) }},
+		{"invalid layout", func(c *apidocsv1.APIDocs) { c.Scalar = &apidocsv1.Scalar{Layout: proto.String("invalid")} }},
+		{"invalid search key", func(c *apidocsv1.APIDocs) { c.Scalar = &apidocsv1.Scalar{SearchHotKey: proto.String("Ctrl+K")} }},
 		{"invalid proxy", func(c *apidocsv1.APIDocs) { c.Scalar = &apidocsv1.Scalar{ProxyUrl: "javascript:bad"} }},
 		{"non-finite extra", func(c *apidocsv1.APIDocs) {
 			c.Scalar = &apidocsv1.Scalar{Extra: &structpb.Struct{Fields: map[string]*structpb.Value{"invalid": structpb.NewNumberValue(math.NaN())}}}
@@ -169,7 +169,7 @@ func TestHandlerSnapshotsCallerData(t *testing.T) {
 	before := request(h, http.MethodGet, "/docs/init.js")
 	c.Documents[0].GetData()[0] = '!'
 	c.Scalar.Extra.Fields["authentication"].GetStructValue().Fields["preferredSecurityScheme"] = structpb.NewStringValue("other")
-	c.Scalar.Theme = "purple"
+	c.Scalar.Theme = proto.String("purple")
 	after := request(h, http.MethodGet, "/docs/init.js")
 	if before.Code != http.StatusOK || after.Code != http.StatusOK || !bytes.Equal(before.Body.Bytes(), after.Body.Bytes()) {
 		t.Fatal("caller mutation changed served configuration")
@@ -200,7 +200,7 @@ func TestFileSourceUsesWorkingDirectoryAndSnapshotsContent(t *testing.T) {
 	if !errors.Is(err, os.ErrNotExist) || !strings.Contains(err.Error(), filepath.Join(other, "api/internal/assets/openapi.yaml")) {
 		t.Fatalf("wrong-directory error = %v", err)
 	}
-	absolute := newHandler(t, &apidocsv1.APIDocs{Enable: true, Path: file})
+	absolute := newHandler(t, &apidocsv1.APIDocs{Enable: true, Path: proto.String(file)})
 	if w := request(absolute, http.MethodGet, "/docs/openapi.yaml"); !bytes.Equal(w.Body.Bytes(), changed) {
 		t.Fatal("absolute path did not load current file")
 	}
@@ -213,7 +213,7 @@ func TestFileSourceUsesWorkingDirectoryAndSnapshotsContent(t *testing.T) {
 }
 
 func TestExplicitDocumentsReplaceDefaultPath(t *testing.T) {
-	h := newHandler(t, &apidocsv1.APIDocs{Enable: true, Path: filepath.Join(t.TempDir(), "missing"), Documents: []*apidocsv1.Document{{Source: &apidocsv1.Document_Url{Url: "https://example.invalid/openapi.yaml"}}}})
+	h := newHandler(t, &apidocsv1.APIDocs{Enable: true, Path: proto.String(filepath.Join(t.TempDir(), "missing")), Documents: []*apidocsv1.Document{{Source: &apidocsv1.Document_Url{Url: "https://example.invalid/openapi.yaml"}}}})
 	if w := request(h, http.MethodGet, "/docs/openapi.yaml"); w.Code != http.StatusNotFound {
 		t.Fatal("remote document unexpectedly mirrored")
 	}
@@ -221,7 +221,7 @@ func TestExplicitDocumentsReplaceDefaultPath(t *testing.T) {
 
 func TestGatewayRedirectPreservesPrefixAndQuery(t *testing.T) {
 	c := inlineConfig()
-	c.BasePath = "/reference/"
+	c.BasePath = proto.String("/reference/")
 	h := newHandler(t, c)
 	mux := http.NewServeMux()
 	mux.Handle(h.BasePath(), h)

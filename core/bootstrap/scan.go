@@ -4,47 +4,26 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
+	"strings"
 
+	confv1 "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	kconfig "github.com/go-kratos/kratos/v3/config"
+	"google.golang.org/protobuf/proto"
 )
 
-// Section is the contract implemented by configuration messages that opt into
-// keyed scanning via bootstrap.Scan. Implementations are typically produced by
-// protoc-gen-servora-conf from `(servora.conf.v1.section)`.
-type Section interface {
-	// SectionKey returns the dotted key under which the section lives in the
-	// merged kratos config (e.g. "broker", "audit", "data.kafka").
-	SectionKey() string
-}
-
-// OptionalSection marks a Section whose absence from the config source is
-// non-fatal. When SectionOptional reports true and the key is missing, Scan
-// skips both Value(key).Scan and ApplyConf for that target.
-type OptionalSection interface {
-	SectionOptional() bool
-}
-
-// Defaulter is the contract for messages that carry literal defaults declared
-// via `(servora.conf.v1.field) = { default: ... }`.
-type Defaulter interface {
-	ApplyDefaults()
-}
-
-// RequiredChecker is the contract for messages that carry required-field rules.
-// Typically consumed via ConfApplier; exposed for testing and direct use.
-type RequiredChecker interface {
-	CheckRequired() error
-}
-
-// ConfApplier is the composite contract for messages processed by
-// protoc-gen-servora-conf. It runs the full post-scan sequence in a single call.
+// ConfApplier 是配置消息解码后执行默认、必填及值约束的唯一入口。
 type ConfApplier interface {
-	ApplyConf() error
+	Apply() error
 }
 
-// Scan loads every target from the runtime's merged kratos config. Targets that
-// implement Section are scanned from Value(SectionKey()); all others are scanned
-// from the whole config. ApplyConf runs only after a successful scan.
+var (
+	acronymBoundary = regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)
+	wordBoundary    = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+)
+
+// Scan 按描述符标记读取配置段，其余 target 读取整份配置。
+// 缺失配置段跳过解码与 Apply；存在段的解码或 Apply 错误均返回。
 func Scan(rt *Runtime, targets ...any) error {
 	if rt == nil {
 		return errors.New("bootstrap: scan: nil runtime")
@@ -59,8 +38,8 @@ func Scan(rt *Runtime, targets ...any) error {
 		if isTypedNil(target) {
 			return fmt.Errorf("bootstrap: scan target[%d]: typed nil %T", i, target)
 		}
-		if section, ok := target.(Section); ok {
-			if err := scanSectionTarget(rt.Config, i, target, section); err != nil {
+		if message, ok := target.(proto.Message); ok && isSection(message) {
+			if err := scanSectionTarget(rt.Config, i, target, sectionKey(message)); err != nil {
 				return err
 			}
 			continue
@@ -77,37 +56,36 @@ func scanConfigTarget(cfg kconfig.Config, index int, target any) error {
 		return fmt.Errorf("bootstrap: scan target[%d] config: %w", index, err)
 	}
 	if applier, ok := target.(ConfApplier); ok {
-		if err := applier.ApplyConf(); err != nil {
+		if err := applier.Apply(); err != nil {
 			return fmt.Errorf("bootstrap: apply target[%d] config: %w", index, err)
 		}
 	}
 	return nil
 }
 
-func scanSectionTarget(cfg kconfig.Config, index int, target any, section Section) error {
-	key := section.SectionKey()
-	if key == "" {
-		return fmt.Errorf("bootstrap: scan target[%d]: empty section key", index)
-	}
+func scanSectionTarget(cfg kconfig.Config, index int, target any, key string) error {
 	if err := cfg.Value(key).Scan(target); err != nil {
-		if isOptional(section) && isKeyMissing(err) {
+		if errors.Is(err, kconfig.ErrNotFound) {
 			return nil
 		}
 		return fmt.Errorf("bootstrap: scan target[%d] section %q: %w", index, key, err)
 	}
 	if applier, ok := target.(ConfApplier); ok {
-		if err := applier.ApplyConf(); err != nil {
+		if err := applier.Apply(); err != nil {
 			return fmt.Errorf("bootstrap: apply target[%d] section %q: %w", index, key, err)
 		}
 	}
 	return nil
 }
 
-func isOptional(s Section) bool {
-	if o, ok := s.(OptionalSection); ok {
-		return o.SectionOptional()
-	}
-	return false
+func isSection(message proto.Message) bool {
+	return proto.GetExtension(message.ProtoReflect().Descriptor().Options(), confv1.E_Section).(bool)
+}
+
+func sectionKey(message proto.Message) string {
+	name := string(message.ProtoReflect().Descriptor().Name())
+	name = acronymBoundary.ReplaceAllString(name, "${1}_${2}")
+	return strings.ToLower(wordBoundary.ReplaceAllString(name, "${1}_${2}"))
 }
 
 func isTypedNil(v any) bool {
@@ -118,10 +96,4 @@ func isTypedNil(v any) bool {
 	default:
 		return false
 	}
-}
-
-// isKeyMissing recognises the error kratos returns when a config key is not
-// present in any of the loaded sources, using the public ErrNotFound sentinel.
-func isKeyMissing(err error) bool {
-	return errors.Is(err, kconfig.ErrNotFound)
 }
