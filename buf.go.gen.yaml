@@ -52,7 +52,7 @@ plugins:
       out: api/gen/go
       opt: paths=source_relative
 
-    # generate conf SectionKey/ApplyDefaults/CheckRequired/ApplyConf from proto annotations
+    # 根据 Proto 注解生成唯一的 Apply 配置处理方法
     - local: protoc-gen-servora-conf
       out: api/gen/go
       opt: paths=source_relative

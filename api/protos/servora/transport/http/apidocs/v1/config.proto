@@ -11,11 +11,11 @@ option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/transport
 message APIDocs {
   bool enable = 1;
   // 相对于进程工作目录；documents 非空时完整替代此来源。
-  string path = 2 [(servora.conf.v1.field) = {default: "./api/internal/assets/openapi.yaml"}];
-  string base_path = 3 [(servora.conf.v1.field) = {default: "/docs"}];
-  string title = 4 [(servora.conf.v1.field) = {default: "API Documentation"}];
+  optional string path = 2 [(servora.conf.v1.field) = {default: "./api/internal/assets/openapi.yaml"}];
+  optional string base_path = 3 [(servora.conf.v1.field) = {default: "/docs"}];
+  optional string title = 4 [(servora.conf.v1.field) = {default: "API Documentation"}];
   // 断网部署可指定同源或自托管脚本地址。
-  string script_url = 5 [(servora.conf.v1.field) = {default: "https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser/standalone.js"}];
+  optional string script_url = 5 [(servora.conf.v1.field) = {default: "https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser/standalone.js"}];
   repeated Document documents = 6;
   Scalar scalar = 7;
 }
@@ -34,13 +34,13 @@ message Document {
 
 // Scalar 定义常用界面配置。所有字段会公开给文档访问者，不得包含服务端秘密。
 message Scalar {
-  string theme = 1 [(servora.conf.v1.field) = {default: "default"}];
+  optional string theme = 1 [(servora.conf.v1.field) = {default: "default"}];
   // 支持 modern、classic。
-  string layout = 2 [(servora.conf.v1.field) = {default: "modern"}];
+  optional string layout = 2 [(servora.conf.v1.field) = {default: "modern"}];
   // 未设置时使用 Scalar 自身的模式；显式 false 必须保留。
   optional bool dark_mode = 3;
   optional bool show_sidebar = 4;
-  string search_hot_key = 5 [(servora.conf.v1.field) = {default: "k"}];
+  optional string search_hot_key = 5 [(servora.conf.v1.field) = {default: "k"}];
   bool hide_test_request_button = 6;
   bool telemetry = 7;
   bool persist_auth = 8;

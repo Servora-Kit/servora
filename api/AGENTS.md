@@ -38,7 +38,7 @@ Buf 配置在仓库根：`buf.yaml`、`buf.lock`、`buf.go.gen.yaml`。`api/prot
 | `just bsr-update` | 更新 BSR 依赖 |
 | `just bsr-push` | 推送 `buf.build/servora/servora`，HEAD 有主 tag 时附加 tag label |
 
-修改 proto 或生成器导致 `api/gen/go` 变化时，先 `just lint-proto && just gen`，再随根 module 的 `v0.x.y` 发布。BSR 发布是独立流程，不因 Go module 发版自动执行。
+修改 proto 或生成器导致 `api/gen/go` 变化时，先 `just lint-proto && just gen`，再随根 module 的 `v0.x.y` 发布。BSR module 与 Go module 的版本边界彼此独立，但根 `v*` Git tag 也是 Buf CI 触发器：发布 tag 会自动推送当前 schema，并维护 BSR `main` 与对应版本 label；`just bsr-push` 只作本地预演或应急入口。
 
 ## 开发约定
 

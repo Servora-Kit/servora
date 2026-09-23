@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestResolveTraceRuntimeConfig(t *testing.T) {
@@ -29,7 +30,7 @@ func TestResolveTraceRuntimeConfig(t *testing.T) {
 			cfg: &corev1.Trace{
 				Endpoint:      "otel.example.internal:4317",
 				Insecure:      true,
-				SamplingRatio: 0.25,
+				SamplingRatio: proto.Float64(0.25),
 				CaPath:        "/etc/certs/otel-ca.pem",
 			},
 			want: traceRuntimeConfig{
@@ -40,12 +41,10 @@ func TestResolveTraceRuntimeConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "falls back when sampling ratio invalid",
-			env:  "production",
-			cfg: &corev1.Trace{
-				SamplingRatio: 1.5,
-			},
-			want: traceRuntimeConfig{samplingRatio: defaultProdSamplingRatio},
+			name: "explicit zero overrides environment",
+			env:  "dev",
+			cfg:  &corev1.Trace{SamplingRatio: proto.Float64(0)},
+			want: traceRuntimeConfig{samplingRatio: 0},
 		},
 	}
 
@@ -56,6 +55,15 @@ func TestResolveTraceRuntimeConfig(t *testing.T) {
 				t.Fatalf("resolveTraceRuntimeConfig() = %#v, want %#v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestInitTracerProviderRejectsInvalidSamplingRatio(t *testing.T) {
+	for _, ratio := range []float64{-0.1, 1.1} {
+		cleanup, err := InitTracerProvider(&corev1.Trace{SamplingRatio: proto.Float64(ratio)}, "example", "prod")
+		if err == nil || cleanup != nil {
+			t.Fatalf("sampling ratio %v: cleanup=%t error=%v, want rejection", ratio, cleanup != nil, err)
+		}
 	}
 }
 

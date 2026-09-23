@@ -9,8 +9,8 @@
 
 ## 当前实现事实
 
-- 默认超时：`Dial=5s`、`Read=3s`、`Write=3s`
-- `New` 直接接收 `servora.contrib.db.redis.v1.Redis`，返回官方 `*redis.Client`，不做黑盒封装
+- 默认超时由 Redis Proto 声明：`Dial=5s`、`Read=3s`、`Write=3s`；显式零值原样传给 go-redis，不在本包再次补默认
+- `New` 直接接收 `servora.contrib.db.redis.v1.Redis`，先调用 `Apply()`，再将地址、网络类型及超时等设置传给官方客户端
 - `New` 完成配置转换、TLS 构建和 `Ping` 连通性校验，并返回 `cleanup func()`
 - 不记录构造期生命周期日志；业务日志由调用方自行拼装
 
@@ -33,6 +33,7 @@ KV 读写直接使用 go-redis 官方 API（`Get`/`Set`/`Del`/…），本包不
 ```go
 cfg := &redispb.Redis{Addr: "localhost:6379", Db: 0}
 client, cleanup, err := redis.New(cfg)
+if err != nil { return err }
 defer cleanup()
 
 _ = client.Set(context.Background(), "key", "value", time.Hour).Err()

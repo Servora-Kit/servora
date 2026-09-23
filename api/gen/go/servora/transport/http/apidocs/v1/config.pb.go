@@ -28,11 +28,11 @@ type APIDocs struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Enable bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`
 	// 相对于进程工作目录；documents 非空时完整替代此来源。
-	Path     string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
-	BasePath string `protobuf:"bytes,3,opt,name=base_path,json=basePath,proto3" json:"base_path,omitempty"`
-	Title    string `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	Path     *string `protobuf:"bytes,2,opt,name=path,proto3,oneof" json:"path,omitempty"`
+	BasePath *string `protobuf:"bytes,3,opt,name=base_path,json=basePath,proto3,oneof" json:"base_path,omitempty"`
+	Title    *string `protobuf:"bytes,4,opt,name=title,proto3,oneof" json:"title,omitempty"`
 	// 断网部署可指定同源或自托管脚本地址。
-	ScriptUrl     string      `protobuf:"bytes,5,opt,name=script_url,json=scriptUrl,proto3" json:"script_url,omitempty"`
+	ScriptUrl     *string     `protobuf:"bytes,5,opt,name=script_url,json=scriptUrl,proto3,oneof" json:"script_url,omitempty"`
 	Documents     []*Document `protobuf:"bytes,6,rep,name=documents,proto3" json:"documents,omitempty"`
 	Scalar        *Scalar     `protobuf:"bytes,7,opt,name=scalar,proto3" json:"scalar,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -77,29 +77,29 @@ func (x *APIDocs) GetEnable() bool {
 }
 
 func (x *APIDocs) GetPath() string {
-	if x != nil {
-		return x.Path
+	if x != nil && x.Path != nil {
+		return *x.Path
 	}
 	return ""
 }
 
 func (x *APIDocs) GetBasePath() string {
-	if x != nil {
-		return x.BasePath
+	if x != nil && x.BasePath != nil {
+		return *x.BasePath
 	}
 	return ""
 }
 
 func (x *APIDocs) GetTitle() string {
-	if x != nil {
-		return x.Title
+	if x != nil && x.Title != nil {
+		return *x.Title
 	}
 	return ""
 }
 
 func (x *APIDocs) GetScriptUrl() string {
-	if x != nil {
-		return x.ScriptUrl
+	if x != nil && x.ScriptUrl != nil {
+		return *x.ScriptUrl
 	}
 	return ""
 }
@@ -238,17 +238,17 @@ func (*Document_Data) isDocument_Source() {}
 // Scalar 定义常用界面配置。所有字段会公开给文档访问者，不得包含服务端秘密。
 type Scalar struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Theme string                 `protobuf:"bytes,1,opt,name=theme,proto3" json:"theme,omitempty"`
+	Theme *string                `protobuf:"bytes,1,opt,name=theme,proto3,oneof" json:"theme,omitempty"`
 	// 支持 modern、classic。
-	Layout string `protobuf:"bytes,2,opt,name=layout,proto3" json:"layout,omitempty"`
+	Layout *string `protobuf:"bytes,2,opt,name=layout,proto3,oneof" json:"layout,omitempty"`
 	// 未设置时使用 Scalar 自身的模式；显式 false 必须保留。
-	DarkMode              *bool  `protobuf:"varint,3,opt,name=dark_mode,json=darkMode,proto3,oneof" json:"dark_mode,omitempty"`
-	ShowSidebar           *bool  `protobuf:"varint,4,opt,name=show_sidebar,json=showSidebar,proto3,oneof" json:"show_sidebar,omitempty"`
-	SearchHotKey          string `protobuf:"bytes,5,opt,name=search_hot_key,json=searchHotKey,proto3" json:"search_hot_key,omitempty"`
-	HideTestRequestButton bool   `protobuf:"varint,6,opt,name=hide_test_request_button,json=hideTestRequestButton,proto3" json:"hide_test_request_button,omitempty"`
-	Telemetry             bool   `protobuf:"varint,7,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
-	PersistAuth           bool   `protobuf:"varint,8,opt,name=persist_auth,json=persistAuth,proto3" json:"persist_auth,omitempty"`
-	WithDefaultFonts      bool   `protobuf:"varint,9,opt,name=with_default_fonts,json=withDefaultFonts,proto3" json:"with_default_fonts,omitempty"`
+	DarkMode              *bool   `protobuf:"varint,3,opt,name=dark_mode,json=darkMode,proto3,oneof" json:"dark_mode,omitempty"`
+	ShowSidebar           *bool   `protobuf:"varint,4,opt,name=show_sidebar,json=showSidebar,proto3,oneof" json:"show_sidebar,omitempty"`
+	SearchHotKey          *string `protobuf:"bytes,5,opt,name=search_hot_key,json=searchHotKey,proto3,oneof" json:"search_hot_key,omitempty"`
+	HideTestRequestButton bool    `protobuf:"varint,6,opt,name=hide_test_request_button,json=hideTestRequestButton,proto3" json:"hide_test_request_button,omitempty"`
+	Telemetry             bool    `protobuf:"varint,7,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
+	PersistAuth           bool    `protobuf:"varint,8,opt,name=persist_auth,json=persistAuth,proto3" json:"persist_auth,omitempty"`
+	WithDefaultFonts      bool    `protobuf:"varint,9,opt,name=with_default_fonts,json=withDefaultFonts,proto3" json:"with_default_fonts,omitempty"`
 	// 缺省不使用公共请求代理。
 	ProxyUrl string `protobuf:"bytes,10,opt,name=proxy_url,json=proxyUrl,proto3" json:"proxy_url,omitempty"`
 	// 使用 Scalar 原生 JSON 字段名；禁止覆盖来源和上面的强类型字段。
@@ -288,15 +288,15 @@ func (*Scalar) Descriptor() ([]byte, []int) {
 }
 
 func (x *Scalar) GetTheme() string {
-	if x != nil {
-		return x.Theme
+	if x != nil && x.Theme != nil {
+		return *x.Theme
 	}
 	return ""
 }
 
 func (x *Scalar) GetLayout() string {
-	if x != nil {
-		return x.Layout
+	if x != nil && x.Layout != nil {
+		return *x.Layout
 	}
 	return ""
 }
@@ -316,8 +316,8 @@ func (x *Scalar) GetShowSidebar() bool {
 }
 
 func (x *Scalar) GetSearchHotKey() string {
-	if x != nil {
-		return x.SearchHotKey
+	if x != nil && x.SearchHotKey != nil {
+		return *x.SearchHotKey
 	}
 	return ""
 }
@@ -368,46 +368,54 @@ var File_servora_transport_http_apidocs_v1_config_proto protoreflect.FileDescrip
 
 const file_servora_transport_http_apidocs_v1_config_proto_rawDesc = "" +
 	"\n" +
-	".servora/transport/http/apidocs/v1/config.proto\x12!servora.transport.http.apidocs.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\"\xc1\x03\n" +
+	".servora/transport/http/apidocs/v1/config.proto\x12!servora.transport.http.apidocs.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a!servora/conf/v1/annotations.proto\"\x85\x04\n" +
 	"\aAPIDocs\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\x12<\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\x12A\n" +
 	"\x04path\x18\x02 \x01(\tB(\x8a\xce\x18$\n" +
-	"\"./api/internal/assets/openapi.yamlR\x04path\x12(\n" +
+	"\"./api/internal/assets/openapi.yamlH\x00R\x04path\x88\x01\x01\x12-\n" +
 	"\tbase_path\x18\x03 \x01(\tB\v\x8a\xce\x18\a\n" +
-	"\x05/docsR\bbasePath\x12-\n" +
+	"\x05/docsH\x01R\bbasePath\x88\x01\x01\x122\n" +
 	"\x05title\x18\x04 \x01(\tB\x17\x8a\xce\x18\x13\n" +
-	"\x11API DocumentationR\x05title\x12y\n" +
+	"\x11API DocumentationH\x02R\x05title\x88\x01\x01\x12~\n" +
 	"\n" +
 	"script_url\x18\x05 \x01(\tBZ\x8a\xce\x18V\n" +
-	"Thttps://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser/standalone.jsR\tscriptUrl\x12I\n" +
+	"Thttps://cdn.jsdelivr.net/npm/@scalar/api-reference@1.67.0/dist/browser/standalone.jsH\x03R\tscriptUrl\x88\x01\x01\x12I\n" +
 	"\tdocuments\x18\x06 \x03(\v2+.servora.transport.http.apidocs.v1.DocumentR\tdocuments\x12A\n" +
-	"\x06scalar\x18\a \x01(\v2).servora.transport.http.apidocs.v1.ScalarR\x06scalar\"~\n" +
+	"\x06scalar\x18\a \x01(\v2).servora.transport.http.apidocs.v1.ScalarR\x06scalarB\a\n" +
+	"\x05_pathB\f\n" +
+	"\n" +
+	"_base_pathB\b\n" +
+	"\x06_titleB\r\n" +
+	"\v_script_url\"~\n" +
 	"\bDocument\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x14\n" +
 	"\x04path\x18\x03 \x01(\tH\x00R\x04path\x12\x12\n" +
 	"\x03url\x18\x04 \x01(\tH\x00R\x03url\x12\x14\n" +
 	"\x04data\x18\x05 \x01(\fH\x00R\x04dataB\b\n" +
-	"\x06source\"\xdf\x03\n" +
-	"\x06Scalar\x12#\n" +
+	"\x06source\"\x96\x04\n" +
+	"\x06Scalar\x12(\n" +
 	"\x05theme\x18\x01 \x01(\tB\r\x8a\xce\x18\t\n" +
-	"\adefaultR\x05theme\x12$\n" +
+	"\adefaultH\x00R\x05theme\x88\x01\x01\x12)\n" +
 	"\x06layout\x18\x02 \x01(\tB\f\x8a\xce\x18\b\n" +
-	"\x06modernR\x06layout\x12 \n" +
-	"\tdark_mode\x18\x03 \x01(\bH\x00R\bdarkMode\x88\x01\x01\x12&\n" +
-	"\fshow_sidebar\x18\x04 \x01(\bH\x01R\vshowSidebar\x88\x01\x01\x12-\n" +
+	"\x06modernH\x01R\x06layout\x88\x01\x01\x12 \n" +
+	"\tdark_mode\x18\x03 \x01(\bH\x02R\bdarkMode\x88\x01\x01\x12&\n" +
+	"\fshow_sidebar\x18\x04 \x01(\bH\x03R\vshowSidebar\x88\x01\x01\x122\n" +
 	"\x0esearch_hot_key\x18\x05 \x01(\tB\a\x8a\xce\x18\x03\n" +
-	"\x01kR\fsearchHotKey\x127\n" +
+	"\x01kH\x04R\fsearchHotKey\x88\x01\x01\x127\n" +
 	"\x18hide_test_request_button\x18\x06 \x01(\bR\x15hideTestRequestButton\x12\x1c\n" +
 	"\ttelemetry\x18\a \x01(\bR\ttelemetry\x12!\n" +
 	"\fpersist_auth\x18\b \x01(\bR\vpersistAuth\x12,\n" +
 	"\x12with_default_fonts\x18\t \x01(\bR\x10withDefaultFonts\x12\x1b\n" +
 	"\tproxy_url\x18\n" +
 	" \x01(\tR\bproxyUrl\x12-\n" +
-	"\x05extra\x18\v \x01(\v2\x17.google.protobuf.StructR\x05extraB\f\n" +
+	"\x05extra\x18\v \x01(\v2\x17.google.protobuf.StructR\x05extraB\b\n" +
+	"\x06_themeB\t\n" +
+	"\a_layoutB\f\n" +
 	"\n" +
 	"_dark_modeB\x0f\n" +
-	"\r_show_sidebarBWZUgithub.com/Servora-Kit/servora/api/gen/go/servora/transport/http/apidocs/v1;apidocsv1b\x06proto3"
+	"\r_show_sidebarB\x11\n" +
+	"\x0f_search_hot_keyBWZUgithub.com/Servora-Kit/servora/api/gen/go/servora/transport/http/apidocs/v1;apidocsv1b\x06proto3"
 
 var (
 	file_servora_transport_http_apidocs_v1_config_proto_rawDescOnce sync.Once
@@ -444,6 +452,7 @@ func file_servora_transport_http_apidocs_v1_config_proto_init() {
 	if File_servora_transport_http_apidocs_v1_config_proto != nil {
 		return
 	}
+	file_servora_transport_http_apidocs_v1_config_proto_msgTypes[0].OneofWrappers = []any{}
 	file_servora_transport_http_apidocs_v1_config_proto_msgTypes[1].OneofWrappers = []any{
 		(*Document_Path)(nil),
 		(*Document_Url)(nil),

@@ -126,22 +126,22 @@ func CallUser(ctx context.Context, l *slog.Logger, data *corev1.Data, d registry
 
 #### 配置文件
 
-通过 `(section)` 标记 message 在外部 yaml/json 配置中的定位键，通过 `(field)` 声明字段的默认值与必填语义。Plugin 自动生成 `SectionKey()` / `ApplyDefaults()` / `CheckRequired()` / `ApplyConf()`，配合 `bootstrap.Scan` 在 kratos config 中定向 scan。该契约只在启动期加载或业务显式调用 `bootstrap.Scan` 时生效；Kratos `Config.Watch` 不会自动调用这些生成方法。
+配置消息使用 `(servora.conf.v1.section) = true` 标记按段加载，段名由消息短名转换为小写下划线形式；未标记的对象扫描整份配置。字段通过 `(field)` 声明默认值或必填要求，插件只生成 `Apply() error`。默认值仅补缺失字段；标量需要 optional 才能区分未设置和显式零值。required 只要求明确设置，非空或范围要求使用 `buf.validate` 单独声明。
 
 ```proto
 import "servora/conf/v1/annotations.proto";
 import "google/protobuf/duration.proto";
 
 message Redis {
-  option (servora.conf.v1.section) = { key: "redis", optional: true };
+  option (servora.conf.v1.section) = true;
 
-  string addr    = 1 [(servora.conf.v1.field) = { required: true }];
-  string network = 2 [(servora.conf.v1.field) = { default: "tcp" }];
-  google.protobuf.Duration timeout = 3 [(servora.conf.v1.field) = { default: "5s" }];
+  string network = 1;
+  string addr = 2;
+  google.protobuf.Duration dial_timeout = 6 [(servora.conf.v1.field) = { default: "5s" }];
 }
 ```
 
-运行时通过 `Scan(rt, targets...)` 统一扫描整份配置或指定 section；配置文件中缺失的 optional section 静默跳过，`ApplyConf` 自动完成必填校验 + 默认值填充：
+`bootstrap.Scan(rt, targets...)` 对存在的配置段完成解码并调用 Apply；缺段直接跳过，不填默认值、不创建子对象。实际使用配置的独立构造入口仍须调用 Apply，并保留所属模块的安全检查：
 
 ```go
 import (
@@ -153,10 +153,10 @@ redisCfg := &redispb.Redis{}
 if err := bootstrap.Scan(rt, redisCfg); err != nil {
     return err
 }
-// redisCfg 已通过必填校验并自动填充默认值（由 ApplyConf 编排）
+// redis 段存在时已解码并应用默认值；缺段时 redisCfg 保持原样。
 ```
 
-配置中心热更新属于 Kratos `Config.Watch` 的底层能力。业务如需在 watch 回调中复用上述契约，需要自行对新的 `Value` 执行 `Scan` 并调用 `ApplyConf()`；Servora 不会对远端配置变更自动重 scan、校验或回调。
+Kratos `Config.Watch` 不会自动重新应用配置。自行解码、原始 Scan 或手工构造的配置，需在使用前显式调用 `Apply()` 并处理错误；不要在每个读取字段的函数重复调用。普通父配置缺失时保持缺失，只有明确提供的对象才处理内部规则。
 
 
 

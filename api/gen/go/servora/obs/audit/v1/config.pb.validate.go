@@ -59,11 +59,15 @@ func (m *AuditContract) validate(all bool) error {
 
 	// no validation rules for Enabled
 
-	// no validation rules for EmitterType
-
-	// no validation rules for Topic
-
 	// no validation rules for ServiceName
+
+	if m.EmitterType != nil {
+		// no validation rules for EmitterType
+	}
+
+	if m.Topic != nil {
+		// no validation rules for Topic
+	}
 
 	if len(errors) > 0 {
 		return AuditContractMultiError(errors)

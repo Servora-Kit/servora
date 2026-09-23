@@ -1,11 +1,13 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	governanceConfig "github.com/Servora-Kit/servora/core/config"
@@ -33,6 +35,7 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 		kconfig.WithResolveActualTypes(true),
 	)
 	if err := tempConfig.Load(); err != nil {
+		_ = tempConfig.Close()
 		return nil, nil, err
 	}
 
@@ -57,6 +60,7 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 
 	finalSources, err := buildFileSources(configPath)
 	if err != nil {
+		_ = closeSource(configCenterSource)
 		return nil, nil, err
 	}
 	if configCenterSource != nil {
@@ -64,11 +68,15 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 	}
 	finalSources = append(finalSources, env.NewSource(envPrefix))
 
-	c := kconfig.New(
-		kconfig.WithSource(finalSources...),
-		kconfig.WithResolveActualTypes(true),
-	)
+	c := &loadedConfig{
+		Config: kconfig.New(
+			kconfig.WithSource(finalSources...),
+			kconfig.WithResolveActualTypes(true),
+		),
+		source: configCenterSource,
+	}
 	if err := c.Load(); err != nil {
+		_ = c.Close()
 		return nil, nil, err
 	}
 	if err := c.Scan(&bc); err != nil {
@@ -76,12 +84,34 @@ func LoadBootstrap(configPath string, serviceName string, useEnvPrefix bool) (*c
 		return nil, nil, err
 	}
 
-	if err := bc.ApplyConf(); err != nil {
+	if err := bc.Apply(); err != nil {
 		_ = c.Close()
 		return nil, nil, err
 	}
 
 	return &bc, c, nil
+}
+
+// loadedConfig 在停止 Kratos 监听后关闭 loader 创建的远端来源。
+type loadedConfig struct {
+	kconfig.Config
+	source    kconfig.Source
+	closeOnce sync.Once
+	closeErr  error
+}
+
+func (c *loadedConfig) Close() error {
+	c.closeOnce.Do(func() {
+		c.closeErr = errors.Join(c.Config.Close(), closeSource(c.source))
+	})
+	return c.closeErr
+}
+
+func closeSource(source kconfig.Source) error {
+	if closer, ok := source.(interface{ Close() error }); ok {
+		return closer.Close()
+	}
+	return nil
 }
 
 // buildFileSources 将单文件或目录路径转换为 Kratos 可加载的文件配置源列表。

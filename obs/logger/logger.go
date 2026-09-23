@@ -37,10 +37,15 @@ var isTerminal = func(fd uintptr) bool {
 	return term.IsTerminal(int(fd))
 }
 
-// New assembles a logger from Bootstrap proto config.
-// Returns a stdlib *slog.Logger and a closer (always non-nil; no-op
-// when no OTel backend is active). Callers MUST invoke closer on shutdown.
-func New(bc *corev1.Bootstrap, opts ...Option) (*slog.Logger, func(context.Context) error) {
+// New 从 Bootstrap 配置组装日志器，并在创建任何 backend 前执行 Apply。
+// 未启用可释放资源时 closer 仍可调用；调用方必须在关闭时执行 closer。
+// 配置无效时返回错误，且不创建 backend。
+func New(bc *corev1.Bootstrap, opts ...Option) (*slog.Logger, func(context.Context) error, error) {
+	if bc != nil {
+		if err := bc.Apply(); err != nil {
+			return nil, nil, err
+		}
+	}
 	var o options
 	for _, fn := range opts {
 		fn(&o)
@@ -60,9 +65,12 @@ func New(bc *corev1.Bootstrap, opts ...Option) (*slog.Logger, func(context.Conte
 		case *corev1.Log_LogBackend_Stdout:
 			handlers = append(handlers, buildStdoutHandler(o.handlerFunc, x.Stdout, env, lvl))
 		case *corev1.Log_LogBackend_File:
-			h := buildFileHandler(o.handlerFunc, x.File, lvl)
+			h, closer := buildFileHandler(o.handlerFunc, x.File, lvl)
 			if h != nil {
 				handlers = append(handlers, h)
+				if closer != nil {
+					closers = append(closers, closer)
+				}
 			}
 		case *corev1.Log_LogBackend_Otel:
 			h, closer := buildOtelHandler(x.Otel, lvl)
@@ -89,7 +97,7 @@ func New(bc *corev1.Bootstrap, opts ...Option) (*slog.Logger, func(context.Conte
 		return first
 	}
 
-	return slog.New(fanout(handlers)), closer
+	return slog.New(fanout(handlers)), closer, nil
 }
 
 // --- stdout backend ---

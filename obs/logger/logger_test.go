@@ -12,7 +12,10 @@ import (
 )
 
 func TestNew_NilSafe(t *testing.T) {
-	l, closer := New(nil)
+	l, closer, err := New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if l == nil {
 		t.Fatal("New(nil) must return non-nil *slog.Logger")
 	}
@@ -25,24 +28,53 @@ func TestNew_NilSafe(t *testing.T) {
 }
 
 func TestNew_DefaultStdoutWhenEmpty(t *testing.T) {
-	l, _ := New(&corev1.Bootstrap{
+	l, _, err := New(&corev1.Bootstrap{
 		App: &corev1.App{Env: "dev"},
 		Obs: &corev1.Observability{Log: &corev1.Log{}},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if l == nil {
 		t.Fatal("empty backends must default to stdout logger")
 	}
 }
 
 func TestNew_NoopBackend(t *testing.T) {
-	l, _ := New(&corev1.Bootstrap{
+	l, _, err := New(&corev1.Bootstrap{
 		Obs: &corev1.Observability{Log: &corev1.Log{
 			Backends: []*corev1.Log_LogBackend{{
 				Backend: &corev1.Log_LogBackend_Noop{Noop: &corev1.Log_NoopBackend{}},
 			}},
 		}},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	l.Info("should not panic")
+}
+
+func TestNewRejectsInvalidBackendBeforeCreatingHandlers(t *testing.T) {
+	for name, backend := range map[string]*corev1.Log_LogBackend{
+		"file": {Backend: &corev1.Log_LogBackend_File{File: &corev1.Log_FileBackend{}}},
+		"otel": {Backend: &corev1.Log_LogBackend_Otel{Otel: &corev1.Log_OtelBackend{}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			created := false
+			_, closer, err := New(&corev1.Bootstrap{Obs: &corev1.Observability{Log: &corev1.Log{
+				Backends: []*corev1.Log_LogBackend{
+					{Backend: &corev1.Log_LogBackend_Stdout{Stdout: &corev1.Log_StdoutBackend{}}},
+					backend,
+				},
+			}}}, WithLogHandlerFunc(func(io.Writer, slog.Level) slog.Handler {
+				created = true
+				return slog.DiscardHandler
+			}))
+			if err == nil || created || closer != nil {
+				t.Fatalf("invalid %s backend: error=%v, created=%t, closer=%t", name, err, created, closer != nil)
+			}
+		})
+	}
 }
 
 func TestResolveStdoutJSON_EnvDefaults(t *testing.T) {
@@ -80,7 +112,7 @@ func TestResolveStdoutJSON_ProtoOverridesEnv(t *testing.T) {
 
 func TestWithLogHandlerFunc_ReplacesStdout(t *testing.T) {
 	var buf bytes.Buffer
-	l, _ := New(
+	l, _, err := New(
 		&corev1.Bootstrap{
 			App: &corev1.App{Env: "prod"},
 			Obs: &corev1.Observability{Log: &corev1.Log{
@@ -95,6 +127,9 @@ func TestWithLogHandlerFunc_ReplacesStdout(t *testing.T) {
 			return slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: lvl})
 		}),
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 	l.Info("hello", "key", "val")
 	if !strings.Contains(buf.String(), "hello") {
 		t.Errorf("custom factory output expected to contain 'hello', got: %s", buf.String())

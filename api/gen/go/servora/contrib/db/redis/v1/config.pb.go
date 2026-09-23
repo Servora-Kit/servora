@@ -136,18 +136,20 @@ var File_servora_contrib_db_redis_v1_config_proto protoreflect.FileDescriptor
 
 const file_servora_contrib_db_redis_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"(servora/contrib/db/redis/v1/config.proto\x12\x1bservora.contrib.db.redis.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\"\xf9\x02\n" +
+	"(servora/contrib/db/redis/v1/config.proto\x12\x1bservora.contrib.db.redis.v1\x1a\x1egoogle/protobuf/duration.proto\x1a!servora/conf/v1/annotations.proto\x1a$servora/security/tls/v1/config.proto\"\x8e\x03\n" +
 	"\x05Redis\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x12\x1b\n" +
 	"\tuser_name\x18\x03 \x01(\tR\buserName\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x0e\n" +
-	"\x02db\x18\x05 \x01(\x05R\x02db\x12<\n" +
-	"\fdial_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vdialTimeout\x12<\n" +
-	"\fread_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x12.\n" +
-	"\x03tls\x18\t \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls:\r\x82\xce\x18\t\n" +
-	"\x05redis\x10\x01BOZMgithub.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1;redispbb\x06proto3"
+	"\x02db\x18\x05 \x01(\x05R\x02db\x12F\n" +
+	"\fdial_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\b\x8a\xce\x18\x04\n" +
+	"\x025sR\vdialTimeout\x12F\n" +
+	"\fread_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationB\b\x8a\xce\x18\x04\n" +
+	"\x023sR\vreadTimeout\x12H\n" +
+	"\rwrite_timeout\x18\b \x01(\v2\x19.google.protobuf.DurationB\b\x8a\xce\x18\x04\n" +
+	"\x023sR\fwriteTimeout\x12.\n" +
+	"\x03tls\x18\t \x01(\v2\x1c.servora.security.tls.v1.TLSR\x03tls:\x04\x80\xce\x18\x01BOZMgithub.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1;redispbb\x06proto3"
 
 var (
 	file_servora_contrib_db_redis_v1_config_proto_rawDescOnce sync.Once

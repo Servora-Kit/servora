@@ -23,10 +23,7 @@ func BuildOpts(cfg *kafkapb.Kafka, extra ...kgo.Opt) ([]kgo.Opt, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("kafka: config must not be nil")
 	}
-	if len(cfg.GetBrokers()) == 0 {
-		return nil, fmt.Errorf("kafka: at least one broker address is required")
-	}
-	if err := cfg.ApplyConf(); err != nil {
+	if err := cfg.Apply(); err != nil {
 		return nil, err
 	}
 
@@ -108,8 +105,7 @@ func NewClient(ctx context.Context, cfg *kafkapb.Kafka, extra ...kgo.Opt) (*kgo.
 	return client, nil
 }
 
-// NewClientOptional returns nil when Kafka is absent. A configured Kafka client
-// must connect successfully, otherwise the error is returned to the owner.
+// NewClientOptional 在未配置 Kafka 时返回 nil；已配置时必须连接成功，否则向调用方返回错误。
 func NewClientOptional(ctx context.Context, cfg *kafkapb.Kafka, extra ...kgo.Opt) (*kgo.Client, error) {
 	if cfg == nil || len(cfg.GetBrokers()) == 0 {
 		return nil, nil

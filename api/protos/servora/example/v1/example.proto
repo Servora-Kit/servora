@@ -89,7 +89,7 @@ message User {
     (google.api.field_behavior) = IMMUTABLE
   ];
 
-  // nickname 保留 presence；显式 Clear 写入 NULL。
+  // nickname 区分未设置与空字符串；显式清除时写入 NULL。
   optional string nickname = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // temporary_password 只供 Create/Update 输入；存储层转换为私有 password_hash。

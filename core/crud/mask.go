@@ -22,7 +22,7 @@ type WriteMask struct {
 // Paths returns canonical sorted paths. A wildcard mask returns ["*"].
 func (mask WriteMask) Paths() []string { return slices.Clone(mask.paths) }
 
-// Implicit reports whether update_mask was omitted and derived from resource presence.
+// Implicit 报告是否因省略 update_mask 而根据已设置的资源字段推导更新范围。
 func (mask WriteMask) Implicit() bool { return mask.implicit }
 
 // Wildcard reports whether the sole explicit path was "*".

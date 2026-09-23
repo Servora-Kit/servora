@@ -1,13 +1,6 @@
-// Package protoreach provides a predicate-parameterized tree-walk over proto
-// message descriptors. It answers one question: "does any field in this
-// message's subtree satisfy a caller-supplied predicate?" The walk handles
-// cycle-guarding (self-referential messages), diamond-caching (shared
-// sub-messages evaluated once), and skips well-known google.protobuf.* types,
-// lists, and maps.
-//
-// Designed for protoc-gen-servora-* plugins that need transitive reachability
-// decisions at codegen time (e.g. "does this message need a cascading
-// ApplyDefaults?" or "does it need a cascading CheckRequired?").
+// Package protoreach 提供 Proto 消息的生成期可达性检查。
+// 旧的 NeedsCascade 仅遍历普通单值消息，保留供原调用方使用；
+// 配置生成器通过 ConfigChild 和 NeedsConfig 遍历集合元素与 map 值。
 package protoreach
 
 import (
@@ -16,18 +9,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// NeedsCascade reports whether md must carry a generated cascade method
-// based on pred. Returns true when any field in md satisfies pred, or
-// when any singular non-well-known message-typed field transitively does.
-//
-// memo doubles as the recursion guard and the result cache: an entry is
-// written as false on entry (breaking self-referential cycles at the
-// back-edge) and overwritten with the real result on exit, so shared
-// (diamond) subtrees are evaluated correctly. Callers pass a fresh map.
-//
-// Oneof members ARE traversed for reachability. However, emitters must
-// decide independently whether to allocate them (ApplyDefaults must not;
-// CheckRequired only checks if set).
+// NeedsCascade 保留原有的单值消息递归规则，不改变其他插件的行为。
+// memo 同时缓存结果并避免自引用循环；oneof 的处理由调用方决定。
 func NeedsCascade(
 	md protoreflect.MessageDescriptor,
 	pred func(protoreflect.FieldDescriptor) bool,
@@ -43,7 +26,7 @@ func NeedsCascade(
 
 	result := false
 	fields := md.Fields()
-	for i := 0; i < fields.Len(); i++ {
+	for i := range fields.Len() {
 		fd := fields.Get(i)
 		if pred(fd) {
 			result = true
@@ -65,7 +48,55 @@ func NeedsCascade(
 	return result
 }
 
-// IsWellKnown reports whether md is in the google.protobuf.* namespace.
+// ConfigChild 返回字段实际包含的自定义子消息，支持普通字段、集合和 map 值。
+// 内建消息与 map-entry 合成类型不继续展开。
+func ConfigChild(fd protoreflect.FieldDescriptor) protoreflect.MessageDescriptor {
+	if fd == nil {
+		return nil
+	}
+	if fd.IsMap() {
+		fd = fd.MapValue()
+	}
+	if fd.Kind() != protoreflect.MessageKind && fd.Kind() != protoreflect.GroupKind {
+		return nil
+	}
+	md := fd.Message()
+	if md == nil || md.IsMapEntry() || IsWellKnown(md) {
+		return nil
+	}
+	return md
+}
+
+// NeedsConfig 检查所有字段形态中的配置子消息，不改变旧的 NeedsCascade 规则。
+func NeedsConfig(md protoreflect.MessageDescriptor, pred func(protoreflect.FieldDescriptor) bool, memo map[protoreflect.FullName]bool) bool {
+	return needsConfig(md, pred, memo, make(map[protoreflect.FullName]bool))
+}
+
+func needsConfig(md protoreflect.MessageDescriptor, pred func(protoreflect.FieldDescriptor) bool, memo, active map[protoreflect.FullName]bool) bool {
+	if md == nil || md.IsMapEntry() || IsWellKnown(md) {
+		return false
+	}
+	if active[md.FullName()] {
+		return false
+	}
+	if value, ok := memo[md.FullName()]; ok {
+		return value
+	}
+	active[md.FullName()] = true
+	result := false
+	for i := range md.Fields().Len() {
+		fd := md.Fields().Get(i)
+		if pred(fd) || needsConfig(ConfigChild(fd), pred, memo, active) {
+			result = true
+			break
+		}
+	}
+	delete(active, md.FullName())
+	memo[md.FullName()] = result
+	return result
+}
+
+// IsWellKnown 判断消息是否属于 google.protobuf 命名空间。
 func IsWellKnown(md protoreflect.MessageDescriptor) bool {
 	return strings.HasPrefix(string(md.FullName()), "google.protobuf.")
 }

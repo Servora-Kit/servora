@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// ListResult is one immutable adapter result with optional total-size presence.
+// ListResult 是不可变的查询结果，同时记录是否计算了总条数。
 type ListResult[T any] struct {
 	items         []T
 	nextPageToken string
@@ -15,7 +15,7 @@ type ListResult[T any] struct {
 	hasTotalSize  bool
 }
 
-// NewListResult enforces include_total and total_size presence as one contract.
+// NewListResult 保证 include_total 与总条数是否已计算的状态一致。
 func NewListResult[T any](
 	query ListQuery,
 	items []T,
@@ -48,7 +48,7 @@ func (result ListResult[T]) Items() []T { return cloneListItems(result.items) }
 // NextPageToken returns the opaque continuation token, or empty on the last page.
 func (result ListResult[T]) NextPageToken() string { return result.nextPageToken }
 
-// TotalSize returns the count and its explicit presence.
+// TotalSize 返回总条数以及是否已计算该值。
 func (result ListResult[T]) TotalSize() (int64, bool) {
 	return result.totalSize, result.hasTotalSize
 }

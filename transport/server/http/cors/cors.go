@@ -8,18 +8,61 @@ import (
 	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 )
 
-// Middleware 创建 CORS 中间件。
-// corsConfig 应已经过 corsv1.CORS.ApplyDefaults()（由业务方在
-// bootstrap.Scan 时自动完成），本函数不再回填默认值。
-// 当 corsConfig 为 nil 或 Enable=false 时返回透传中间件。
-func Middleware(corsConfig *corsv1.CORS) func(http.Handler) http.Handler {
+var (
+	defaultOrigins = []string{"*"}
+	defaultMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	defaultHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+)
+
+type options struct {
+	origins     []string
+	methods     string
+	headers     string
+	exposed     string
+	credentials bool
+	maxAge      string
+}
+
+func effectiveOrigins(config *corsv1.CORS) []string {
+	if !IsEnabled(config) {
+		return nil
+	}
+	if len(config.GetAllowedOrigins()) == 0 {
+		return defaultOrigins
+	}
+	return config.GetAllowedOrigins()
+}
+
+// Middleware 创建 CORS 中间件；有效默认在构造时计算，不在请求中分配。
+func Middleware(config *corsv1.CORS) func(http.Handler) http.Handler {
+	if !IsEnabled(config) {
+		return func(next http.Handler) http.Handler { return next }
+	}
+	methods := config.GetAllowedMethods()
+	if len(methods) == 0 {
+		methods = defaultMethods
+	}
+	headers := config.GetAllowedHeaders()
+	if len(headers) == 0 {
+		headers = defaultHeaders
+	}
+	origins := effectiveOrigins(config)
+	if len(config.GetAllowedOrigins()) != 0 {
+		origins = append([]string(nil), origins...)
+	}
+	policy := options{
+		origins:     origins,
+		methods:     strings.Join(methods, ", "),
+		headers:     strings.Join(headers, ", "),
+		exposed:     strings.Join(config.GetExposedHeaders(), ", "),
+		credentials: config.GetAllowCredentials(),
+	}
+	if d := config.GetMaxAge(); d != nil && d.AsDuration() > 0 {
+		policy.maxAge = fmt.Sprintf("%d", int64(d.AsDuration().Seconds()))
+	}
 	return func(next http.Handler) http.Handler {
-		if corsConfig == nil || !corsConfig.GetEnable() {
-			return next
-		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			origin := r.Header.Get("Origin")
-			setCORSHeaders(w, corsConfig, origin)
+			setCORSHeaders(w, &policy, r.Header.Get("Origin"))
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusNoContent)
 				return
@@ -29,37 +72,36 @@ func Middleware(corsConfig *corsv1.CORS) func(http.Handler) http.Handler {
 	}
 }
 
-// IsEnabled reports whether the supplied CORS configuration is active.
-func IsEnabled(corsConfig *corsv1.CORS) bool {
-	return corsConfig != nil && corsConfig.GetEnable() && len(corsConfig.GetAllowedOrigins()) > 0
+// IsEnabled 报告 CORS 是否由配置显式启用。
+func IsEnabled(config *corsv1.CORS) bool {
+	return config != nil && config.GetEnable()
 }
 
-// GetAllowedOrigins exposes the configured origin list for logging.
-func GetAllowedOrigins(corsConfig *corsv1.CORS) []string {
-	if corsConfig == nil {
+// GetAllowedOrigins 返回与中间件相同的有效来源策略，供日志使用。
+func GetAllowedOrigins(config *corsv1.CORS) []string {
+	if !IsEnabled(config) {
 		return nil
 	}
-	return corsConfig.GetAllowedOrigins()
+	if len(config.GetAllowedOrigins()) == 0 {
+		return append([]string(nil), defaultOrigins...)
+	}
+	return config.GetAllowedOrigins()
 }
 
-func setCORSHeaders(w http.ResponseWriter, c *corsv1.CORS, origin string) {
-	if isOriginAllowed(origin, c.GetAllowedOrigins()) {
+func setCORSHeaders(w http.ResponseWriter, policy *options, origin string) {
+	if isOriginAllowed(origin, policy.origins) {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 	}
-	if methods := c.GetAllowedMethods(); len(methods) > 0 {
-		w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ", "))
+	w.Header().Set("Access-Control-Allow-Methods", policy.methods)
+	w.Header().Set("Access-Control-Allow-Headers", policy.headers)
+	if policy.exposed != "" {
+		w.Header().Set("Access-Control-Expose-Headers", policy.exposed)
 	}
-	if headers := c.GetAllowedHeaders(); len(headers) > 0 {
-		w.Header().Set("Access-Control-Allow-Headers", strings.Join(headers, ", "))
-	}
-	if exposed := c.GetExposedHeaders(); len(exposed) > 0 {
-		w.Header().Set("Access-Control-Expose-Headers", strings.Join(exposed, ", "))
-	}
-	if c.GetAllowCredentials() {
+	if policy.credentials {
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
-	if d := c.GetMaxAge(); d != nil && d.AsDuration() > 0 {
-		w.Header().Set("Access-Control-Max-Age", fmt.Sprintf("%d", int64(d.AsDuration().Seconds())))
+	if policy.maxAge != "" {
+		w.Header().Set("Access-Control-Max-Age", policy.maxAge)
 	}
 }
 
@@ -74,8 +116,7 @@ func isOriginAllowed(origin string, allowedOrigins []string) bool {
 		if after, ok := strings.CutPrefix(allowed, "*."); ok {
 			suffix := after
 			if before, ok := strings.CutSuffix(origin, suffix); ok {
-				parts := strings.Split(before, ".")
-				if len(parts) == 2 {
+				if strings.Count(before, ".") == 1 {
 					return true
 				}
 			}

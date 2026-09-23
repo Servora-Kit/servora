@@ -71,7 +71,7 @@ message User {
 }
 ```
 
-客户端可写的 singular scalar 应使用 explicit presence。这样框架可以区分“未提供”“Set 零值”和 FieldMask 选中但值 absent 的 Clear。
+客户端可写的 singular scalar 应使用 明确记录字段是否已设置。这样框架可以区分“未提供”“Set 零值”和 FieldMask 选中但值 absent 的 Clear。
 
 `protoc-gen-servora-crud` 在扫描资源前校验 `target`，只接受 `go` 或 `ts`。资源 pattern 的 `{variable}` 必须是 ASCII Proto identifier（`[A-Za-z_][A-Za-z0-9_]*`）；同一 pattern 内变量不得重复；同一资源的多个 pattern 也不得包含会生成相同 Go exported identifier 的不同变量，例如 `foo_bar` 与 `fooBar`。违反这些约束会在生成阶段返回包含资源 full name、pattern 或冲突变量的确定性诊断。
 
@@ -191,7 +191,7 @@ if err != nil {
 
 Update 规则：
 
-- 省略 mask 时，根据 explicit presence 生成隐式 mask；普通无 presence 标量的默认值不表示更新意图。
+- 省略 mask 时，根据 明确记录字段是否已设置 生成隐式 mask；普通无 字段设置状态 标量的默认值不表示更新意图。
 - 显式 mask 使用 Proto `snake_case` 路径；重复路径会规范化，祖先/后代重叠、未知路径和非法元素遍历会被拒绝。
 - `*` 只能单独出现，并展开为全部可写 leaf。
 - mask 命中 present 值表示 Set；命中 optional/message absent 表示 Clear；repeated/map 采用 Replace，空集合表示 Replace(empty)。
@@ -306,7 +306,7 @@ curl --get 'http://127.0.0.1:28080/v1/tenants/acme/users' \
 - 默认 codec 是 deterministic Proto binary + unpadded Base64URL，未签名。需要完整性或保密性时，通过 `PageTokenCodec` 替换；不要让客户端依赖内部 payload。
 - Timestamp cursor 同时保存 UTC instant 与原始整分钟时区 offset；offset 只用于重建 SQL keyset 参数，避免 SQLite 文本时间在 Proto UTC 归一化后改变续页比较值。非法或错配 offset 会在数据库访问前返回 `INVALID_PAGE_TOKEN`。
 
-`include_total=true` 才执行 Count。`optional int64 total_size` 用 presence 区分“未计算”和“已计算且为 0”。Count 必须复用相同 collection、业务 scope 与 filter，但不应用 order、cursor、skip 或 page size。
+`include_total=true` 才执行 Count。`optional int64 total_size` 用 字段设置状态 区分“未计算”和“已计算且为 0”。Count 必须复用相同 collection、业务 scope 与 filter，但不应用 order、cursor、skip 或 page size。
 
 ## ResourceMapper：只做读投影
 
@@ -574,7 +574,7 @@ const updateMask = makeUpdateMask(UserUpdateFields, {
 })
 ```
 
-`UserName.parse` 抛出 `ResourceNameError`，`tryParse` 返回 `null`。`makeUpdateMask` 以 own-key presence 判断意图，因此显式 `undefined` 仍会选中字段。
+`UserName.parse` 抛出 `ResourceNameError`，`tryParse` 返回 `null`。`makeUpdateMask` 以 对象自身是否含有该键 判断意图，因此显式 `undefined` 仍会选中字段。
 
 普通 TypeScript string 永远表示 Exact；其中的 `*` 与 `\` 会先做 wildcard 层转义，再做 quoted-string 编码。Prefix/Suffix/Contains 必须使用对应 typed helper；helper 与 `<`、`<=`、`>`、`>=`、`:` 组合时 `buildFilter` 会本地抛出 `RangeError`。三个 helper 都接受空字符串并统一输出 `"*"`。`rawFilterValue` 是有意绕过 typed helper 的原样出口，不重复实现服务端 parser；调用方负责 raw text 的语法意图，服务端仍执行权威字段类型和 operator 校验。
 

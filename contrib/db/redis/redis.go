@@ -13,13 +13,8 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 )
 
-const (
-	DefaultDialTimeout  = 5 * time.Second
-	DefaultReadTimeout  = 3 * time.Second
-	DefaultWriteTimeout = 3 * time.Second
-)
-
 type Config struct {
+	Network      string
 	Addr         string
 	Username     string
 	Password     string
@@ -34,30 +29,19 @@ func configFromProto(cfg *redispb.Redis) (*Config, error) {
 	if cfg == nil {
 		return nil, nil
 	}
+	if err := cfg.Apply(); err != nil {
+		return nil, fmt.Errorf("redis: config: %w", err)
+	}
 
 	config := &Config{
-		Addr:     cfg.GetAddr(),
-		Username: cfg.GetUserName(),
-		Password: cfg.GetPassword(),
-		DB:       int(cfg.GetDb()),
-	}
-
-	if cfg.GetDialTimeout() != nil {
-		config.DialTimeout = cfg.GetDialTimeout().AsDuration()
-	} else {
-		config.DialTimeout = DefaultDialTimeout
-	}
-
-	if cfg.GetReadTimeout() != nil {
-		config.ReadTimeout = cfg.GetReadTimeout().AsDuration()
-	} else {
-		config.ReadTimeout = DefaultReadTimeout
-	}
-
-	if cfg.GetWriteTimeout() != nil {
-		config.WriteTimeout = cfg.GetWriteTimeout().AsDuration()
-	} else {
-		config.WriteTimeout = DefaultWriteTimeout
+		Addr:         cfg.GetAddr(),
+		Network:      cfg.GetNetwork(),
+		Username:     cfg.GetUserName(),
+		Password:     cfg.GetPassword(),
+		DB:           int(cfg.GetDb()),
+		DialTimeout:  cfg.GetDialTimeout().AsDuration(),
+		ReadTimeout:  cfg.GetReadTimeout().AsDuration(),
+		WriteTimeout: cfg.GetWriteTimeout().AsDuration(),
 	}
 
 	var serverName string
@@ -107,26 +91,15 @@ func newClient(cfg *Config) (*goredis.Client, func(), error) {
 }
 
 func newRedisOptions(cfg *Config) *goredis.Options {
-	dialTimeout := cfg.DialTimeout
-	if dialTimeout == 0 {
-		dialTimeout = DefaultDialTimeout
-	}
-	readTimeout := cfg.ReadTimeout
-	if readTimeout == 0 {
-		readTimeout = DefaultReadTimeout
-	}
-	writeTimeout := cfg.WriteTimeout
-	if writeTimeout == 0 {
-		writeTimeout = DefaultWriteTimeout
-	}
 	return &goredis.Options{
+		Network:      cfg.Network,
 		Addr:         cfg.Addr,
 		Username:     cfg.Username,
 		Password:     cfg.Password,
 		DB:           cfg.DB,
-		DialTimeout:  dialTimeout,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
+		DialTimeout:  cfg.DialTimeout,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
 		TLSConfig:    cfg.TLSConfig,
 	}
 }

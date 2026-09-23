@@ -9,18 +9,15 @@ import "servora/security/tls/v1/config.proto";
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1;redispb";
 
 message Redis {
-  option (servora.conf.v1.section) = {
-    key: "redis"
-    optional: true
-  };
+  option (servora.conf.v1.section) = true;
 
   string network = 1;
   string addr = 2;
   string user_name = 3;
   string password = 4;
   int32 db = 5;
-  google.protobuf.Duration dial_timeout = 6;
-  google.protobuf.Duration read_timeout = 7;
-  google.protobuf.Duration write_timeout = 8;
+  google.protobuf.Duration dial_timeout = 6 [(servora.conf.v1.field) = {default: "5s"}];
+  google.protobuf.Duration read_timeout = 7 [(servora.conf.v1.field) = {default: "3s"}];
+  google.protobuf.Duration write_timeout = 8 [(servora.conf.v1.field) = {default: "3s"}];
   servora.security.tls.v1.TLS tls = 9;
 }

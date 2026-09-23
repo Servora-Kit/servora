@@ -1,10 +1,13 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	kconfig "github.com/go-kratos/kratos/v3/config"
 )
 
 func TestLoadBootstrap(t *testing.T) {
@@ -88,8 +91,8 @@ func TestLoadBootstrap_RequiredFieldMissing(t *testing.T) {
 	if err == nil {
 		t.Fatal("LoadBootstrap should fail when server.http.listen.addr is missing")
 	}
-	if !strings.Contains(err.Error(), "addr is required") {
-		t.Fatalf("error should mention addr, got: %v", err)
+	if !strings.Contains(err.Error(), "addr") {
+		t.Fatalf("error should identify addr, got: %v", err)
 	}
 }
 
@@ -106,7 +109,45 @@ func TestLoadBootstrap_NoServerSection(t *testing.T) {
 	}
 	defer func() { _ = cfg.Close() }()
 
-	if got := bc.GetServer().GetHttp().GetListen().GetNetwork(); got != "tcp" {
-		t.Fatalf("network = %q, want %q (default after ApplyDefaults)", got, "tcp")
+	if bc.GetServer() != nil {
+		t.Fatalf("missing server section unexpectedly constructed: %v", bc.GetServer())
+	}
+}
+
+type recordingConfig struct {
+	kconfig.Config
+	close func() error
+}
+
+func (c recordingConfig) Close() error { return c.close() }
+
+type recordingSource struct {
+	kconfig.Source
+	close func() error
+}
+
+func (s recordingSource) Close() error { return s.close() }
+
+func TestLoadedConfigClosesWatcherBeforeRemoteSourceOnce(t *testing.T) {
+	var order []string
+	watchErr, sourceErr := errors.New("watcher close"), errors.New("source close")
+	c := &loadedConfig{
+		Config: recordingConfig{close: func() error {
+			order = append(order, "watcher")
+			return watchErr
+		}},
+		source: recordingSource{close: func() error {
+			order = append(order, "source")
+			return sourceErr
+		}},
+	}
+	for range 2 {
+		err := c.Close()
+		if !errors.Is(err, watchErr) || !errors.Is(err, sourceErr) {
+			t.Fatalf("Close error = %v, want both errors", err)
+		}
+	}
+	if len(order) != 2 || order[0] != "watcher" || order[1] != "source" {
+		t.Fatalf("Close order = %v, want watcher then source once", order)
 	}
 }

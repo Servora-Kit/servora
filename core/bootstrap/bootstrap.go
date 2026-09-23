@@ -94,7 +94,11 @@ func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
 	}
 	serviceID := fmt.Sprintf("%s-%s", bc.App.Name, hostname)
 
-	sl, logCloser := slogger.New(bc, slogger.WithLogHandlerFunc(o.logHandlerFunc))
+	sl, logCloser, err := slogger.New(bc, slogger.WithLogHandlerFunc(o.logHandlerFunc))
+	if err != nil {
+		_ = c.Close()
+		return nil, fmt.Errorf("bootstrap: logger: %w", err)
+	}
 	appLogger := sl.With("service", bc.App.Name)
 	klog.SetDefault(appLogger)
 
