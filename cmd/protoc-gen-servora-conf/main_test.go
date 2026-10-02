@@ -150,7 +150,7 @@ func TestGeneratedConfigurationBehavior(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	files["go.mod"] = "module example.com/fixture\n\ngo 1.27.0\n\nrequire github.com/Servora-Kit/servora v0.0.0\nreplace github.com/Servora-Kit/servora => " + repoRoot + "\n"
+	files["go.mod"] = "module example.com/fixture\n\ngo 1.27.1\n\nrequire github.com/Servora-Kit/servora v0.0.0\nreplace github.com/Servora-Kit/servora => " + repoRoot + "\n"
 	files["fixture_test.go"] = `package fixture
 import (
  "strings"
@@ -333,7 +333,7 @@ func TestImportedValueRulesWithDirectorySplit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	files["go.mod"] = "module example.com/fixture\n\ngo 1.27.0\n\nrequire github.com/Servora-Kit/servora v0.0.0\nreplace github.com/Servora-Kit/servora => " + repoRoot + "\n"
+	files["go.mod"] = "module example.com/fixture\n\ngo 1.27.1\n\nrequire github.com/Servora-Kit/servora v0.0.0\nreplace github.com/Servora-Kit/servora => " + repoRoot + "\n"
 	files["fixture_test.go"] = `package fixture
 import (
  "errors"
