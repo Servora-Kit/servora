@@ -19,12 +19,6 @@ type ContractRow struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uint32 `json:"id,omitempty"`
-	// DeleteTime holds the value of the "delete_time" field.
-	DeleteTime *time.Time `json:"delete_time,omitempty"`
-	// DeletedBy holds the value of the "deleted_by" field.
-	DeletedBy *string `json:"deleted_by,omitempty"`
-	// PurgeTime holds the value of the "purge_time" field.
-	PurgeTime *time.Time `json:"purge_time,omitempty"`
 	// TextValue holds the value of the "text_value" field.
 	TextValue string `json:"text_value,omitempty"`
 	// UniqueText holds the value of the "unique_text" field.
@@ -39,6 +33,8 @@ type ContractRow struct {
 	TimestampValue time.Time `json:"timestamp_value,omitempty"`
 	// UpdatedTimestamp holds the value of the "updated_timestamp" field.
 	UpdatedTimestamp time.Time `json:"updated_timestamp,omitempty"`
+	// DeleteTime holds the value of the "delete_time" field.
+	DeleteTime *time.Time `json:"delete_time,omitempty"`
 	// DurationValue holds the value of the "duration_value" field.
 	DurationValue time.Duration `json:"duration_value,omitempty"`
 	// EnumNumber holds the value of the "enum_number" field.
@@ -55,9 +51,9 @@ func (*ContractRow) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case contractrow.FieldID, contractrow.FieldNumericValue, contractrow.FieldDurationValue, contractrow.FieldEnumNumber:
 			values[i] = new(sql.NullInt64)
-		case contractrow.FieldDeletedBy, contractrow.FieldTextValue, contractrow.FieldUniqueText, contractrow.FieldNullableText:
+		case contractrow.FieldTextValue, contractrow.FieldUniqueText, contractrow.FieldNullableText:
 			values[i] = new(sql.NullString)
-		case contractrow.FieldDeleteTime, contractrow.FieldPurgeTime, contractrow.FieldTimestampValue, contractrow.FieldUpdatedTimestamp:
+		case contractrow.FieldTimestampValue, contractrow.FieldUpdatedTimestamp, contractrow.FieldDeleteTime:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -80,27 +76,6 @@ func (_m *ContractRow) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = uint32(value.Int64)
-		case contractrow.FieldDeleteTime:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field delete_time", values[i])
-			} else if value.Valid {
-				_m.DeleteTime = new(time.Time)
-				*_m.DeleteTime = value.Time
-			}
-		case contractrow.FieldDeletedBy:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field deleted_by", values[i])
-			} else if value.Valid {
-				_m.DeletedBy = new(string)
-				*_m.DeletedBy = value.String
-			}
-		case contractrow.FieldPurgeTime:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field purge_time", values[i])
-			} else if value.Valid {
-				_m.PurgeTime = new(time.Time)
-				*_m.PurgeTime = value.Time
-			}
 		case contractrow.FieldTextValue:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field text_value", values[i])
@@ -145,6 +120,13 @@ func (_m *ContractRow) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_timestamp", values[i])
 			} else if value.Valid {
 				_m.UpdatedTimestamp = value.Time
+			}
+		case contractrow.FieldDeleteTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field delete_time", values[i])
+			} else if value.Valid {
+				_m.DeleteTime = new(time.Time)
+				*_m.DeleteTime = value.Time
 			}
 		case contractrow.FieldDurationValue:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -194,21 +176,6 @@ func (_m *ContractRow) String() string {
 	var builder strings.Builder
 	builder.WriteString("ContractRow(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	if v := _m.DeleteTime; v != nil {
-		builder.WriteString("delete_time=")
-		builder.WriteString(v.Format(time.ANSIC))
-	}
-	builder.WriteString(", ")
-	if v := _m.DeletedBy; v != nil {
-		builder.WriteString("deleted_by=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := _m.PurgeTime; v != nil {
-		builder.WriteString("purge_time=")
-		builder.WriteString(v.Format(time.ANSIC))
-	}
-	builder.WriteString(", ")
 	builder.WriteString("text_value=")
 	builder.WriteString(_m.TextValue)
 	builder.WriteString(", ")
@@ -231,6 +198,11 @@ func (_m *ContractRow) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_timestamp=")
 	builder.WriteString(_m.UpdatedTimestamp.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.DeleteTime; v != nil {
+		builder.WriteString("delete_time=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("duration_value=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DurationValue))

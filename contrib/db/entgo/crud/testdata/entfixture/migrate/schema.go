@@ -11,9 +11,6 @@ var (
 	// ContractRowsColumns holds the columns for the "contract_rows" table.
 	ContractRowsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint32, Increment: true},
-		{Name: "delete_time", Type: field.TypeTime, Nullable: true},
-		{Name: "deleted_by", Type: field.TypeString, Nullable: true},
-		{Name: "purge_time", Type: field.TypeTime, Nullable: true},
 		{Name: "text_value", Type: field.TypeString, Default: ""},
 		{Name: "unique_text", Type: field.TypeString},
 		{Name: "profile", Type: field.TypeJSON},
@@ -21,6 +18,7 @@ var (
 		{Name: "nullable_text", Type: field.TypeString, Nullable: true},
 		{Name: "timestamp_value", Type: field.TypeTime},
 		{Name: "updated_timestamp", Type: field.TypeTime},
+		{Name: "delete_time", Type: field.TypeTime, Nullable: true},
 		{Name: "duration_value", Type: field.TypeInt64, Default: 0},
 		{Name: "enum_number", Type: field.TypeInt32, Default: 0},
 	}
@@ -31,19 +29,9 @@ var (
 		PrimaryKey: []*schema.Column{ContractRowsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "contractrow_delete_time",
-				Unique:  false,
-				Columns: []*schema.Column{ContractRowsColumns[1]},
-			},
-			{
-				Name:    "contractrow_purge_time",
-				Unique:  false,
-				Columns: []*schema.Column{ContractRowsColumns[3]},
-			},
-			{
 				Name:    "contractrow_unique_text",
 				Unique:  true,
-				Columns: []*schema.Column{ContractRowsColumns[5]},
+				Columns: []*schema.Column{ContractRowsColumns[2]},
 			},
 		},
 	}

@@ -5,7 +5,6 @@ package contractrow
 import (
 	"time"
 
-	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	crudpb "github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1"
 )
@@ -15,12 +14,6 @@ const (
 	Label = "contract_row"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldDeleteTime holds the string denoting the delete_time field in the database.
-	FieldDeleteTime = "delete_time"
-	// FieldDeletedBy holds the string denoting the deleted_by field in the database.
-	FieldDeletedBy = "deleted_by"
-	// FieldPurgeTime holds the string denoting the purge_time field in the database.
-	FieldPurgeTime = "purge_time"
 	// FieldTextValue holds the string denoting the text_value field in the database.
 	FieldTextValue = "text_value"
 	// FieldUniqueText holds the string denoting the unique_text field in the database.
@@ -35,6 +28,8 @@ const (
 	FieldTimestampValue = "timestamp_value"
 	// FieldUpdatedTimestamp holds the string denoting the updated_timestamp field in the database.
 	FieldUpdatedTimestamp = "updated_timestamp"
+	// FieldDeleteTime holds the string denoting the delete_time field in the database.
+	FieldDeleteTime = "delete_time"
 	// FieldDurationValue holds the string denoting the duration_value field in the database.
 	FieldDurationValue = "duration_value"
 	// FieldEnumNumber holds the string denoting the enum_number field in the database.
@@ -46,9 +41,6 @@ const (
 // Columns holds all SQL columns for contractrow fields.
 var Columns = []string{
 	FieldID,
-	FieldDeleteTime,
-	FieldDeletedBy,
-	FieldPurgeTime,
 	FieldTextValue,
 	FieldUniqueText,
 	FieldProfile,
@@ -56,6 +48,7 @@ var Columns = []string{
 	FieldNullableText,
 	FieldTimestampValue,
 	FieldUpdatedTimestamp,
+	FieldDeleteTime,
 	FieldDurationValue,
 	FieldEnumNumber,
 }
@@ -70,14 +63,7 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// Note that the variables below are initialized by the runtime
-// package on the initialization of the application. Therefore,
-// it should be imported in the main as follows:
-//
-//	import _ "github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture/runtime"
 var (
-	Hooks        [1]ent.Hook
-	Interceptors [1]ent.Interceptor
 	// DefaultTextValue holds the default value on creation for the "text_value" field.
 	DefaultTextValue string
 	// DefaultTimestampValue holds the default value on creation for the "timestamp_value" field.
@@ -98,21 +84,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByDeleteTime orders the results by the delete_time field.
-func ByDeleteTime(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDeleteTime, opts...).ToFunc()
-}
-
-// ByDeletedBy orders the results by the deleted_by field.
-func ByDeletedBy(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDeletedBy, opts...).ToFunc()
-}
-
-// ByPurgeTime orders the results by the purge_time field.
-func ByPurgeTime(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPurgeTime, opts...).ToFunc()
 }
 
 // ByTextValue orders the results by the text_value field.
@@ -143,6 +114,11 @@ func ByTimestampValue(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedTimestamp orders the results by the updated_timestamp field.
 func ByUpdatedTimestamp(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedTimestamp, opts...).ToFunc()
+}
+
+// ByDeleteTime orders the results by the delete_time field.
+func ByDeleteTime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeleteTime, opts...).ToFunc()
 }
 
 // ByDurationValue orders the results by the duration_value field.

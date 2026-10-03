@@ -21,48 +21,6 @@ type ContractRowCreate struct {
 	hooks    []Hook
 }
 
-// SetDeleteTime sets the "delete_time" field.
-func (_c *ContractRowCreate) SetDeleteTime(v time.Time) *ContractRowCreate {
-	_c.mutation.SetDeleteTime(v)
-	return _c
-}
-
-// SetNillableDeleteTime sets the "delete_time" field if the given value is not nil.
-func (_c *ContractRowCreate) SetNillableDeleteTime(v *time.Time) *ContractRowCreate {
-	if v != nil {
-		_c.SetDeleteTime(*v)
-	}
-	return _c
-}
-
-// SetDeletedBy sets the "deleted_by" field.
-func (_c *ContractRowCreate) SetDeletedBy(v string) *ContractRowCreate {
-	_c.mutation.SetDeletedBy(v)
-	return _c
-}
-
-// SetNillableDeletedBy sets the "deleted_by" field if the given value is not nil.
-func (_c *ContractRowCreate) SetNillableDeletedBy(v *string) *ContractRowCreate {
-	if v != nil {
-		_c.SetDeletedBy(*v)
-	}
-	return _c
-}
-
-// SetPurgeTime sets the "purge_time" field.
-func (_c *ContractRowCreate) SetPurgeTime(v time.Time) *ContractRowCreate {
-	_c.mutation.SetPurgeTime(v)
-	return _c
-}
-
-// SetNillablePurgeTime sets the "purge_time" field if the given value is not nil.
-func (_c *ContractRowCreate) SetNillablePurgeTime(v *time.Time) *ContractRowCreate {
-	if v != nil {
-		_c.SetPurgeTime(*v)
-	}
-	return _c
-}
-
 // SetTextValue sets the "text_value" field.
 func (_c *ContractRowCreate) SetTextValue(v string) *ContractRowCreate {
 	_c.mutation.SetTextValue(v)
@@ -137,6 +95,20 @@ func (_c *ContractRowCreate) SetNillableUpdatedTimestamp(v *time.Time) *Contract
 	return _c
 }
 
+// SetDeleteTime sets the "delete_time" field.
+func (_c *ContractRowCreate) SetDeleteTime(v time.Time) *ContractRowCreate {
+	_c.mutation.SetDeleteTime(v)
+	return _c
+}
+
+// SetNillableDeleteTime sets the "delete_time" field if the given value is not nil.
+func (_c *ContractRowCreate) SetNillableDeleteTime(v *time.Time) *ContractRowCreate {
+	if v != nil {
+		_c.SetDeleteTime(*v)
+	}
+	return _c
+}
+
 // SetDurationValue sets the "duration_value" field.
 func (_c *ContractRowCreate) SetDurationValue(v time.Duration) *ContractRowCreate {
 	_c.mutation.SetDurationValue(v)
@@ -178,9 +150,7 @@ func (_c *ContractRowCreate) Mutation() *ContractRowMutation {
 
 // Save creates the ContractRow in the database.
 func (_c *ContractRowCreate) Save(ctx context.Context) (*ContractRow, error) {
-	if err := _c.defaults(); err != nil {
-		return nil, err
-	}
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -207,22 +177,16 @@ func (_c *ContractRowCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ContractRowCreate) defaults() error {
+func (_c *ContractRowCreate) defaults() {
 	if _, ok := _c.mutation.TextValue(); !ok {
 		v := contractrow.DefaultTextValue
 		_c.mutation.SetTextValue(v)
 	}
 	if _, ok := _c.mutation.TimestampValue(); !ok {
-		if contractrow.DefaultTimestampValue == nil {
-			return fmt.Errorf("entfixture: uninitialized contractrow.DefaultTimestampValue (forgotten import entfixture/runtime?)")
-		}
 		v := contractrow.DefaultTimestampValue()
 		_c.mutation.SetTimestampValue(v)
 	}
 	if _, ok := _c.mutation.UpdatedTimestamp(); !ok {
-		if contractrow.DefaultUpdatedTimestamp == nil {
-			return fmt.Errorf("entfixture: uninitialized contractrow.DefaultUpdatedTimestamp (forgotten import entfixture/runtime?)")
-		}
 		v := contractrow.DefaultUpdatedTimestamp()
 		_c.mutation.SetUpdatedTimestamp(v)
 	}
@@ -234,7 +198,6 @@ func (_c *ContractRowCreate) defaults() error {
 		v := contractrow.DefaultEnumNumber
 		_c.mutation.SetEnumNumber(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -295,18 +258,6 @@ func (_c *ContractRowCreate) createSpec() (*ContractRow, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.DeleteTime(); ok {
-		_spec.SetField(contractrow.FieldDeleteTime, field.TypeTime, value)
-		_node.DeleteTime = &value
-	}
-	if value, ok := _c.mutation.DeletedBy(); ok {
-		_spec.SetField(contractrow.FieldDeletedBy, field.TypeString, value)
-		_node.DeletedBy = &value
-	}
-	if value, ok := _c.mutation.PurgeTime(); ok {
-		_spec.SetField(contractrow.FieldPurgeTime, field.TypeTime, value)
-		_node.PurgeTime = &value
-	}
 	if value, ok := _c.mutation.TextValue(); ok {
 		_spec.SetField(contractrow.FieldTextValue, field.TypeString, value)
 		_node.TextValue = value
@@ -334,6 +285,10 @@ func (_c *ContractRowCreate) createSpec() (*ContractRow, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedTimestamp(); ok {
 		_spec.SetField(contractrow.FieldUpdatedTimestamp, field.TypeTime, value)
 		_node.UpdatedTimestamp = value
+	}
+	if value, ok := _c.mutation.DeleteTime(); ok {
+		_spec.SetField(contractrow.FieldDeleteTime, field.TypeTime, value)
+		_node.DeleteTime = &value
 	}
 	if value, ok := _c.mutation.DurationValue(); ok {
 		_spec.SetField(contractrow.FieldDurationValue, field.TypeInt64, value)

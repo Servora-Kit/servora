@@ -20,7 +20,6 @@ import (
 	"github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture"
 	entrow "github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture/contractrow"
 	_ "github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture/runtime"
-	entgomixin "github.com/Servora-Kit/servora/contrib/db/entgo/mixin"
 	corecrud "github.com/Servora-Kit/servora/core/crud"
 	crudmapper "github.com/Servora-Kit/servora/core/crud/mapper"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -65,9 +64,9 @@ func TestSQLiteLiveContract(t *testing.T) {
 		rows := resetContractRows(t, client)
 		testWriteMaskClear(t, client, rows[0])
 	})
-	t.Run("soft delete", func(t *testing.T) {
+	t.Run("caller query scope", func(t *testing.T) {
 		rows := resetContractRows(t, client)
-		testSoftDelete(t, client, fields, rows[0])
+		testScopedQuery(t, client, fields, rows)
 	})
 	t.Run("native error chain", func(t *testing.T) {
 		resetContractRows(t, client)
@@ -106,9 +105,9 @@ func TestPostgresLiveContract(t *testing.T) {
 		rows := resetContractRows(t, client)
 		testWriteMaskClear(t, client, rows[0])
 	})
-	t.Run("soft delete", func(t *testing.T) {
+	t.Run("caller query scope", func(t *testing.T) {
 		rows := resetContractRows(t, client)
-		testSoftDelete(t, client, fields, rows[0])
+		testScopedQuery(t, client, fields, rows)
 	})
 	t.Run("native error chain", func(t *testing.T) {
 		resetContractRows(t, client)
@@ -152,7 +151,7 @@ func openLiveFixture(t *testing.T, entDialect, driverName, envName string) *entf
 
 func resetContractRows(t *testing.T, client *entfixture.Client) []*entfixture.ContractRow {
 	t.Helper()
-	ctx := entgomixin.SkipSoftDelete(context.Background())
+	ctx := context.Background()
 	if _, err := client.ContractRow.Delete().Exec(ctx); err != nil {
 		t.Fatalf("clear fixture contract rows: %v", err)
 	}
@@ -342,7 +341,7 @@ func testWildcardStringMatches(
 	fields *crud.ListFields[*entfixture.ContractRow],
 ) {
 	t.Helper()
-	ctx := entgomixin.SkipSoftDelete(context.Background())
+	ctx := context.Background()
 	extras := []struct {
 		id      uint32
 		text    string
@@ -596,37 +595,92 @@ func testWriteMaskClear(t *testing.T, client *entfixture.Client, row *entfixture
 	}
 }
 
-func testSoftDelete(t *testing.T, client *entfixture.Client, fields *crud.ListFields[*entfixture.ContractRow], row *entfixture.ContractRow) {
+func testScopedQuery(t *testing.T, client *entfixture.Client, fields *crud.ListFields[*entfixture.ContractRow], rows []*entfixture.ContractRow) {
 	t.Helper()
-	ctx := entgomixin.WithDeletedBy(context.Background(), "principals/tester")
-	if err := client.ContractRow.DeleteOneID(row.ID).Exec(ctx); err != nil {
-		t.Fatalf("soft delete contract row: %v", err)
+	ctx := context.Background()
+	if _, err := client.ContractRow.UpdateOneID(rows[2].ID).SetDeleteTime(liveBaseTime.Add(5 * time.Second)).Save(ctx); err != nil {
+		t.Fatalf("set fixture tombstone: %v", err)
 	}
-	if exists, err := client.ContractRow.Query().Where(entrow.IDEQ(row.ID)).Exist(context.Background()); err != nil || exists {
-		t.Fatalf("default query after delete = (%v, %v), want (false, nil)", exists, err)
+
+	// The caller owns both predicates; the adapter preserves them in count and page clones.
+	builder := client.ContractRow.Query().Where(entrow.DeleteTimeIsNil(), entrow.NumericValueGTE(2))
+	scope := []byte("active:numeric_value>=2")
+	listScoped := func(t *testing.T, input corecrud.ListInput) corecrud.ListResult[*entfixture.ContractRow] {
+		t.Helper()
+		result, err := crud.List(ctx, builder, prepareLiveQuery(t, input), fields, scope)
+		if err != nil {
+			t.Fatalf("List caller-scoped query (%+v): %v", input, err)
+		}
+		return result
 	}
-	bypass := entgomixin.SkipSoftDelete(context.Background())
-	tombstone, err := client.ContractRow.Query().Where(entrow.IDEQ(row.ID)).Only(bypass)
-	if err != nil {
-		t.Fatalf("read tombstone with bypass: %v", err)
+
+	first := listScoped(t, corecrud.ListInput{
+		Collection: "tenants/acme/users", PageSize: 1, IncludeTotal: true,
+	})
+	if got := ids(first.Items()); !slices.Equal(got, []uint32{40}) || first.NextPageToken() == "" {
+		t.Fatalf("scoped first page = %v token=%q, want [40] with continuation", got, first.NextPageToken())
 	}
-	if tombstone.DeleteTime == nil || tombstone.DeletedBy == nil || *tombstone.DeletedBy != "principals/tester" {
-		t.Fatalf("tombstone fields = delete_time:%v deleted_by:%v", tombstone.DeleteTime, tombstone.DeletedBy)
+	if total, present := first.TotalSize(); !present || total != 2 {
+		t.Fatalf("scoped first total = (%d, %v), want (2, true)", total, present)
 	}
-	result, err := crud.List(bypass, client.ContractRow.Query(), prepareLiveQuery(t, corecrud.ListInput{
+	second := listScoped(t, corecrud.ListInput{
+		Collection: "tenants/acme/users", PageSize: 1, PageToken: first.NextPageToken(), IncludeTotal: true,
+	})
+	if got := ids(second.Items()); !slices.Equal(got, []uint32{20}) || second.NextPageToken() != "" {
+		t.Fatalf("scoped second page = %v token=%q, want [20] without continuation", got, second.NextPageToken())
+	}
+	if total, present := second.TotalSize(); !present || total != 2 {
+		t.Fatalf("scoped continuation total = (%d, %v), want (2, true)", total, present)
+	}
+	skipped := listScoped(t, corecrud.ListInput{
+		Collection: "tenants/acme/users", PageSize: 1, Skip: 1, IncludeTotal: true,
+	})
+	if got := ids(skipped.Items()); !slices.Equal(got, []uint32{20}) || skipped.NextPageToken() != "" {
+		t.Fatalf("scoped skipped page = %v token=%q, want [20] without continuation", got, skipped.NextPageToken())
+	}
+	if total, present := skipped.TotalSize(); !present || total != 2 {
+		t.Fatalf("scoped skipped total = (%d, %v), want (2, true)", total, present)
+	}
+
+	for _, test := range []struct {
+		name   string
+		filter string
+		want   []uint32
+	}{
+		{name: "filter within scope", filter: `tenant_plan = "team"`, want: []uint32{20}},
+		{name: "filter cannot expose tombstone", filter: `tenant_plan = "business"`},
+		{name: "filter cannot widen numeric scope", filter: `tenant_plan = "free"`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			result := listScoped(t, corecrud.ListInput{
+				Collection: "tenants/acme/users", Filter: test.filter, IncludeTotal: true,
+			})
+			if got := ids(result.Items()); !slices.Equal(got, test.want) || result.NextPageToken() != "" {
+				t.Fatalf("scoped filtered page = %v token=%q, want %v without continuation", got, result.NextPageToken(), test.want)
+			}
+			if total, present := result.TotalSize(); !present || total != int64(len(test.want)) {
+				t.Fatalf("scoped filtered total = (%d, %v), want (%d, true)", total, present, len(test.want))
+			}
+		})
+	}
+	if count, err := builder.Count(ctx); err != nil || count != 2 {
+		t.Fatalf("caller builder count after lists = (%d, %v), want (2, nil)", count, err)
+	}
+
+	unscoped := listLive(t, client, fields, corecrud.ListInput{
 		Collection: "tenants/acme/users", IncludeTotal: true,
-	}), fields, nil)
-	if err != nil {
-		t.Fatalf("List tombstones with bypass: %v", err)
+	}, nil)
+	if total, present := unscoped.TotalSize(); !present || total != int64(len(rows)) {
+		t.Fatalf("unscoped total = (%d, %v), want (%d, true)", total, present, len(rows))
 	}
-	if total, present := result.TotalSize(); !present || total != 4 {
-		t.Fatalf("bypass total = (%d, %v), want (4, true)", total, present)
+	tombstones := listLive(t, client, fields, corecrud.ListInput{
+		Collection: "tenants/acme/users", Filter: "delete_time != null", IncludeTotal: true,
+	}, nil)
+	if got := ids(tombstones.Items()); !slices.Equal(got, []uint32{rows[2].ID}) {
+		t.Fatalf("unscoped tombstone IDs = %v, want [%d]", got, rows[2].ID)
 	}
-	if _, err := client.ContractRow.UpdateOneID(row.ID).ClearDeleteTime().ClearDeletedBy().Save(bypass); err != nil {
-		t.Fatalf("undelete contract row: %v", err)
-	}
-	if exists, err := client.ContractRow.Query().Where(entrow.IDEQ(row.ID)).Exist(context.Background()); err != nil || !exists {
-		t.Fatalf("default query after undelete = (%v, %v), want (true, nil)", exists, err)
+	if total, present := tombstones.TotalSize(); !present || total != 1 {
+		t.Fatalf("unscoped tombstone total = (%d, %v), want (1, true)", total, present)
 	}
 }
 

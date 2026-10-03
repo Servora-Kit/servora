@@ -306,14 +306,12 @@ func (c *ContractRowClient) GetX(ctx context.Context, id uint32) *ContractRow {
 
 // Hooks returns the client hooks.
 func (c *ContractRowClient) Hooks() []Hook {
-	hooks := c.hooks.ContractRow
-	return append(hooks[:len(hooks):len(hooks)], contractrow.Hooks[:]...)
+	return c.hooks.ContractRow
 }
 
 // Interceptors returns the client interceptors.
 func (c *ContractRowClient) Interceptors() []Interceptor {
-	inters := c.inters.ContractRow
-	return append(inters[:len(inters):len(inters)], contractrow.Interceptors[:]...)
+	return c.inters.ContractRow
 }
 
 func (c *ContractRowClient) mutate(ctx context.Context, m *ContractRowMutation) (Value, error) {

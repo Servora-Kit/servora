@@ -30,66 +30,6 @@ func (_u *ContractRowUpdate) Where(ps ...predicate.ContractRow) *ContractRowUpda
 	return _u
 }
 
-// SetDeleteTime sets the "delete_time" field.
-func (_u *ContractRowUpdate) SetDeleteTime(v time.Time) *ContractRowUpdate {
-	_u.mutation.SetDeleteTime(v)
-	return _u
-}
-
-// SetNillableDeleteTime sets the "delete_time" field if the given value is not nil.
-func (_u *ContractRowUpdate) SetNillableDeleteTime(v *time.Time) *ContractRowUpdate {
-	if v != nil {
-		_u.SetDeleteTime(*v)
-	}
-	return _u
-}
-
-// ClearDeleteTime clears the value of the "delete_time" field.
-func (_u *ContractRowUpdate) ClearDeleteTime() *ContractRowUpdate {
-	_u.mutation.ClearDeleteTime()
-	return _u
-}
-
-// SetDeletedBy sets the "deleted_by" field.
-func (_u *ContractRowUpdate) SetDeletedBy(v string) *ContractRowUpdate {
-	_u.mutation.SetDeletedBy(v)
-	return _u
-}
-
-// SetNillableDeletedBy sets the "deleted_by" field if the given value is not nil.
-func (_u *ContractRowUpdate) SetNillableDeletedBy(v *string) *ContractRowUpdate {
-	if v != nil {
-		_u.SetDeletedBy(*v)
-	}
-	return _u
-}
-
-// ClearDeletedBy clears the value of the "deleted_by" field.
-func (_u *ContractRowUpdate) ClearDeletedBy() *ContractRowUpdate {
-	_u.mutation.ClearDeletedBy()
-	return _u
-}
-
-// SetPurgeTime sets the "purge_time" field.
-func (_u *ContractRowUpdate) SetPurgeTime(v time.Time) *ContractRowUpdate {
-	_u.mutation.SetPurgeTime(v)
-	return _u
-}
-
-// SetNillablePurgeTime sets the "purge_time" field if the given value is not nil.
-func (_u *ContractRowUpdate) SetNillablePurgeTime(v *time.Time) *ContractRowUpdate {
-	if v != nil {
-		_u.SetPurgeTime(*v)
-	}
-	return _u
-}
-
-// ClearPurgeTime clears the value of the "purge_time" field.
-func (_u *ContractRowUpdate) ClearPurgeTime() *ContractRowUpdate {
-	_u.mutation.ClearPurgeTime()
-	return _u
-}
-
 // SetTextValue sets the "text_value" field.
 func (_u *ContractRowUpdate) SetTextValue(v string) *ContractRowUpdate {
 	_u.mutation.SetTextValue(v)
@@ -171,6 +111,26 @@ func (_u *ContractRowUpdate) SetUpdatedTimestamp(v time.Time) *ContractRowUpdate
 	return _u
 }
 
+// SetDeleteTime sets the "delete_time" field.
+func (_u *ContractRowUpdate) SetDeleteTime(v time.Time) *ContractRowUpdate {
+	_u.mutation.SetDeleteTime(v)
+	return _u
+}
+
+// SetNillableDeleteTime sets the "delete_time" field if the given value is not nil.
+func (_u *ContractRowUpdate) SetNillableDeleteTime(v *time.Time) *ContractRowUpdate {
+	if v != nil {
+		_u.SetDeleteTime(*v)
+	}
+	return _u
+}
+
+// ClearDeleteTime clears the value of the "delete_time" field.
+func (_u *ContractRowUpdate) ClearDeleteTime() *ContractRowUpdate {
+	_u.mutation.ClearDeleteTime()
+	return _u
+}
+
 // SetDurationValue sets the "duration_value" field.
 func (_u *ContractRowUpdate) SetDurationValue(v time.Duration) *ContractRowUpdate {
 	_u.mutation.ResetDurationValue()
@@ -220,9 +180,7 @@ func (_u *ContractRowUpdate) Mutation() *ContractRowMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *ContractRowUpdate) Save(ctx context.Context) (int, error) {
-	if err := _u.defaults(); err != nil {
-		return 0, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -249,15 +207,11 @@ func (_u *ContractRowUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ContractRowUpdate) defaults() error {
+func (_u *ContractRowUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedTimestamp(); !ok {
-		if contractrow.UpdateDefaultUpdatedTimestamp == nil {
-			return fmt.Errorf("entfixture: uninitialized contractrow.UpdateDefaultUpdatedTimestamp (forgotten import entfixture/runtime?)")
-		}
 		v := contractrow.UpdateDefaultUpdatedTimestamp()
 		_u.mutation.SetUpdatedTimestamp(v)
 	}
-	return nil
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
@@ -274,24 +228,6 @@ func (_u *ContractRowUpdate) sqlSave(ctx context.Context) (_node int, err error)
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.DeleteTime(); ok {
-		_spec.SetField(contractrow.FieldDeleteTime, field.TypeTime, value)
-	}
-	if _u.mutation.DeleteTimeCleared() {
-		_spec.ClearField(contractrow.FieldDeleteTime, field.TypeTime)
-	}
-	if value, ok := _u.mutation.DeletedBy(); ok {
-		_spec.SetField(contractrow.FieldDeletedBy, field.TypeString, value)
-	}
-	if _u.mutation.DeletedByCleared() {
-		_spec.ClearField(contractrow.FieldDeletedBy, field.TypeString)
-	}
-	if value, ok := _u.mutation.PurgeTime(); ok {
-		_spec.SetField(contractrow.FieldPurgeTime, field.TypeTime, value)
-	}
-	if _u.mutation.PurgeTimeCleared() {
-		_spec.ClearField(contractrow.FieldPurgeTime, field.TypeTime)
 	}
 	if value, ok := _u.mutation.TextValue(); ok {
 		_spec.SetField(contractrow.FieldTextValue, field.TypeString, value)
@@ -316,6 +252,12 @@ func (_u *ContractRowUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.UpdatedTimestamp(); ok {
 		_spec.SetField(contractrow.FieldUpdatedTimestamp, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.DeleteTime(); ok {
+		_spec.SetField(contractrow.FieldDeleteTime, field.TypeTime, value)
+	}
+	if _u.mutation.DeleteTimeCleared() {
+		_spec.ClearField(contractrow.FieldDeleteTime, field.TypeTime)
 	}
 	if value, ok := _u.mutation.DurationValue(); ok {
 		_spec.SetField(contractrow.FieldDurationValue, field.TypeInt64, value)
@@ -349,66 +291,6 @@ type ContractRowUpdateOne struct {
 	hooks     []Hook
 	mutation  *ContractRowMutation
 	modifiers []func(*sql.UpdateBuilder)
-}
-
-// SetDeleteTime sets the "delete_time" field.
-func (_u *ContractRowUpdateOne) SetDeleteTime(v time.Time) *ContractRowUpdateOne {
-	_u.mutation.SetDeleteTime(v)
-	return _u
-}
-
-// SetNillableDeleteTime sets the "delete_time" field if the given value is not nil.
-func (_u *ContractRowUpdateOne) SetNillableDeleteTime(v *time.Time) *ContractRowUpdateOne {
-	if v != nil {
-		_u.SetDeleteTime(*v)
-	}
-	return _u
-}
-
-// ClearDeleteTime clears the value of the "delete_time" field.
-func (_u *ContractRowUpdateOne) ClearDeleteTime() *ContractRowUpdateOne {
-	_u.mutation.ClearDeleteTime()
-	return _u
-}
-
-// SetDeletedBy sets the "deleted_by" field.
-func (_u *ContractRowUpdateOne) SetDeletedBy(v string) *ContractRowUpdateOne {
-	_u.mutation.SetDeletedBy(v)
-	return _u
-}
-
-// SetNillableDeletedBy sets the "deleted_by" field if the given value is not nil.
-func (_u *ContractRowUpdateOne) SetNillableDeletedBy(v *string) *ContractRowUpdateOne {
-	if v != nil {
-		_u.SetDeletedBy(*v)
-	}
-	return _u
-}
-
-// ClearDeletedBy clears the value of the "deleted_by" field.
-func (_u *ContractRowUpdateOne) ClearDeletedBy() *ContractRowUpdateOne {
-	_u.mutation.ClearDeletedBy()
-	return _u
-}
-
-// SetPurgeTime sets the "purge_time" field.
-func (_u *ContractRowUpdateOne) SetPurgeTime(v time.Time) *ContractRowUpdateOne {
-	_u.mutation.SetPurgeTime(v)
-	return _u
-}
-
-// SetNillablePurgeTime sets the "purge_time" field if the given value is not nil.
-func (_u *ContractRowUpdateOne) SetNillablePurgeTime(v *time.Time) *ContractRowUpdateOne {
-	if v != nil {
-		_u.SetPurgeTime(*v)
-	}
-	return _u
-}
-
-// ClearPurgeTime clears the value of the "purge_time" field.
-func (_u *ContractRowUpdateOne) ClearPurgeTime() *ContractRowUpdateOne {
-	_u.mutation.ClearPurgeTime()
-	return _u
 }
 
 // SetTextValue sets the "text_value" field.
@@ -492,6 +374,26 @@ func (_u *ContractRowUpdateOne) SetUpdatedTimestamp(v time.Time) *ContractRowUpd
 	return _u
 }
 
+// SetDeleteTime sets the "delete_time" field.
+func (_u *ContractRowUpdateOne) SetDeleteTime(v time.Time) *ContractRowUpdateOne {
+	_u.mutation.SetDeleteTime(v)
+	return _u
+}
+
+// SetNillableDeleteTime sets the "delete_time" field if the given value is not nil.
+func (_u *ContractRowUpdateOne) SetNillableDeleteTime(v *time.Time) *ContractRowUpdateOne {
+	if v != nil {
+		_u.SetDeleteTime(*v)
+	}
+	return _u
+}
+
+// ClearDeleteTime clears the value of the "delete_time" field.
+func (_u *ContractRowUpdateOne) ClearDeleteTime() *ContractRowUpdateOne {
+	_u.mutation.ClearDeleteTime()
+	return _u
+}
+
 // SetDurationValue sets the "duration_value" field.
 func (_u *ContractRowUpdateOne) SetDurationValue(v time.Duration) *ContractRowUpdateOne {
 	_u.mutation.ResetDurationValue()
@@ -554,9 +456,7 @@ func (_u *ContractRowUpdateOne) Select(field string, fields ...string) *Contract
 
 // Save executes the query and returns the updated ContractRow entity.
 func (_u *ContractRowUpdateOne) Save(ctx context.Context) (*ContractRow, error) {
-	if err := _u.defaults(); err != nil {
-		return nil, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -583,15 +483,11 @@ func (_u *ContractRowUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ContractRowUpdateOne) defaults() error {
+func (_u *ContractRowUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedTimestamp(); !ok {
-		if contractrow.UpdateDefaultUpdatedTimestamp == nil {
-			return fmt.Errorf("entfixture: uninitialized contractrow.UpdateDefaultUpdatedTimestamp (forgotten import entfixture/runtime?)")
-		}
 		v := contractrow.UpdateDefaultUpdatedTimestamp()
 		_u.mutation.SetUpdatedTimestamp(v)
 	}
-	return nil
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
@@ -626,24 +522,6 @@ func (_u *ContractRowUpdateOne) sqlSave(ctx context.Context) (_node *ContractRow
 			}
 		}
 	}
-	if value, ok := _u.mutation.DeleteTime(); ok {
-		_spec.SetField(contractrow.FieldDeleteTime, field.TypeTime, value)
-	}
-	if _u.mutation.DeleteTimeCleared() {
-		_spec.ClearField(contractrow.FieldDeleteTime, field.TypeTime)
-	}
-	if value, ok := _u.mutation.DeletedBy(); ok {
-		_spec.SetField(contractrow.FieldDeletedBy, field.TypeString, value)
-	}
-	if _u.mutation.DeletedByCleared() {
-		_spec.ClearField(contractrow.FieldDeletedBy, field.TypeString)
-	}
-	if value, ok := _u.mutation.PurgeTime(); ok {
-		_spec.SetField(contractrow.FieldPurgeTime, field.TypeTime, value)
-	}
-	if _u.mutation.PurgeTimeCleared() {
-		_spec.ClearField(contractrow.FieldPurgeTime, field.TypeTime)
-	}
 	if value, ok := _u.mutation.TextValue(); ok {
 		_spec.SetField(contractrow.FieldTextValue, field.TypeString, value)
 	}
@@ -667,6 +545,12 @@ func (_u *ContractRowUpdateOne) sqlSave(ctx context.Context) (_node *ContractRow
 	}
 	if value, ok := _u.mutation.UpdatedTimestamp(); ok {
 		_spec.SetField(contractrow.FieldUpdatedTimestamp, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.DeleteTime(); ok {
+		_spec.SetField(contractrow.FieldDeleteTime, field.TypeTime, value)
+	}
+	if _u.mutation.DeleteTimeCleared() {
+		_spec.ClearField(contractrow.FieldDeleteTime, field.TypeTime)
 	}
 	if value, ok := _u.mutation.DurationValue(); ok {
 		_spec.SetField(contractrow.FieldDurationValue, field.TypeInt64, value)

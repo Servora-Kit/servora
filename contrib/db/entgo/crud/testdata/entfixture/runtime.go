@@ -2,4 +2,40 @@
 
 package entfixture
 
-// The schema-stitching logic is generated in github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture/runtime/runtime.go
+import (
+	"time"
+
+	crudpb "github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1"
+	"github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture/contractrow"
+	"github.com/Servora-Kit/servora/contrib/db/entgo/crud/testdata/entfixture/schema"
+)
+
+// The init function reads all schema descriptors with runtime code
+// (default values, validators, hooks and policies) and stitches it
+// to their package variables.
+func init() {
+	contractrowFields := schema.ContractRow{}.Fields()
+	_ = contractrowFields
+	// contractrowDescTextValue is the schema descriptor for text_value field.
+	contractrowDescTextValue := contractrowFields[1].Descriptor()
+	// contractrow.DefaultTextValue holds the default value on creation for the text_value field.
+	contractrow.DefaultTextValue = contractrowDescTextValue.Default.(string)
+	// contractrowDescTimestampValue is the schema descriptor for timestamp_value field.
+	contractrowDescTimestampValue := contractrowFields[6].Descriptor()
+	// contractrow.DefaultTimestampValue holds the default value on creation for the timestamp_value field.
+	contractrow.DefaultTimestampValue = contractrowDescTimestampValue.Default.(func() time.Time)
+	// contractrowDescUpdatedTimestamp is the schema descriptor for updated_timestamp field.
+	contractrowDescUpdatedTimestamp := contractrowFields[7].Descriptor()
+	// contractrow.DefaultUpdatedTimestamp holds the default value on creation for the updated_timestamp field.
+	contractrow.DefaultUpdatedTimestamp = contractrowDescUpdatedTimestamp.Default.(func() time.Time)
+	// contractrow.UpdateDefaultUpdatedTimestamp holds the default value on update for the updated_timestamp field.
+	contractrow.UpdateDefaultUpdatedTimestamp = contractrowDescUpdatedTimestamp.UpdateDefault.(func() time.Time)
+	// contractrowDescDurationValue is the schema descriptor for duration_value field.
+	contractrowDescDurationValue := contractrowFields[9].Descriptor()
+	// contractrow.DefaultDurationValue holds the default value on creation for the duration_value field.
+	contractrow.DefaultDurationValue = time.Duration(contractrowDescDurationValue.Default.(int64))
+	// contractrowDescEnumNumber is the schema descriptor for enum_number field.
+	contractrowDescEnumNumber := contractrowFields[10].Descriptor()
+	// contractrow.DefaultEnumNumber holds the default value on creation for the enum_number field.
+	contractrow.DefaultEnumNumber = crudpb.CrudErrorReason(contractrowDescEnumNumber.Default.(int32))
+}

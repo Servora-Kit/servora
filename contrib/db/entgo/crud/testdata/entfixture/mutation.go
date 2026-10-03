@@ -34,9 +34,6 @@ type ContractRowMutation struct {
 	op                Op
 	typ               string
 	id                *uint32
-	delete_time       *time.Time
-	deleted_by        *string
-	purge_time        *time.Time
 	text_value        *string
 	unique_text       *string
 	profile           *map[string]interface{}
@@ -45,6 +42,7 @@ type ContractRowMutation struct {
 	nullable_text     *string
 	timestamp_value   *time.Time
 	updated_timestamp *time.Time
+	delete_time       *time.Time
 	duration_value    *time.Duration
 	addduration_value *time.Duration
 	enum_number       *crudpb.CrudErrorReason
@@ -157,153 +155,6 @@ func (m *ContractRowMutation) IDs(ctx context.Context) ([]uint32, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetDeleteTime sets the "delete_time" field.
-func (m *ContractRowMutation) SetDeleteTime(t time.Time) {
-	m.delete_time = &t
-}
-
-// DeleteTime returns the value of the "delete_time" field in the mutation.
-func (m *ContractRowMutation) DeleteTime() (r time.Time, exists bool) {
-	v := m.delete_time
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDeleteTime returns the old "delete_time" field's value of the ContractRow entity.
-// If the ContractRow object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContractRowMutation) OldDeleteTime(ctx context.Context) (v *time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDeleteTime is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDeleteTime requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDeleteTime: %w", err)
-	}
-	return oldValue.DeleteTime, nil
-}
-
-// ClearDeleteTime clears the value of the "delete_time" field.
-func (m *ContractRowMutation) ClearDeleteTime() {
-	m.delete_time = nil
-	m.clearedFields[contractrow.FieldDeleteTime] = struct{}{}
-}
-
-// DeleteTimeCleared returns if the "delete_time" field was cleared in this mutation.
-func (m *ContractRowMutation) DeleteTimeCleared() bool {
-	_, ok := m.clearedFields[contractrow.FieldDeleteTime]
-	return ok
-}
-
-// ResetDeleteTime resets all changes to the "delete_time" field.
-func (m *ContractRowMutation) ResetDeleteTime() {
-	m.delete_time = nil
-	delete(m.clearedFields, contractrow.FieldDeleteTime)
-}
-
-// SetDeletedBy sets the "deleted_by" field.
-func (m *ContractRowMutation) SetDeletedBy(s string) {
-	m.deleted_by = &s
-}
-
-// DeletedBy returns the value of the "deleted_by" field in the mutation.
-func (m *ContractRowMutation) DeletedBy() (r string, exists bool) {
-	v := m.deleted_by
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDeletedBy returns the old "deleted_by" field's value of the ContractRow entity.
-// If the ContractRow object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContractRowMutation) OldDeletedBy(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDeletedBy is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDeletedBy requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDeletedBy: %w", err)
-	}
-	return oldValue.DeletedBy, nil
-}
-
-// ClearDeletedBy clears the value of the "deleted_by" field.
-func (m *ContractRowMutation) ClearDeletedBy() {
-	m.deleted_by = nil
-	m.clearedFields[contractrow.FieldDeletedBy] = struct{}{}
-}
-
-// DeletedByCleared returns if the "deleted_by" field was cleared in this mutation.
-func (m *ContractRowMutation) DeletedByCleared() bool {
-	_, ok := m.clearedFields[contractrow.FieldDeletedBy]
-	return ok
-}
-
-// ResetDeletedBy resets all changes to the "deleted_by" field.
-func (m *ContractRowMutation) ResetDeletedBy() {
-	m.deleted_by = nil
-	delete(m.clearedFields, contractrow.FieldDeletedBy)
-}
-
-// SetPurgeTime sets the "purge_time" field.
-func (m *ContractRowMutation) SetPurgeTime(t time.Time) {
-	m.purge_time = &t
-}
-
-// PurgeTime returns the value of the "purge_time" field in the mutation.
-func (m *ContractRowMutation) PurgeTime() (r time.Time, exists bool) {
-	v := m.purge_time
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPurgeTime returns the old "purge_time" field's value of the ContractRow entity.
-// If the ContractRow object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContractRowMutation) OldPurgeTime(ctx context.Context) (v *time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPurgeTime is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPurgeTime requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPurgeTime: %w", err)
-	}
-	return oldValue.PurgeTime, nil
-}
-
-// ClearPurgeTime clears the value of the "purge_time" field.
-func (m *ContractRowMutation) ClearPurgeTime() {
-	m.purge_time = nil
-	m.clearedFields[contractrow.FieldPurgeTime] = struct{}{}
-}
-
-// PurgeTimeCleared returns if the "purge_time" field was cleared in this mutation.
-func (m *ContractRowMutation) PurgeTimeCleared() bool {
-	_, ok := m.clearedFields[contractrow.FieldPurgeTime]
-	return ok
-}
-
-// ResetPurgeTime resets all changes to the "purge_time" field.
-func (m *ContractRowMutation) ResetPurgeTime() {
-	m.purge_time = nil
-	delete(m.clearedFields, contractrow.FieldPurgeTime)
 }
 
 // SetTextValue sets the "text_value" field.
@@ -591,6 +442,55 @@ func (m *ContractRowMutation) ResetUpdatedTimestamp() {
 	m.updated_timestamp = nil
 }
 
+// SetDeleteTime sets the "delete_time" field.
+func (m *ContractRowMutation) SetDeleteTime(t time.Time) {
+	m.delete_time = &t
+}
+
+// DeleteTime returns the value of the "delete_time" field in the mutation.
+func (m *ContractRowMutation) DeleteTime() (r time.Time, exists bool) {
+	v := m.delete_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeleteTime returns the old "delete_time" field's value of the ContractRow entity.
+// If the ContractRow object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContractRowMutation) OldDeleteTime(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeleteTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeleteTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeleteTime: %w", err)
+	}
+	return oldValue.DeleteTime, nil
+}
+
+// ClearDeleteTime clears the value of the "delete_time" field.
+func (m *ContractRowMutation) ClearDeleteTime() {
+	m.delete_time = nil
+	m.clearedFields[contractrow.FieldDeleteTime] = struct{}{}
+}
+
+// DeleteTimeCleared returns if the "delete_time" field was cleared in this mutation.
+func (m *ContractRowMutation) DeleteTimeCleared() bool {
+	_, ok := m.clearedFields[contractrow.FieldDeleteTime]
+	return ok
+}
+
+// ResetDeleteTime resets all changes to the "delete_time" field.
+func (m *ContractRowMutation) ResetDeleteTime() {
+	m.delete_time = nil
+	delete(m.clearedFields, contractrow.FieldDeleteTime)
+}
+
 // SetDurationValue sets the "duration_value" field.
 func (m *ContractRowMutation) SetDurationValue(t time.Duration) {
 	m.duration_value = &t
@@ -737,16 +637,7 @@ func (m *ContractRowMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ContractRowMutation) Fields() []string {
-	fields := make([]string, 0, 12)
-	if m.delete_time != nil {
-		fields = append(fields, contractrow.FieldDeleteTime)
-	}
-	if m.deleted_by != nil {
-		fields = append(fields, contractrow.FieldDeletedBy)
-	}
-	if m.purge_time != nil {
-		fields = append(fields, contractrow.FieldPurgeTime)
-	}
+	fields := make([]string, 0, 10)
 	if m.text_value != nil {
 		fields = append(fields, contractrow.FieldTextValue)
 	}
@@ -768,6 +659,9 @@ func (m *ContractRowMutation) Fields() []string {
 	if m.updated_timestamp != nil {
 		fields = append(fields, contractrow.FieldUpdatedTimestamp)
 	}
+	if m.delete_time != nil {
+		fields = append(fields, contractrow.FieldDeleteTime)
+	}
 	if m.duration_value != nil {
 		fields = append(fields, contractrow.FieldDurationValue)
 	}
@@ -782,12 +676,6 @@ func (m *ContractRowMutation) Fields() []string {
 // schema.
 func (m *ContractRowMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case contractrow.FieldDeleteTime:
-		return m.DeleteTime()
-	case contractrow.FieldDeletedBy:
-		return m.DeletedBy()
-	case contractrow.FieldPurgeTime:
-		return m.PurgeTime()
 	case contractrow.FieldTextValue:
 		return m.TextValue()
 	case contractrow.FieldUniqueText:
@@ -802,6 +690,8 @@ func (m *ContractRowMutation) Field(name string) (ent.Value, bool) {
 		return m.TimestampValue()
 	case contractrow.FieldUpdatedTimestamp:
 		return m.UpdatedTimestamp()
+	case contractrow.FieldDeleteTime:
+		return m.DeleteTime()
 	case contractrow.FieldDurationValue:
 		return m.DurationValue()
 	case contractrow.FieldEnumNumber:
@@ -815,12 +705,6 @@ func (m *ContractRowMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ContractRowMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case contractrow.FieldDeleteTime:
-		return m.OldDeleteTime(ctx)
-	case contractrow.FieldDeletedBy:
-		return m.OldDeletedBy(ctx)
-	case contractrow.FieldPurgeTime:
-		return m.OldPurgeTime(ctx)
 	case contractrow.FieldTextValue:
 		return m.OldTextValue(ctx)
 	case contractrow.FieldUniqueText:
@@ -835,6 +719,8 @@ func (m *ContractRowMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldTimestampValue(ctx)
 	case contractrow.FieldUpdatedTimestamp:
 		return m.OldUpdatedTimestamp(ctx)
+	case contractrow.FieldDeleteTime:
+		return m.OldDeleteTime(ctx)
 	case contractrow.FieldDurationValue:
 		return m.OldDurationValue(ctx)
 	case contractrow.FieldEnumNumber:
@@ -848,27 +734,6 @@ func (m *ContractRowMutation) OldField(ctx context.Context, name string) (ent.Va
 // type.
 func (m *ContractRowMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case contractrow.FieldDeleteTime:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDeleteTime(v)
-		return nil
-	case contractrow.FieldDeletedBy:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDeletedBy(v)
-		return nil
-	case contractrow.FieldPurgeTime:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPurgeTime(v)
-		return nil
 	case contractrow.FieldTextValue:
 		v, ok := value.(string)
 		if !ok {
@@ -917,6 +782,13 @@ func (m *ContractRowMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedTimestamp(v)
+		return nil
+	case contractrow.FieldDeleteTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeleteTime(v)
 		return nil
 	case contractrow.FieldDurationValue:
 		v, ok := value.(time.Duration)
@@ -1001,17 +873,11 @@ func (m *ContractRowMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ContractRowMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(contractrow.FieldDeleteTime) {
-		fields = append(fields, contractrow.FieldDeleteTime)
-	}
-	if m.FieldCleared(contractrow.FieldDeletedBy) {
-		fields = append(fields, contractrow.FieldDeletedBy)
-	}
-	if m.FieldCleared(contractrow.FieldPurgeTime) {
-		fields = append(fields, contractrow.FieldPurgeTime)
-	}
 	if m.FieldCleared(contractrow.FieldNullableText) {
 		fields = append(fields, contractrow.FieldNullableText)
+	}
+	if m.FieldCleared(contractrow.FieldDeleteTime) {
+		fields = append(fields, contractrow.FieldDeleteTime)
 	}
 	return fields
 }
@@ -1027,17 +893,11 @@ func (m *ContractRowMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ContractRowMutation) ClearField(name string) error {
 	switch name {
-	case contractrow.FieldDeleteTime:
-		m.ClearDeleteTime()
-		return nil
-	case contractrow.FieldDeletedBy:
-		m.ClearDeletedBy()
-		return nil
-	case contractrow.FieldPurgeTime:
-		m.ClearPurgeTime()
-		return nil
 	case contractrow.FieldNullableText:
 		m.ClearNullableText()
+		return nil
+	case contractrow.FieldDeleteTime:
+		m.ClearDeleteTime()
 		return nil
 	}
 	return fmt.Errorf("unknown ContractRow nullable field %s", name)
@@ -1047,15 +907,6 @@ func (m *ContractRowMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ContractRowMutation) ResetField(name string) error {
 	switch name {
-	case contractrow.FieldDeleteTime:
-		m.ResetDeleteTime()
-		return nil
-	case contractrow.FieldDeletedBy:
-		m.ResetDeletedBy()
-		return nil
-	case contractrow.FieldPurgeTime:
-		m.ResetPurgeTime()
-		return nil
 	case contractrow.FieldTextValue:
 		m.ResetTextValue()
 		return nil
@@ -1076,6 +927,9 @@ func (m *ContractRowMutation) ResetField(name string) error {
 		return nil
 	case contractrow.FieldUpdatedTimestamp:
 		m.ResetUpdatedTimestamp()
+		return nil
+	case contractrow.FieldDeleteTime:
+		m.ResetDeleteTime()
 		return nil
 	case contractrow.FieldDurationValue:
 		m.ResetDurationValue()

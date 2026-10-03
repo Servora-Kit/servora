@@ -11,7 +11,7 @@
 
 - 仅使用 `ContractRow` 与能力型字段名，不承载 User 等业务实体或 repository 语义。
 - 只在新增可观察 adapter/方言合同时增加字段。
-- 必须复用 `contrib/db/entgo/mixin.SoftDeleteMixin`，不得复制软删除实现。
+- tombstone 字段由 fixture 自有 schema 定义；live contract 验证调用方显式查询范围对列表、计数和分页的作用。
 - Go 测试只消费调用方明确提供的 DSN，不管理数据库或容器生命周期。
 
 ## 生成

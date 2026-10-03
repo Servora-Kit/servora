@@ -264,12 +264,12 @@ func (_q *ContractRowQuery) Clone() *ContractRowQuery {
 // Example:
 //
 //	var v []struct {
-//		DeleteTime time.Time `json:"delete_time,omitempty"`
+//		TextValue string `json:"text_value,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ContractRow.Query().
-//		GroupBy(contractrow.FieldDeleteTime).
+//		GroupBy(contractrow.FieldTextValue).
 //		Aggregate(entfixture.Count()).
 //		Scan(ctx, &v)
 func (_q *ContractRowQuery) GroupBy(field string, fields ...string) *ContractRowGroupBy {
@@ -287,11 +287,11 @@ func (_q *ContractRowQuery) GroupBy(field string, fields ...string) *ContractRow
 // Example:
 //
 //	var v []struct {
-//		DeleteTime time.Time `json:"delete_time,omitempty"`
+//		TextValue string `json:"text_value,omitempty"`
 //	}
 //
 //	client.ContractRow.Query().
-//		Select(contractrow.FieldDeleteTime).
+//		Select(contractrow.FieldTextValue).
 //		Scan(ctx, &v)
 func (_q *ContractRowQuery) Select(fields ...string) *ContractRowSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

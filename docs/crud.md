@@ -13,7 +13,6 @@ Servora CRUD 是一组显式组合的资源 API 组件。它从 Proto resource d
 | Go runtime | `core/crud` | ResourcePlan、ListPreparer、FieldMask、字段生命周期、page token、响应清理 |
 | 读映射 | `core/crud/mapper` | PO → 资源 PB 的同名映射、converter、改名和 post hook |
 | Ent adapter | `contrib/db/entgo/crud` | ListFields、filter/order/keyset/Count、masked Clear |
-| Ent 软删除 | `contrib/db/entgo/mixin` | tombstone 字段、默认过滤、Delete 改写、显式 bypass |
 | TypeScript runtime | `@servora/proto-utils/crud` | update mask、filter/order builder、pager、资源名错误 |
 
 标准数据流：
@@ -462,25 +461,7 @@ Kratos/Servora 的推荐依赖方向是 `service → biz ← data`。参考应�
 
 ### Ent 存储层能力
 
-在需要软删除的 Ent schema 中显式启用：
-
-```go
-func (User) Mixin() []ent.Mixin {
-    return []ent.Mixin{mixin.SoftDeleteMixin{}}
-}
-```
-
-Mixin 提供：
-
-- nullable `delete_time`；
-- private `deleted_by`；
-- nullable `purge_time`；
-- 普通 Query 默认排除 tombstone；
-- Delete/DeleteOne 改写为设置 `delete_time`；
-- `mixin.SkipSoftDelete(ctx)` 显式绕过默认过滤和 Delete 改写；
-- `mixin.WithDeletedBy(ctx, actor)` 为删除写入 canonical actor name。
-
-它只标记当前模型记录，不遍历 edges，不修改外键关系，不自动生成回收站、Undelete、Expunge 或清理任务。
+软删除字段、默认可见范围、删除和恢复操作由应用持久化层实现。Ent CRUD adapter 消费调用方提供的查询范围，并将其用于列表、计数和分页。
 
 ### AIP-164 公共合同
 
@@ -492,13 +473,13 @@ Mixin 提供：
 - List 默认隐藏，`show_deleted=true` 时包含 tombstone；
 - 提供 `Undelete`，需要时另行设计 `Expunge`。
 
-启用 `SoftDeleteMixin` 不等于采用 AIP-164。普通 Delete 返回 `google.protobuf.Empty` 和返回目标资源都受生成器支持；框架只按响应形态清理输出，不从 Mixin、字段名或 RPC 集合推导公共删除策略。
+公共 Delete 返回 `google.protobuf.Empty` 或目标资源，由应用 Proto 合同决定；生成器支持这两种响应，框架按响应形态清理输出。
 
-`show_deleted` 等可见范围由 biz 决定，data 通过显式 bypass 执行。它改变结果集时必须进入业务 scope fingerprint。
+`show_deleted` 等可见范围由 biz 决定，data 通过查询谓词执行，并纳入业务 scope fingerprint。
 
 ### 唯一约束
 
-Mixin 不创建“仅 active row 唯一”的索引。应用按方言和业务语义声明：
+软删除相关唯一约束由应用按方言和业务语义声明：
 
 - PostgreSQL/SQLite：优先 partial unique index，例如 `WHERE delete_time IS NULL`；
 - MySQL：使用适合业务语义的 tombstone/生成列复合唯一方案，并先验证重复 tombstone 行为。
