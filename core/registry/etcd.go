@@ -192,13 +192,13 @@ func (r *Registry) heartBeat(ctx context.Context, leaseID clientv3.LeaseID, key 
 				}
 				// prevent infinite blocking
 				idChan := make(chan clientv3.LeaseID, 1)
-				errChan := make(chan error, 1)
+				retryChan := make(chan struct{}, 1)
 				cancelCtx, cancel := context.WithCancel(ctx)
 				go func() {
 					defer cancel()
 					id, registerErr := r.registerWithKV(cancelCtx, key, value)
 					if registerErr != nil {
-						errChan <- registerErr
+						retryChan <- struct{}{}
 					} else {
 						idChan <- id
 					}
@@ -208,7 +208,7 @@ func (r *Registry) heartBeat(ctx context.Context, leaseID clientv3.LeaseID, key 
 				case <-time.After(3 * time.Second):
 					cancel()
 					continue
-				case <-errChan:
+				case <-retryChan:
 					continue
 				case curLeaseID = <-idChan:
 				}
