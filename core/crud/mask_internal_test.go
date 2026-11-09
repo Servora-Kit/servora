@@ -16,18 +16,18 @@ func TestNormalizeWriteMaskRejectsAncestorOverlapAndElementTraversal(t *testing.
 	t.Parallel()
 
 	file, err := protodesc.NewFile(&descriptorpb.FileDescriptorProto{
-		Name:    stringPointer("mask_internal_test.proto"),
-		Package: stringPointer("masktest"),
-		Syntax:  stringPointer("proto3"),
+		Name:    new("mask_internal_test.proto"),
+		Package: new("masktest"),
+		Syntax:  new("proto3"),
 		MessageType: []*descriptorpb.DescriptorProto{
 			{
-				Name: stringPointer("Profile"),
+				Name: new("Profile"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					fieldDescriptor("bio", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING, descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL, ""),
 				},
 			},
 			{
-				Name: stringPointer("Resource"),
+				Name: new("Resource"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					fieldDescriptor("profile", 1, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL, ".masktest.Profile"),
 					fieldDescriptor("tags", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING, descriptorpb.FieldDescriptorProto_LABEL_REPEATED, ""),

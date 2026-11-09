@@ -95,12 +95,12 @@ func TestLifecycleKeepsInputOnlyWritesAndIgnoresOutputOnly(t *testing.T) {
 func newLifecyclePlan(t *testing.T) (*ResourcePlan[proto.Message], *dynamicpb.Message) {
 	t.Helper()
 	file, err := protodesc.NewFile(&descriptorpb.FileDescriptorProto{
-		Name:    stringPointer("lifecycle_internal_test.proto"),
-		Package: stringPointer("lifecycletest"),
-		Syntax:  stringPointer("proto2"),
+		Name:    new("lifecycle_internal_test.proto"),
+		Package: new("lifecycletest"),
+		Syntax:  new("proto2"),
 		MessageType: []*descriptorpb.DescriptorProto{
 			{
-				Name: stringPointer("Profile"),
+				Name: new("Profile"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					annotatedFieldDescriptor("bio", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING, "", annotations.FieldBehavior_OPTIONAL),
 					annotatedFieldDescriptor("locale", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING, "", annotations.FieldBehavior_REQUIRED),
@@ -108,7 +108,7 @@ func newLifecyclePlan(t *testing.T) (*ResourcePlan[proto.Message], *dynamicpb.Me
 				},
 			},
 			{
-				Name: stringPointer("Resource"),
+				Name: new("Resource"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					annotatedFieldDescriptor("profile", 1, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, ".lifecycletest.Profile", annotations.FieldBehavior_OPTIONAL),
 					annotatedFieldDescriptor("secret", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING, "", annotations.FieldBehavior_OPTIONAL, annotations.FieldBehavior_INPUT_ONLY),

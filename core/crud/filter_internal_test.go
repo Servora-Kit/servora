@@ -219,18 +219,18 @@ func TestParseProtoDurationUsesStrictDecimalSyntax(t *testing.T) {
 func newDynamicFilterResource(t *testing.T) dynamicFilterResource {
 	t.Helper()
 	file, err := protodesc.NewFile(&descriptorpb.FileDescriptorProto{
-		Name:    stringPointer("filter_internal_test.proto"),
-		Package: stringPointer("crudtest"),
-		Syntax:  stringPointer("proto3"),
+		Name:    new("filter_internal_test.proto"),
+		Package: new("crudtest"),
+		Syntax:  new("proto3"),
 		EnumType: []*descriptorpb.EnumDescriptorProto{{
-			Name: stringPointer("Status"),
+			Name: new("Status"),
 			Value: []*descriptorpb.EnumValueDescriptorProto{
-				{Name: stringPointer("STATUS_UNSPECIFIED"), Number: int32Pointer(0)},
-				{Name: stringPointer("ACTIVE"), Number: int32Pointer(1)},
+				{Name: new("STATUS_UNSPECIFIED"), Number: new(int32(0))},
+				{Name: new("ACTIVE"), Number: new(int32(1))},
 			},
 		}},
 		MessageType: []*descriptorpb.DescriptorProto{{
-			Name: stringPointer("Resource"),
+			Name: new("Resource"),
 			Field: []*descriptorpb.FieldDescriptorProto{
 				fieldDescriptor("enabled", 1, descriptorpb.FieldDescriptorProto_TYPE_BOOL, descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL, ""),
 				fieldDescriptor("flags", 2, descriptorpb.FieldDescriptorProto_TYPE_BOOL, descriptorpb.FieldDescriptorProto_LABEL_REPEATED, ""),
@@ -268,16 +268,13 @@ func fieldDescriptor(
 	typeName string,
 ) *descriptorpb.FieldDescriptorProto {
 	field := &descriptorpb.FieldDescriptorProto{
-		Name:   stringPointer(name),
-		Number: int32Pointer(number),
+		Name:   new(name),
+		Number: new(number),
 		Type:   &fieldType,
 		Label:  &label,
 	}
 	if typeName != "" {
-		field.TypeName = stringPointer(typeName)
+		field.TypeName = new(typeName)
 	}
 	return field
 }
-
-func stringPointer(value string) *string { return &value }
-func int32Pointer(value int32) *int32    { return &value }
