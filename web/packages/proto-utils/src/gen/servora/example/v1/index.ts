@@ -105,8 +105,6 @@ export type ListUsersRequest = {
   // Behaviors: OPTIONAL
   filter?: string;
   // 只有 true 时执行 Count 并返回 total_size。
-  // Servora 的可选 total 扩展；项目 api-linter 配置需允许该附加字段。
-  // (-- api-linter: core::0132::request-unknown-fields=disabled --)
   //
   // Behaviors: OPTIONAL
   includeTotal?: boolean;
@@ -131,8 +129,6 @@ export type ListUsersRequest = {
   // Behaviors: OPTIONAL
   showDeleted?: boolean;
   // 可单独使用，也可在 page_token 恢复 cursor 后额外跳过资源；服务可以限制最大值。
-  // Servora 的随机跳页扩展；项目 api-linter 配置明示允许该字段。
-  // (-- api-linter: core::0158::request-skip-field=disabled --)
   //
   // Behaviors: OPTIONAL
   skip?: string;
@@ -144,8 +140,6 @@ export type ListUsersResponse = {
   nextPageToken?: string;
   // 仅在 include_total 为 true 时设置。Servora 明示使用 optional int64
   // 表达“未计算”并支持大型集合。
-  // Servora 的可选 total 扩展；项目 api-linter 配置明示允许该字段。
-  // (-- api-linter: core::0132::response-unknown-fields=disabled --)
   totalSize?: string;
   // users 是当前页返回的 User 列表。
   users?: User[];

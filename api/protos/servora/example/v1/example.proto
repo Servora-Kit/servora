@@ -134,8 +134,6 @@ message ListUsersRequest {
   string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
 
   // 可单独使用，也可在 page_token 恢复 cursor 后额外跳过资源；服务可以限制最大值。
-  // Servora 的随机跳页扩展；项目 api-linter 配置明示允许该字段。
-  // (-- api-linter: core::0158::request-skip-field=disabled --)
   int64 skip = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // filter 是 AIP-160 确定性子集表达式。
@@ -144,8 +142,6 @@ message ListUsersRequest {
   string order_by = 6 [(google.api.field_behavior) = OPTIONAL];
 
   // 只有 true 时执行 Count 并返回 total_size。
-  // Servora 的可选 total 扩展；项目 api-linter 配置需允许该附加字段。
-  // (-- api-linter: core::0132::request-unknown-fields=disabled --)
   bool include_total = 7 [(google.api.field_behavior) = OPTIONAL];
 
   // true 时显式包含正常资源与 tombstone；默认只返回正常资源。
@@ -161,8 +157,6 @@ message ListUsersResponse {
 
   // 仅在 include_total 为 true 时设置。Servora 明示使用 optional int64
   // 表达“未计算”并支持大型集合。
-  // Servora 的可选 total 扩展；项目 api-linter 配置明示允许该字段。
-  // (-- api-linter: core::0132::response-unknown-fields=disabled --)
   optional int64 total_size = 3;
 }
 
