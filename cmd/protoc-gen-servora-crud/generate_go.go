@@ -11,6 +11,7 @@ var (
 	fmtImport          = protogen.GoImportPath("fmt")
 	stringsImport      = protogen.GoImportPath("strings")
 	protoreflectImport = protogen.GoImportPath("google.golang.org/protobuf/reflect/protoreflect")
+	crudv1Import       = protogen.GoImportPath("github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1")
 )
 
 func generateGoFile(gen *protogen.Plugin, file *protogen.File, resources []*resourceInfo) {
@@ -132,7 +133,7 @@ func generateGoNameHelper(g *protogen.GeneratedFile, resource *resourceInfo) {
 		g.P("}")
 		g.P("}")
 	}
-	g.P("return ", nameType, "{}, ", qualified(g, fmtImport, "Errorf"), "(\"invalid ", name, " resource name %q\", value)")
+	g.P("return ", nameType, "{}, ", invalidResourceNameError(g), "(\"invalid ", name, " resource name %q\", value)")
 	g.P("}")
 	g.P()
 	g.P("// Validate checks the selected pattern and all variable segments.")
@@ -144,7 +145,7 @@ func generateGoNameHelper(g *protogen.GeneratedFile, resource *resourceInfo) {
 			generateGoNameValidation(g, name, resource.variables, pattern)
 		}
 		g.P("default:")
-		g.P("return ", qualified(g, fmtImport, "Errorf"), "(\"", name, " resource name pattern is not selected\")")
+		g.P("return ", invalidResourceNameError(g), "(\"", name, " resource name pattern is not selected\")")
 		g.P("}")
 	} else {
 		generateGoNameValidation(g, name, resource.variables, resource.patterns[0])
@@ -161,7 +162,7 @@ func generateGoNameHelper(g *protogen.GeneratedFile, resource *resourceInfo) {
 			generateGoNameFormatReturn(g, pattern)
 		}
 		g.P("default:")
-		g.P("return \"\", ", qualified(g, fmtImport, "Errorf"), "(\"", name, " resource name pattern is not selected\")")
+		g.P("return \"\", ", invalidResourceNameError(g), "(\"", name, " resource name pattern is not selected\")")
 		g.P("}")
 	} else {
 		generateGoNameFormatReturn(g, resource.patterns[0])
@@ -205,7 +206,7 @@ func generateGoNameValidation(
 		used[variable] = struct{}{}
 		field := goExportedName(variable)
 		g.P("if name.", field, " == \"\" || ", qualified(g, stringsImport, "Contains"), "(name.", field, ", \"/\") {")
-		g.P("return ", qualified(g, fmtImport, "Errorf"), "(\"", resourceName, " resource name variable ", variable, " must be non-empty and contain no slash\")")
+		g.P("return ", invalidResourceNameError(g), "(\"", resourceName, " resource name variable ", variable, " must be non-empty and contain no slash\")")
 		g.P("}")
 	}
 	for _, variable := range allVariables {
@@ -213,7 +214,7 @@ func generateGoNameValidation(
 			continue
 		}
 		field := goExportedName(variable)
-		g.P("if name.", field, " != \"\" { return ", qualified(g, fmtImport, "Errorf"), "(\"", resourceName, " resource name variable ", variable, " does not belong to the selected pattern\") }")
+		g.P("if name.", field, " != \"\" { return ", invalidResourceNameError(g), "(\"", resourceName, " resource name variable ", variable, " does not belong to the selected pattern\") }")
 	}
 	g.P("return nil")
 }
@@ -232,6 +233,10 @@ func generateGoNameFormatReturn(g *protogen.GeneratedFile, pattern namePattern) 
 
 func qualified(g *protogen.GeneratedFile, importPath protogen.GoImportPath, name string) string {
 	return g.QualifiedGoIdent(protogen.GoIdent{GoName: name, GoImportPath: importPath})
+}
+
+func invalidResourceNameError(g *protogen.GeneratedFile) string {
+	return qualified(g, crudv1Import, "ErrorCrudErrorReasonInvalidResourceName")
 }
 
 func lowerFirst(value string) string {

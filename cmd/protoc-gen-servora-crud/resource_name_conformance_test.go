@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	crudv1 "github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1"
 	examplev1 "github.com/Servora-Kit/servora/api/gen/go/servora/example/v1"
 )
 
@@ -50,14 +51,17 @@ func TestGeneratedUserNameConformance(t *testing.T) {
 		}
 	}
 	for _, name := range vectors.InvalidNames {
-		if _, err := examplev1.ParseUserName(name); err == nil {
-			t.Errorf("ParseUserName(%q) accepted invalid name", name)
+		if _, err := examplev1.ParseUserName(name); !crudv1.IsCrudErrorReasonInvalidResourceName(err) {
+			t.Errorf("ParseUserName(%q) error = %v, want INVALID_RESOURCE_NAME", name, err)
 		}
 	}
 	for _, parts := range vectors.InvalidParts {
 		name := examplev1.NewUserName(parts.Tenant, parts.User)
-		if _, err := name.Format(); err == nil {
-			t.Errorf("Format(%#v) accepted invalid parts", name)
+		if err := name.Validate(); !crudv1.IsCrudErrorReasonInvalidResourceName(err) {
+			t.Errorf("Validate(%#v) error = %v, want INVALID_RESOURCE_NAME", name, err)
+		}
+		if _, err := name.Format(); !crudv1.IsCrudErrorReasonInvalidResourceName(err) {
+			t.Errorf("Format(%#v) error = %v, want INVALID_RESOURCE_NAME", name, err)
 		}
 	}
 }

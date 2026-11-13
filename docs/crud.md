@@ -85,7 +85,7 @@ Go companion 提供：
 
 - `UserCRUDDescriptor()`；
 - `UserFields` 和 descriptor-backed `UserFieldPath`；
-- `UserName`、`NewUserName`、`ParseUserName` 等 canonical name helper。
+- `UserName`、`NewUserName`、`ParseUserName` 等 canonical name helper（解析或校验失败直接返回 `400 CRUD_ERROR_REASON_INVALID_RESOURCE_NAME`）。
 
 生成 companion 不依赖 `core/crud`，也不生成 service、biz、repository、Ent schema、setter、授权或事务代码。
 
@@ -322,7 +322,8 @@ resourceMapper, err := mapper.NewResourceMapper[*userv1.User, ent.User](
 默认反射复制同名且类型兼容的字段。其它情况显式组合：
 
 - `WithConverters`：类型转换；
-- `WithFieldMapping`：PO 字段改名到 generated typed field path；
+- `WithFlatten`：将扁平 PO 上的同名导出字段按需投影到指定的单层或多层单值子消息（如 `WithFlatten(userv1.UserFields.Profile)`），子消息下全为空时保持指针为 `nil`，可与显式 `WithFieldMapping` 混用；
+- `WithFieldMapping`：PO 字段改名或投影到 generated typed field path（支持顶层及单值嵌套子消息路径如 `profile.name`）；
 - `WithPostToDTOHook`：relation、JSON、oneof、computed 等本地补充；
 - `WithResourceName`：设置 canonical `IDENTIFIER` name。
 

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	crudv1 "github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1"
+	examplev1 "github.com/Servora-Kit/servora/api/gen/go/servora/example/v1"
 	annotations "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
@@ -32,10 +34,12 @@ func TestGenerateGoCompanionForValidResource(t *testing.T) {
 		t.Fatalf("missing Go companion; files=%v", sortedKeys(files))
 	}
 	for _, expected := range []string{
+		`"github.com/Servora-Kit/servora/api/gen/go/servora/crud/v1"`,
 		"func UserCRUDDescriptor() protoreflect.MessageDescriptor",
 		"type UserFieldPath struct",
 		"var UserFields = struct",
 		"func ParseUserName(value string) (UserName, error)",
+		"ErrorCrudErrorReasonInvalidResourceName",
 		"DisplayName",
 		"func (name UserName) Validate() error",
 		"func (name UserName) Format() (string, error)",
@@ -44,13 +48,37 @@ func TestGenerateGoCompanionForValidResource(t *testing.T) {
 			t.Fatalf("generated Go missing %q:\n%s", expected, content)
 		}
 	}
-	for _, forbidden := range []string{"core/crud", "MethodPlan", "UpdateUserCommand", "ToPO", "StringMatch", "FilterPrefix", "FilterSuffix", "FilterContains", "LogicalType"} {
+	for _, forbidden := range []string{"core/crud", "fmt.Errorf", "MethodPlan", "UpdateUserCommand", "ToPO", "StringMatch", "FilterPrefix", "FilterSuffix", "FilterContains", "LogicalType"} {
 		if strings.Contains(content, forbidden) {
 			t.Fatalf("generated Go contains forbidden %q", forbidden)
 		}
 	}
 	if _, err := parser.ParseFile(token.NewFileSet(), "user_crud.pb.go", content, parser.AllErrors); err != nil {
 		t.Fatalf("generated Go is invalid: %v\n%s", err, content)
+	}
+}
+
+func TestGeneratedUserNameReturnsStructuredInvalidResourceNameError(t *testing.T) {
+	t.Parallel()
+
+	for _, raw := range []string{"", "users/u-1", "tenants//users/u-1", "tenants/acme/users/", "tenants/acme/users/u-1/extra"} {
+		_, err := examplev1.ParseUserName(raw)
+		if !crudv1.IsCrudErrorReasonInvalidResourceName(err) {
+			t.Fatalf("ParseUserName(%q) error = %v, want INVALID_RESOURCE_NAME", raw, err)
+		}
+	}
+	for _, invalid := range []examplev1.UserName{
+		examplev1.NewUserName("", "u-1"),
+		examplev1.NewUserName("acme", ""),
+		examplev1.NewUserName("ac/me", "u-1"),
+		examplev1.NewUserName("acme", "u/1"),
+	} {
+		if err := invalid.Validate(); !crudv1.IsCrudErrorReasonInvalidResourceName(err) {
+			t.Fatalf("Validate(%#v) error = %v, want INVALID_RESOURCE_NAME", invalid, err)
+		}
+		if _, err := invalid.Format(); !crudv1.IsCrudErrorReasonInvalidResourceName(err) {
+			t.Fatalf("Format(%#v) error = %v, want INVALID_RESOURCE_NAME", invalid, err)
+		}
 	}
 }
 

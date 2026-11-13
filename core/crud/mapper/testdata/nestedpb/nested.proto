@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package servora.mapper.testdata.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Servora-Kit/servora/core/crud/mapper/testdata/nestedpb;nestedpb";
+
+message Address {
+  optional string city = 1 [(google.api.field_behavior) = OPTIONAL];
+  optional string postal_code = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message Profile {
+  optional string name = 1 [(google.api.field_behavior) = OPTIONAL];
+  optional string nickname = 2 [(google.api.field_behavior) = OPTIONAL];
+  optional string bio = 3 [(google.api.field_behavior) = OPTIONAL];
+  int32 rank = 4 [(google.api.field_behavior) = OPTIONAL];
+  repeated string tags = 5 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp verified_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Address address = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message TagItem {
+  optional string label = 1 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message Account {
+  option (google.api.resource) = {
+    type: "mappertest.servora.dev/Account"
+    pattern: "accounts/{account}"
+    singular: "account"
+    plural: "accounts"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  optional string email = 2 [(google.api.field_behavior) = REQUIRED];
+  Profile profile = 3 [(google.api.field_behavior) = OPTIONAL];
+  repeated TagItem items = 4 [(google.api.field_behavior) = OPTIONAL];
+  map<string, TagItem> labels = 5 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp create_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
