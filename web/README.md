@@ -6,7 +6,7 @@
 
 | 包 | npm | 说明 |
 |---|---|---|
-| [`@servora/proto-utils`](./packages/proto-utils/) | [![npm](https://img.shields.io/npm/v/@servora/proto-utils)](https://www.npmjs.com/package/@servora/proto-utils) | Proto/Kratos 传输契约工具：CRUD 辅助函数、FieldMask、ProtoJSON 类型与结构化错误 |
+| [`@servora/proto-utils`](./packages/proto-utils/) | [![npm](https://img.shields.io/npm/v/@servora/proto-utils)](https://www.npmjs.com/package/@servora/proto-utils) | Proto/Kratos 传输契约工具：传输类型与路径编码、CRUD 辅助函数、FieldMask、ProtoJSON 类型与结构化错误 |
 
 ## 安装
 
@@ -16,7 +16,7 @@ pnpm add @servora/proto-utils
 
 ## 使用
 
-生成的 HTTP 客户端只依赖其生成的 `ClientTransport` 接口。应用在组合根中使用原生 fetch、Next.js fetch、Nuxt `$fetch`、ofetch、Axios 或其它自有 HTTP 客户端实现该适配器：
+生成的 HTTP 客户端按需从 `@servora/proto-utils/transport` 导入 `ClientTransport` 等传输接口与路径编码函数。应用在组合根中使用原生 fetch、Next.js fetch、Nuxt `$fetch`、ofetch、Axios 或其它自有 HTTP 客户端实现该适配器：
 
 ```typescript
 import { createUserHTTPServiceClient } from './generated/example/service/v1'
@@ -75,7 +75,7 @@ export function crudErrorMessage(reason: unknown): string | undefined {
 pnpm install
 ```
 
-kit 工作区中的 pnpm 会链接本地 `servora/web/packages/proto-utils` 包。独立使用时从 npm 安装 `@servora/proto-utils`；纯能力通过 `./crud`、`./errors`、`./error-reasons/*` 与 `./proto/*` 子路径公开。本地工作区开启 `linkWorkspacePackages: true` 后会自动建立源码符号链接，其作用类似 Go 的 `go.work` replace 指令。
+kit 工作区中的 pnpm 会链接本地 `servora/web/packages/proto-utils` 包。独立使用时从 npm 安装 `@servora/proto-utils`；纯能力通过 `./transport`、`./crud`、`./errors`、`./error-reasons/*` 与 `./proto/*` 子路径公开。本地工作区开启 `linkWorkspacePackages: true` 后会自动建立源码符号链接，其作用类似 Go 的 `go.work` replace 指令。
 
 ## 许可证
 

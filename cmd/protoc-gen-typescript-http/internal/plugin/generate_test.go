@@ -52,7 +52,7 @@ func TestGenerateUsesProtoJSONTypesFor64BitIntegers(t *testing.T) {
 func TestGenerateEmitsTypeSafeHTTPRuntimeGuards(t *testing.T) {
 	output := generateContractFixture(t)
 
-	assert.Contains(t, output, "unary<T>(")
+	assert.Contains(t, output, "import type { ClientTransport, DuplexStream } from '@servora/proto-utils/transport';")
 	assert.Contains(t, output, "return transport.unary<Payload>(")
 	assert.Contains(t, output, "if (request.name === undefined || request.name === null || request.name === '') {")
 	assert.Contains(t, output, "if (request.payload === undefined || request.payload === null) {")
@@ -66,8 +66,9 @@ func TestGenerateEncodesHTTPPathVariablesByTemplateShape(t *testing.T) {
 
 	assert.Contains(t, output, "const path = `v1/${encodeMultiSegmentPath(request.name)}`;")
 	assert.Contains(t, output, "const path = `v1/users/${encodePathSegment(request.id)}`;")
-	assert.Contains(t, output, "function encodePathSegment(value: unknown): string {")
-	assert.Contains(t, output, "function encodeMultiSegmentPath(value: unknown): string {")
+	assert.Contains(t, output, "import { encodeMultiSegmentPath, encodePathSegment } from '@servora/proto-utils/transport';")
+	assert.NotContains(t, output, "function encodePathSegment(")
+	assert.NotContains(t, output, "function encodeMultiSegmentPath(")
 	assert.NotContains(t, output, "const path = `v1/${request.name}`;")
 	assert.NotContains(t, output, "const path = `v1/users/${request.id}`;")
 }
@@ -75,8 +76,62 @@ func TestGenerateEncodesHTTPPathVariablesByTemplateShape(t *testing.T) {
 func TestGenerateEmitsStreamingTransportContract(t *testing.T) {
 	output := generateContractFixture(t)
 
-	assert.Contains(t, output, "duplexStream<TIn, TOut>(path: string, meta: TransportMeta, encode?: (data: TIn) => unknown): DuplexStream<TIn, TOut>;")
-	assert.Contains(t, output, "closeSend(): void;")
+	assert.Contains(t, output, "SyncNamed(\n    request: StreamRequest,\n  ): DuplexStream<StreamRequest, Payload>;")
+	assert.NotContains(t, output, "export interface ClientTransport")
+	assert.NotContains(t, output, "export interface DuplexStream")
+}
+
+func TestGenerateOmitsTransportImportsWithoutServices(t *testing.T) {
+	file := contractFixtureDescriptor()
+	file.Service = nil
+	request := &pluginpb.CodeGeneratorRequest{
+		FileToGenerate: []string{file.GetName()},
+		ProtoFile: descriptorClosure(
+			annotations.File_google_api_annotations_proto,
+			annotations.File_google_api_field_behavior_proto,
+			wrapperspb.File_google_protobuf_wrappers_proto,
+		),
+	}
+	request.ProtoFile = append(request.ProtoFile, file)
+
+	response, err := Generate(request)
+	require.NoError(t, err)
+	require.Len(t, response.File, 1)
+	output := response.File[0].GetContent()
+	assert.NotContains(t, output, "@servora/proto-utils/transport")
+}
+
+func TestGenerateSkipsPureGRPCServicesWithoutHTTPRules(t *testing.T) {
+	file := contractFixtureDescriptor()
+	file.Service = []*descriptorpb.ServiceDescriptorProto{
+		{
+			Name: new("PureGrpcService"),
+			Method: []*descriptorpb.MethodDescriptorProto{
+				{
+					Name:       new("InternalOp"),
+					InputType:  new(".test.v1.GetRequest"),
+					OutputType: new(".google.protobuf.Int64Value"),
+				},
+			},
+		},
+	}
+	request := &pluginpb.CodeGeneratorRequest{
+		FileToGenerate: []string{file.GetName()},
+		ProtoFile: descriptorClosure(
+			annotations.File_google_api_annotations_proto,
+			annotations.File_google_api_field_behavior_proto,
+			wrapperspb.File_google_protobuf_wrappers_proto,
+		),
+	}
+	request.ProtoFile = append(request.ProtoFile, file)
+
+	response, err := Generate(request)
+	require.NoError(t, err)
+	require.Len(t, response.File, 1)
+	output := response.File[0].GetContent()
+	assert.NotContains(t, output, "@servora/proto-utils/transport")
+	assert.NotContains(t, output, "PureGrpcService")
+	assert.NotContains(t, output, "createApiClient")
 }
 
 func TestGeneratedBidiStreamBehavior(t *testing.T) {
@@ -99,7 +154,7 @@ const transport: ClientTransport = {
   async unary<T>(): Promise<T> {
     throw new Error('本测试不调用普通请求');
   },
-  serverStream<T>(): ServerStream<T> {
+  serverStream() {
     throw new Error('本测试不调用服务端流');
   },
   duplexStream<TIn, TOut>(
@@ -157,9 +212,19 @@ bodyOnly.send({ payload: { int64Value: '126' } });
 assertEqual(calls[2].frames, [{ int64Value: '126' }], '无 URL 绑定的命名 body 映射错误');
 `
 
-	file := filepath.Join(t.TempDir(), "generated-stream.test.ts")
+	dir := t.TempDir()
+	transportSrc, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "web", "packages", "proto-utils", "src", "transport.ts"))
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(
+		filepath.Join(dir, "package.json"),
+		[]byte(`{"name":"@servora/proto-utils","type":"module","exports":{"./transport":"./transport.ts"}}`),
+		0o600,
+	))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "transport.ts"), transportSrc, 0o600))
+	file := filepath.Join(dir, "generated-stream.test.ts")
 	require.NoError(t, os.WriteFile(file, []byte(script), 0o600))
 	command := exec.Command(node, file)
+	command.Dir = dir
 	combined, err := command.CombinedOutput()
 	require.NoErrorf(t, err, "生成客户端行为执行失败：%s", combined)
 }

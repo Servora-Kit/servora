@@ -1,6 +1,8 @@
 package plugin
 
 import (
+	"strings"
+
 	"github.com/Servora-Kit/servora/cmd/protoc-gen-typescript-http/internal/codegen"
 	"github.com/Servora-Kit/servora/cmd/protoc-gen-typescript-http/internal/httprule"
 	"google.golang.org/genproto/googleapis/api/annotations"
@@ -8,45 +10,95 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func generateTransportInfra(f *codegen.File, defaultHost string) {
-	f.P("interface TransportMeta {")
-	f.P(t(1), "service: string;")
-	f.P(t(1), "method: string;")
-	f.P("}")
-	f.P()
-	f.P("export interface ClientTransport {")
-	f.P(t(1), "unary<T>(")
-	f.P(t(2), "path: string,")
-	f.P(t(2), "method: string,")
-	f.P(t(2), "body: null | string,")
-	f.P(t(2), "meta: TransportMeta,")
-	f.P(t(1), "): Promise<T>;")
-	f.P(t(1), "serverStream<T>(path: string, meta: TransportMeta): ServerStream<T>;")
-	f.P(t(1), "duplexStream<TIn, TOut>(path: string, meta: TransportMeta, encode?: (data: TIn) => unknown): DuplexStream<TIn, TOut>;")
-	f.P("}")
-	f.P()
-	f.P("export interface ServerStream<T> {")
-	f.P(t(1), "onEvent(listener: (data: T) => void): () => void;")
-	f.P(t(1), "onError(handler: (error: Error) => void): void;")
-	f.P(t(1), "close(): void;")
-	f.P("}")
-	f.P()
-	f.P("export interface DuplexStream<TIn, TOut> extends ServerStream<TOut> {")
-	f.P(t(1), "send(data: TIn): void;")
-	f.P(t(1), "closeSend(): void;")
-	f.P("}")
-	f.P()
-	f.P("function encodePathSegment(value: unknown): string {")
-	f.P(t(1), "return encodeURIComponent(String(value)).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);")
-	f.P("}")
-	f.P()
-	f.P("function encodeMultiSegmentPath(value: unknown): string {")
-	f.P(t(1), "return String(value)")
-	f.P(t(2), ".split('/')")
-	f.P(t(2), ".map(encodePathSegment)")
-	f.P(t(2), ".join('/');")
-	f.P("}")
-	f.P()
+type transportUsage struct {
+	clientTransport        bool
+	serverStream           bool
+	duplexStream           bool
+	encodePathSegment      bool
+	encodeMultiSegmentPath bool
+}
+
+func serviceHasSupportedHTTPMethod(svc protoreflect.ServiceDescriptor) bool {
+	methods := svc.Methods()
+	for i := range methods.Len() {
+		if ok, _ := supportedMethod(methods.Get(i)); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func collectTransportUsage(files []protoreflect.FileDescriptor) transportUsage {
+	var usage transportUsage
+	for _, file := range files {
+		services := file.Services()
+		for i := range services.Len() {
+			svc := services.Get(i)
+			if !serviceHasSupportedHTTPMethod(svc) {
+				continue
+			}
+			usage.clientTransport = true
+			rangeMethods(svc.Methods(), func(method protoreflect.MethodDescriptor) {
+				if ok, _ := supportedMethod(method); !ok {
+					return
+				}
+				r, ok := httprule.Get(method)
+				if !ok {
+					return
+				}
+				rule, err := httprule.ParseRule(r)
+				if err != nil {
+					return
+				}
+				if method.IsStreamingClient() {
+					usage.duplexStream = true
+				} else if method.IsStreamingServer() {
+					usage.serverStream = true
+				}
+				for _, seg := range rule.Template.Segments {
+					if seg.Kind != httprule.SegmentKindVariable {
+						continue
+					}
+					if isMultiSegmentPathVariable(seg.Variable) {
+						usage.encodeMultiSegmentPath = true
+					} else {
+						usage.encodePathSegment = true
+					}
+				}
+			})
+		}
+	}
+	return usage
+}
+
+func generateTransportInfra(f *codegen.File, files []protoreflect.FileDescriptor, defaultHost string) {
+	usage := collectTransportUsage(files)
+	var typeImports []string
+	if usage.clientTransport {
+		typeImports = append(typeImports, "ClientTransport")
+	}
+	if usage.duplexStream {
+		typeImports = append(typeImports, "DuplexStream")
+	}
+	if usage.serverStream {
+		typeImports = append(typeImports, "ServerStream")
+	}
+	var valueImports []string
+	if usage.encodeMultiSegmentPath {
+		valueImports = append(valueImports, "encodeMultiSegmentPath")
+	}
+	if usage.encodePathSegment {
+		valueImports = append(valueImports, "encodePathSegment")
+	}
+	if len(typeImports) > 0 {
+		f.P("import type { ", strings.Join(typeImports, ", "), " } from '@servora/proto-utils/transport';")
+	}
+	if len(valueImports) > 0 {
+		f.P("import { ", strings.Join(valueImports, ", "), " } from '@servora/proto-utils/transport';")
+	}
+	if len(typeImports) > 0 || len(valueImports) > 0 {
+		f.P()
+	}
 	if defaultHost != "" {
 		f.P("export const DEFAULT_HOST = ", tsSingleQuote(defaultHost), ";")
 		f.P()

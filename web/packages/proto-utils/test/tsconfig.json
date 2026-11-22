@@ -8,5 +8,5 @@
     "noEmit": true,
     "skipLibCheck": false
   },
-  "files": ["./error-reasons.types.ts"]
+  "files": ["./error-reasons.types.ts", "./transport.types.ts"]
 }

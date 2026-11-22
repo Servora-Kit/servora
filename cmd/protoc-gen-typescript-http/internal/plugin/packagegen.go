@@ -14,7 +14,7 @@ type packageGenerator struct {
 func (p packageGenerator) Generate(f *codegen.File) error {
 	p.generateHeader(f)
 	defaultHost := p.readDefaultHost()
-	generateTransportInfra(f, defaultHost)
+	generateTransportInfra(f, p.files, defaultHost)
 	var walkErr error
 	var services []protoreflect.ServiceDescriptor
 	protowalk.WalkFiles(p.files, func(desc protoreflect.Descriptor) bool {
@@ -31,6 +31,9 @@ func (p packageGenerator) Generate(f *codegen.File) error {
 		case protoreflect.EnumDescriptor:
 			enumGenerator{pkg: p.pkg, enum: v}.Generate(f)
 		case protoreflect.ServiceDescriptor:
+			if !serviceHasSupportedHTTPMethod(v) {
+				return false
+			}
 			services = append(services, v)
 			if err := (serviceGenerator{
 				pkg:     p.pkg,
@@ -39,6 +42,9 @@ func (p packageGenerator) Generate(f *codegen.File) error {
 				walkErr = err
 				return false
 			}
+		case protoreflect.MethodDescriptor:
+			ok, _ := supportedMethod(v)
+			return ok
 		}
 		return true
 	})
@@ -55,7 +61,7 @@ func (p packageGenerator) readDefaultHost() string {
 	var firstService string
 	for _, file := range p.files {
 		services := file.Services()
-		for i := 0; i < services.Len(); i++ {
+		for i := range services.Len() {
 			svc := services.Get(i)
 			host := getDefaultHost(svc)
 			if host == "" {
