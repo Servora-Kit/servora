@@ -101,9 +101,9 @@ service 使用 generated name helper 或 Plan 解析 canonical name；不要手�
 
 ### 顶层与嵌套集合
 
-公开可运行的 User example 使用嵌套 pattern `tenants/{tenant}/users/{user}`，因此标准 Create/List request 都携带 `REQUIRED parent`。它验证的是嵌套资源的完整 runtime 组合，不是顶层资源准入。
+上文的 `User` 示例使用嵌套 pattern `tenants/{tenant}/users/{user}`，因此标准 Create/List request 都携带 `REQUIRED parent`。
 
-单一顶层 pattern 没有资源 parent。以下 Realm 只用于说明公共合同与 service 组合，不会向 `plateau/app/example` 增加第二个业务资源：
+单一顶层 pattern 没有资源 parent。以下 `Realm` 展示顶层资源的公共合同与 service 组合：
 
 ```proto
 message Realm {
@@ -600,32 +600,26 @@ SERVORA_ENT_POSTGRES_DSN='postgres://postgres:postgres@127.0.0.1:5432/servora_pl
 
 ## 参考应用
 
-可运行黄金路径位于 [`plateau/app/example`](https://github.com/Servora-Kit/plateau/tree/main/app/example)：
+可运行参考实现位于 [`plateau/app/iam`](https://github.com/Servora-Kit/plateau/tree/main/app/iam) 与 [`plateau/app/admin`](https://github.com/Servora-Kit/plateau/tree/main/app/admin)：
 
-- 单一 `example.servora.dev/User`，pattern `tenants/{tenant}/users/{user}`；
-- service → biz → data → Ent 分层；
-- 标准 Get/List/Create/Update/Delete + AIP-164 Undelete；
-- filter/order/page token/skip/optional total；
-- nullable `nickname` 的 Clear→NULL、非空 `display_name` 的 Clear→空字符串；
-- INPUT_ONLY `temporary_password` → private `password_hash`；
-- Vue 控制台只消费 generated TypeScript client 与 `@servora/proto-utils`。
+- `iam.plateau.dev/User`（顶层 pattern `users/{user}`），覆盖 `service -> biz -> data -> Ent` 分层；
+- `ResourcePlan`、`ListPreparer`、`entcrud.ListFields`（含自定义 `email` filter predicate、枚举 `status` converter、可空 `profile.*` 字段绑定）、`ResourceMapper` 与 `entcrud.ClearHelper`；
+- 标准 `CreateUser`/`GetUser`/`ListUsers`/`UpdateUser`/`DeleteUser`、AIP-164 `UndeleteUser` 与显式 `ExpungeUser` 生命周期；
+- `app/admin`（Go BFF + Vben 管理前端）通过 `@plateau/api` 与 `@servora/proto-utils/crud`、`@servora/proto-utils/errors` 消费筛选、排序、分页与 `update_mask`。
 
-本地跨仓回归必须通过 Servora-Kit 顶层 `go.work` 使用当前框架源码；service Makefile 会解析并校验该 workspace，而不是静默使用 `plateau/go.work` 中已发布的框架版本：
+本地跨仓回归可通过 Servora-Kit 顶层 `go.work` 使用当前框架源码运行：
 
 ```bash
-cd plateau/app/example/service
-SERVORA_EXAMPLE_SQLITE_DSN='file:servora_reference_live?mode=memory&cache=shared&_fk=1' \
-  make test.integration
+cd ../plateau
+go test ./app/iam/service/... ./app/admin/service/...
 ```
 
-本地运行：
+本地启动（基础设施由根 `just compose-up` 提供）：
 
 ```bash
-cd plateau/app/example/service
-make run
-
-cd ../web
-pnpm dev
+cd ../plateau
+just service::iam::run
+just service::admin::run
+just web::iam::dev
+just web::admin::dev
 ```
-
-服务默认监听 HTTP `127.0.0.1:28080` 与 gRPC `127.0.0.1:28081`，Vue Vite proxy 将 `/v1` 转发到 HTTP facade。参考应用默认使用进程内共享的命名 SQLite URI；进程退出后数据消失，且该配置不进入 CI 数据库生命周期。
