@@ -5,7 +5,6 @@
 *.dll
 *.dylib
 ./server
-/protoc-gen-servora-audit
 /protoc-gen-servora-conf
 
 # Test binary, built with `go test -c`

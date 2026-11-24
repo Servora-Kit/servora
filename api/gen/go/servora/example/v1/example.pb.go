@@ -9,7 +9,6 @@
 package examplev1
 
 import (
-	_ "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -625,7 +624,7 @@ var File_servora_example_v1_example_proto protoreflect.FileDescriptor
 
 const file_servora_example_v1_example_proto_rawDesc = "" +
 	"\n" +
-	" servora/example/v1/example.proto\x12\x12servora.example.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"servora/audit/v1/annotations.proto\"\xb0\x05\n" +
+	" servora/example/v1/example.proto\x12\x12servora.example.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb0\x05\n" +
 	"\x04User\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12+\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x01H\x00R\vdisplayName\x88\x01\x01\x12\x1e\n" +
@@ -684,12 +683,12 @@ const file_servora_example_v1_example_proto_rawDesc = "" +
 	"\rallow_missing\x18\x03 \x01(\bB\x03\xe0A\x01R\fallowMissing\"K\n" +
 	"\x13UndeleteUserRequest\x124\n" +
 	"\x04name\x18\x01 \x01(\tB \xe0A\x02\xfaA\x1a\n" +
-	"\x18example.servora.dev/UserR\x04name2\xc2\x06\n" +
+	"\x18example.servora.dev/UserR\x04name2\xbc\x06\n" +
 	"\vUserService\x12t\n" +
 	"\aGetUser\x12\".servora.example.v1.GetUserRequest\x1a\x18.servora.example.v1.User\"+\xdaA\x04name\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/{name=tenants/*/users/*}\x12\x87\x01\n" +
-	"\tListUsers\x12$.servora.example.v1.ListUsersRequest\x1a%.servora.example.v1.ListUsersResponse\"-\xdaA\x06parent\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/{parent=tenants/*}/users\x12\x95\x01\n" +
+	"\tListUsers\x12$.servora.example.v1.ListUsersRequest\x1a%.servora.example.v1.ListUsersResponse\"-\xdaA\x06parent\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/{parent=tenants/*}/users\x12\x8f\x01\n" +
 	"\n" +
-	"CreateUser\x12%.servora.example.v1.CreateUserRequest\x1a\x18.servora.example.v1.User\"F\xdaA\x13parent,user,user_id\xa2\xbb\x18\x02\b\x02\x82\xd3\xe4\x93\x02$:\x04user\"\x1c/v1/{parent=tenants/*}/users\x12\x91\x01\n" +
+	"CreateUser\x12%.servora.example.v1.CreateUserRequest\x1a\x18.servora.example.v1.User\"@\xdaA\x13parent,user,user_id\x82\xd3\xe4\x93\x02$:\x04user\"\x1c/v1/{parent=tenants/*}/users\x12\x91\x01\n" +
 	"\n" +
 	"UpdateUser\x12%.servora.example.v1.UpdateUserRequest\x1a\x18.servora.example.v1.User\"B\xdaA\x10user,update_mask\x82\xd3\xe4\x93\x02):\x04user2!/v1/{user.name=tenants/*/users/*}\x12z\n" +
 	"\n" +

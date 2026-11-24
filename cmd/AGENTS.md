@@ -14,7 +14,7 @@
 | `svr/` | 统一开发 CLI：`svr new api`、`svr gen gorm`（见 `svr/AGENTS.md`） |
 | `protoc-gen-typescript-http/` | 仓库内维护的 TypeScript HTTP client 生成器：遵循 canonical ProtoJSON 的 64 位整数字符串映射，并按 `google.api.http` 单段/多段规则编码路径变量 |
 | `protoc-gen-go-errors/` | 读取 `servora.errors.v1` 注解；默认生成 Kratos v3 reason constructor，`target=ts` 生成复用既有联合类型的运行时 reason companion |
-| `protoc-gen-servora-audit/` | 从 `rule`（method）+ `service_default`（service）注解生成审计规则；method 显式字段覆盖 service 默认，未设置字段继承默认 |
+| `protoc-gen-servora-conf/` | 从 `servora.conf.v1` 配置注解生成唯一的 `Apply() error` 配置默认与必填处理入口 |
 | `protoc-gen-servora-crud/` | 从完整 `google.api.resource` 生成 Go/TypeScript 资源名、typed field path 与 descriptor companion；不生成 repository 或事务 |
 
 ## For AI Agents

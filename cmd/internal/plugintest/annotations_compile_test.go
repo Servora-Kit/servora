@@ -10,7 +10,7 @@ import (
 	"github.com/bufbuild/protocompile/wellknownimports"
 )
 
-func TestAuditAnnotationsCompile(t *testing.T) {
+func TestConfAnnotationsCompile(t *testing.T) {
 	_, testFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("resolve plugintest test path")
@@ -18,7 +18,7 @@ func TestAuditAnnotationsCompile(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", "..", ".."))
 	sources := make(map[string]string)
 	for importPath, filePath := range map[string]string{
-		"servora/audit/v1/annotations.proto": filepath.Join(root, "api", "protos", "servora", "audit", "v1", "annotations.proto"),
+		"servora/conf/v1/annotations.proto": filepath.Join(root, "api", "protos", "servora", "conf", "v1", "annotations.proto"),
 		"test/annotations/compile.proto":     filepath.Join(filepath.Dir(testFile), "testdata", "annotations", "compile.proto"),
 	} {
 		content, err := os.ReadFile(filePath)
@@ -33,6 +33,6 @@ func TestAuditAnnotationsCompile(t *testing.T) {
 		}),
 	}
 	if _, err := compiler.Compile(t.Context(), "test/annotations/compile.proto"); err != nil {
-		t.Fatalf("compile Audit annotations fixture: %v", err)
+		t.Fatalf("compile Conf annotations fixture: %v", err)
 	}
 }

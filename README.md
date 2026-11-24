@@ -122,7 +122,7 @@ func CallUser(ctx context.Context, l *slog.Logger, data *corev1.Data, d registry
 
 ### Proto 契约化⚖️
 
-配置文件、资源 API 与审计等框架行为都可以由 Proto contract 驱动。Servora 通过代码生成配合运行时能力，让普通请求之外的框架行为保持显式、版本化和可验证。
+配置文件、资源 API 与错误编码等框架行为都可以由 Proto contract 驱动。Servora 通过代码生成配合运行时能力，让普通请求之外的框架行为保持显式、版本化和可验证。
 
 以下是 Servora 提供的 Proto 插件，多数采用代码生成 + 运行时解析配合的方式工作。
 
@@ -166,40 +166,7 @@ Kratos `Config.Watch` 不会自动重新应用配置。自行解码、原始 Sca
 
 Servora 提供了声明式、 AIP 风格约束的 CRUD 生态框架，用户只需要在 [API Proto](./api/protos/servora/example/v1/example.proto) 中定义 AIP 规范的资源 message ，Servora 就会利用 `protoc-gen-servora-crud` 插件生成 Go 、 TypeScript 关于 分页、排序以及过滤的辅助函数，以及关于 proto 生成的代码与 data 层所使用的 orm框架字段的绑定关系代码。通过 CRUD 生态，用户可以非常规范、方便地完成增删改查的 API 设计与业务开发。
 
-具体使用示例可见：[plateau/example.service](https://github.com/Servora-Kit/plateau/tree/main/app/example)
-
-#### 审计
-
-通过 `rule` 或 `service_default` 声明 RPC 是否进入通用审计。注解只表达开关；事件类型、业务目标、详情 data 和扩展属性由事件生产者负责，例如产品服务、后续 CRUD generator 或业务显式 emit。通用 RPC 审计事件以 [CloudEvents](https://cloudevents.io/) 投递。
-
-```proto
-import "servora/audit/v1/annotations.proto";
-
-service ResourceService {
-  option (servora.audit.v1.service_default) = { mode: AUDIT_MODE_ENABLED };
-
-  rpc CreateResource(CreateResourceRequest) returns (Resource) {
-    option (servora.audit.v1.rule) = {
-      mode: AUDIT_MODE_ENABLED
-    };
-  }
-}
-```
-
-Plugin 生成 `AuditRules()` 规则表，业务侧把 `Auditor` 实现（默认 Kafka）跟规则表一起挂到 middleware：
-
-```go
-import (
-    "github.com/Servora-Kit/servora/obs/audit"
-    pb "myapp/api/gen/go/myapp/resource/v1"
-)
-
-mw := audit.Middleware(auditor,
-    audit.WithRulesFuncs(pb.AuditRules),
-)
-```
-
-通用 middleware 发出的事件固定为 `servora.audit.rpc.v1`，`source` 为 `"//" + app.Name`，`subject` 为 Kratos transport operation（如 `/myapp.resource.v1.ResourceService/CreateResource`）。业务资源事件可直接用 `audit.NewEvent()` 构造自定义 CloudEvent 并调用 `Auditor.Emit`。
+具体使用示例可见：[plateau/iam](https://github.com/Servora-Kit/plateau/tree/main/app/iam) 与 [plateau/admin](https://github.com/Servora-Kit/plateau/tree/main/app/admin)。
 
 ### 服务治理
 
@@ -219,7 +186,6 @@ Servora 默认接入 [OpenTelemetry](https://opentelemetry.io/) SDK，开箱即�
 - **Metrics** — `obs/metrics.New` 通过 OpenTelemetry Metrics SDK + [Prometheus](https://prometheus.io/) exporter 暴露 `/metrics` endpoint；业务自定义指标通过 `metrics.Meter("your/import/path")` 创建 OTel instruments，默认 Prometheus registry 上的 `promauto` 指标不会自动并入 Servora `/metrics`
 - **Tracing** — `obs/tracing.InitTracerProvider` 通过 OTLP gRPC exporter 推送到 [OTel Collector](https://opentelemetry.io/docs/collector/)，再由 Collector 转发到 [Jaeger](https://www.jaegertracing.io/) / Tempo 等任意后端
 - **Logging** — `obs/logger` 提供基于 `slog` 的结构化日志，支持 stdout/file/OTel fanout
-- **Audit** — 详见上文「Proto 契约化 → 审计」段，事件以 [CloudEvents](https://cloudevents.io/) 格式投递
 
 本地起一套 Prometheus + Jaeger UI + Grafana 即可看到全链路指标与 trace（参考 [plateau](https://github.com/Servora-Kit/plateau) 的 compose 配置；`servora-example` 只内置 Consul / Jaeger / OTel Collector，可直接 curl `/metrics` 做 smoke）。
 

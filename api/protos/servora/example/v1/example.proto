@@ -9,7 +9,6 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "servora/audit/v1/annotations.proto";
 
 option go_package = "github.com/Servora-Kit/servora/api/gen/go/servora/example/v1;examplev1";
 option java_multiple_files = true;
@@ -37,7 +36,6 @@ service UserService {
       body: "user"
     };
     option (google.api.method_signature) = "parent,user,user_id";
-    option (servora.audit.v1.rule) = {mode: AUDIT_MODE_ENABLED};
   }
 
   // UpdateUser 更新一个已有 User。

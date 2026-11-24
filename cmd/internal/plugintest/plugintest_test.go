@@ -4,13 +4,13 @@ import (
 	"reflect"
 	"testing"
 
-	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
+	confv1 "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
 func TestDescriptorClosureIsTopologicalAndUnique(t *testing.T) {
-	files := DescriptorClosure(auditv1.File_servora_audit_v1_annotations_proto)
+	files := DescriptorClosure(confv1.File_servora_conf_v1_annotations_proto)
 	seen := make(map[string]int)
 	for index, file := range files {
 		if previous, duplicate := seen[file.GetName()]; duplicate {
@@ -24,15 +24,15 @@ func TestDescriptorClosureIsTopologicalAndUnique(t *testing.T) {
 			}
 		}
 	}
-	if _, present := seen["servora/audit/v1/annotations.proto"]; !present {
-		t.Fatal("audit annotations descriptor missing")
+	if _, present := seen["servora/conf/v1/annotations.proto"]; !present {
+		t.Fatal("conf annotations descriptor missing")
 	}
 }
 
 func TestResponseFilesAndOnlyGeneratedFile(t *testing.T) {
 	plugin, err := protogen.Options{}.New(&pluginpb.CodeGeneratorRequest{
-		ProtoFile:      DescriptorClosure(auditv1.File_servora_audit_v1_annotations_proto),
-		FileToGenerate: []string{"servora/audit/v1/annotations.proto"},
+		ProtoFile:      DescriptorClosure(confv1.File_servora_conf_v1_annotations_proto),
+		FileToGenerate: []string{"servora/conf/v1/annotations.proto"},
 		Parameter:      new("paths=source_relative"),
 	})
 	if err != nil {
@@ -59,9 +59,9 @@ func TestResponseFilesAndOnlyGeneratedFile(t *testing.T) {
 func TestAssertGeneratedGoCompiles(t *testing.T) {
 	AssertGeneratedGoCompiles(t, `package fixture
 
-import auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/audit/v1"
+import confv1 "github.com/Servora-Kit/servora/api/gen/go/servora/conf/v1"
 
-var _ = auditv1.AuditMode_AUDIT_MODE_ENABLED
+var _ = confv1.E_Section
 `, "fixture")
 }
 

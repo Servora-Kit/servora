@@ -11,7 +11,6 @@ require (
 	github.com/bufbuild/protocompile v0.14.1
 	github.com/charmbracelet/huh v0.8.0
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-kratos/kratos/contrib/config/consul/v3 v3.0.0-20260621094049-2726761cdd77
 	github.com/go-kratos/kratos/contrib/config/nacos/v3 v3.0.0-20260621094049-2726761cdd77
@@ -36,8 +35,6 @@ require (
 	github.com/rs/zerolog v1.35.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	github.com/twmb/franz-go v1.20.7
-	github.com/twmb/franz-go/plugin/kotel v1.6.0
 	go.einride.tech/aip v0.86.3
 	go.etcd.io/etcd/client/v3 v3.6.8
 	go.opentelemetry.io/contrib/bridges/otelslog v0.20.0
@@ -190,7 +187,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // indirect
 	github.com/orcaman/concurrent-map v1.0.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
@@ -202,7 +198,6 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	github.com/twmb/franz-go/pkg/kmsg v1.12.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect

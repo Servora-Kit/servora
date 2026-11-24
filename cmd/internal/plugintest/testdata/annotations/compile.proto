@@ -2,18 +2,10 @@ syntax = "proto3";
 
 package test.annotations.v1;
 
-import "servora/audit/v1/annotations.proto";
+import "servora/conf/v1/annotations.proto";
 
-message Request {
-  string id = 1;
-}
+message ConfigFixture {
+  option (servora.conf.v1.section) = true;
 
-message Response {}
-
-service ContractService {
-  option (servora.audit.v1.service_default) = {mode: AUDIT_MODE_ENABLED};
-
-  rpc Public(Request) returns (Response) {
-    option (servora.audit.v1.rule) = {mode: AUDIT_MODE_DISABLED};
-  }
+  optional string addr = 1 [(servora.conf.v1.field) = {default: "127.0.0.1:8080"}];
 }

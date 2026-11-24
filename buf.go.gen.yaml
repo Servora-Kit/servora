@@ -47,11 +47,6 @@ plugins:
           - paths=source_relative
           - target=go
 
-    # generate audit rules from proto annotations
-    - local: protoc-gen-servora-audit
-      out: api/gen/go
-      opt: paths=source_relative
-
     # 根据 Proto 注解生成唯一的 Apply 配置处理方法
     - local: protoc-gen-servora-conf
       out: api/gen/go

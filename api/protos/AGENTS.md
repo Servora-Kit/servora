@@ -7,7 +7,7 @@
 
 `api/protos/` 是 Servora 框架公共 proto contract 根，随仓库根 `buf.yaml` 发布到 `buf.build/servora/servora`。
 
-这里定义框架级 annotation、配置 schema、CloudEvents/audit schema 与通用数据结构。
+这里定义框架级 annotation、配置 schema 与通用数据结构。
 
 ## 当前结构
 
@@ -16,23 +16,19 @@ api/protos/
 ├── README.md
 ├── AGENTS.md
 └── servora/
-    ├── audit/v1/                    # audit annotation extensions
-    ├── cloudevents/v1/              # CloudEvents envelope schema
     ├── conf/v1/                     # config annotation extensions
     ├── core/v1/                     # bootstrap config schema
     ├── crud/v1/                     # CRUD framework errors and page-token payload
     ├── errors/v1/                   # error-code annotation extensions
     ├── redact/v3/                   # field-level log-redaction annotations
-    ├── contrib/kafka/v1/            # optional section schema
     ├── contrib/db/redis/v1/         # database section schema
-    ├── obs/audit/v1/                # audit runtime config schema
     ├── security/tls/v1/             # shared TLS configuration
     └── transport/http/cors/v1/      # transport config schema
 
 `buf.yaml`、`buf.lock`、`buf.go.gen.yaml` 都在仓库根。imports 相对于 `api/protos/`，例如：
 
 ```proto
-import "servora/audit/v1/annotations.proto";
+import "servora/conf/v1/annotations.proto";
 ```
 
 ## 命名与生成约束
@@ -41,7 +37,6 @@ import "servora/audit/v1/annotations.proto";
 - 目录必须与 package 对齐，满足 Buf `PACKAGE_DIRECTORY_MATCH`。
 - `go_package` 使用 `github.com/Servora-Kit/servora/api/gen/go/servora/<ns>/v1;<alias>`。
 - 新 annotation extension 号段遵守根 `AGENTS.md` 的 `5xx00` 规划。
-- `service_default` 合并语义必须与生成器测试一致：方法级显式字段覆盖服务级默认，未显式字段继承。
 - 第一方 backend/section 配置 proto 使用 `servora.conf.v1.section` / `field` 表达 section、默认值和必填项。
 - core `bootstrap.proto` 内的配置 message 采用所属域名称；TLS、Redis 等配置放在所属域 proto，由 core 引用或业务显式 `bootstrap.Scan`。
 - 运行期配置按 owner 归入 `contrib`、`security`、`transport` 或 `obs`。

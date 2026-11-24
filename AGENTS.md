@@ -8,7 +8,7 @@ Proto contract 驱动的 Go 微服务框架；包含运行时、protoc 插件、
 - `api/gen/go/`：根 Go module 内的生成 package
 - `cmd/`：CLI 与 `protoc-gen-servora-*`
 - `security/`：通用 TLS primitive
-- `obs/`：日志、追踪、指标、Audit
+- `obs/`：日志、追踪、指标
 - `contrib/`：可选第三方 Client 与 capability Adapter
 - `web/`：`@servora/proto-utils`
 
@@ -34,7 +34,6 @@ just tidy
 - package 形如 `servora.<domain>.v1`，目录与 package 对齐。
 - `go_package` 形如 `github.com/Servora-Kit/servora/api/gen/go/servora/<domain>/v1`。
 - annotation 号段按命名空间从 `5xx00` 起；方法/消息使用 `+0`，服务/字段使用 `+1`。
-- 方法级显式字段覆盖服务默认，未显式字段继承默认。
 
 ## 发布
 

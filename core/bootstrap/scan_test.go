@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
+	redispb "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1"
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
-	auditv1 "github.com/Servora-Kit/servora/api/gen/go/servora/obs/audit/v1"
+	apidocsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/apidocs/v1"
 	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 	kconfig "github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
@@ -63,18 +64,21 @@ server:
 }
 
 func TestScanUsesAcronymAndCompositeMessageKeys(t *testing.T) {
+	if got := sectionKey(&apidocsv1.APIDocs{}); got != "api_docs" {
+		t.Fatalf("sectionKey(APIDocs) = %q, want api_docs", got)
+	}
 	rt := &Runtime{Config: loadKratosConfig(t, `
-audit_contract:
-  enabled: true
+redis:
+  addr: "127.0.0.1:6379"
 cors:
   enable: true
 `)}
-	audit, cors := &auditv1.AuditContract{}, &corsv1.CORS{}
-	if err := Scan(rt, audit, cors); err != nil {
+	redis, cors := &redispb.Redis{}, &corsv1.CORS{}
+	if err := Scan(rt, redis, cors); err != nil {
 		t.Fatal(err)
 	}
-	if !audit.GetEnabled() || audit.GetEmitterType() != "noop" || !cors.GetEnable() {
-		t.Fatalf("automatic section keys did not load or apply: audit=%v cors=%v", audit, cors)
+	if redis.GetAddr() != "127.0.0.1:6379" || redis.GetDialTimeout().AsDuration() != 5*time.Second || !cors.GetEnable() {
+		t.Fatalf("automatic section keys did not load or apply: redis=%v cors=%v", redis, cors)
 	}
 }
 
