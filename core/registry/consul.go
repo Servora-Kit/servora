@@ -82,9 +82,3 @@ func NewConsulDiscovery(c *corev1.Consul) registry.Discovery {
 	r := consul.New(client)
 	return r
 }
-
-// NewConsulRegistrar 创建 Consul 注册中心客户端
-// Deprecated: 使用 NewConsulRegistry 替代
-func NewConsulRegistrar(c *corev1.Consul) registry.Registrar {
-	return NewConsulRegistry(c)
-}
