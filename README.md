@@ -45,7 +45,8 @@ curl 'http://127.0.0.1:8001/v1/hello?greeting=hi'
 
 > `make run` 直接 `go run` 启动；如需 air 热重载请改用 `make dev`（需先 `make init` 安装 air）。
 
-完整流程（全容器化 / 热重载 / 端口约定 / 目录结构）见 [servora-example](https://github.com/Servora-Kit/servora-example)。
+- 最小多服务上手示例（全容器化 / 热重载 / 端口约定 / 目录结构）见 [servora-example](https://github.com/Servora-Kit/servora-example)。
+- 生产级微服务平台最佳实践（含 IAM / OIDC、OpenFGA 授权、Kafka + ClickHouse 审计、管理后台与完整可观测栈）见 [Plateau](https://github.com/Servora-Kit/plateau)。
 
 ## 特性✨
 
