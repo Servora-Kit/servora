@@ -1,0 +1,91 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard"
+  ],
+  "timezone": "Asia/Shanghai",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "automerge": false,
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "mise": {
+    "enabled": true
+  },
+  // Experimental (Renovate 44.236+): sync minimumReleaseAge from web/pnpm-workspace.yaml
+  // (1440 min / 1 day) so lockfile updates match pnpm v12 supply-chain checks in CI.
+  "minimumReleaseAgePackageManagerSync": true,
+  "packageRules": [
+    {
+      "description": "Keep the go directive as the minimum version; patch releases go through the toolchain directive",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes": [
+        "golang"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Bump the go directive on minor releases",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes": [
+        "golang"
+      ],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Group Go tool directive dependencies",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes": [
+        "tool"
+      ],
+      "groupName": "go-tools"
+    },
+    {
+      "description": "Track protoc plugin modules that go.mod only requires indirectly for tool directives",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "google.golang.org/grpc/cmd/protoc-gen-go-grpc",
+        "github.com/go-kratos/kratos/cmd/protoc-gen-go-http/**",
+        "github.com/envoyproxy/protoc-gen-validate"
+      ],
+      "enabled": true,
+      "groupName": "go-tools"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Group mise tool version updates",
+      "matchManagers": [
+        "mise"
+      ],
+      "groupName": "mise"
+    },
+    {
+      "description": "Group web pnpm workspace dependencies",
+      "matchManagers": [
+        "npm"
+      ],
+      "groupName": "web"
+    }
+  ]
+}

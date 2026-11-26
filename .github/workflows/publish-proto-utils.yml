@@ -15,22 +15,16 @@ jobs:
       run:
         working-directory: web/packages/proto-utils
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: "10.33.0"
+      - uses: jdx/mise-action@v5
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-          cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
-
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
         working-directory: web
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm run build
+      - name: Build, typecheck, and test
+        run: pnpm run test
 
-      - run: npm publish --provenance --access public
+      - name: Publish to npm
+        run: npm publish --provenance --access public --registry=https://registry.npmjs.org

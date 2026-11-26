@@ -1,0 +1,46 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - go.mod
+      - go.sum
+      - .github/workflows/security.yml
+  push:
+    branches: [main]
+    paths:
+      - go.mod
+      - go.sum
+      - .github/workflows/security.yml
+  schedule:
+    # Mondays at 04:00 Asia/Shanghai (20:00 UTC Sunday)
+    - cron: "0 20 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  GOWORK: "off"
+
+jobs:
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          repo-checkout: false
+          go-version-input: ""
+          go-version-file: go.mod
+          check-latest: false
+          cache: true
+          go-package: ./...

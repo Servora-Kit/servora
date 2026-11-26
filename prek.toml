@@ -1,0 +1,141 @@
+default_install_hook_types = ["pre-commit", "pre-push", "commit-msg"]
+default_stages = ["pre-commit"]
+
+exclude = { glob = [
+  "api/gen/**",
+  "web/packages/proto-utils/src/gen/**",
+  "web/packages/proto-utils/dist/**",
+  "**/pnpm-lock.yaml",
+  "**/node_modules/**",
+  "coverage.out",
+  # Agent 与代码索引工具自行维护的目录，不纳入仓库格式钩子。
+  ".agent/**",
+  ".agents/**",
+  ".omp/**",
+  ".claude/**",
+  ".opencode/**",
+  ".codegraph/**",
+  ".gitnexus/**",
+] }
+
+[[repos]]
+repo = "builtin"
+
+[[repos.hooks]]
+id = "trailing-whitespace"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "end-of-file-fixer"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "check-yaml"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "check-json"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "check-toml"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "check-merge-conflict"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "detect-private-key"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "check-added-large-files"
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "mixed-line-ending"
+stages = ["pre-commit"]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "gofmt"
+name = "gofmt"
+entry = "gofmt -l -w"
+language = "system"
+types = ["go"]
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "buf-format"
+name = "buf format"
+entry = "buf format -w"
+language = "system"
+files = '\.proto$'
+pass_filenames = 1
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "just-fmt"
+name = "just fmt check"
+entry = "just --fmt --check --unstable --justfile"
+language = "system"
+files = '(^|/)(justfile|[^/]+\.just)$'
+pass_filenames = 1
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "biome-check"
+name = "biome check"
+entry = '''bash -c 'args=(); for f in "$@"; do args+=("${f#web/}"); done; pnpm --dir web exec biome check --write --no-errors-on-unmatched "${args[@]}"' --'''
+language = "system"
+files = '^web/.*\.(ts|mts|mjs|js|json)$'
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "lint-go"
+name = "just lint-go"
+entry = "just lint-go"
+language = "system"
+env = { GOWORK = "off" }
+pass_filenames = false
+always_run = true
+stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "lint-proto"
+name = "just lint-proto"
+entry = "just lint-proto"
+language = "system"
+pass_filenames = false
+always_run = true
+stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "buf-breaking"
+name = "just breaking"
+entry = "just breaking"
+language = "system"
+pass_filenames = false
+always_run = true
+stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "gen-check"
+name = "just gen-check"
+entry = "just gen-check"
+language = "system"
+env = { GOWORK = "off" }
+pass_filenames = false
+always_run = true
+stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "conventional-commit"
+name = "conventional commit message"
+entry = '\A((feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)\r\n]+\))?!?: [^\r\n]*\S|Merge [^\r\n]+|Revert "[^\r\n]+|(fixup|squash)! [^\r\n]+)'
+language = "pygrep"
+args = ["--negate", "--multiline"]
+stages = ["commit-msg"]

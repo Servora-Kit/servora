@@ -1,15 +1,16 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -18,40 +19,253 @@ env:
   GOWORK: "off"
 
 jobs:
-  lint:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      go: ${{ github.event_name != 'pull_request' || steps.filter.outputs.go == 'true' }}
+      proto: ${{ github.event_name != 'pull_request' || steps.filter.outputs.proto == 'true' }}
+      web: ${{ github.event_name != 'pull_request' || steps.filter.outputs.web == 'true' }}
+      gen: ${{ github.event_name != 'pull_request' || steps.filter.outputs.gen == 'true' }}
+      ci: ${{ github.event_name != 'pull_request' || steps.filter.outputs.ci == 'true' }}
+    steps:
+      - name: Detect changed paths
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            go:
+              - '**/*.go'
+              - 'api/gen/go/**'
+              - 'cmd/**'
+              - 'conformance/**'
+              - 'contrib/**'
+              - 'core/**'
+              - 'obs/**'
+              - 'security/**'
+              - 'transport/**'
+              - '!**/*.proto'
+            proto:
+              - '**/*.proto'
+              - 'api/protos/**'
+              - 'buf.yaml'
+              - 'buf.lock'
+              - 'buf.*.gen.yaml'
+            web:
+              - 'web/**'
+              - 'conformance/**'
+            gen:
+              - 'api/gen/go/**'
+              - 'web/packages/proto-utils/src/gen/**'
+            ci:
+              - '.github/workflows/ci.yml'
+              - 'mise.toml'
+              - 'justfile'
+              - 'prek.toml'
+              - 'go.mod'
+              - 'go.sum'
+              - '.golangci.yml'
+              - '.golangci.yaml'
+
+  prek:
+    name: prek
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          cache: false
 
-      - uses: extractions/setup-just@v4
+      - uses: jdx/mise-action@v5
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "store_path=$(pnpm --dir web store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
         with:
-          just-version: "1.57.0"
+          path: ${{ steps.pnpm-cache.outputs.store_path }}
+          key: pnpm-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-web-${{ runner.os }}-
 
-      - run: just --fmt --check
+      - name: Install web dependencies for Biome hook
+        run: just web-install
 
-      - uses: golangci/golangci-lint-action@v9
+      - name: Run pre-commit hooks
+        run: prek run --all-files --stage pre-commit --show-diff-on-failure
 
-  test:
+  go:
+    name: go
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.proto == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          cache: true
 
-      - run: go build ./...
+      - uses: jdx/mise-action@v5
 
-      - run: go test -short -race -coverprofile=coverage.out ./...
+      - name: Cache golangci-lint
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/golangci-lint
+          key: golangci-lint-${{ runner.os }}-${{ hashFiles('mise.toml', 'go.sum', '.golangci.yml', '.golangci.yaml') }}
+          restore-keys: |
+            golangci-lint-${{ runner.os }}-
 
-      - name: Upload coverage artifact
+      - name: Build
+        run: go build ./...
+
+      - name: Lint Go
+        run: just lint-go
+
+      - name: Test
+        run: just test -coverprofile=coverage.out
+
+      - name: Coverage summary
         if: always()
-        uses: actions/upload-artifact@v7
+        run: |
+          if [ ! -f coverage.out ]; then
+            exit 0
+          fi
+          total="$(go tool cover -func=coverage.out | tail -n 1)"
+          {
+            echo "### Go Test Coverage"
+            echo ""
+            echo "\`${total}\`"
+            echo ""
+            echo "<details><summary>Function coverage details</summary>"
+            echo ""
+            echo '```text'
+            go tool cover -func=coverage.out
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  proto:
+    name: proto
+    needs: changes
+    if: needs.changes.outputs.proto == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
         with:
-          name: coverage-out
-          path: coverage.out
-          if-no-files-found: warn
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@v5
+
+      - name: Lint proto
+        run: just lint-proto --error-format=github-actions
+
+      - name: Check proto formatting
+        run: just fmt-proto-check --error-format=github-actions
+
+      - name: Check breaking changes
+        if: github.event_name == 'pull_request'
+        env:
+          BUF_BREAKING_AGAINST: .git#ref=origin/${{ github.base_ref }}
+        run: |
+          git fetch --no-tags origin "${GITHUB_BASE_REF}:refs/remotes/origin/${GITHUB_BASE_REF}"
+          just breaking --error-format=github-actions
+
+  gen:
+    name: gen
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.proto == 'true' || needs.changes.outputs.gen == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: jdx/mise-action@v5
+
+      - name: Check generated code
+        run: |
+          if ! just gen-check; then
+            echo "::error title=Generated code out of date::Run 'GOWORK=off just gen' and commit the updated generated files."
+            git status --short
+            exit 1
+          fi
+
+  web:
+    name: web
+    needs: changes
+    if: needs.changes.outputs.web == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v5
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "store_path=$(pnpm --dir web store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-cache.outputs.store_path }}
+          key: pnpm-web-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-web-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: just web-install
+
+      - name: Biome check
+        run: just web-check
+
+      - name: Typecheck
+        run: just web-typecheck
+
+      - name: Build and test
+        run: just web-test
+
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [changes, prek, go, proto, gen, web]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          PREK_RESULT: ${{ needs.prek.result }}
+          GO_RESULT: ${{ needs.go.result }}
+          PROTO_RESULT: ${{ needs.proto.result }}
+          GEN_RESULT: ${{ needs.gen.result }}
+          WEB_RESULT: ${{ needs.web.result }}
+        run: |
+          failed=0
+          for entry in \
+            "changes:${CHANGES_RESULT}" \
+            "prek:${PREK_RESULT}" \
+            "go:${GO_RESULT}" \
+            "proto:${PROTO_RESULT}" \
+            "gen:${GEN_RESULT}" \
+            "web:${WEB_RESULT}"; do
+            job="${entry%%:*}"
+            result="${entry#*:}"
+            echo "${job}: ${result}"
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              echo "::error::Job '${job}' finished with status '${result}'"
+              failed=1
+            fi
+          done
+          exit "$failed"
