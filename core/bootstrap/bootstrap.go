@@ -19,7 +19,8 @@ import (
 	klog "github.com/go-kratos/kratos/v3/log"
 )
 
-// Runtime 聚合启动阶段产物与 runtime 级资源清理句柄。
+// Runtime 聚合启动阶段产物与 runtime 级资源清理句柄，仅作为启动装配根使用；
+// 业务依赖通过 ProviderSet 展开的细粒度字段注入。
 type Runtime struct {
 	Bootstrap *corev1.Bootstrap
 	Config    kconfig.Config
@@ -122,7 +123,8 @@ func NewRuntime(configPath string, opts ...Option) (*Runtime, error) {
 	}, nil
 }
 
-// NewApp 使用 Runtime 默认项构造 Kratos 应用。
+// NewApp 使用 Runtime 的 ID、Name、Version、Metadata 构造 Kratos 应用；
+// 日志已由 NewRuntime 绑定为 Kratos 默认 logger，server、registrar 与 lifecycle hooks 通过 opts 传入。
 func (r *Runtime) NewApp(opts ...kratos.Option) *kratos.App {
 	appOpts := []kratos.Option{
 		kratos.ID(r.serviceID),
@@ -150,7 +152,7 @@ func (r *Runtime) Run(build func() (*kratos.App, func(), error)) (err error) {
 	return app.Run()
 }
 
-// Close 释放 Runtime 创建的资源。重复调用返回第一次关闭得到的同一个错误。
+// Close 按 LIFO 顺序仅释放 Runtime 自有资源；重复调用返回第一次关闭得到的同一个错误。
 func (r *Runtime) Close(ctx context.Context) error {
 	if r == nil {
 		return nil

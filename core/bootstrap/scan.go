@@ -13,6 +13,7 @@ import (
 )
 
 // ConfApplier 是配置消息解码后执行默认、必填及值约束的唯一入口。
+// 实现仅对已解码字段执行纯内存的默认值填充与校验。
 type ConfApplier interface {
 	Apply() error
 }

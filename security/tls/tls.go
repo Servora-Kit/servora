@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// defaultMinVersion 将默认最低协议版本维持在 TLS 1.2；需要更高版本时由调用方显式指定。
 const defaultMinVersion = stdtls.VersionTLS12
 
 // ServerConfigOptions 描述服务端 TLS 配置来源。

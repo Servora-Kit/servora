@@ -19,8 +19,8 @@ const (
 	Prefix
 )
 
-// WhiteList holds whitelist data and provides selector helpers.
-// Operations in the whitelist will SKIP the auth middleware.
+// WhiteList holds Kratos operation whitelist entries and provides selector helpers.
+// Matched operations bypass the auth middleware.
 type WhiteList struct {
 	mu    sync.RWMutex
 	items map[string]struct{}
