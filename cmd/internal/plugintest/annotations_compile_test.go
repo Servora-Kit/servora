@@ -19,7 +19,7 @@ func TestConfAnnotationsCompile(t *testing.T) {
 	sources := make(map[string]string)
 	for importPath, filePath := range map[string]string{
 		"servora/conf/v1/annotations.proto": filepath.Join(root, "api", "protos", "servora", "conf", "v1", "annotations.proto"),
-		"test/annotations/compile.proto":     filepath.Join(filepath.Dir(testFile), "testdata", "annotations", "compile.proto"),
+		"test/annotations/compile.proto":    filepath.Join(filepath.Dir(testFile), "testdata", "annotations", "compile.proto"),
 	} {
 		content, err := os.ReadFile(filePath)
 		if err != nil {

@@ -1,0 +1,7 @@
+[tools]
+buf = "1.75.0"
+golangci-lint = "2.15.0"
+just = "1.59.0"
+node = "24.22.3"
+pnpm = "12.21.0"
+prek = "0.5.11"

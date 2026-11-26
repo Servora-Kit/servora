@@ -5,49 +5,49 @@ version: v2
 # 使用 `just gen-fresh` 显式触发 clean + regenerate。
 
 plugins:
-    # generate go struct code
-    - local: protoc-gen-go
-      out: api/gen/go
-      opt: paths=source_relative
+  # generate go struct code
+  - local: ["go", "tool", "protoc-gen-go"]
+    out: api/gen/go
+    opt: paths=source_relative
 
-    # generate grpc service code
-    - local: protoc-gen-go-grpc
-      out: api/gen/go
-      opt: paths=source_relative
+  # generate grpc service code
+  - local: ["go", "tool", "protoc-gen-go-grpc"]
+    out: api/gen/go
+    opt: paths=source_relative
 
-    # generate kratos http service code
-    - local: protoc-gen-go-http
-      out: api/gen/go
-      opt: paths=source_relative
+  # generate kratos http service code
+  - local: ["go", "tool", "protoc-gen-go-http"]
+    out: api/gen/go
+    opt: paths=source_relative
 
-    # generate kratos errors code
-    - local: protoc-gen-go-errors
-      out: api/gen/go
-      opt: paths=source_relative
+  # generate kratos errors code
+  - local: ["go", "tool", "protoc-gen-go-errors"]
+    out: api/gen/go
+    opt: paths=source_relative
 
-    # generate message validator code
-    - local: protoc-gen-validate
-      out: api/gen/go
-      opt:
-          - paths=source_relative
-          - lang=go
+  # generate message validator code
+  - local: ["go", "tool", "protoc-gen-validate"]
+    out: api/gen/go
+    opt:
+      - paths=source_relative
+      - lang=go
 
-    # generate redact code (field-level log redaction)
-    - local: protoc-gen-redact
-      out: api/gen/go
-      opt:
-          - paths=source_relative
-          - lang=go
+  # generate redact code (field-level log redaction)
+  - local: ["go", "tool", "protoc-gen-redact"]
+    out: api/gen/go
+    opt:
+      - paths=source_relative
+      - lang=go
 
-    # ==================== Servora custom plugins ====================
-    # generate typed CRUD descriptors, field paths, and resource-name helpers
-    - local: protoc-gen-servora-crud
-      out: api/gen/go
-      opt:
-          - paths=source_relative
-          - target=go
+  # ==================== Servora custom plugins ====================
+  # generate typed CRUD descriptors, field paths, and resource-name helpers
+  - local: ["go", "tool", "protoc-gen-servora-crud"]
+    out: api/gen/go
+    opt:
+      - paths=source_relative
+      - target=go
 
-    # 根据 Proto 注解生成唯一的 Apply 配置处理方法
-    - local: protoc-gen-servora-conf
-      out: api/gen/go
-      opt: paths=source_relative
+  # 根据 Proto 注解生成唯一的 Apply 配置处理方法
+  - local: ["go", "tool", "protoc-gen-servora-conf"]
+    out: api/gen/go
+    opt: paths=source_relative

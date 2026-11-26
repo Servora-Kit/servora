@@ -1,2 +1,5 @@
 packages:
-  - 'packages/*'
+  - "packages/*"
+
+# Explicit 1-day cooldown (matches pnpm v12 default) so Renovate syncs it unambiguously.
+minimumReleaseAge: 1440

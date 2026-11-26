@@ -161,12 +161,7 @@ function renderFilter(
     if (!fields.has(expression.field)) {
       throw new RangeError(`unknown filter field: ${expression.field}`);
     }
-    if (
-      !Object.prototype.hasOwnProperty.call(
-        filterOperators,
-        expression.operator,
-      )
-    ) {
+    if (!Object.hasOwn(filterOperators, expression.operator)) {
       throw new RangeError(
         `unsupported filter operator: ${String(expression.operator)}`,
       );

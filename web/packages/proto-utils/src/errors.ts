@@ -41,10 +41,7 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   if (!isRecord(value)) return false;
 
   for (const key in value) {
-    if (
-      Object.prototype.hasOwnProperty.call(value, key) &&
-      typeof value[key] !== "string"
-    ) {
+    if (Object.hasOwn(value, key) && typeof value[key] !== "string") {
       return false;
     }
   }
@@ -57,10 +54,7 @@ export function parseKratosErrorBody(value: unknown): KratosErrorBody | null {
     if (!Number.isInteger(value.code)) return null;
     if (typeof value.reason !== "string") return null;
     if (typeof value.message !== "string") return null;
-    if (
-      Object.prototype.hasOwnProperty.call(value, "metadata") &&
-      !isStringRecord(value.metadata)
-    ) {
+    if (Object.hasOwn(value, "metadata") && !isStringRecord(value.metadata)) {
       return null;
     }
 

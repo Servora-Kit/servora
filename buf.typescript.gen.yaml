@@ -3,23 +3,20 @@ version: v2
 clean: true
 
 inputs:
-    - directory: api/protos
-      paths:
-          - api/protos/servora
+  - directory: api/protos
+    paths:
+      - api/protos/servora
 
 plugins:
-    - local: protoc-gen-typescript-http
-      out: web/packages/proto-utils/src/gen
-
-
-    - local: protoc-gen-go-errors
-      out: web/packages/proto-utils/src/gen
-      opt:
-          - target=ts
-          - paths=source_relative
-
-    - local: protoc-gen-servora-crud
-      out: web/packages/proto-utils/src/gen
-      opt:
-          - target=ts
-          - paths=source_relative
+  - local: ["go", "tool", "protoc-gen-typescript-http"]
+    out: web/packages/proto-utils/src/gen
+  - local: ["go", "tool", "protoc-gen-go-errors"]
+    out: web/packages/proto-utils/src/gen
+    opt:
+      - target=ts
+      - paths=source_relative
+  - local: ["go", "tool", "protoc-gen-servora-crud"]
+    out: web/packages/proto-utils/src/gen
+    opt:
+      - target=ts
+      - paths=source_relative
