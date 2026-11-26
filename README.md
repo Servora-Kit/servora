@@ -26,24 +26,19 @@
 
 ## 快速开始🏃‍♂️
 
-跑一对 master + worker 微服务，看看 servora 起一个项目长什么样。前置要求：Go 1.27.0+、Docker。
+通过官方最佳实践项目 [Plateau](https://github.com/Servora-Kit/plateau) 一键体验基于 Servora 构建的多服务全栈环境（前置要求：Go 1.27.3+、Docker、[mise](https://mise.jdx.dev/)）：
 
 ```bash
-git clone https://github.com/Servora-Kit/servora-example
-cd servora-example
-make compose.up.infra            # 拉起 Consul / Jaeger / OTel Collector
+git clone https://github.com/Servora-Kit/plateau.git
+cd plateau
+cp .env.example .env
 
-# 终端 A：worker
-cd app/worker/service && make run
-
-# 终端 B：master
-cd app/master/service && make run
-
-# 验证：HTTP 200 + {"reply":"master relay -> worker says hello, hi"}
-curl 'http://127.0.0.1:8001/v1/hello?greeting=hi'
+mise install
+just init
+just dev
 ```
 
-> `make run` 直接 `go run` 启动；如需 air 热重载请改用 `make dev`（需先 `make init` 安装 air）。
+> 无交互式终端时可使用后台守护模式：`just dev-up` 启动、`just dev-down` 停止本地应用进程。
 
 - 最小多服务上手示例（全容器化 / 热重载 / 端口约定 / 目录结构）见 [servora-example](https://github.com/Servora-Kit/servora-example)。
 - 生产级微服务平台最佳实践（含 IAM / OIDC、OpenFGA 授权、Kafka + ClickHouse 审计、管理后台与完整可观测栈）见 [Plateau](https://github.com/Servora-Kit/plateau)。
@@ -194,13 +189,16 @@ Servora 默认接入 [OpenTelemetry](https://opentelemetry.io/) SDK，开箱即�
 
 ### 辅助工具链
 
-在 Servora 主仓开发时，`justfile` 是主动维护的任务入口，需要 [Just 1.57.0+](https://just.systems/man/en/packages.html)。迁移期根 `Makefile` 保留兼容；已有同名命令的行为变更同步维护，新命令默认只加入 `justfile`。
+在 Servora 主仓开发时，工具版本由 [`mise.toml`](./mise.toml) 与 [`go.mod`](./go.mod) `tool` 统一固定，`justfile` 是唯一的任务入口：
 
 ```bash
-just --list  # 查看全部命令
-just test    # 运行无外部依赖的 Go 测试
-just lint    # 运行 Go 与 Proto lint
-just gen     # 增量生成 Go 代码
+mise install     # 安装固定版本的 just、buf、golangci-lint、node、pnpm、prek
+just init        # 完成工具链、prek 本地钩子与前端依赖初始化
+just --list      # 查看全部命令
+just test        # 运行无外部依赖的 Go 竞态单元测试
+just lint        # 运行前端、Proto 与 Go 静态检查
+just gen         # 同步生成 Go 与 TypeScript Proto 代码
+just gen-check   # 在 GOWORK=off 下校验生成产物无漂移
 ```
 
 ## 星的轨迹⭐
@@ -211,7 +209,7 @@ just gen     # 增量生成 Go 代码
 
 - 特别感谢 [go-kratos](https://github.com/go-kratos/kratos)，为 servora 提供了核心能力的支撑。
 - 特别感谢 [go-wind-admin](https://github.com/tx7do/go-wind-admin)，为 servora 的组织架构提供了灵感。
-- 感谢所有用户的建议和反馈。  
+- 感谢所有用户的建议和反馈。
 - 感谢开源社区的所有贡献者和支持者。
 
 [![Contributors](https://contrib.rocks/image?repo=Servora-Kit/servora)](https://github.com/Servora-Kit/servora/graphs/contributors)

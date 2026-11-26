@@ -6,28 +6,37 @@ Proto contract 驱动的 Go 微服务框架；包含运行时、protoc 插件、
 
 - `api/protos/`：公共 Proto 与 annotation
 - `api/gen/go/`：根 Go module 内的生成 package
-- `cmd/`：CLI 与 `protoc-gen-servora-*`
-- `security/`：通用 TLS primitive
+- `cmd/`：`protoc` 代码生成插件（`protoc-gen-*`）
+- `security/`：通用 TLS 能力封装
 - `obs/`：日志、追踪、指标
 - `contrib/`：可选第三方 Client 与 capability Adapter
 - `web/`：`@servora/proto-utils`
 
 生成目录 `api/gen/go/`、`web/packages/proto-utils/src/gen/` 只由生成命令维护。
 
-## 常用命令
+## 工具链与常用命令
+
+CLI 工具版本由 `mise.toml` 固定，`protoc` 插件与 `ent` 由 `go.mod` 的 `tool` 块固定，本地 Git 三阶段钩子由 `prek.toml` 管理。
 
 ```bash
-just gen-fresh      # 清理并生成 Go Proto
-just gen-ts         # 生成内建 Proto TypeScript
-just lint-proto
-just test
-just test-all
-just web-typecheck
-just web-build
-just tidy
+just init             # 安装固定版本工具链、prek 钩子与前端依赖
+just gen              # 同步生成 Go 与内建 Proto TypeScript 代码
+just gen-fresh        # 清理生成目录并全量重建 Go 与 TypeScript 生成物
+just gen-check        # 在 GOWORK=off 下重新生成并校验生成目录零差异
+just lint             # 依次执行前端检查、类型检查、Proto lint 与 Go lint
+just lint-proto       # Buf lint
+just fmt-proto-check  # 检查 Proto 格式
+just breaking         # 检查相对 origin/main 的破坏性变更
+just test             # 运行无外部依赖的 Go 竞态单元测试
+just test-all         # 运行全量 Go 竞态测试
+just web-check        # 运行前端 Biome 检查
+just web-typecheck    # 检查 @servora/proto-utils 类型
+just web-build        # 构建 @servora/proto-utils
+just web-test         # 构建、类型检查并运行 @servora/proto-utils 单元测试
+just tidy             # 执行 go mod tidy
 ```
 
-删除或重命名 Proto 后使用 `just gen-fresh`；插件变更先运行 `just plugin`。CI parity 使用 `GOWORK=off`。
+删除、重命名 Proto 或移除插件后使用 `just gen-fresh`；插件由 `buf generate` 经 `go tool` 直接编译调用，无需手动安装。仓库门禁与 CI 一致使用 `GOWORK=off`，GitHub Actions 以 `ci-ok` 作为唯一必过状态检查。
 
 ## Proto
 

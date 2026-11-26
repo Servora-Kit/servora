@@ -60,4 +60,3 @@ just bsr-push
 - 在本目录新增 `buf.yaml` 与根 workspace 分叉。
 - import 使用相对 `../` 路径或 generated Go 路径。
 - 新增 proto 后忘记同步 `README.md` 中面向 BSR 的说明。
-

@@ -8,8 +8,8 @@
 `api/` 承载框架公共 Proto 与根 module 内的 Go 生成 package：
 
 - `api/protos/`：发布到 BSR 的公共 contract，包括 `servora.crud.v1` 与错误注解；
-- `api/gen/go/`：`just gen` 写入的 Go package，随 Servora 根 module 发布；
-- `just gen-ts`：将内建 Proto TypeScript 类型写入 `web/packages/proto-utils/src/gen`，不在 `api/` 下维护独立 TS package。
+- `api/gen/go/`：`just gen-go`（或 `just gen`）写入的 Go package，随 Servora 根 module 发布；
+- `just gen-ts`（或 `just gen`）：将内建 Proto TypeScript 类型写入 `web/packages/proto-utils/src/gen`，不在 `api/` 下维护独立 TS package。
 
 ## 当前结构
 
@@ -30,15 +30,18 @@ Buf 配置在仓库根：`buf.yaml`、`buf.lock`、`buf.go.gen.yaml`。`api/prot
 
 | 命令 | 作用 |
 | --- | --- |
-| `just gen` | 执行 `buf generate --template buf.go.gen.yaml`，生成 Go 与 CRUD companion |
-| `just gen-ts` | 生成内建 Proto TypeScript 与 CRUD companion 到 proto-utils |
-| `just gen-fresh` | 删除 `api/gen/go` 后重新生成；删除/重命名 proto 或移除 plugin 时使用 |
+| `just gen` | 依次执行 `gen-go` 与 `gen-ts`，同步刷新 Go 与 TypeScript 生成物 |
+| `just gen-go` | 执行 `buf generate --template buf.go.gen.yaml`，生成 Go 与 CRUD companion |
+| `just gen-ts` | 执行 `buf generate --template buf.typescript.gen.yaml`，生成内建 Proto TypeScript 与 CRUD companion 到 `proto-utils` |
+| `just gen-fresh` | 清理 `api/gen/go` 与 `web/packages/proto-utils/src/gen` 后重新生成；删除/重命名 proto 或移除 plugin 时使用 |
+| `just gen-check` | 在 `GOWORK=off` 下运行 `just gen`，校验生成目录无差异及未跟踪文件 |
 | `just lint-proto` | Buf lint |
-| `just fmt-proto` | Buf format |
+| `just fmt-proto` / `just fmt-proto-check` | 格式化 Proto 文件 / 检查 Proto 格式差异 |
+| `just breaking` | 检查相对 `origin/main`（可用 `BUF_BREAKING_AGAINST` 覆盖）的破坏性变更 |
 | `just bsr-update` | 更新 BSR 依赖 |
 | `just bsr-push` | 推送 `buf.build/servora/servora`，HEAD 有主 tag 时附加 tag label |
 
-修改 proto 或生成器导致 `api/gen/go` 变化时，先 `just lint-proto && just gen`，再随根 module 的 `v0.x.y` 发布。BSR module 与 Go module 的版本边界彼此独立，但根 `v*` Git tag 也是 Buf CI 触发器：发布 tag 会自动推送当前 schema，并维护 BSR `main` 与对应版本 label；`just bsr-push` 只作本地预演或应急入口。
+修改 proto 或生成器导致生成物变化时，先 `just lint-proto && just gen && GOWORK=off just gen-check`，再随根 module 的 `v0.x.y` 发布。BSR module 与 Go module 的版本体系彼此独立，但根 `v*` Git tag 也是 Buf CI 触发器：发布 tag 会自动推送当前 schema，并维护 BSR `main` 与对应版本 label；`just bsr-push` 只作本地预演或应急入口。
 
 ## 开发约定
 

@@ -23,7 +23,7 @@
 ```bash
 go test ./cmd/protoc-gen-go-errors
 GOWORK=off go test ./cmd/protoc-gen-go-errors
-just plugin
 just gen
-just gen-ts
+just web-typecheck
+just web-test
 ```
