@@ -40,13 +40,6 @@ plugins:
       - lang=go
 
   # ==================== Servora custom plugins ====================
-  # generate typed CRUD descriptors, field paths, and resource-name helpers
-  - local: ["go", "tool", "protoc-gen-servora-crud"]
-    out: api/gen/go
-    opt:
-      - paths=source_relative
-      - target=go
-
   # 根据 Proto 注解生成唯一的 Apply 配置处理方法
   - local: ["go", "tool", "protoc-gen-servora-conf"]
     out: api/gen/go

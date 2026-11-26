@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	redispb "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1"
 	corev1 "github.com/Servora-Kit/servora/api/gen/go/servora/core/v1"
 	apidocsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/apidocs/v1"
 	corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
@@ -67,18 +66,23 @@ func TestScanUsesAcronymAndCompositeMessageKeys(t *testing.T) {
 	if got := sectionKey(&apidocsv1.APIDocs{}); got != "api_docs" {
 		t.Fatalf("sectionKey(APIDocs) = %q, want api_docs", got)
 	}
+	if got := sectionKey(&corsv1.CORS{}); got != "cors" {
+		t.Fatalf("sectionKey(CORS) = %q, want cors", got)
+	}
 	rt := &Runtime{Config: loadKratosConfig(t, `
-redis:
-  addr: "127.0.0.1:6379"
+server:
+  http:
+    listen:
+      addr: ":8080"
 cors:
   enable: true
 `)}
-	redis, cors := &redispb.Redis{}, &corsv1.CORS{}
-	if err := Scan(rt, redis, cors); err != nil {
+	whole, cors := &corev1.Bootstrap{}, &corsv1.CORS{}
+	if err := Scan(rt, whole, cors); err != nil {
 		t.Fatal(err)
 	}
-	if redis.GetAddr() != "127.0.0.1:6379" || redis.GetDialTimeout().AsDuration() != 5*time.Second || !cors.GetEnable() {
-		t.Fatalf("automatic section keys did not load or apply: redis=%v cors=%v", redis, cors)
+	if whole.GetServer().GetHttp().GetListen().GetAddr() != ":8080" || whole.GetServer().GetHttp().GetListen().GetNetwork() != "tcp" || !cors.GetEnable() || cors.GetMaxAge().AsDuration() != 24*time.Hour {
+		t.Fatalf("targets did not load or apply: whole=%v cors=%v", whole, cors)
 	}
 }
 

@@ -1,16 +1,12 @@
 {
     "name": "@servora/proto-utils",
-    "version": "0.1.11",
-    "description": "Servora Proto 工具：CRUD 查询、FieldMask、ProtoJSON、传输契约与 Kratos 错误解析",
+    "version": "0.2.0",
+    "description": "Servora Proto 工具：ProtoJSON、传输契约与 Kratos 错误解析",
     "type": "module",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js"
-        },
-        "./crud": {
-            "types": "./dist/crud/index.d.ts",
-            "import": "./dist/crud/index.js"
         },
         "./transport": {
             "types": "./dist/transport.d.ts",
@@ -19,10 +15,6 @@
         "./proto/*": {
             "types": "./dist/gen/*/index.d.ts",
             "import": "./dist/gen/*/index.js"
-        },
-        "./error-reasons/*": {
-            "types": "./dist/gen/*.errors.d.ts",
-            "import": "./dist/gen/*.errors.js"
         },
         "./errors": {
             "types": "./dist/errors.d.ts",

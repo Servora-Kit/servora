@@ -15,10 +15,8 @@
 - `bootstrap/` 启动装配与生命周期
 - `config/` 配置加载
 - `registry/` 服务注册与发现
-- `crud/` 后端中立资源 Plan、List、FieldMask、page token 与响应清理
-- `crud/mapper/` ORM 无关 PO → 资源 PB 读投影
 
-CRUD 不持有 ORM client，不解析认证上下文，不安装权限、租户、事务或存储策略。新增 core 包必须在 PR 描述中逐条说明准入标准。
+新增 core 包必须在 PR 描述中逐条说明准入标准。
 
 ## 验证
 
@@ -36,5 +34,4 @@ go test -short ./...
 ## 维护提示
 
 - 新成员加入须先在 PR 描述里答辩准入标准
-- `crud/` 是框架横切协议范例：包名可一句话讲清、跨 capability 使用且无业务语义。
 - `bootstrap/` / `config/` / `registry/` 是「平台能力」类成员，与「框架横切协议」共享同一聚合根，但准入闸同样适用

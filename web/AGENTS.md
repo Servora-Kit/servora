@@ -10,7 +10,7 @@
 
 | 包 | 路径 | 说明 |
 |---|------|------|
-| `@servora/proto-utils` | `web/packages/proto-utils/` | CRUD/FieldMask/query helpers、ProtoJSON wire helpers、框架中立错误合同 |
+| `@servora/proto-utils` | `web/packages/proto-utils/` | 传输类型与路径编码、ProtoJSON 类型与框架中立错误合同 |
 
 ## 开发约束
 
@@ -26,7 +26,7 @@
 
 ### 与业务仓库的关系
 
-- 业务仓库通过 `@servora/proto-utils` 依赖本包；纯能力通过 `@servora/proto-utils/crud`、`@servora/proto-utils/errors` 与 `@servora/proto-utils/proto/*` 子路径暴露
+- 业务仓库通过 `@servora/proto-utils` 依赖本包；纯能力通过 `@servora/proto-utils/transport`、`@servora/proto-utils/errors` 与 `@servora/proto-utils/proto/*` 子路径暴露
 - 本地开发：顶层 `pnpm-workspace.yaml`（在 `servora-kit/`）联调，`workspace:*` 自动 link 本地源码
 - CI/生产：通过 npm 公共 registry 安装（`npm publish --provenance`）
 
@@ -57,8 +57,8 @@ servora/
     ├── packages/
     │   └── proto-utils/      # @servora/proto-utils
     │       ├── src/
-    │       │   ├── crud/      # FieldMask、filter/order、pager、ResourceNameError
-    │       │   ├── errors.ts   # ApiError 与 Kratos body parser
+    │       │   ├── transport.ts # ClientTransport、流契约与 RFC 3986 路径编码
+    │       │   ├── errors.ts    # ApiError 与 Kratos body parser
     │       │   └── gen/       # just gen-ts 生成，禁止手改
     │       ├── dist/         # 构建产物（gitignored，npm publish 时生成）
     │       ├── package.json

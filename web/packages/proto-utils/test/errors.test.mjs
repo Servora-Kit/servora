@@ -109,12 +109,14 @@ test("parseKratosError only maps HTTP errors and matches reasons exactly", () =>
 });
 
 
-test('removed client subpaths are not exported', async () => {
+test('removed subpaths are not exported', async () => {
   const removed = [
     '@servora/proto-utils/client',
     '@servora/proto-utils/client/request',
     '@servora/proto-utils/client/errors',
     '@servora/proto-utils/request',
+    '@servora/proto-utils/crud',
+    '@servora/proto-utils/error-reasons/servora/crud/v1/errors',
   ]
 
   for (const specifier of removed) {

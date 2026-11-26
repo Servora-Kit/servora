@@ -8,7 +8,6 @@
         "skipLibCheck": true,
         "lib": ["ES2022", "DOM"],
         "paths": {
-            "@servora/proto-utils/crud": ["./src/crud/index.ts"],
             "@servora/proto-utils/transport": ["./src/transport.ts"]
         },
         "rootDir": "src",

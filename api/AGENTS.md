@@ -7,7 +7,7 @@
 
 `api/` 承载框架公共 Proto 与根 module 内的 Go 生成 package：
 
-- `api/protos/`：发布到 BSR 的公共 contract，包括 `servora.crud.v1` 与错误注解；
+- `api/protos/`：发布到 BSR 的公共 contract，包括配置、错误与日志脱敏注解；
 - `api/gen/go/`：`just gen-go`（或 `just gen`）写入的 Go package，随 Servora 根 module 发布；
 - `just gen-ts`（或 `just gen`）：将内建 Proto TypeScript 类型写入 `web/packages/proto-utils/src/gen`，不在 `api/` 下维护独立 TS package。
 
@@ -31,8 +31,8 @@ Buf 配置在仓库根：`buf.yaml`、`buf.lock`、`buf.go.gen.yaml`。`api/prot
 | 命令 | 作用 |
 | --- | --- |
 | `just gen` | 依次执行 `gen-go` 与 `gen-ts`，同步刷新 Go 与 TypeScript 生成物 |
-| `just gen-go` | 执行 `buf generate --template buf.go.gen.yaml`，生成 Go 与 CRUD companion |
-| `just gen-ts` | 执行 `buf generate --template buf.typescript.gen.yaml`，生成内建 Proto TypeScript 与 CRUD companion 到 `proto-utils` |
+| `just gen-go` | 执行 `buf generate --template buf.go.gen.yaml`，生成内建 Proto Go 代码 |
+| `just gen-ts` | 执行 `buf generate --template buf.typescript.gen.yaml`，生成内建 Proto TypeScript 代码到 `proto-utils` |
 | `just gen-fresh` | 清理 `api/gen/go` 与 `web/packages/proto-utils/src/gen` 后重新生成；删除/重命名 proto 或移除 plugin 时使用 |
 | `just gen-check` | 在 `GOWORK=off` 下运行 `just gen`，校验生成目录无差异及未跟踪文件 |
 | `just lint-proto` | Buf lint |

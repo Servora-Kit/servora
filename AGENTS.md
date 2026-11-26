@@ -9,14 +9,14 @@ Proto contract 驱动的 Go 微服务框架；包含运行时、protoc 插件、
 - `cmd/`：`protoc` 代码生成插件（`protoc-gen-*`）
 - `security/`：通用 TLS 能力封装
 - `obs/`：日志、追踪、指标
-- `contrib/`：可选第三方 Client 与 capability Adapter
+- `contrib/`：Kubernetes 等可选运行时集成
 - `web/`：`@servora/proto-utils`
 
 生成目录 `api/gen/go/`、`web/packages/proto-utils/src/gen/` 只由生成命令维护。
 
 ## 工具链与常用命令
 
-CLI 工具版本由 `mise.toml` 固定，`protoc` 插件与 `ent` 由 `go.mod` 的 `tool` 块固定，本地 Git 三阶段钩子由 `prek.toml` 管理。
+CLI 工具版本由 `mise.toml` 固定，`protoc` 插件由 `go.mod` 的 `tool` 块固定，本地 Git 三阶段钩子由 `prek.toml` 管理。
 
 ```bash
 just init             # 安装固定版本工具链、prek 钩子与前端依赖

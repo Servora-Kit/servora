@@ -15,8 +15,3 @@ plugins:
     opt:
       - target=ts
       - paths=source_relative
-  - local: ["go", "tool", "protoc-gen-servora-crud"]
-    out: web/packages/proto-utils/src/gen
-    opt:
-      - target=ts
-      - paths=source_relative

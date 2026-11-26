@@ -42,7 +42,6 @@ jobs:
               - '**/*.go'
               - 'api/gen/go/**'
               - 'cmd/**'
-              - 'conformance/**'
               - 'contrib/**'
               - 'core/**'
               - 'obs/**'
@@ -57,7 +56,6 @@ jobs:
               - 'buf.*.gen.yaml'
             web:
               - 'web/**'
-              - 'conformance/**'
             gen:
               - 'api/gen/go/**'
               - 'web/packages/proto-utils/src/gen/**'

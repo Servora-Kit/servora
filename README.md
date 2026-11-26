@@ -118,7 +118,7 @@ func CallUser(ctx context.Context, l *slog.Logger, data *corev1.Data, d registry
 
 ### Proto 契约化⚖️
 
-配置文件、资源 API 与错误编码等框架行为都可以由 Proto contract 驱动。Servora 通过代码生成配合运行时能力，让普通请求之外的框架行为保持显式、版本化和可验证。
+配置文件、日志脱敏与错误编码等框架行为都可以由 Proto contract 驱动。Servora 通过代码生成配合运行时能力，让普通请求之外的框架行为保持显式、版本化和可验证。
 
 以下是 Servora 提供的 Proto 插件，多数采用代码生成 + 运行时解析配合的方式工作。
 
@@ -130,12 +130,12 @@ func CallUser(ctx context.Context, l *slog.Logger, data *corev1.Data, d registry
 import "servora/conf/v1/annotations.proto";
 import "google/protobuf/duration.proto";
 
-message Redis {
+message CORS {
   option (servora.conf.v1.section) = true;
 
-  string network = 1;
-  string addr = 2;
-  google.protobuf.Duration dial_timeout = 6 [(servora.conf.v1.field) = { default: "5s" }];
+  bool enable = 1;
+  repeated string allowed_origins = 2;
+  google.protobuf.Duration max_age = 7 [(servora.conf.v1.field) = { default: "24h" }];
 }
 ```
 
@@ -144,25 +144,17 @@ message Redis {
 ```go
 import (
     "github.com/Servora-Kit/servora/core/bootstrap"
-    redispb "github.com/Servora-Kit/servora/api/gen/go/servora/contrib/db/redis/v1"
+    corsv1 "github.com/Servora-Kit/servora/api/gen/go/servora/transport/http/cors/v1"
 )
 
-redisCfg := &redispb.Redis{}
-if err := bootstrap.Scan(rt, redisCfg); err != nil {
+corsCfg := &corsv1.CORS{}
+if err := bootstrap.Scan(rt, corsCfg); err != nil {
     return err
 }
-// redis 段存在时已解码并应用默认值；缺段时 redisCfg 保持原样。
+// cors 段存在时已解码并应用默认值；缺段时 corsCfg 保持原样。
 ```
 
 Kratos `Config.Watch` 不会自动重新应用配置。自行解码、原始 Scan 或手工构造的配置，需在使用前显式调用 `Apply()` 并处理错误；不要在每个读取字段的函数重复调用。普通父配置缺失时保持缺失，只有明确提供的对象才处理内部规则。
-
-
-
-#### CRUD 生态
-
-Servora 提供了声明式、 AIP 风格约束的 CRUD 生态框架，用户只需要在 [API Proto](./api/protos/servora/example/v1/example.proto) 中定义 AIP 规范的资源 message ，Servora 就会利用 `protoc-gen-servora-crud` 插件生成 Go 、 TypeScript 关于 分页、排序以及过滤的辅助函数，以及关于 proto 生成的代码与 data 层所使用的 orm框架字段的绑定关系代码。通过 CRUD 生态，用户可以非常规范、方便地完成增删改查的 API 设计与业务开发。
-
-具体使用示例可见：[plateau/iam](https://github.com/Servora-Kit/plateau/tree/main/app/iam) 与 [plateau/admin](https://github.com/Servora-Kit/plateau/tree/main/app/admin)。
 
 ### 服务治理
 

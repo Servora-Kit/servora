@@ -157,54 +157,6 @@ test *args:
 test-all *args:
     @go test -race -count=1 {{ args }} ./...
 
-# Run the local SQLite Ent live contract (requires explicit DSN)
-[unix]
-[working-directory(ROOT_DIR)]
-test-ent-sqlite:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -z "${SERVORA_ENT_SQLITE_DSN:-}" ]; then
-        echo "SERVORA_ENT_SQLITE_DSN is required (use a dedicated fixture database)" >&2
-        exit 2
-    fi
-    go test -count=1 -tags=integration ./contrib/db/entgo/crud -run '^TestSQLiteLiveContract$'
-
-[script("powershell.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File")]
-[windows]
-[working-directory(ROOT_DIR)]
-test-ent-sqlite:
-    $ErrorActionPreference = "Stop"
-    if ([string]::IsNullOrEmpty($env:SERVORA_ENT_SQLITE_DSN)) {
-        [Console]::Error.WriteLine("SERVORA_ENT_SQLITE_DSN is required (use a dedicated fixture database)")
-        exit 2
-    }
-    go test -count=1 -tags=integration ./contrib/db/entgo/crud -run '^TestSQLiteLiveContract$'
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-# Run the local PostgreSQL Ent live contract (requires explicit DSN)
-[unix]
-[working-directory(ROOT_DIR)]
-test-ent-postgres:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -z "${SERVORA_ENT_POSTGRES_DSN:-}" ]; then
-        echo "SERVORA_ENT_POSTGRES_DSN is required (use a dedicated fixture database)" >&2
-        exit 2
-    fi
-    go test -count=1 -tags=integration ./contrib/db/entgo/crud -run '^TestPostgresLiveContract$'
-
-[script("powershell.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File")]
-[windows]
-[working-directory(ROOT_DIR)]
-test-ent-postgres:
-    $ErrorActionPreference = "Stop"
-    if ([string]::IsNullOrEmpty($env:SERVORA_ENT_POSTGRES_DSN)) {
-        [Console]::Error.WriteLine("SERVORA_ENT_POSTGRES_DSN is required (use a dedicated fixture database)")
-        exit 2
-    }
-    go test -count=1 -tags=integration ./contrib/db/entgo/crud -run '^TestPostgresLiveContract$'
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
 # Run tests with coverage profile
 [working-directory(ROOT_DIR)]
 cover *args:
